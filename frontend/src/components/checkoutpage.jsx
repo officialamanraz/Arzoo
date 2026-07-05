@@ -18,7 +18,7 @@ const Checkout = () => {
             const token = localStorage.getItem('authToken');
             try {
                 // Calling the backend route you just perfected!
-                const res = await fetch('http://localhost:5000/api/addresses', {
+                const res = await fetch('https://arzoo-saree.onrender.com/api/addresses', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
@@ -44,7 +44,7 @@ const Checkout = () => {
         const fullShippingAddress = `${selectedAddress.house_no}, ${selectedAddress.road_area}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.pincode}`;
 
         try {
-            const res = await fetch('http://localhost:5000/api/checkout', {
+            const res = await fetch('https://arzoo-saree.onrender.com/api/checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

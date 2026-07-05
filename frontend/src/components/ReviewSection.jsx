@@ -11,7 +11,7 @@ const ReviewSection = ({ productId }) => {
   const fetchReviews = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/reviews/${productId}`
+        `https://arzoo-saree.onrender.com/api/reviews/${productId}`
       );
       const data = await response.json();
 
@@ -119,7 +119,7 @@ const ReviewSection = ({ productId }) => {
                 {/* Image (If uploaded) */}
                 {review.image_url && (
                   <img
-                    src={`http://localhost:5000/uploads/${review.image_url}`}
+                    src={`https://arzoo-saree.onrender.com/uploads/${review.image_url}`}
                     alt="Review"
                     className="w-32 h-32 object-cover rounded-md border"
                   />

@@ -10,7 +10,7 @@
 //     setLoading(true);
 //     try {
 //         // YAHAN DEKH: URL mein min aur max attach karke bhej rahe hain
-//         const response = await fetch(`http://localhost:5000/api/products?min=${minPrice}&max=${maxPrice}`);
+//         const response = await fetch(`https://arzoo-saree.onrender.com/api/products?min=${minPrice}&max=${maxPrice}`);
 //         const result = await response.json();
         
 //         if (result.success) {
@@ -29,7 +29,7 @@
 // }, [minPrice, maxPrice]);
 //   useEffect(() => {
 //     // 🛠️ Port 5000 kar diya hai
-//     fetch('http://localhost:5000/api/products')
+//     fetch('https://arzoo-saree.onrender.com/api/products')
 //       .then((response) => response.json())
 //       .then((result) => {
 //         // Backend ke response ke hisaab se data set kiya
@@ -64,7 +64,7 @@
 //             <div className="image-container">
 //               {/* 🛠️ Image path theek kiya */}
 //               <img
-//                 src={`http://localhost:5000/uploads/${saree.thumbnail || saree.image_url}`}
+//                 src={`https://arzoo-saree.onrender.com/uploads/${saree.thumbnail || saree.image_url}`}
 //                 alt={saree.title || saree.name}
 //                 className="saree-image"
 //                 onError={(e) => (e.target.src = '/saare_1.jpeg')}

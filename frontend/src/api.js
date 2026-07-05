@@ -7,10 +7,10 @@
 // - Auth token is read fresh from localStorage on EVERY request → works
 //   correctly no matter WHICH user is currently logged in, automatically.
 //
-// Everywhere in the app, replace raw `fetch('http://localhost:5000/...')`
+// Everywhere in the app, replace raw `fetch('https://arzoo-saree.onrender.com/...')`
 // calls with `apiFetch('/api/...')` from this file.
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-saree.onrender.com";
 
 /**
  * Dynamic fetch wrapper.

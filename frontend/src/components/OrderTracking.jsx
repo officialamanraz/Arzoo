@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://arzoo-saree.onrender.com';
 
 // Same status set used across Admin/User order pages -- keep in sync
 const STATUS_FLOW = ['pending', 'processing', 'shipped', 'delivered'];

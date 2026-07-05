@@ -46,7 +46,7 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
             <div className="product-grid">
               {sarees?.map((saree) => {
                 const imageName = saree.image_url || saree.thumbnail || saree.image;
-                const imagePath = imageName ? `http://localhost:5000/uploads/${encodeURIComponent(imageName)}` : "/saare_1.jpeg";
+                const imagePath = imageName ? `https://arzoo-saree.onrender.com/uploads/${encodeURIComponent(imageName)}` : "/saare_1.jpeg";
                 const sareeId = saree.product_id || saree.id;
 
                 return (

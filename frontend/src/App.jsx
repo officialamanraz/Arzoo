@@ -25,7 +25,7 @@ import AdminRoute from "./components/AdminRoute";
 
 // Centralized API base URL — change this one line for production deployment,
 // or set REACT_APP_API_URL in your .env file.
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-saree.onrender.com";
 function App() {
   const [sarees, setSarees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,15 +91,15 @@ useEffect(() => {
   setError(null);
 
   // 1. DEFAULT URL (Normal + Pagination)
-  let url = `http://localhost:5000/api/products/all?page=${currentPage}&limit=12`;
+  let url = `https://arzoo-saree.onrender.com/api/products/all?page=${currentPage}&limit=12`;
 
   // 2. SEARCH URL (Agar search kiya hai)
   if (searchKeyword) {
-    url = `http://localhost:5000/api/products/search?keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}&limit=12`;
+    url = `https://arzoo-saree.onrender.com/api/products/search?keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}&limit=12`;
   } 
   // 3. BUDGET FILTER URL (Agar min/max price lagaya hai)
   else if (minprice && maxprice) {
-    url = `http://localhost:5000/api/products/all?page=${currentPage}&limit=12&min=${minprice}&max=${maxprice}`;
+    url = `https://arzoo-saree.onrender.com/api/products/all?page=${currentPage}&limit=12&min=${minprice}&max=${maxprice}`;
   }
 
   // Ab bas API hit karni hai
@@ -151,7 +151,7 @@ const handleSearch = (keyword) => {
 };
   const translateText = async (text, targetLang) => {
     try {
-        const response = await fetch('http://localhost:5000/api/translate', {
+        const response = await fetch('https://arzoo-saree.onrender.com/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text, targetLanguage: targetLang })
@@ -168,7 +168,7 @@ const fetchSarees = async () => {
     setLoading(true);
     try {
         // Naya route: /filter use karo
-        const response = await fetch(`http://localhost:5000/api/products/filter?min=${minPrice}&max=${maxPrice}`);
+        const response = await fetch(`https://arzoo-saree.onrender.com/api/products/filter?min=${minPrice}&max=${maxPrice}`);
         const result = await response.json();
         
         if (result.success) {

@@ -13,7 +13,7 @@ const ProductList = () => {
         // Backend ka wahi Postman wala URL
         const fetchSarees = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/products/all?page=1&limit=10');
+                const response = await fetch('https://arzoo-saree.onrender.com/api/products/all?page=1&limit=10');
                 const result = await response.json();
 
                 if (result.success) {
@@ -51,7 +51,7 @@ const ProductList = () => {
                         
                         {/* Image URL backend ke static folder se */}
                         <img 
-                            src={`http://localhost:5000/uploads/${saree.image}`} 
+                            src={`https://arzoo-saree.onrender.com/uploads/${saree.image}`} 
                             alt={saree.name} 
                             style={{ width: '100%', height: '250px', objectFit: 'cover', borderRadius: '5px' }}
                         />

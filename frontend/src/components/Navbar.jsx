@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { indianLanguages } from '../languages'; 
 import { Link } from 'react-router-dom';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-saree.onrender.com";
 
 // NOTICE: I have added 'language' and 'setLanguage' to the props here
 function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, onSearch, language, setLanguage ,minPrice, setMinPrice, maxPrice, setMaxPrice}) {

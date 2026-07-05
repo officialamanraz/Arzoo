@@ -28,7 +28,7 @@ function Signup() {
 
   const fetchLocations = async () => {
   try {
-    const res = await fetch('http://localhost:5000/api/location/states-districts', {
+    const res = await fetch('https://arzoo-saree.onrender.com/api/location/states-districts', {
       signal: controller.signal,
     });
     
@@ -67,7 +67,7 @@ function Signup() {
 
     try {
       console.log("registering user..."+JSON.stringify(formData));
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch('https://arzoo-saree.onrender.com/api/auth/register', {
         method: 'POST',
           headers: { 'Content-Type': 'application/json' },   // 👈 yeh line add karo
 

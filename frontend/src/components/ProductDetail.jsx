@@ -5,7 +5,7 @@ import ReviewSection from '../components/ReviewSection';
 import Recommended from "../components/Recommended";
 import './ProductDetail.css';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://arzoo-saree.onrender.com';
 
 // Maps DB column name -> display label. Add/remove entries here only --
 // the list below renders itself dynamically, nothing is hardcoded in JSX.
