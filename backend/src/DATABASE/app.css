@@ -1,0 +1,107 @@
+/* App.css */
+.container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+header h1 {
+  color: #c41e3a; /* Deep Red Color */
+  font-size: 2.5rem;
+  margin-bottom: 5px;
+}
+
+.saree-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+.saree-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  background: white;
+}
+
+.saree-card:hover {
+  transform: translateY(-5px);
+}
+
+.image-placeholder {
+  background-color: #f4f4f4;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+}
+
+.saree-info {
+  padding: 15px;
+}
+
+.saree-info h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.price {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #27ae60;
+  margin-bottom: 15px;
+}
+
+.details p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.origin {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 15px;
+  font-style: italic;
+}
+
+.buy-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #c41e3a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 15px;
+  transition: background-color 0.3s;
+}
+
+.buy-btn:hover {
+  background-color: #a01830;
+}
+.image-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.saree-image {
+  width: 100%;
+  height: 280px;
+  object-fit: cover; /* Photo ka ratio kharab nahi hoga aur card me fit aayegi */
+  border-bottom: 1px solid #eee;
+  display: block;
+}

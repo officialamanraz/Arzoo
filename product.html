@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Saree Details - Aman Saare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ===== 1. RESET (Space clear karna) ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', sans-serif; background-color: #fdf8f4; color: #2c2c2a; }
+
+        /* ===== 2. NAVBAR (Fixed & Perfect Size) ===== */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 40px; position: sticky; top: 0;
+            background-color: #fff; border-bottom: 1px solid #e8ddd5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Halki si shadow */
+            z-index: 100;
+        }
+        .nav-logo { font-family: 'Playfair Display', serif; font-size: 24px; color: #7c3f2f; text-decoration: none; font-weight: 600; }
+        .search-box { display: flex; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+        .search-box input { border: none; padding: 8px 12px; outline: none; background: #faf6f3; font-family: inherit;}
+        .search-box button { background: #7c3f2f; color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: inherit;}
+        .nav-links { display: flex; gap: 24px; list-style: none; }
+        .nav-links a { text-decoration: none; color: #5f5e5a; font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: #7c3f2f; }
+        .nav-cart a { text-decoration: none; color: #7c3f2f; font-weight: 600; }
+        #mode-changer { background: transparent; border: 2px solid #7c3f2f; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
+        /* ===== 3. MAIN PAGE LAYOUT ===== */
+        .main-container {
+            max-width: 1100px; /* Page ko center mein rakhne ke liye */
+            margin: 40px auto; 
+            padding: 0 20px;
+        }
+        
+        .back-btn {
+            display: inline-block; margin-bottom: 20px; color: #7c3f2f; 
+            text-decoration: none; font-weight: 600; font-size: 15px;
+            transition: transform 0.2s;
+        }
+        .back-btn:hover { transform: translateX(-5px); /* Hover karne par thoda peechhe khiskega */ }
+
+        /* ===== 4. PREMIUM PRODUCT CARD ===== */
+        .details-container {
+            display: flex; 
+            gap: 60px;
+            padding: 20px 0;
+            background: transparent;
+        }
+        
+        .details-container img {
+            width: 480px; 
+            height: 620px;
+             object-fit: cover; 
+             border-radius:8px ;
+             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      
+        }
+        
+        .info-box { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .info-box h1 { font-family: 'Playfair Display', serif; font-size: 34px; color: #7c3f2f; margin-bottom: 10px; line-height: 1.2; }
+        .price { font-size: 28px; font-weight: 600; color: #e07a5f; margin-bottom: 30px; }
+
+        /* Details List Alignment */
+        .details-list h3 { color: #7c3f2f; border-bottom: 2px solid #fdf8f4; padding-bottom: 8px; margin-bottom: 15px; font-size: 18px; }
+        .details-list p { margin: 12px 0; font-size: 15px; color: #5f5e5a; display: flex; }
+        .details-list p b { color: #2c2c2a; width: 150px; flex-shrink: 0; } /* Isse saari details ek straight line mein aayengi */
+
+        /* Add to Cart Button */
+        .add-btn {
+            margin-top: 40px; padding: 16px 30px; background: #7c3f2f; color: white; 
+            border: none; border-radius: 8px; font-size: 18px; font-weight: 500; 
+            cursor: pointer; transition: background 0.3s, transform 0.2s; font-family: inherit;
+        }
+        .add-btn:hover { background: #5e2e1e; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(94, 46, 30, 0.3); }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="nav-logo">Aman Saare</a>
+        <div class="search-box">
+            <input type="text" placeholder="Search saare...">
+            <button id="btn1">Search</button>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="index.html#product">Products</a></li>
+            <li><a href="login.html">Login</a></li>
+        </ul>
+        <div class="nav-cart">
+            <a href="cart.html">🛒 Cart (0)</a>
+        </div>
+        <div class="theme-converter">
+          <button id="mode-changer">*</button>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <a href="Aman-saare-shop.html" class="back-btn">← Back to Home</a>
+        
+        <div id="display">
+            <h2>Loading details...</h2>
+        </div>
+    </div>
+
+    <script src="learn.js"></script>
+</body>
+</html>

@@ -1,0 +1,937 @@
+/* =========================================
+   FONTS
+   Fraunces: characterful display serif (replaces the very common
+   Playfair Display "premium boutique" default)
+   Manrope: warm, geometric body sans (replaces Poppins)
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* =========================================
+   1. RESET & VITE DEFAULTS REMOVAL
+   ========================================= */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+  scroll-behavior: smooth;
+}
+
+#root {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box !important;
+}
+
+/* Respect users who've asked the OS to reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible keyboard focus everywhere — accessibility floor */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* =========================================
+   2. DESIGN TOKENS — "Khat Weave" theme
+   Inspired by Kota Doria's own world: the square "khat" check-weave
+   of the fabric itself, Rajasthani rani-pink bridal silk, marigold
+   festival flowers, and Kota's namesake limestone.
+   ========================================= */
+:root {
+  /* Core palette */
+  --primary: #ad3764;        /* Rani Pink — bridal saree pink */
+  --primary-hover: #8a2950;
+  --accent: #d28a2e;          /* Marigold gold */
+  --accent-hover: #b06f1f;
+  --bg-light: #e9e8e1;        /* Kota stone grey — cool, not cream */
+  --text-dark: #242824;       /* Charcoal ink, slight green undertone */
+  --text-light: #6c7066;
+  --white: #ffffff;
+  --border: rgba(173, 55, 100, 0.14);
+
+  /* Type */
+  --font-display: 'Fraunces', 'Iowan Old Style', serif;
+  --font-body: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-tag: ui-monospace, SFMono-Regular, 'Space Mono', Menlo, Consolas, monospace;
+
+  /* Shadows & blur */
+  --shadow-sm: 0 4px 15px rgba(36, 40, 36, 0.05);
+  --shadow-md: 0 10px 30px rgba(173, 55, 100, 0.10);
+  --shadow-lg: 0 20px 40px rgba(173, 55, 100, 0.18);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-blur: blur(16px);
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  transition: background-color 0.4s ease, color 0.4s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-light); }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-hover); }
+
+::selection { background: var(--primary); color: var(--white); }
+
+/* =========================================
+   3. SIGNATURE MOTIF — "Khat" check swatch
+   A tiny woven-check swatch, drawn purely in CSS, used sparingly as
+   the page's one recurring signature: under section titles, in the
+   sidebar header, and on product price tags. Echoes the literal
+   square-check weave that gives Kota Doria its name and texture.
+   ========================================= */
+.khat-swatch {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  vertical-align: middle;
+  background-image:
+    linear-gradient(45deg, var(--primary) 25%, transparent 25%, transparent 75%, var(--primary) 75%),
+    linear-gradient(45deg, var(--primary) 25%, transparent 25%, transparent 75%, var(--primary) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+  opacity: 0.85;
+}
+
+/* =========================================
+   4. PERFECT DARK MODE
+   ========================================= */
+body.dark, .dark, #root.dark {
+  --bg-light: #161a17;          /* deep teal-charcoal, not pure black */
+  --text-dark: #efeee8 !important;
+  --text-light: #a7aba2;
+  --white: #1f2420;
+  --border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(31, 36, 32, 0.85);
+  --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.75);
+}
+
+body.dark a, body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark span {
+  color: #ffffff !important;
+}
+
+body.dark .product-name, .dark .product-name {
+  color: #ffffff !important;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+/* =========================================
+   5. HERO & BANNERS
+   ========================================= */
+.banner {
+  width: 100%;
+  max-height: 500px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 0 0 30px 30px;
+  box-shadow: var(--shadow-md);
+}
+.banner img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.9);
+  transition: transform 1.2s ease, filter 0.8s ease;
+}
+.banner:hover img {
+  transform: scale(1.05);
+  filter: brightness(1);
+}
+
+.hero-text {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  text-align: center;
+  padding: 25px 20px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  box-shadow: 0 10px 20px rgba(173, 55, 100, 0.25);
+}
+
+/* =========================================
+   6. PRODUCT SECTION & CARDS
+   ========================================= */
+.product-section { padding: 80px 5%; }
+
+.section-title {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 44px;
+  color: var(--text-dark);
+  margin-bottom: 14px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.section-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 60px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  font-weight: 600;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 40px;
+}
+
+.product-card {
+  background: var(--white);
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+}
+.product-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-lg);
+  border-color: transparent;
+}
+
+.product-card img {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.8s ease;
+}
+.product-card:hover img { transform: scale(1.08); }
+
+.product-info {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--white);
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--border);
+}
+.product-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-dark);
+  line-height: 1.4;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Price styled like a woven fabric tag: small mono numerals with a
+   "punched hole" dot, echoing the little care-labels stitched onto
+   real sarees. */
+.price {
+  font-family: var(--font-tag);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.price::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+}
+
+/* =========================================
+   7. LUXURY SIDEBAR (single, clean, de-duplicated)
+   ========================================= */
+.side-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(20, 18, 16, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1500; opacity: 0; visibility: hidden; transition: 0.4s ease-in-out;
+  border: none !important; outline: none !important;
+}
+.side-overlay.active { opacity: 1; visibility: visible; }
+
+.side-sidebar {
+  position: fixed; top: 0; left: -380px; width: 360px; height: 100vh;
+  background-color: var(--white) !important;
+  z-index: 2000; box-shadow: 15px 0 40px rgba(36, 24, 28, 0.18);
+  transition: left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex; flex-direction: column;
+  border: none !important; outline: none !important;
+}
+.side-sidebar.open { left: 0; }
+
+body.dark .side-sidebar { background-color: var(--bg-light) !important; }
+
+.side-sidebar-header {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background-image:
+    linear-gradient(135deg, var(--primary), var(--accent)),
+    linear-gradient(45deg, rgba(255,255,255,0.07) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.07) 75%);
+  background-size: cover, 14px 14px;
+  color: white;
+  padding: 30px 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none !important; outline: none !important; flex-shrink: 0;
+}
+.user-icon {
+  font-size: 26px; background: rgba(255, 255, 255, 0.2);
+  padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.side-close-btn {
+  background: transparent; border: none; color: white; font-size: 24px;
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+.side-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.side-sidebar-content {
+  flex: 1; overflow-y: auto; padding-top: 20px;
+  border: none !important; outline: none !important;
+}
+
+.side-divider { height: 1px; background: var(--border); margin: 20px 25px; border: none; }
+
+.admin-link, .logout-btn {
+  text-decoration: none; font-size: 16px; font-weight: 500;
+  background: transparent; border: none !important; outline: none !important;
+  padding: 14px 20px; display: block; text-align: left; cursor: pointer;
+  width: calc(100% - 40px); margin: 0 20px; border-radius: 10px; transition: all 0.3s ease;
+}
+.admin-link { color: var(--text-dark) !important; }
+.admin-link:hover { color: var(--primary) !important; background: var(--bg-light); padding-left: 25px; font-weight: 600; }
+
+.logout-btn { color: #c0392b !important; }
+.logout-btn:hover { background: rgba(192, 57, 43, 0.08); padding-left: 25px; font-weight: 600; }
+
+/* =========================================
+   8. PREMIUM SELECT
+   ========================================= */
+.premium-select {
+  width: calc(100% - 40px); margin: 0 20px; padding: 15px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg-light); font-size: 15px; color: var(--text-dark); font-weight: 600;
+  cursor: pointer; outline: none; transition: all 0.3s ease; appearance: none;
+  max-height: 200px; overflow-y: auto;
+}
+.premium-select:hover, .premium-select:focus {
+  border-color: var(--accent); background: var(--white); box-shadow: 0 0 0 4px rgba(210, 138, 46, 0.15);
+}
+
+/* =========================================
+   9. CURRENCY DROPDOWN
+   ========================================= */
+.currency-dropdown-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--text-dark);
+  transition: 0.2s ease;
+}
+.currency-dropdown-btn:hover { border-color: var(--primary); }
+
+.currency-dropdown-box {
+  margin-top: 8px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: var(--shadow-sm);
+}
+.currency-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.currency-search-input:focus { border-color: var(--primary); }
+
+.currency-list-container {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* =========================================
+   10. PRICE FILTER (restyled to match brand — was generic "Flipkart blue")
+   ========================================= */
+.price-filter-container {
+  padding: 10px 20px;
+  font-family: var(--font-body);
+}
+
+.price-filter-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 25px;
+  display: block;
+}
+
+.flipkart-slider {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  margin-bottom: 30px;
+  accent-color: var(--primary);
+}
+.flipkart-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--border);
+  box-shadow: 0 1px 3px rgba(36, 40, 36, 0.2);
+  cursor: pointer;
+}
+.flipkart-slider::-webkit-slider-thumb:active { border: 2px solid var(--primary); }
+
+.price-dropdowns-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flipkart-select {
+  width: 42%;
+  padding: 6px 10px;
+  font-size: 14px;
+  color: var(--text-dark);
+  background-color: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  appearance: auto;
+}
+.flipkart-select:focus { border-color: var(--primary); }
+
+.price-divider-text {
+  color: var(--text-light);
+  font-size: 14px;
+  margin: 0 10px;
+}
+
+/* =========================================
+   11. CONTACT PAGE (restyled to match brand — was a generic blue SaaS form)
+   ========================================= */
+.contact-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  background-color: var(--bg-light);
+  font-family: var(--font-body);
+  min-height: 80vh;
+}
+
+.contact-card {
+  background: var(--white);
+  padding: 50px 40px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 550px;
+  border: 1px solid var(--border);
+}
+
+.contact-header { text-align: center; margin-bottom: 35px; }
+.contact-header h2 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--text-dark);
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+.contact-header p {
+  color: var(--text-light);
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.contact-form { display: flex; flex-direction: column; gap: 20px; }
+
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-left: 5px;
+}
+
+.contact-input {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background-color: var(--bg-light);
+  font-size: 16px;
+  color: var(--text-dark);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  outline: none;
+  font-family: var(--font-body);
+}
+.contact-input:focus {
+  border-color: var(--primary);
+  background-color: var(--white);
+  box-shadow: 0 0 0 4px rgba(173, 55, 100, 0.12);
+}
+textarea.contact-input { resize: vertical; min-height: 120px; }
+
+.contact-submit-btn {
+  margin-top: 10px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-body);
+}
+.contact-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+.contact-submit-btn:active:not(:disabled) { transform: translateY(0); }
+.contact-submit-btn:disabled {
+  background: #d9b9c7;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.status-message {
+  margin-top: 25px;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 15px;
+  animation: fadeIn 0.4s ease;
+}
+.status-success {
+  background-color: #f0fbf2;
+  color: #1d6b34;
+  border: 1px solid #b9e6c4;
+}
+.status-error {
+  background-color: #fdf0ef;
+  color: #9b2c24;
+  border: 1px solid #f3c6c2;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   12. RESPONSIVE DESIGN (Mobiles/Tablets)
+   ========================================= */
+@media (max-width: 768px) {
+  .section-title { font-size: 30px; }
+  .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+  .product-card img { height: 220px; }
+  .product-info { padding: 15px; }
+  .product-name { font-size: 14px; }
+  .price { font-size: 15px; }
+  .side-sidebar { width: 85vw; left: -100%; }
+  .khat-swatch { width: 16px; height: 16px; }
+}
+/* =========================================
+   ADMIN DASHBOARD PREMIUM CSS
+   ========================================= */
+/* =========================================
+   FIXED ADMIN DASHBOARD CSS (PREMIUM & SOLID)
+   ========================================= */
+.admin-wrapper {
+  padding: 100px 5% 50px;
+  min-height: 100vh;
+  background-color: var(--bg-main, #f3f4f6); /* Clean light grey background */
+  font-family: 'Poppins', sans-serif;
+}
+
+.admin-header-stats {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid rgba(0,0,0,0.05);
+}
+
+.admin-header-stats h2 { color: #1A365D; font-size: 32px; margin: 0; font-weight: 700; }
+.stat-badge { background: #9b2c50; color: white; padding: 10px 25px; border-radius: 25px; font-weight: 600; font-size: 15px;}
+
+.admin-layout { display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start; }
+
+/* -----------------------------------------
+   LEFT SIDE: FORM CARD
+   ----------------------------------------- */
+.admin-form-glass {
+  flex: 1; min-width: 350px;
+  background: #ffffff; /* Solid White Background */
+  border-radius: 16px; padding: 35px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.admin-form-glass h3 { margin-top: 0; color: #111827; margin-bottom: 25px; font-size: 22px; font-weight: 700;}
+
+/* Fixing the Layout of Inputs */
+.form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.form-group-row { display: flex; gap: 15px; margin-bottom: 20px; }
+.form-group-row .form-group { margin-bottom: 0; flex: 1; }
+
+.form-group label { font-weight: 600; font-size: 14px; color: #4b5563; }
+
+/* FIX: Making Inputs Visible & Beautiful */
+.admin-input, .admin-file-input {
+  width: 100%; padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db; /* Visible Border */
+  background-color: #f9fafb !important; /* Solid light grey background */
+  color: #111827; font-size: 15px;
+  outline: none; transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+.admin-input:focus { 
+  border-color: #9b2c50; 
+  box-shadow: 0 0 0 3px rgba(155, 44, 80, 0.15); 
+  background-color: #ffffff !important;
+}
+
+textarea.admin-input { resize: vertical; min-height: 110px; }
+.admin-file-input { padding: 10px; border: 1px dashed #9ca3af; background-color: #ffffff !important; cursor: pointer;}
+
+.admin-submit-btn {
+  width: 100%; padding: 16px;
+  background: #9b2c50; color: white;
+  border: none; border-radius: 10px;
+  font-weight: 600; font-size: 16px; letter-spacing: 0.5px;
+  cursor: pointer; transition: 0.3s; margin-top: 15px;
+}
+.admin-submit-btn:hover { background: #7a223f; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(155, 44, 80, 0.3);}
+
+/* -----------------------------------------
+   RIGHT SIDE: TABLE CARD
+   ----------------------------------------- */
+.admin-list-glass {
+  flex: 1.5; min-width: 450px;
+  background: #ffffff; /* Solid White Background */
+  border-radius: 16px; padding: 35px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.admin-list-glass h3 { margin-top: 0; color: #111827; margin-bottom: 25px; font-size: 22px; font-weight: 700;}
+
+.admin-table-container { 
+  max-height: 600px; overflow-y: auto; overflow-x: auto; 
+  border-radius: 12px; border: 1px solid #e5e7eb; 
+}
+.admin-table { width: 100%; border-collapse: collapse; text-align: left; }
+.admin-table th { 
+  padding: 16px; background: #f3f4f6; color: #374151; font-weight: 600; 
+  position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #d1d5db;
+}
+.admin-table td { padding: 16px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; color: #4b5563; }
+
+.admin-list-img { width: 65px; height: 65px; object-fit: cover; border-radius: 10px; border: 1px solid #e5e7eb; }
+.admin-list-name { font-weight: 600; color: #111827; font-size: 15px;}
+.admin-list-price { color: #ea580c; font-weight: 700; font-size: 16px;}
+
+.admin-list-actions { display: flex; gap: 10px; }
+.action-btn { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s;}
+.edit-btn { background: #e0f2fe; color: #0284c7; }
+.edit-btn:hover { background: #0284c7; color: white; }
+.delete-btn { background: #fee2e2; color: #dc2626; }
+.delete-btn:hover { background: #dc2626; color: white; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .admin-layout { flex-direction: column; }
+  .admin-form-glass, .admin-list-glass { min-width: 100%; width: 100%; padding: 20px;}
+}
+/*
+  ProductDetail.css
+  Apne global theme file me already defined hain (Khat Weave theme):
+  --rani-pink, --marigold-gold, --kota-stone-grey, font-family Fraunces (display) + Manrope (body)
+  Agar variable names alag hain to yaha replace kar lena — function same rahega.
+*/
+
+.product-detail-page {
+  margin-top: 80px;
+  padding: 40px 20px;
+  font-family: var(--font-body, 'Manrope', sans-serif);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 30px;
+  color: var(--kota-stone-grey, #6e6259);
+  text-decoration: none;
+  font-weight: 500;
+}
+.back-link:hover { color: var(--rani-pink, #d6336c); }
+
+.details-container {
+  display: flex;
+  gap: 50px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Gallery ---------- */
+.gallery-section {
+  max-width: 450px;
+  width: 100%;
+}
+
+.main-image-wrapper {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.main-image {
+  width: 100%;
+  border-radius: 15px;
+  display: block;
+}
+
+.sold-out-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: var(--kota-stone-grey, #6e6259);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.thumbnail-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.thumbnail {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  cursor: pointer;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.thumbnail-active {
+  border: 2px solid var(--rani-pink, #d6336c);
+  transform: translateY(-2px);
+}
+
+/* ---------- Info Box ---------- */
+.info-box {
+  flex: 1;
+  min-width: 280px;
+}
+
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.product-title {
+  font-family: var(--font-display, 'Fraunces', serif);
+  font-size: 2rem;
+  color: var(--kota-stone-grey, #3a332c);
+  margin: 0 0 8px 0;
+}
+
+.like-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.like-btn:hover { transform: scale(1.1); border-color: var(--rani-pink, #d6336c); }
+.like-btn.liked { border-color: var(--rani-pink, #d6336c); }
+
+.product-price {
+  color: var(--marigold-gold, #c98a00);
+  font-family: var(--font-display, 'Fraunces', serif);
+  font-size: 1.5rem;
+  margin: 4px 0 12px 0;
+}
+
+.stock-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.stock-badge.in-stock {
+  background: #e6f4ea;
+  color: #2e7d32;
+}
+.stock-badge.out-of-stock {
+  background: #fdecea;
+  color: #c62828;
+}
+
+.product-desc {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.add-to-cart-btn {
+  padding: 15px 30px;
+  background: var(--rani-pink, #d6336c);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+.add-to-cart-btn:hover:not(:disabled) {
+  background: var(--marigold-gold, #c98a00);
+}
+.add-to-cart-btn:disabled {
+  background: #bbb;
+  cursor: not-allowed;
+}
+
+/* ---------- Finer Details ---------- */
+.finer-details {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+}
+
+.finer-details-title {
+  font-family: var(--font-display, 'Fraunces', serif);
+  font-size: 1.2rem;
+  text-decoration: underline;
+  margin-bottom: 14px;
+  color: var(--kota-stone-grey, #3a332c);
+}
+
+.finer-details-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.finer-details-list li {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 0.95rem;
+  border-bottom: 1px dashed #eee;
+}
+
+.finer-label {
+  font-weight: 600;
+  color: var(--kota-stone-grey, #3a332c);
+  min-width: 150px;
+}
+
+.finer-value {
+  color: #555;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .details-container { gap: 24px; }
+  .gallery-section { max-width: 100%; }
+  .finer-label { min-width: 120px; }
+}
