@@ -5,8 +5,8 @@ import "./theme.css";
 import AdminSwitcher from './components/AdminSwitcher';
 
 // Components
-import AddressForm from './components/AddressForm';
-import OrderSummary from './components/OrderSummary';
+import AddressForm from './components/Addressform';
+import OrderSummary from './components/ordersummary';
 import PaymentPage from './components/PaymentePage';
 import OrderTracking from './components/OrderTracking';
 import UserOrders from './components/UserOrders'; // Or './pages/UserOrders'
@@ -16,11 +16,11 @@ import Home from "./components/Home";
 import ProductDetail from "./components/ProductDetail";
 import AdminPage from "./components/AdminPage";
 import Login from "./components/Login";
-import Signup from "./components/Signup";
+import Signup from "./components/signup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CartPage from "./components/Cartpage";
 import About from './components/About';
-import Contact from './components/Contact';
+import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 
 // Centralized API base URL — change this one line for production deployment,
