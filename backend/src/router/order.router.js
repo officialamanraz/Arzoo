@@ -5,7 +5,7 @@ const { processCheckout } = require('../controllers/checkout.controller');
 const { getOrderTracking } = require('../controllers/tracking.controller'); // Removed updateOrderStatus from here
 const { getadminorder, getmyorders, updateOrderStatus } = require('../controllers/order.controller'); // ADDED IT HERE!
 const { getCart } = require('../controllers/cart.controller');
-const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, verifyAdmin } = require('../middleware/authmiddleware');
 
 // Customer places a COD order
 router.post('/checkout', verifyToken, processCheckout);
