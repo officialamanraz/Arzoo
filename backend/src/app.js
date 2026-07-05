@@ -12,7 +12,14 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json()); // Ek hi baar lagana kaafi hai
-
+// Keep it simple: use the cors() function properly
+app.use(cors({
+  origin: [
+    'http://localhost:5173', 
+    'https://arzoo-engd.onrender.com'
+  ],
+  credentials: true
+}));
 // 3. Static Files (Dynamic path setup)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -115,12 +122,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running beautifully on PORT ${PORT} 🚀`);
 });
-// Keep it simple: use the cors() function properly
-app.use(cors({
-  origin: [
-    'http://localhost:5173', 
-    'https://arzoo-engd.onrender.com'
-  ],
-  credentials: true
-}));
+
 module.exports = app;
