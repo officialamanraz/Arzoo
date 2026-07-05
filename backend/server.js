@@ -38,10 +38,11 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+// Keep it simple: use the cors() function properly
 app.use(cors({
   origin: [
     'http://localhost:5173', 
-    'https://arzoo-engd.onrender.com' // <-- Your new live frontend URL
+    'https://arzoo-engd.onrender.com'
   ],
   credentials: true
 }));
