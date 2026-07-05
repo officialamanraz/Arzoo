@@ -115,5 +115,11 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running beautifully on PORT ${PORT} 🚀`);
 });
-
+app.use(cors({
+  origin: [
+    'http://localhost:5173', 
+    'https://arzoo-engd.onrender.com' 
+  ],
+  credentials: true
+}));
 module.exports = app;
