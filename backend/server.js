@@ -31,7 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/checkout', checkoutRouter);
 app.use('/api/tracking', trackingRouter);
 app.use('/api/addresses', addressRouter);
-app.use('./api/Email',emailRouter)
+app.use('/api/Email',emailRouter)
 // 3. LISTEN: Sabse aakhir mein
 const PORT = 5000;
 app.listen(PORT, () => {
