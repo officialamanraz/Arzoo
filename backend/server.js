@@ -2,24 +2,37 @@ const express = require('express');
 const cors = require('cors'); // CORS zaruri hai
 const app = express(); // Sirf ek hi baar app banega
 
-// 1. MIDDLEWARE: Sabse upar hona chahiye
-app.use(cors()); 
-app.use(express.json()); 
+// 1. MIDDLEWARE: Sabse upar, routes se PEHLE
+// Sirf EK cors() config rakho — specific origins ke saath, credentials support ke liye
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://arzoo-engd.onrender.com'
+  ],
+  credentials: true
+}));
+app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// 2. ROUTES: Middleware ke baad// Add this with other route imports:
+// Quick sanity check route
+app.get('/test', (req, res) => {
+  res.send('Bhai server mast chal raha hai!');
+});
+
+// 2. ROUTES: Middleware ke baad
 const subcategoryRouter = require('./src/router/subcategory.router');
 const productrouter = require('./src/router/product.router');
 const authRoutes = require('./src/router/auth.router');
 const locationRouter = require('./src/router/Location.router'); // Naam apne hisaab se check kar lena
 const currencyRouter = require('./src/router/currency.router');
-const cartrouter = require('./src/router/cart.router')
+const cartrouter = require('./src/router/cart.router');
 const orderRouter = require('./src/router/order.router');
-const reviewRouter = require('./src/router/review.router')
+const reviewRouter = require('./src/router/review.router');
 const checkoutRouter = require('./src/router/checkout.router');
 const trackingRouter = require('./src/router/tracking.router');
 const addressRouter = require('./src/router/Addresses.router');
-const emailRouter = require('./src/router/Email.router')
+const emailRouter = require('./src/router/Email.router');
+
 app.use('/api/orders', orderRouter);
 app.use('/api/location', locationRouter);
 app.use('/api/Currency', currencyRouter);
@@ -31,18 +44,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/checkout', checkoutRouter);
 app.use('/api/tracking', trackingRouter);
 app.use('/api/addresses', addressRouter);
-app.use('/api/Email',emailRouter)
-// 3. LISTEN: Sabse aakhir mein
-const PORT = 5000;
+app.use('/api/Email', emailRouter);
+
+// 3. LISTEN: Sabse aakhir mein — Render ka dynamic PORT use karo, hardcode mat karo
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Keep it simple: use the cors() function properly
-app.use(cors({
-  origin: [
-    'http://localhost:5173', 
-    'https://arzoo-engd.onrender.com'
-  ],
-  credentials: true
-}));
+module.exports = app;
