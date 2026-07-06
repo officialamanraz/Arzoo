@@ -5,10 +5,7 @@ const app = express(); // Sirf ek hi baar app banega
 // 1. MIDDLEWARE: Sabse upar, routes se PEHLE
 // Sirf EK cors() config rakho — specific origins ke saath, credentials support ke liye
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://arzoo-engd.onrender.com'
-  ],
+  origin: "*",
   credentials: true
 }));
 app.use(express.json());
