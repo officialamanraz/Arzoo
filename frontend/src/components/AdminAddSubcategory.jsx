@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const API_BASE_URL = 'https://arzoo-saree.onrender.com';
+const API_BASE_URL = `https://arzoo-3.onrender.com';
 
 function AdminAddSubcategory() {
   const [subcategoryName, setSubcategoryName] = useState('');

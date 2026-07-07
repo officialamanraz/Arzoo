@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-saree.onrender.com';
+// FIXED: Matching quotes for the URL string
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
 
 const statusColors = {
   pending: { bg: '#fff3cd', text: '#856404', icon: '⏳' },
@@ -79,7 +80,6 @@ function AdminOrders() {
     }
   };
 
-  // Fixed: Accepts the full 'order' object now
   const handleStatusChange = async (order, newStatus) => {
     const token = localStorage.getItem('token');
 
@@ -91,7 +91,7 @@ function AdminOrders() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          orderId: order.order_id,   // backend looks up by payment_id
+          orderId: order.order_id,
           newStatus,
           adminNote: `Order status updated to ${newStatus}`
         })
@@ -105,7 +105,6 @@ function AdminOrders() {
         setOrders(updatedOrders);
         calculateStats(updatedOrders);
         
-        // Ensure the filter updates smoothly
         if (filterStatus === 'all') {
            setFilteredOrders(updatedOrders);
         } else {
@@ -296,7 +295,7 @@ function AdminOrders() {
                   </div>
                 </div>
 
-                {/* Status Change - FIXED TO PASS ENTIRE ORDER OBJECT */}
+                {/* Status Change */}
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9em', color: '#666', fontWeight: '500' }}>
                     Change Status:

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
 
-const API_BASE_URL = 'https://arzoo-saree.onrender.com';
+const API_BASE_URL = `https://arzoo-3.onrender.com';
 
 function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
   const [products, setProducts] = useState([]);
