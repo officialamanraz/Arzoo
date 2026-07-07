@@ -7,8 +7,6 @@ const db = require('./DATABASE/mysql'); // Tera db setup
 // 1. App Engine Start
 const app = express();
 
-// 2. Middlewares (Global)
-app.use(cors());
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json()); // Ek hi baar lagana kaafi hai
