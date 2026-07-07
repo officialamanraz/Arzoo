@@ -1,6 +1,7 @@
 // Ye do lines sabse zyada zaroori hain! Inke bina .env file nahi chalti.
-const dotenv = require('dotenv');
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 if (!process.env.host) {
   throw new Error('env file me host ka value nahi he');

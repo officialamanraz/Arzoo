@@ -25,7 +25,7 @@ import AdminRoute from "./components/AdminRoute";
 
 // Centralized API base URL — change this in Render's Environment tab (VITE_API_URL),
 // never hardcode it anywhere else in this file.
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-saree.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-3.onrender.com"
 
 function App() {
   const [sarees, setSarees] = useState([]);
