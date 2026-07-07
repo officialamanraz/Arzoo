@@ -73,7 +73,7 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
             <img
-              src={`${API_BASE_URL}/uploads/${product.image_url}`}
+              src={`https://arzoo-3.onrender.com/uploads/${product.image_url || 'saare_1.jpeg'}`} alt="Saree"
               alt={product.name}
               style={{
                 width: '100%',

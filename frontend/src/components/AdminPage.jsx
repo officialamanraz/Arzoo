@@ -363,7 +363,7 @@ function AdminDashboard() {
                     <tr key={product.product_id}>
                       <td>
                         <img
-                          src={`${API_BASE_URL}/uploads/${product.image_url || 'saare_1.jpeg'}`}
+                    src={`https://arzoo-3.onrender.com/uploads/${product.image_url || 'saare_1.jpeg'}`} alt="Saree" 
                           alt="Saree"
                           className="admin-list-img"
                           onError={(e) => e.target.src = '/saare_1.jpeg'}
