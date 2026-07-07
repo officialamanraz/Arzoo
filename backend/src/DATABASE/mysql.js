@@ -13,6 +13,7 @@ const initializeDatabase = async () => {
     user: config.user,
     password: config.password,
     port: config.port,
+    ssl: { rejectUnauthorized: false }
   });
 
   console.log('Connected to MySQL Server.');
