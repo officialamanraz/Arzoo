@@ -38,7 +38,7 @@ const registerUser = async (req, res) => {
   const fullFormattedAddress = [fullAddress, city, state].filter(Boolean).join(', ');
 
   db.query(
-    'SELECT * FROM Users WHERE email = ?',
+    'SELECT * FROM users WHERE email = ?',
     [email],
     async (err, existingUsers) => {
       if (err) {
@@ -58,7 +58,7 @@ const registerUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const insertQuery =
-          'INSERT INTO Users (name, email, password_hash, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)';
+          'INSERT INTO  users (name, email, password_hash, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)';
 
         db.query(
           insertQuery,
@@ -104,7 +104,7 @@ const loginUser = async (req, res) => {
     console.log(`🚀 2. Attempting db.execute for email: ${email}`);
     
     // Using await db.execute() instead of db.query() with callbacks
-    const [result] = await db.execute('SELECT * FROM Users WHERE email = ?', [email]);
+    const [result] = await db.execute('SELECT * FROM  users WHERE email = ?', [email]);
     
     console.log(`🚀 3. Database replied! Users found: ${result.length}`);
 
