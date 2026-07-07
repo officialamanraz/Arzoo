@@ -1,11 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const API_BASE_URL = `https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
 
 function AdminAddSubcategory() {
   const [subcategoryName, setSubcategoryName] = useState('');
-  const [categoryId, setCategoryId] = useState('1');
+  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/categories`);
+        const data = await response.json();
+        if (data && data.data) {
+          setCategories(data.data);
+          if (data.data.length > 0) {
+            setCategoryId(String(data.data[0].category_id));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,8 +70,14 @@ function AdminAddSubcategory() {
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            required
           >
-            <option value="1">Sarees</option>
+            <option value="" disabled>Select Category...</option>
+            {categories.map((cat) => (
+              <option key={cat.category_id} value={cat.category_id}>
+                {cat.category_name}
+              </option>
+            ))}
           </select>
         </div>
 

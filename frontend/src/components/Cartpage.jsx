@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = `https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
 
 function CartPage() {
   const [cartItems, setCartItems] = useState([]);
@@ -20,7 +20,6 @@ function CartPage() {
         });
 
         const res = await response.json();
-        console.log('Cart Response from Backend:', res);
 
         if (res.success) {
           setCartItems(res.data || res.cart || []);
@@ -38,7 +37,7 @@ function CartPage() {
   }, []);
 
   const handleRemoveItem = async (cartId) => {
-    if (!window.confirm('Remove this item? 🗑️')) return;
+    if (!window.confirm('Remove this item?')) return;
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/cart/remove/${cartId}`, {
@@ -59,13 +58,13 @@ function CartPage() {
     0
   );
 
-  if (loading) return <div style={{ padding: '150px', textAlign: 'center' }}>Loading Cart... ⏳</div>;
+  if (loading) return <div style={{ padding: '150px', textAlign: 'center' }}>Loading Cart...</div>;
 
   return (
     <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', padding: '100px 20px' }}>
       {cartItems.length === 0 ? (
         <div style={{ background: '#fff', padding: '50px', textAlign: 'center', maxWidth: '500px', margin: '0 auto', borderRadius: '20px' }}>
-          <h3>Cart is empty! 🛒</h3>
+          <h3>Cart is empty!</h3>
           <Link to="/">Go Back to Shopping</Link>
         </div>
       ) : (
@@ -76,8 +75,9 @@ function CartPage() {
               <div key={item.cart_id} style={{ display: 'flex', alignItems: 'center', padding: '15px 0', borderBottom: '1px solid #eee' }}>
                 <img
                   src={`${API_BASE_URL}/uploads/${item.image_url || 'saare_1.jpeg'}`}
-                  alt={item.name}
+                  alt={item.name || 'Saree'}
                   style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '12px', marginRight: '20px' }}
+                  onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
                 />
                 <div style={{ flex: 1 }}>
                   <h4>{item.name || 'Saree'}</h4>
@@ -89,7 +89,6 @@ function CartPage() {
             ))}
           </div>
 
-          {/* Bill summary + single entry point into the checkout flow */}
           <div style={{ flex: '1', minWidth: '300px', background: '#fff', padding: '30px', borderRadius: '20px' }}>
             <h3>Bill Details</h3>
             <p>Total: ₹{totalAmount.toLocaleString('en-IN')}</p>

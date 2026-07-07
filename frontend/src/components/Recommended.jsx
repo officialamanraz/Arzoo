@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = `https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
 
 function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate(); // Initialize the navigation hook
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        // Build query parameters safely
         const params = new URLSearchParams({
           product_id: currentProductId,
           category_id: categoryId
         });
-        
+
         if (subcategoryId) {
           params.append('subcategory_id', subcategoryId);
         }
@@ -46,7 +45,7 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
   }
 
   if (products.length === 0) {
-    return null; // Hide the component if there are no recommendations available
+    return null;
   }
 
   return (
@@ -60,7 +59,7 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
         {products.map((product) => (
           <div
             key={product.product_id}
-            onClick={() => navigate(`/product/${product.product_id}`)} // Redirect to product detail page on click
+            onClick={() => navigate(`/product/${product.product_id}`)}
             style={{
               border: '1px solid #eee',
               borderRadius: '12px',
@@ -73,8 +72,8 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
             <img
-              src={`https://arzoo-3.onrender.com/uploads/${product.image_url || 'saare_1.jpeg'}`} alt="Saree"
-              alt={product.name}
+              src={`${API_BASE_URL}/uploads/${product.image_url || 'saare_1.jpeg'}`}
+              alt={product.name || 'Saree'}
               style={{
                 width: '100%',
                 height: '150px',
