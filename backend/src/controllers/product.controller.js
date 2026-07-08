@@ -259,10 +259,12 @@ const deleteproduct = async (req, res) => {
 // ==========================================
 // ==========================================
 // 7. GET ALL PRODUCTS (Paginated + Filtered)
+//// ==========================================
+// 7. GET ALL PRODUCTS (Paginated + Filtered)
 // ==========================================
 const getallproduct = async (req, res) => {
   try {
-    // 1. Strictly parse inputs
+    // 1. Strictly parse inputs as Numbers
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.max(1, parseInt(req.query.limit) || 12);
     const offset = (page - 1) * limit;
@@ -273,29 +275,26 @@ const getallproduct = async (req, res) => {
     let query = `SELECT * FROM products`;
     let queryParams = [];
 
-    // 2. Build query dynamically
-    if (minPrice !== null && maxPrice !== null) {
+    // 2. Build query dynamically for prices
+    if (minPrice !== null && maxPrice !== null && !isNaN(minPrice) && !isNaN(maxPrice)) {
       query += ` WHERE price >= ? AND price <= ?`;
       queryParams.push(minPrice, maxPrice);
     }
 
-    // 3. Add pagination securely
-    query += ` LIMIT ? OFFSET ?`;
-    queryParams.push(limit, offset);
+    // 3. THE FIX: Inject sanitized numbers directly into the string
+    // This perfectly bypasses the "mysqld_stmt_execute" bug
+    query += ` LIMIT ${limit} OFFSET ${offset}`;
 
-    // 4. CRITICAL FIX: Use db.execute instead of db.query for arrays with numbers.
-    // mysql2/promise handles number casting perfectly when using prepared statements (execute).
-    const [results] = await db.execute(query, queryParams);
+    // 4. Use db.query instead of db.execute here
+    const [results] = await db.query(query, queryParams);
     
     return res.status(200).json({ success: true, data: results });
   } catch (err) {
-    // Print the FULL error object to the Render console, not just the message
     console.error('[Error] Fetching paginated products:', err); 
     
     return res.status(500).json({ 
       success: false, 
       message: "Server Error fetching product list", 
-      // Safely extract a string even if the error is a complex object
       error: err.sqlMessage || err.message || String(err) 
     });
   }
