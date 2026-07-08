@@ -254,11 +254,12 @@ const deleteproduct = async (req, res) => {
 // ==========================================
 // 7. GET ALL PRODUCTS (Paginated + Filtered)
 // ==========================================
+// ==========================================
+// 7. GET ALL PRODUCTS (Paginated + Filtered)
+// ==========================================
 const getallproduct = async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.max(1, parseInt(req.query.limit) || 12);
-  
-  // Important Fix: Calculate offset and ensure it's a number
   const offset = (page - 1) * limit;
 
   const minPrice = req.query.min;
@@ -274,9 +275,8 @@ const getallproduct = async (req, res) => {
 
   query += ` LIMIT ? OFFSET ?`;
   
-  // Important Fix: mysql2/promise expects numeric values explicitly converted to strings
-  // when strict type casting isn't enforced, or explicitly using Number() wrapper.
-  queryParams.push(Number(limit).toString(), Number(offset).toString());
+  // THE FIX: We pass pure Numbers here, absolutely no strings allowed for LIMIT/OFFSET
+  queryParams.push(limit, offset);
 
   try {
     const [results] = await db.query(query, queryParams);
@@ -286,7 +286,6 @@ const getallproduct = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error fetching product list", error: err.message });
   }
 };
-
 // ==========================================
 // 8. ADD NEW IMAGES TO EXISTING PRODUCT
 // ==========================================
