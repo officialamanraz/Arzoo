@@ -257,33 +257,47 @@ const deleteproduct = async (req, res) => {
 // ==========================================
 // 7. GET ALL PRODUCTS (Paginated + Filtered)
 // ==========================================
+// ==========================================
+// 7. GET ALL PRODUCTS (Paginated + Filtered)
+// ==========================================
 const getallproduct = async (req, res) => {
-  const page = Math.max(1, parseInt(req.query.page) || 1);
-  const limit = Math.max(1, parseInt(req.query.limit) || 12);
-  const offset = (page - 1) * limit;
-
-  const minPrice = req.query.min;
-  const maxPrice = req.query.max;
-
-  let query = `SELECT * FROM products`;
-  let queryParams = [];
-
-  if (minPrice && maxPrice) {
-    query += ` WHERE price >= ? AND price <= ?`;
-    queryParams.push(Number(minPrice), Number(maxPrice));
-  }
-
-  query += ` LIMIT ? OFFSET ?`;
-  
-  // THE FIX: We pass pure Numbers here, absolutely no strings allowed for LIMIT/OFFSET
-  queryParams.push(limit, offset);
-
   try {
-    const [results] = await db.query(query, queryParams);
+    // 1. Strictly parse inputs
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 12);
+    const offset = (page - 1) * limit;
+
+    const minPrice = req.query.min ? Number(req.query.min) : null;
+    const maxPrice = req.query.max ? Number(req.query.max) : null;
+
+    let query = `SELECT * FROM products`;
+    let queryParams = [];
+
+    // 2. Build query dynamically
+    if (minPrice !== null && maxPrice !== null) {
+      query += ` WHERE price >= ? AND price <= ?`;
+      queryParams.push(minPrice, maxPrice);
+    }
+
+    // 3. Add pagination securely
+    query += ` LIMIT ? OFFSET ?`;
+    queryParams.push(limit, offset);
+
+    // 4. CRITICAL FIX: Use db.execute instead of db.query for arrays with numbers.
+    // mysql2/promise handles number casting perfectly when using prepared statements (execute).
+    const [results] = await db.execute(query, queryParams);
+    
     return res.status(200).json({ success: true, data: results });
   } catch (err) {
-    console.error('[Error] Fetching paginated products:', err.message);
-    return res.status(500).json({ success: false, message: "Server Error fetching product list", error: err.message });
+    // Print the FULL error object to the Render console, not just the message
+    console.error('[Error] Fetching paginated products:', err); 
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: "Server Error fetching product list", 
+      // Safely extract a string even if the error is a complex object
+      error: err.sqlMessage || err.message || String(err) 
+    });
   }
 };
 // ==========================================
