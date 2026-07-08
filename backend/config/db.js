@@ -4,29 +4,17 @@ if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
+// Using the exact variable names from your Render dashboard (e.g., process.env.host)
 const pool = mysql.createPool({ 
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 18821,
+  host: process.env.host,
+  user: process.env.user,
+  password: process.env.password,
+  database: process.env.database,
+  port: process.env.port || 18821,
+  // Aiven requires this SSL block
   ssl: {
     rejectUnauthorized: false
-  },
-  // This tells MySQL to wait up to 10 seconds before giving up
-  connectTimeout: 10000 
+  }
 });
-
-// Professional Startup Check using Promises
-pool.getConnection()
-  .then(conn => {
-    console.log("✅ SUCCESS: Connected to Aiven Database!");
-    conn.release();
-  })
-  .catch(err => {
-    console.error("❌ CRITICAL ERROR: Could not connect to Database.");
-    console.error("Check your DB_HOST, DB_USER, and DB_PASSWORD in Render!");
-    console.error("Exact Error:", err.message);
-  });
 
 module.exports = pool;
