@@ -4,16 +4,17 @@ const db = require('../../config/db');
 // 1. GET ALL PRODUCTS (Basic)
 // ==========================================
 const product = async (req, res) => {
-  const showproduct = 'SELECT * FROM products';
-
   try {
-    const [result] = await db.query(showproduct);
+    const query = 'SELECT * FROM products';
+    const [result] = await db.query(query);
+    
     return res.status(200).json({
       success: true,
       message: 'Data fetched successfully',
       data: result,
     });
   } catch (err) {
+    console.error('[Error] Fetching basic products:', err.message);
     return res.status(500).json({
       success: false,
       message: 'Error fetching products',
@@ -29,7 +30,6 @@ const getProductById = async (req, res) => {
   const productId = req.params.id;
 
   try {
-    // 1st Query: Get basic product details (this automatically includes all new columns)
     const productQuery = `SELECT * FROM products WHERE product_id = ?`;
     const [productResults] = await db.query(productQuery, [productId]);
 
@@ -39,18 +39,15 @@ const getProductById = async (req, res) => {
 
     const product = productResults[0];
 
-    // 2nd Query: Get extra images from new table
     const imagesQuery = `SELECT image_url FROM product_images WHERE product_id = ?`;
     const [imageResults] = await db.query(imagesQuery, [productId]);
 
     const allImages = [];
 
-    // Push main image first (from products table)
     if (product.image_url) {
       allImages.push(product.image_url);
     }
 
-    // Push extra images (from product_images table)
     if (imageResults && imageResults.length > 0) {
       imageResults.forEach(img => {
         allImages.push(img.image_url);
@@ -61,12 +58,17 @@ const getProductById = async (req, res) => {
 
     return res.status(200).json({ success: true, data: product });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Database error fetching product details', error: err.message });
+    console.error('[Error] Fetching product by ID:', err.message);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Database error fetching product details', 
+      error: err.message 
+    });
   }
 };
 
 // ==========================================
-// 3. ADD PRODUCT (Handles Dynamic Multiple Images + All New Columns)
+// 3. ADD PRODUCT
 // ==========================================
 const addproducts = async (req, res) => {
   const {
@@ -83,14 +85,13 @@ const addproducts = async (req, res) => {
   if (!category_id || !name || !price) {
     return res.status(400).json({ success: false, message: 'Category ID, Name, and Price are required fields' });
   }
-  if (price <= 0) {
+  if (Number(price) <= 0) {
     return res.status(400).json({ success: false, message: 'Price must be greater than 0' });
   }
-  if (stock_qty < 0) {
+  if (Number(stock_qty) < 0) {
     return res.status(400).json({ success: false, message: 'Stock quantity cannot be negative' });
   }
 
-  // Handle Uploaded Files
   if (req.files && req.files.length > 0) {
     mainImage = req.files[0].filename; 
     if (req.files.length > 1) {
@@ -99,19 +100,18 @@ const addproducts = async (req, res) => {
   }
 
   try {
-    const categoryQuery = 'SELECT * FROM Categories WHERE category_id = ?';
+    const categoryQuery = 'SELECT category_id FROM categories WHERE category_id = ?';
     const [categoryResult] = await db.query(categoryQuery, [category_id]);
     if (categoryResult.length === 0) {
       return res.status(404).json({ success: false, message: 'Provided Category ID does not exist' });
     }
 
-    const duplicateQuery = 'SELECT * FROM products WHERE name = ? AND category_id = ?';
+    const duplicateQuery = 'SELECT product_id FROM products WHERE name = ? AND category_id = ?';
     const [productResult] = await db.query(duplicateQuery, [name, category_id]);
     if (productResult.length > 0) {
       return res.status(409).json({ success: false, message: 'Product already exists in this category' });
     }
 
-    // UPDATED QUERY: Now inserts all 14 new columns safely
     const insertProductQuery = `
       INSERT INTO products (
         name, price, description, base_color, category_id, stock_qty, is_active, image_url,
@@ -120,16 +120,15 @@ const addproducts = async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     
-    // Values array perfectly matches the query above. (|| null prevents SQL crashes if a field is empty)
     const values = [
-      name, price, description || null, base_color || null, category_id, stock_qty, is_active, mainImage,
+      name, Number(price), description || null, base_color || null, Number(category_id), Number(stock_qty), Number(is_active), mainImage,
       primary_color || null, other_color || null, border_type || null, pattern || null, 
       craft || null, weave || null, zari_type || null, blouse || null, border_motifs || null, 
       origin || null, fabric || null, khats || null, weight || null, blouse_length || null, 
       producer || null, maker || null
     ];
 
-    const [result] = await db.query(insertProductQuery, values);
+    const [result] = await db.execute(insertProductQuery, values);
     const newProductId = result.insertId;
 
     if (extraImages.length > 0) {
@@ -138,13 +137,14 @@ const addproducts = async (req, res) => {
       
       try {
         await db.query(insertImagesQuery, [imageValues]);
-      } catch (err4) {
-        console.error("Error saving extra images:", err4.message);
+      } catch (imgErr) {
+        console.error("[Error] Saving extra images:", imgErr.message);
       }
     }
 
     return res.status(201).json({ success: true, message: 'Product successfully added.', product_id: newProductId });
   } catch (err) {
+    console.error('[Error] Adding product:', err.message);
     return res.status(500).json({ success: false, message: 'Database error while adding product', error: err.message });
   }
 };
@@ -176,17 +176,17 @@ const searchproduct = async (req, res) => {
     const [result] = await db.query(sqlQuery, queryValues);
     return res.status(200).json({ success: true, total_found: result.length, data: result });
   } catch (err) {
+    console.error('[Error] Searching products:', err.message);
     return res.status(500).json({ success: false, message: 'Database search error.', error: err.message });
   }
 };
 
 // ==========================================
-// 5. UPDATE PRODUCT (Now handles ALL new columns)
+// 5. UPDATE PRODUCT
 // ==========================================
 const updateproduct = async (req, res) => {
   const product_id = req.params.id;
   
-  // Extract all fields, including the newly added ones
   const { 
     category_id, name, description, price, stock_qty, is_active,
     base_color, primary_color, other_color, border_type, pattern, 
@@ -195,15 +195,14 @@ const updateproduct = async (req, res) => {
   } = req.body;
 
   try {
-    const checkproduct = 'SELECT * FROM products WHERE product_id=?';
+    const checkproduct = 'SELECT product_id FROM products WHERE product_id=?';
     const [result] = await db.query(checkproduct, [product_id]);
 
     if (result.length === 0) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    // UPDATED QUERY: Now updates all specific detail columns
-    const update = `
+    const updateQuery = `
       UPDATE products SET 
         category_id=?, name=?, description=?, price=?, stock_qty=?, is_active=?,
         base_color=?, primary_color=?, other_color=?, border_type=?, pattern=?, 
@@ -213,16 +212,17 @@ const updateproduct = async (req, res) => {
     `;
     
     const values = [
-      category_id, name, description || null, price, stock_qty, is_active,
+      Number(category_id), name, description || null, Number(price), Number(stock_qty), Number(is_active),
       base_color || null, primary_color || null, other_color || null, border_type || null, pattern || null,
       craft || null, weave || null, zari_type || null, blouse || null, border_motifs || null, origin || null,
       fabric || null, khats || null, weight || null, blouse_length || null, producer || null, maker || null,
-      product_id
+      Number(product_id)
     ];
 
-    await db.query(update, values);
+    await db.execute(updateQuery, values);
     return res.status(200).json({ success: true, message: 'Product details updated successfully' });
   } catch (err) {
+    console.error('[Error] Updating product:', err.message);
     return res.status(500).json({ success: false, message: 'Failed to update product details', error: err.message });
   }
 };
@@ -246,6 +246,7 @@ const deleteproduct = async (req, res) => {
 
     return res.status(200).json({ success: true, message: 'Product and associated images successfully deleted.' });
   } catch (err) {
+    console.error('[Error] Deleting product:', err.message);
     return res.status(500).json({ success: false, message: 'Error deleting product', error: err.message });
   }
 };
@@ -254,8 +255,10 @@ const deleteproduct = async (req, res) => {
 // 7. GET ALL PRODUCTS (Paginated + Filtered)
 // ==========================================
 const getallproduct = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 12;
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.max(1, parseInt(req.query.limit) || 12);
+  
+  // Important Fix: Calculate offset and ensure it's a number
   const offset = (page - 1) * limit;
 
   const minPrice = req.query.min;
@@ -270,12 +273,16 @@ const getallproduct = async (req, res) => {
   }
 
   query += ` LIMIT ? OFFSET ?`;
-  queryParams.push(limit, offset);
+  
+  // Important Fix: mysql2/promise expects numeric values explicitly converted to strings
+  // when strict type casting isn't enforced, or explicitly using Number() wrapper.
+  queryParams.push(Number(limit).toString(), Number(offset).toString());
 
   try {
     const [results] = await db.query(query, queryParams);
     return res.status(200).json({ success: true, data: results });
   } catch (err) {
+    console.error('[Error] Fetching paginated products:', err.message);
     return res.status(500).json({ success: false, message: "Server Error fetching product list", error: err.message });
   }
 };
@@ -301,6 +308,7 @@ const addNewImagesToProduct = async (req, res) => {
     const [result] = await db.query(insertImagesQuery, [imageValues]);
     return res.status(201).json({ success: true, message: `${result.affectedRows} new images successfully added to product.` });
   } catch (err) {
+    console.error('[Error] Adding new images:', err.message);
     return res.status(500).json({ success: false, message: 'Error saving new images to database', error: err.message });
   }
 };
@@ -322,6 +330,7 @@ const deleteSingleImage = async (req, res) => {
 
     return res.status(200).json({ success: true, message: 'Image permanently deleted.' });
   } catch (err) {
+    console.error('[Error] Deleting single image:', err.message);
     return res.status(500).json({ success: false, message: 'Error processing image deletion', error: err.message });
   }
 };
@@ -365,7 +374,7 @@ const getRecommendedProducts = async (req, res) => {
       return res.status(200).json({ success: true, data: results || [] });
     }
   } catch (err) {
-    console.error("Recommendations Error:", err);
+    console.error("[Error] Fetching recommendations:", err.message);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
