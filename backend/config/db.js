@@ -4,7 +4,6 @@ if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
-// FIXED: Variable name is now 'pool' and using 'createPool'
 const pool = mysql.createPool({ 
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -13,7 +12,21 @@ const pool = mysql.createPool({
   port: process.env.DB_PORT || 18821,
   ssl: {
     rejectUnauthorized: false
-  }
+  },
+  // This tells MySQL to wait up to 10 seconds before giving up
+  connectTimeout: 10000 
 });
 
-module.exports = pool; // Ab ye properly export ho jayega bina crash hue
+// Professional Startup Check using Promises
+pool.getConnection()
+  .then(conn => {
+    console.log("✅ SUCCESS: Connected to Aiven Database!");
+    conn.release();
+  })
+  .catch(err => {
+    console.error("❌ CRITICAL ERROR: Could not connect to Database.");
+    console.error("Check your DB_HOST, DB_USER, and DB_PASSWORD in Render!");
+    console.error("Exact Error:", err.message);
+  });
+
+module.exports = pool;
