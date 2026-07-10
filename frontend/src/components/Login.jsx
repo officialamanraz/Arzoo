@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,Link } from 'react-router-dom';
 
 // 1. Define your API URL directly
 const API_BASE_URL = import.meta.env.VITE_API_URL ||  'https://arzoo-3.onrender.com';
@@ -104,6 +104,11 @@ function Login() {
         >
           {isSubmitting ? 'Logging in...' : 'Login'}
         </button>
+        <div style={{ marginTop: '10px', fontSize: '14px' }}>
+  <Link to="/forgot-password" style={{ color: '#e07a5f', textDecoration: 'none' }}>
+    Forgot Password?
+  </Link>
+</div>
       </form>
     </div>
   );

@@ -12,6 +12,8 @@ import OrderTracking from './components/OrderTracking';
 import UserOrders from './components/UserOrders'; // Or './pages/UserOrders'
 import AdminOrders from './components/AdminOrders';
 import Navbar from "./components/Navbar";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 import Home from "./components/Home";
 import ProductDetail from "./components/ProductDetail";
 import AdminPage from "./components/AdminPage";
@@ -270,6 +272,8 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Other routes */}
         <Route
