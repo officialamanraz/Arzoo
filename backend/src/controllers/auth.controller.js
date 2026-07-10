@@ -149,13 +149,14 @@ const loginUser = async (req, res) => {
   }
 };
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Gmail App Password, not your normal password
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
   },
 });
-
 // 1. FORGOT PASSWORD — generates a token and emails a reset link
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
