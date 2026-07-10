@@ -1,6 +1,8 @@
 const db = require('../DATABASE/mysql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
@@ -146,4 +148,84 @@ const loginUser = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
   }
 };
-module.exports = { registerUser, loginUser };
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // Gmail App Password, not your normal password
+  },
+});
+
+// 1. FORGOT PASSWORD — generates a token and emails a reset link
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Email is required.' });
+  }
+
+  try {
+    const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+
+    if (users.length === 0) {
+      // Don't reveal whether the email exists — just say "sent" either way
+      return res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+    await db.execute(
+      'UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE email = ?',
+      [token, expiry, email]
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Reset your Arzoo password',
+      html: `<p>Click below to reset your password. This link expires in 1 hour.</p>
+             <a href="${resetLink}">${resetLink}</a>`,
+    });
+
+    return res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
+  }
+};
+
+// 2. RESET PASSWORD — verifies token and sets new password
+const resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+  }
+
+  try {
+    const [users] = await db.execute(
+      'SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()',
+      [token]
+    );
+
+    if (users.length === 0) {
+      return res.status(400).json({ success: false, message: 'Reset link is invalid or has expired.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.execute(
+      'UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE reset_token = ?',
+      [hashedPassword, token]
+    );
+
+    return res.status(200).json({ success: true, messages: 'Password reset successfully. You can now log in.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
+  }
+};
+module.exports = { registerUser, loginUser, forgotPassword, resetPasswords };

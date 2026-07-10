@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser } = require('../controllers/auth.controller');
+const { registerUser, loginUser, forgotPassword, resetPassword } = require('../controllers/auth.controller');
 
-// Sirf ek baar define karo
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password/:token', resetPassword);
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 
