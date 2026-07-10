@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiFetch } from '../api';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
+
 function Signup() {
   const navigate = useNavigate();
 
@@ -28,7 +30,7 @@ function Signup() {
 
   const fetchLocations = async () => {
   try {
-    const res = await fetch('https://arzoo-saree.onrender.com/api/location/states-districts', {
+    const res =await fetch(`${API_BASE_URL}/api/location/states-districts`, {
       signal: controller.signal,
     });
     
@@ -67,7 +69,7 @@ function Signup() {
 
     try {
       console.log("registering user..."+JSON.stringify(formData));
-      const res = await fetch('https://arzoo-saree.onrender.com/api/auth/register', {
+      const res =await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
           headers: { 'Content-Type': 'application/json' },   // 👈 yeh line add karo
 
