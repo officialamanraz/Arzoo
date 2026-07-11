@@ -44,9 +44,10 @@ app.use('/api/addresses', addressRouter);
 app.use('/api/Email', emailRouter);
 
 // 3. LISTEN: Sabse aakhir mein — Render ka dynamic PORT use karo, hardcode mat karo
+// Render environment variable PORT ko priority dega, 
+// nahi toh local ke liye 5000 use karega
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running beautifully on port ${PORT}`);
 });
-
 module.exports = app;

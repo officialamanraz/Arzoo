@@ -115,10 +115,11 @@ app.get('/data', (req, res) => {
 // ==========================================
 
 // 🚨 YAHAN DHYAN DE: Port ko process.env se aane de, nahi toh 5000 fallback kar
-const PORT = process.env.PORT || 5000; 
+// Render environment variable PORT ko priority dega, 
+// nahi toh local ke liye 5000 use karega
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server is running beautifully on PORT ${PORT} 🚀`);
+  console.log(`Server is running beautifully on port ${PORT}`);
 });
-
 module.exports = app;
