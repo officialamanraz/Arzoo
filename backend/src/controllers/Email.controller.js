@@ -8,11 +8,19 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 // Transporter created once (not on every request) for better performance
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    pass: process.env.GMAIL_APP_PASSWORD
   },
+  // THE FIX: Forces Node.js to use IPv4 instead of IPv6. 
+  // This bypasses the Render 'ENETUNREACH' error completely.
+  family: 4, 
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 const sendContactEmail = async (req, res) => {
