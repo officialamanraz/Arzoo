@@ -154,8 +154,14 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    pass: process.env.GMAIL_APP_PASSWORD
   },
+  // THE FIX: Forces Node.js to use IPv4 instead of IPv6. 
+  // This bypasses the Render 'ENETUNREACH' error completely.
+  family: 4, 
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 // 1. FORGOT PASSWORD — generates a token and emails a reset link
 const forgotPassword = async (req, res) => {
