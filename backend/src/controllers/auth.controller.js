@@ -9,10 +9,18 @@ if (process.env.NODE_ENV !== 'production') {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-const defaultClient = brevo.ApiClient.instance;
-const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY; // Yeh API key hum .env aur Render mein daalenge
+// 1. Node.js version conflict fix (Yeh automaticallys sahi object dhoondh lega)
+const brevoSDK = brevo.default || brevo;
 
+// 2. Sahi tarike se API Client aur Key setup karein
+const defaultClient = brevoSDK.ApiClient.instance;
+const apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY; 
+
+// 3. Email API initialize karein
+const emailAPI = new brevoSDK.TransactionalEmailsApi();
+
+// Iske neeche aapka emailAPI.sendTransacEmail() wala code same rahega...
 // 3. Ab Constructor Sahi Se Kaam Karega
 const emailAPI = new brevo.TransactionalEmailsApi();
 const generateToken = (userId, role) => {
