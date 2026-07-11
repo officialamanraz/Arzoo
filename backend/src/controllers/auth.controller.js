@@ -2,14 +2,15 @@ const db = require('../DATABASE/mysql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const brevo = require('@getbrevo/brevo');
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-
+const emailAPI = new brevo.TransactionalEmailsApi();
+emailAPI.authentications.apiKey.apiKey = process.env.BREVO_API_KEY;
 // Helper to generate a signed JWT for a user
 const generateToken = (userId, role) => {
   return jwt.sign({ user_id: userId, role }, JWT_SECRET, {
@@ -148,21 +149,14 @@ const loginUser = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
   }
 };
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD
-  },
-  // THE FIX: Forces Node.js to use IPv4 instead of IPv6. 
-  // This bypasses the Render 'ENETUNREACH' error completely.
-  family: 4, 
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+const sendEmail = async ({ to, subject, html }) => {
+  const message = new brevo.SendSmtpEmail();
+  message.subject = subject;
+  message.htmlContent = html;
+  message.sender = { name: 'Arzoo Saree', email: process.env.GMAIL_USER };
+  message.to = [{ email: to }];
+  return emailAPI.sendTransacEmail(message);
+};
 // 1. FORGOT PASSWORD — generates a token and emails a reset link
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -188,13 +182,12 @@ const forgotPassword = async (req, res) => {
 
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Reset your Arzoo password',
-      html: `<p>Click below to reset your password. This link expires in 1 hour.</p>
-             <a href="${resetLink}">${resetLink}</a>`,
-    });
+ await sendEmail({
+  to: email,
+  subject: 'Reset your Arzoo password',
+  html: `<p>Click below to reset your password. This link expires in 1 hour.</p>
+         <a href="${resetLink}">${resetLink}</a>`,
+});
 
     return res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
   } catch (error) {

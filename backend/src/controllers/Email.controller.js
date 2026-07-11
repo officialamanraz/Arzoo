@@ -40,19 +40,11 @@ const sendContactEmail = async (req, res) => {
   }
 
   try {
-    const mailOptions = {
-      // IMPORTANT: "from" must be YOUR authenticated Gmail address — Gmail
-      // rejects/spam-flags emails claiming to be "from" someone else's address.
-      from: `"${name} via Aman Saare" <${process.env.GMAIL_USER}>`,
-      // Reply-To is the visitor's real email, so when you hit "Reply" in
-      // your inbox, it goes straight back to them.
-      replyTo: email,
-      to: process.env.CONTACT_RECEIVER_EMAIL,
-      subject: `New Inquiry from Aman Saare Website - ${name}`,
-      text: `New message from the website:\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-    };
-
-    await transporter.sendMail(mailOptions);
+await sendEmail({
+  to: process.env.CONTACT_RECEIVER_EMAIL,
+  subject: `New Inquiry from Aman Saare Website - ${name}`,
+  html: `<p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Message:</strong> ${message}</p>`,
+});
 
     return res.status(200).json({ success: true, message: 'Your message has been sent!' });
   } catch (error) {

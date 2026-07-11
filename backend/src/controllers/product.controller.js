@@ -250,18 +250,6 @@ const deleteproduct = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error deleting product', error: err.message });
   }
 };
-
-// ==========================================
-// 7. GET ALL PRODUCTS (Paginated + Filtered)
-// ==========================================
-// ==========================================
-// 7. GET ALL PRODUCTS (Paginated + Filtered)
-// ==========================================
-// ==========================================
-// 7. GET ALL PRODUCTS (Paginated + Filtered)
-//// ==========================================
-// 7. GET ALL PRODUCTS (Paginated + Filtered)
-// ==========================================
 const getallproduct = async (req, res) => {
   try {
     // 1. Strictly parse inputs as Numbers
