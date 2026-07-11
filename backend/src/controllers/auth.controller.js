@@ -2,7 +2,7 @@ const db = require('../DATABASE/mysql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const brevo = require('@getbrevo/brevo');
+const { BrevoClient } = require('@getbrevo/brevo');
 
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
@@ -29,20 +29,17 @@ if (!JWT_SECRET) {
 // ==========================================
 // BREVO (transactional email API) SETUP
 // ==========================================
-const brevoSDK = brevo.default || brevo;
-const defaultClient = brevoSDK.ApiClient.instance;
-const apiKeyAuth = defaultClient.authentications['api-key'];
-apiKeyAuth.apiKey = process.env.BREVO_API_KEY;
-
-const emailAPI = new brevoSDK.TransactionalEmailsApi();
+const brevoClient = new BrevoClient({
+  apiKey: process.env.BREVO_API_KEY,
+});
 
 const sendEmail = async ({ to, subject, html }) => {
-  const message = new brevoSDK.SendSmtpEmail();
-  message.subject = subject;
-  message.htmlContent = html;
-  message.sender = { name: EMAIL_FROM_NAME, email: EMAIL_FROM_ADDRESS };
-  message.to = [{ email: to }];
-  return emailAPI.sendTransacEmail(message);
+  return brevoClient.transactionalEmails.sendTransacEmail({
+    subject,
+    htmlContent: html,
+    sender: { name: EMAIL_FROM_NAME, email: EMAIL_FROM_ADDRESS },
+    to: [{ email: to }],
+  });
 };
 
 // ==========================================
