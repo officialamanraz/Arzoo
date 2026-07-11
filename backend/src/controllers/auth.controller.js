@@ -9,9 +9,12 @@ if (process.env.NODE_ENV !== 'production') {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const defaultClient = brevo.ApiClient.instance;
+const apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY; // Yeh API key hum .env aur Render mein daalenge
+
+// 3. Ab Constructor Sahi Se Kaam Karega
 const emailAPI = new brevo.TransactionalEmailsApi();
-emailAPI.authentications.apiKey.apiKey = process.env.BREVO_API_KEY;
-// Helper to generate a signed JWT for a user
 const generateToken = (userId, role) => {
   return jwt.sign({ user_id: userId, role }, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
