@@ -33,6 +33,7 @@ const brevoClient = new BrevoClient({
   apiKey: process.env.BREVO_API_KEY,
 });
 
+console.log('BREVO_API_KEY loaded:', process.env.BREVO_API_KEY ? `Yes, starts with ${process.env.BREVO_API_KEY.slice(0, 8)}...` : 'NO — undefined!');
 const sendEmail = async ({ to, subject, html }) => {
   return brevoClient.transactionalEmails.sendTransacEmail({
     subject,
