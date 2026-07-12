@@ -1,84 +1,88 @@
 const db = require('../DATABASE/mysql');
 
-const Addcategory = (req, res) => {
+// ==========================================
+// 1. ADD CATEGORY
+// ==========================================
+const Addcategory = async (req, res) => {
   const { category_name } = req.body;
-  const insertquery = 'INSERT INTO categories (category_name) VALUES (?)';
 
-  // Fix: 'search_by_category' was undefined, replaced it with 'category_name'
-  db.query(insertquery, [category_name], (err, result) => {
-    if (err) {
-      return res
-        .status(500)
-        .json({ success: false, message: 'There is an issue with the database' });
-    } else {
-      return res.status(200).json({ success: true, message: 'Category saved successfully' });
-    }
-  });
+  if (!category_name) {
+    return res.status(400).json({ success: false, message: 'Category name is required.' });
+  }
+
+  try {
+    await db.execute('INSERT INTO categories (category_name) VALUES (?)', [category_name]);
+    return res.status(200).json({ success: true, message: 'Category saved successfully.' });
+  } catch (error) {
+    console.error('Add category error:', error.message);
+    return res.status(500).json({ success: false, message: 'There is an issue with the database.', error: error.message });
+  }
 };
 
-const getcategory = (req, res) => {
-  const getallcat = 'SELECT * FROM categories';
-
-  db.query(getallcat, (err, result) => {
-    if (err) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'There is a problem with the database' });
-    } else {
-      // Fix: Sending 'data: result' to the frontend is required, otherwise the dropdown will remain empty
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: 'All categories fetched successfully',
-          data: result,
-        });
-    }
-  });
+// ==========================================
+// 2. GET ALL CATEGORIES
+// ==========================================
+const getcategory = async (req, res) => {
+  try {
+    const [rows] = await db.execute('SELECT * FROM categories');
+    return res.status(200).json({
+      success: true,
+      message: 'All categories fetched successfully.',
+      data: rows
+    });
+  } catch (error) {
+    console.error('Get categories error:', error.message);
+    return res.status(500).json({ success: false, message: 'There is a problem with the database.', error: error.message });
+  }
 };
 
-const Addsubcategory = (req, res) => {
-  // Fix: Extracted 'subcategory_name' from req.body
+// ==========================================
+// 3. ADD SUBCATEGORY
+// ==========================================
+const Addsubcategory = async (req, res) => {
   const { category_id, subcategory_name } = req.body;
 
-  const sqlinsert =
-    'INSERT INTO subcategories (category_id, subcategory_name) VALUES (?, ?)';
+  if (!category_id || !subcategory_name) {
+    return res.status(400).json({ success: false, message: 'category_id and subcategory_name are required.' });
+  }
 
-  // Fix: Passed the query first, followed by the [values] array in db.query
-  db.query(sqlinsert, [category_id, subcategory_name], (err, result) => {
-    if (err) {
-      return res
-        .status(500)
-        .json({ success: false, message: 'Failed to add subcategory', error: err.message });
-    } else {
-      return res.status(201).json({ success: true, message: 'Subcategory added successfully' });
-    }
-  });
+  try {
+    await db.execute(
+      'INSERT INTO subcategories (category_id, subcategory_name) VALUES (?, ?)',
+      [category_id, subcategory_name]
+    );
+    return res.status(201).json({ success: true, message: 'Subcategory added successfully.' });
+  } catch (error) {
+    console.error('Add subcategory error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to add subcategory.', error: error.message });
+  }
 };
 
-const getsubcategories = (req, res) => {
-  const getsub = req.params.category_id;
-  const getsubcat = 'SELECT * FROM subcategories WHERE category_id = ?';
+// ==========================================
+// 4. GET SUBCATEGORIES FOR A GIVEN CATEGORY
+// ==========================================
+const getsubcategories = async (req, res) => {
+  const { category_id } = req.params;
 
-  // Fix: Corrected the variable order in db.query and returned the data properly
-  db.query(getsubcat, [getsub], (err, result) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    } else {
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: 'Subcategories fetched successfully',
-          data: result,
-        });
-    }
-  });
+  try {
+    const [rows] = await db.execute(
+      'SELECT * FROM subcategories WHERE category_id = ?',
+      [category_id]
+    );
+    return res.status(200).json({
+      success: true,
+      message: 'Subcategories fetched successfully.',
+      data: rows
+    });
+  } catch (error) {
+    console.error('Get subcategories error:', error.message);
+    return res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 module.exports = {
   Addcategory,
-  getcategory, // This name now matches what will be exported to the router
+  getcategory,
   Addsubcategory,
   getsubcategories,
 };
