@@ -195,8 +195,20 @@ function AdminDashboard() {
         <div className="stat-badge">Total Sarees in DB: <strong>{products.length}</strong></div>
       </div>
 
-      <Link to="/admin/orders" className="admin-orders-link">
-        View All Orders
+      <Link
+        to="/admin/orders"
+        style={{
+          display: 'inline-block',
+          margin: '16px 0',
+          padding: '12px 24px',
+          backgroundColor: '#b3244c',
+          color: '#fff',
+          borderRadius: '8px',
+          fontWeight: 'bold',
+          textDecoration: 'none'
+        }}
+      >
+        📦 View All Orders
       </Link>
 
       <div className="admin-layout">
