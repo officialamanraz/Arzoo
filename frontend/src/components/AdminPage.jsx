@@ -57,7 +57,7 @@ function AdminDashboard() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/categories`);
+      const response = await fetch(`${API_BASE_URL}/api/get-categories`);
       // Warning: If this returns a 404 HTML page (like in your screenshot), the .json() parsing will fail!
       const result = await response.json(); 
       if (result && result.data) {
@@ -87,7 +87,7 @@ function AdminDashboard() {
       try {
         // IMPORTANT: Ensure this route matches your backend! 
         // I am assuming a standard REST route like /api/subcategories/category/:categoryId
-        const response = await fetch(`${API_BASE_URL}/api/subcategories/category/${form.categoryId}`);
+        const response = await fetch(`${API_BASE_URL}/api/get-subcategories/${form.categoryId}`);
         const result = await response.json();
         
         if (result && result.data) {
