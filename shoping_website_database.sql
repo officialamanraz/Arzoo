@@ -484,14 +484,12 @@ LOCK TABLES `users` WRITE;
 INSERT INTO `users` VALUES (5,'Aman Raza','officialamanraz@gmail.com','$2b$10$YbKH0BJuWL1AacuES8cIy.vcDEGTtY6a7dqOQ1iFjp7xrxu5tSXfW','9530060288',NULL,'admin','2026-06-24 16:11:03'),(6,'Shavez','shavezans1122@gmail.com','$2b$10$abZ1m4NfsBuTv42RAxbTFOrpMoOEfkLVGpTw7b0ebHo5csT9R0Hta','7229943506','Kaithoon, Kota, Rajasthan, Kota, Rajasthan','user','2026-06-26 15:35:42'),(7,'Shavez','shavez@gmail.com','$2b$10$Gi/XVIuJiVGFD/NwtqhCg.kzxWofgBWINM6XRy90myGz5muxfJpEu','7229943506','df, Kota, Rajasthan','user','2026-06-27 15:31:33');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-05 14:55:52
+-- Updated subcategory_ids on July 13, 2026
+SET SQL_SAFE_UPDATES = 0;
+SET @row_number = -1;
+UPDATE products
+SET subcategory_id = (@row_number := @row_number + 1) % 5 + 1
+WHERE subcategory_id IS NULL;
+SET SQL_SAFE_UPDATES = 1;
