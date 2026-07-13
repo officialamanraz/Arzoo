@@ -44,12 +44,14 @@ function AdminDashboard() {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/products/all?page=1&limit=500`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
       const result = await response.json();
       if (result && result.data) {
         setProducts(result.data);
       }
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error fetching products:", error.message);
     } finally {
       setLoading(false);
     }
@@ -57,7 +59,19 @@ function AdminDashboard() {
 
   const fetchCategories = async () => {
     try {
+      // NOTE: Verify this backend route. If it returns 404, check your backend routes.
+      // It might need to be /api/categories/get-categories instead.
       const response = await fetch(`${API_BASE_URL}/api/subcategories/get-categories`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch categories. Server responded with status: ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned non-JSON data. Check the endpoint URL.");
+      }
+
       const result = await response.json();
       if (result && result.data) {
         setCategories(result.data);
@@ -67,7 +81,7 @@ function AdminDashboard() {
         }));
       }
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Error fetching categories:", error.message);
     }
   };
 
@@ -85,6 +99,16 @@ function AdminDashboard() {
       }
       try {
         const response = await fetch(`${API_BASE_URL}/api/subcategories/get-subcategories/${form.categoryId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch subcategories. Status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server returned HTML instead of JSON for subcategories.");
+        }
+
         const result = await response.json();
 
         if (result && result.data) {
@@ -99,7 +123,7 @@ function AdminDashboard() {
           setSubcategories([]);
         }
       } catch (error) {
-        console.error("Error fetching subcategories:", error);
+        console.error("Error fetching subcategories:", error.message);
         setSubcategories([]);
       }
     };
@@ -183,7 +207,7 @@ function AdminDashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this saree?")) {
+    if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         const response = await fetch(`${API_BASE_URL}/api/products/product/${id}`, { method: 'DELETE' });
         if (response.ok) {
@@ -233,7 +257,7 @@ function AdminDashboard() {
     <div className="admin-wrapper">
       <div className="admin-header-stats">
         <h2>Admin Dashboard</h2>
-        <div className="stat-badge">Total Sarees in DB: <strong>{products.length}</strong></div>
+        <div className="stat-badge">Total Products in DB: <strong>{products.length}</strong></div>
       </div>
 
       <Link
@@ -255,11 +279,11 @@ function AdminDashboard() {
       <div className="admin-layout">
         {/* Left Side: ADD / EDIT FORM */}
         <div className="admin-form-glass">
-          <h3>{isEditing ? 'Edit Saree' : 'Add New Saree'}</h3>
+          <h3>{isEditing ? 'Edit Product' : 'Add New Product'}</h3>
           <form onSubmit={handleSubmit} className="admin-form">
 
             <div className="form-group">
-              <label>Saree Name</label>
+              <label>Product Name</label>
               <input type="text" value={form.name} onChange={handleFieldChange('name')} required className="admin-input" />
             </div>
 
@@ -312,9 +336,9 @@ function AdminDashboard() {
               </div>
             </div>
 
-            {/* --- Detailed Saree Attributes --- */}
+            {/* --- Detailed Attributes --- */}
             <fieldset className="admin-fieldset">
-              <legend>Saree Details</legend>
+              <legend>Product Details</legend>
 
               <div className="form-group-row">
                 <div className="form-group">
@@ -424,7 +448,7 @@ function AdminDashboard() {
             </div>
 
             <button type="submit" disabled={isSubmitting} className="admin-submit-btn">
-              {isSubmitting ? "Processing..." : (isEditing ? "Update Saree" : "Add Saree")}
+              {isSubmitting ? "Processing..." : (isEditing ? "Update Product" : "Add Product")}
             </button>
 
             {isEditing && (
@@ -457,7 +481,7 @@ function AdminDashboard() {
                       <td>
                         <img
                           src={`${API_BASE_URL}/uploads/${product.image_url || 'saare_1.jpeg'}`}
-                          alt={product.name || 'Saree'}
+                          alt={product.name || 'Product'}
                           className="admin-list-img"
                           onError={(e) => e.target.src = '/saare_1.jpeg'}
                         />

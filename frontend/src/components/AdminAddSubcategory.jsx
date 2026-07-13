@@ -12,6 +12,16 @@ function AdminAddSubcategory() {
     const fetchCategories = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/subcategories/get-categories`);
+        
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+           throw new Error("Received HTML instead of JSON. Verify backend endpoint.");
+        }
+
         const data = await response.json();
         if (data && data.data) {
           setCategories(data.data);
@@ -20,7 +30,7 @@ function AdminAddSubcategory() {
           }
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error('Error fetching categories:', error.message);
       }
     };
     fetchCategories();
@@ -53,8 +63,8 @@ function AdminAddSubcategory() {
         alert('Error: ' + data.message);
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to add subcategory');
+      console.error('Error:', error.message);
+      alert('Failed to add subcategory. Check console for details.');
     } finally {
       setLoading(false);
     }
