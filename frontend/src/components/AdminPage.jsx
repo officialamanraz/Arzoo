@@ -61,7 +61,7 @@ function AdminDashboard() {
     try {
       // NOTE: Verify this backend route. If it returns 404, check your backend routes.
       // It might need to be /api/categories/get-categories instead.
-      const response = await fetch(`${API_BASE_URL}/api/subcategories/get-categories`);
+      const response = await fetch(`${API_BASE_URL}/api/category/get-categories`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch categories. Server responded with status: ${response.status}`);
@@ -98,7 +98,7 @@ function AdminDashboard() {
         return;
       }
       try {
-        const response = await fetch(`${API_BASE_URL}/api/subcategories/get-subcategories/${form.categoryId}`);
+        const response = await fetch(`${API_BASE_URL}/api/category/get-subcategories/${form.categoryId}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch subcategories. Status: ${response.status}`);

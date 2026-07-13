@@ -17,6 +17,7 @@ app.get('/test', (req, res) => {
 });
 
 // 2. ROUTES: Middleware ke baad
+const categoryRouter = require('./src/router/category.router')
 const subcategoryRouter = require('./src/router/subcategory.router');
 const productrouter = require('./src/router/product.router');
 const authRoutes = require('./src/router/auth.router');
@@ -34,6 +35,7 @@ app.use('/api/orders', orderRouter);
 app.use('/api/location', locationRouter);
 app.use('/api/Currency', currencyRouter);
 app.use("/api/reviews", reviewRouter);
+app.use('/api/category',categoryRouter)
 app.use('/api/subcategories', subcategoryRouter);
 app.use('/api/cart', cartrouter);
 app.use('/api/products', productrouter);
