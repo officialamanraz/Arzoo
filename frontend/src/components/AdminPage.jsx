@@ -9,7 +9,7 @@ const emptyFormState = {
   description: '',
   baseColor: '',
   categoryId: '',
-  subcategoryId: '', // <-- Added subcategory to state
+  subcategoryId: '',
   stockQty: '10',
   primaryColor: '',
   otherColor: '',
@@ -32,7 +32,7 @@ const emptyFormState = {
 function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]); // <-- State for subcategories
+  const [subcategories, setSubcategories] = useState([]);
   const [form, setForm] = useState(emptyFormState);
   const [images, setImages] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -57,9 +57,8 @@ function AdminDashboard() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/get-categories`);
-      // Warning: If this returns a 404 HTML page (like in your screenshot), the .json() parsing will fail!
-      const result = await response.json(); 
+      const response = await fetch(`${API_BASE_URL}/api/subcategories/get-categories`);
+      const result = await response.json();
       if (result && result.data) {
         setCategories(result.data);
         setForm((prev) => ({
@@ -77,7 +76,7 @@ function AdminDashboard() {
     fetchCategories();
   }, []);
 
-  // NEW: Fetch subcategories whenever the selected category changes
+  // Fetch subcategories whenever the selected category changes
   useEffect(() => {
     const fetchSubcategories = async () => {
       if (!form.categoryId) {
@@ -85,14 +84,11 @@ function AdminDashboard() {
         return;
       }
       try {
-        // IMPORTANT: Ensure this route matches your backend! 
-        // I am assuming a standard REST route like /api/subcategories/category/:categoryId
-        const response = await fetch(`${API_BASE_URL}/api/get-subcategories/${form.categoryId}`);
+        const response = await fetch(`${API_BASE_URL}/api/subcategories/get-subcategories/${form.categoryId}`);
         const result = await response.json();
-        
+
         if (result && result.data) {
           setSubcategories(result.data);
-          // If we aren't editing, automatically select the first subcategory
           if (!isEditing && result.data.length > 0) {
             setForm((prev) => ({
               ...prev,
@@ -112,7 +108,6 @@ function AdminDashboard() {
   }, [form.categoryId, isEditing]);
 
   const handleFieldChange = (field) => (e) => {
-    // If category changes, reset the subcategory selection
     if (field === 'categoryId') {
       setForm((prev) => ({ ...prev, [field]: e.target.value, subcategoryId: '' }));
     } else {
@@ -121,9 +116,9 @@ function AdminDashboard() {
   };
 
   const resetForm = () => {
-    setForm({ 
-      ...emptyFormState, 
-      categoryId: String(categories[0]?.category_id || '') 
+    setForm({
+      ...emptyFormState,
+      categoryId: String(categories[0]?.category_id || '')
     });
     setImages([]);
     setIsEditing(false);
@@ -140,7 +135,7 @@ function AdminDashboard() {
     formData.append('description', form.description);
     formData.append('base_color', form.baseColor);
     formData.append('category_id', form.categoryId);
-    formData.append('subcategory_id', form.subcategoryId); // <-- Appended subcategory to payload
+    formData.append('subcategory_id', form.subcategoryId);
     formData.append('stock_qty', form.stockQty);
 
     // Detailed saree fields
@@ -209,7 +204,7 @@ function AdminDashboard() {
       description: product.description || '',
       baseColor: product.base_color || '',
       categoryId: product.category_id ? String(product.category_id) : '',
-      subcategoryId: product.subcategory_id ? String(product.subcategory_id) : '', // <-- Populate on edit
+      subcategoryId: product.subcategory_id ? String(product.subcategory_id) : '',
       stockQty: product.stock_qty != null ? String(product.stock_qty) : '10',
       primaryColor: product.primary_color || '',
       otherColor: product.other_color || '',
@@ -300,10 +295,10 @@ function AdminDashboard() {
 
               <div className="form-group">
                 <label>Subcategory</label>
-                <select 
-                  value={form.subcategoryId} 
-                  onChange={handleFieldChange('subcategoryId')} 
-                  className="admin-input" 
+                <select
+                  value={form.subcategoryId}
+                  onChange={handleFieldChange('subcategoryId')}
+                  className="admin-input"
                   required
                   disabled={!form.categoryId || subcategories.length === 0}
                 >
@@ -320,7 +315,7 @@ function AdminDashboard() {
             {/* --- Detailed Saree Attributes --- */}
             <fieldset className="admin-fieldset">
               <legend>Saree Details</legend>
-              {/* ... (Keep all your existing detailed saree fields exactly the same) ... */}
+
               <div className="form-group-row">
                 <div className="form-group">
                   <label>Base Color</label>

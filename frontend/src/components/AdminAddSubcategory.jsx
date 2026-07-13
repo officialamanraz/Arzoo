@@ -11,7 +11,7 @@ function AdminAddSubcategory() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/categories`);
+        const response = await fetch(`${API_BASE_URL}/api/subcategories/get-categories`);
         const data = await response.json();
         if (data && data.data) {
           setCategories(data.data);
@@ -32,7 +32,7 @@ function AdminAddSubcategory() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/subcategories/add`, {
+      const response = await fetch(`${API_BASE_URL}/api/subcategories/add-subcategory`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
