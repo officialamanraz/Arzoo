@@ -66,7 +66,7 @@ const getsubcategories = async (req, res) => {
 
   try {
     const [rows] = await db.execute(
-      'SELECT * FROM subcategories WHERE category_id = ?',
+      'SELECT * FROM subcategories WHERE subcategory_id= ?',
       [category_id]
     );
     return res.status(200).json({
