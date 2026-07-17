@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { indianLanguages } from '../languages'; 
 import { Link } from 'react-router-dom';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-saree.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // NOTICE: Added 'onCategorySelect' to the props to handle ID-based filtering
 function Navbar({ 
@@ -239,9 +239,6 @@ function Navbar({
 
           <div className="side-divider"></div>
 
-          {/* ====================================================
-              FIXED: CATEGORIES SELECT (Now uses Subcategory IDs)
-              ==================================================== */}
           <div style={{ padding: '0 20px', marginTop: '20px' }}>
             <h4 style={{ color: 'var(--text-light)', marginBottom: '15px' }}>Shop By Categories</h4>
             <select

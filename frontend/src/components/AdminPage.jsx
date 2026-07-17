@@ -98,8 +98,8 @@ function AdminDashboard() {
         return;
       }
       try {
+        // const response = await fetch(`${API_BASE_URL}/api/category/add-subcategory`);
         const response = await fetch(`${API_BASE_URL}/api/category/get-subcategories/${form.categoryId}`);
-        
         if (!response.ok) {
           throw new Error(`Failed to fetch subcategories. Status: ${response.status}`);
         }

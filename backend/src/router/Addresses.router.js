@@ -7,7 +7,7 @@ const { verifyToken } = require('../middleware/authmiddleware');
 // Save a new delivery address for the logged-in user
 router.post('/', verifyToken, addAddress);
 
-// Get all saved addresses for the logged-in user
+// Get all saved addresses for the logged-in user 
 router.get('/', verifyToken, getMyAddresses);
 
 // Get one specific address by ID (used by the Order Summary page)

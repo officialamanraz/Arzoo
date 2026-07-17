@@ -46,7 +46,7 @@ app.use('/api/location', locationRoute);
 app.use('/api/Currency', currencyRoute);
 app.use('/api/translate', translationRouter);
 app.use('/api/products', productrouter); // Tere file ke end me tha
-app.use("/api/reviews", reviewRouter);
+//app.use("/api/reviews", reviewRouter);
 app.use("/api/checkout",checkoutRouter);
 app.use('/api/addresses', addressRouter);
 // ==========================================

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { uiTranslations } from '../languages';
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeyword, keyword, currency, rates, language }) {
   
   // Currency Converter Logic
@@ -46,7 +46,7 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
             <div className="product-grid">
               {sarees?.map((saree) => {
                 const imageName = saree.image_url || saree.thumbnail || saree.image;
-               const imagePath = imageName ? `https://arzoo-3.onrender.com/uploads/${encodeURIComponent(imageName)}` : "/saare_1.jpeg";
+               const imagePath = imageName ? `${API_BASE_URL}/uploads/${encodeURIComponent(imageName)}` : "/saare_1.jpeg";
                 const sareeId = saree.product_id || saree.id;
 
                 return (

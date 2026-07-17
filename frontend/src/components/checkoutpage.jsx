@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Checkout = () => {
     const navigate = useNavigate();
     
@@ -18,7 +18,7 @@ const Checkout = () => {
             const token = localStorage.getItem('authToken');
             try {
                 // Calling the backend route you just perfected!
-                const res = await fetch('https://arzoo-saree.onrender.com/api/addresses', {
+                const res = await fetch('${API_BASE_URL}/api/addresses', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
@@ -44,7 +44,7 @@ const Checkout = () => {
         const fullShippingAddress = `${selectedAddress.house_no}, ${selectedAddress.road_area}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.pincode}`;
 
         try {
-            const res = await fetch('https://arzoo-saree.onrender.com/api/checkout', {
+            const res = await fetch('${API_BASE_URL}/api/checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

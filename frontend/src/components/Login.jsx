@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate,Link } from 'react-router-dom';
 
 // 1. Define your API URL directly
-const API_BASE_URL = import.meta.env.VITE_API_URL ||  'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 
 function Login() {

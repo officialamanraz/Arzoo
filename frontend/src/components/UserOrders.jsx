@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './style_of_userorder.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ||  'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 
 // Site identity comes from env config, not hardcoded here.
@@ -71,8 +71,6 @@ function UserOrders() {
     });
   };
 
-  // Builds the invoice using the new beautiful HTML template and dynamic data
- // Builds the invoice using the improved layout -- Bill of Supply style (no GST, no GSTIN yet)
 const buildInvoiceHtml = (order) => {
   const items = order.items || [];
 

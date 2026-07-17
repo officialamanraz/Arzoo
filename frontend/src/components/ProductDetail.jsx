@@ -340,7 +340,20 @@ function ProductDetail({ currency, rates, language }) {
           {sliderImages.length > 1 && (
             <div className="lightbox-counter">{activeImageIdx + 1} / {sliderImages.length}</div>
           )}
-        </div>
+          <ReviewForm 
+        productId={productId} 
+        onReviewAdded={fetchReviews} 
+        availableOptions={Object.keys(stats || {})} 
+      />
+
+      {/* 3. Review Section: Isme ab direct state data pass kar sakte hain */}
+      <ReviewSection 
+        productId={productId}
+        reviews={reviews}
+        stats={stats}
+        totalReviews={totalReviews}
+      />
+    </div>
       )}
     </div>
   );

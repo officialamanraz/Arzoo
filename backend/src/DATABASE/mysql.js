@@ -8,7 +8,7 @@ const DB_NAME = 'shoping_website_database';
 
 const initializeDatabase = async () => {
   // Step 1: Connect without selecting a database, so we can CREATE DATABASE IF NOT EXISTS
-  const connection = await mysql.createConnection({
+  const connection = await ({
     host: config.host,
     user: config.user,
     password: config.password,
@@ -19,11 +19,11 @@ const initializeDatabase = async () => {
   console.log('Connected to MySQL Server.');
 
   // Step 2: Create database if it doesn't exist
-  await connection.query(`CREATE DATABASE IF NOT EXISTS ${DB_NAME}`);
+  // await connection.query(`CREATE DATABASE IF NOT EXISTS ${DB_NAME}`);
 
   // Step 3: Switch to that database
-  await connection.changeUser({ database: DB_NAME });
-  console.log(`Using database: ${DB_NAME}`);
+  // await connection.changeUser({ database: DB_NAME });
+  // console.log(`Using database: ${DB_NAME}`);
 
   // Step 4: Create table if it doesn't exist
   const createTableQuery = `
@@ -51,18 +51,18 @@ const initializeDatabase = async () => {
     )
   `;
 
-  await connection.query(createTableQuery);
-  console.log("Table 'sarees_detailed' is successfully created and ready!");
+  // await connection.query(createTableQuery);
+  // console.log("Table 'sarees_detailed' is successfully created and ready!");
 
   // Step 5: Close this one-off setup connection
-  await connection.end();
+  // await connection.end();
 
   // Step 6: NOW create the actual connection pool that the rest of the app will use for all queries
   pool = mysql.createPool({
     host: config.host,
     user: config.user,
     password: config.password,
-    port: config.port,
+    port: config.db_port,
     database: DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
