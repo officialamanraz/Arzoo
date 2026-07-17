@@ -9,15 +9,12 @@ const app = express();
 
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // Ek hi baar lagana kaafi hai
-// Keep it simple: use the cors() function properly
 app.use(cors({
-  origin: [
-    'http://localhost:5173', 
-    'https://arzoo-engd.onrender.com'
-  ],
+  origin:'*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+app.use(express.json());
 // 3. Static Files (Dynamic path setup)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
