@@ -89,22 +89,16 @@ function App() {
     setLoading(true);
     setError(null);
 
-    // Default URL
-    let url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12`;
+let url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12`;
 
-    // 2. UPDATED: Logic to handle Search OR Category filtering
-    if (searchKeyword) {
-      url = `${API_BASE_URL}/api/products/search?keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}&limit=12`;
-    } 
-    else if (selectedCategory) {
-      // Passes the subcategory ID to your backend
-      url = `${API_BASE_URL}/api/products/all?subcategory=${selectedCategory}&page=${currentPage}&limit=12`;
-    }
-    else if (minprice && maxprice) {
-      url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12&min=${minprice}&max=${maxprice}`;
-    }
-    else if (selectedCategory) {
+if (searchKeyword) {
+  url = `${API_BASE_URL}/api/products/search?keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}&limit=12`;
+} 
+else if (selectedCategory) {
   url = `${API_BASE_URL}/api/category/subcategory-products/${selectedCategory}`;
+}
+else if (minprice && maxprice) {
+  url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12&min=${minprice}&max=${maxprice}`;
 }
 
     fetch(url)
