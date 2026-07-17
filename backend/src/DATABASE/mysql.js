@@ -12,7 +12,7 @@ const initializeDatabase = async () => {
     host: config.host,
     user: config.user,
     password: config.password,
-    port: config.port,
+    port: config.db_port,
     ssl: { rejectUnauthorized: false }
   });
 
