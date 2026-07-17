@@ -10,7 +10,7 @@ const app = express();
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin:'*',
+  origin:process.env.FRONTEND_URL,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
