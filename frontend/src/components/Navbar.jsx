@@ -4,8 +4,12 @@ import { Link } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-saree.onrender.com";
 
-// NOTICE: I have added 'language' and 'setLanguage' to the props here
-function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, onSearch, language, setLanguage ,minPrice, setMinPrice, maxPrice, setMaxPrice}) {
+// NOTICE: Added 'onCategorySelect' to the props to handle ID-based filtering
+function Navbar({ 
+  isDark, toggleDark, currency, setCurrency, rates, ratesError, 
+  onSearch, onCategorySelect, language, setLanguage, 
+  minPrice, setMinPrice, maxPrice, setMaxPrice 
+}) {
 
   // Sidebar State
   const [open, setOpen] = useState(false);
@@ -13,7 +17,6 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
   // Currency Dropdown State
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSettings, setShowSettings] = useState(false);
 
   // Search bar keyword state
   const [keyword, setKeyword] = useState("");
@@ -34,11 +37,13 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Search Logic
+  // Search Logic (For text search only)
   const handleSearch = () => {
     if (onSearch) onSearch(keyword);
   };
-  const handleSearchKeyDown = (e) => { if (e.key === 'Enter') handleSearch(); };
+  const handleSearchKeyDown = (e) => { 
+    if (e.key === 'Enter') handleSearch(); 
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token'); 
@@ -46,43 +51,12 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
     window.location.reload(); 
   };
 
-  const handleSignup = async (e, formData) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
-        alert("Account created successfully! Welcome to Aman Saare.");
-        window.location.href = '/'; 
-      } else {
-        alert("Signup Failed! Email might already exist.");
-      }
-    } catch (err) {
-      console.error("Signup error:", err);
-    }
-  };
-
   const handleSignout = async () => {
     localStorage.removeItem('token'); 
-  
-  // 2. Apni React state ko khali kar do
-  setToken(null); 
-  
-  // 3. User ko Home page ya Login page par bhej do
-  window.location.href = '/login';
-  }
+    // FIXED: Removed setToken(null) because it was causing a crash (undefined variable)
+    window.location.href = '/login';
+  };
 
-
- // Add this dynamic array right above your return statement
   const navLinks = [
     { title: 'Home', path: '/' },
     { title: 'Products', path: '/products' },
@@ -128,9 +102,7 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
       {/* 3. RIGHT SIDE (Language + Currency + Cart + Dark Mode) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px', border: 'none', outline: 'none' }}>
         
-        {/* ==============================
-            A. LANGUAGE SELECTOR (ALAG)
-            ============================== */}
+        {/* A. LANGUAGE SELECTOR */}
         <select 
           onChange={(e) => { if (setLanguage) setLanguage(e.target.value); }} 
           value={language || 'en'}
@@ -142,9 +114,7 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
           ))}
         </select>
 
-        {/* ==============================
-            B. CURRENCY SELECTOR (ALAG)
-            ============================== */}
+        {/* B. CURRENCY SELECTOR */}
         <div style={{ position: 'relative' }}>
           <div
             onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
@@ -211,7 +181,6 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
       <div className={`side-overlay ${open ? 'active' : ''}`} onClick={closeSidebar} />
 
       <div className={`side-sidebar ${open ? 'open' : ''}`}>
-        {/* Header (SMART SIGN IN/OUT) */}
         <div className="side-sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <span className="user-icon">👤</span>
@@ -240,7 +209,6 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
         {/* Sidebar Content Area */}
         <div className="side-sidebar-content">
           
-          {/* Quick Links (Dynamic Menu for Sidebar) */}
           <div style={{ padding: '0 20px', marginTop: '10px' }}>
             <h4 style={{ color: 'var(--text-light)', marginBottom: '15px' }}>Menu</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -254,7 +222,6 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
 
           <div className="side-divider"></div>
 
-          {/* Account Links */}
           <div style={{ padding: '0 20px', marginTop: '20px' }}>
             <h4 style={{ color: 'var(--text-light)', marginBottom: '15px' }}>Your Account</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -272,30 +239,40 @@ function Navbar({ isDark, toggleDark, currency, setCurrency, rates, ratesError, 
 
           <div className="side-divider"></div>
 
-          {/* Categories SELECT */}
+          {/* ====================================================
+              FIXED: CATEGORIES SELECT (Now uses Subcategory IDs)
+              ==================================================== */}
           <div style={{ padding: '0 20px', marginTop: '20px' }}>
             <h4 style={{ color: 'var(--text-light)', marginBottom: '15px' }}>Shop By Categories</h4>
             <select
               className="premium-select"
               onChange={(e) => {
-                if (e.target.value && onSearch) {
-                  onSearch(e.target.value);
+                if (e.target.value) {
+                  // If the parent component gave us onCategorySelect, use it!
+                  if (onCategorySelect) {
+                    onCategorySelect(e.target.value);
+                  } else {
+                    // Fallback: Redirect to products page with ID in URL
+                    window.location.href = `/products?subcategory=${e.target.value}`;
+                  }
                   closeSidebar();
                 }
               }}
             >
               <option value="">Select Category...</option>
-              <option value="party wear">Party Wear</option>
-              <option value="casual wear">Casual Wear</option>
-              <option value="wedding wear">Wedding Wear</option>
-              <option value="festival outfit">Festival Outfit</option>
-              <option value="office wear">Office Wear</option>
+              {/* Values are now exactly matched to your database IDs */}
+              <option value="1">Bridal Wear</option>
+              <option value="2">Casual Wear</option>
+              <option value="3">Party Wear</option>
+              <option value="4">Festival Outfit</option>
+              <option value="5">Office Wear</option>
             </select>
           </div>
 
           <div className="side-divider"></div>
-          {/* Sidebar mein ye add kar */}
-   <Link to="/my-orders">📦 My Orders</Link>
+          <Link to="/my-orders" style={{ padding: '0 20px' }}>📦 My Orders</Link>
+          <div className="side-divider"></div>
+
           {/* PRICE BUDGET FILTER */}
           <div style={{ padding: '0 20px', marginTop: '20px' }}>
             <h4 style={{ color: 'var(--text-light)', marginBottom: '15px' }}>Filter by Price</h4>

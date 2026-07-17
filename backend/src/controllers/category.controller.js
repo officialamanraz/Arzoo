@@ -57,25 +57,25 @@ const Addsubcategory = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to add subcategory.', error: error.message });
   }
 };
+const getProductsBySubcategory = async (req, res) => {
+  const { subcategory_id } = req.params;
 
-// ==========================================
-// 4. GET SUBCATEGORIES FOR A GIVEN CATEGORY
-// ==========================================
-const getsubcategories = async (req, res) => {
-  const { category_id } = req.params;
+  if (!subcategory_id) {
+    return res.status(400).json({ success: false, message: 'subcategory_id is required.' });
+  }
 
   try {
     const [rows] = await db.execute(
-      'SELECT * FROM subcategories WHERE subcategory_id= ?',
-      [category_id]
+      'SELECT * FROM products WHERE subcategory_id = ?',
+      [subcategory_id]
     );
     return res.status(200).json({
       success: true,
-      message: 'Subcategories fetched successfully.',
+      total_found: rows.length,
       data: rows
     });
   } catch (error) {
-    console.error('Get subcategories error:', error.message);
+    console.error('Get products by subcategory error:', error.message);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -84,5 +84,5 @@ module.exports = {
   Addcategory,
   getcategory,
   Addsubcategory,
-  getsubcategories,
+  getProductsBySubcategory   // 👈 naya export
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route,Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import "./theme.css";
 import AdminSwitcher from './components/AdminSwitcher';
@@ -9,7 +9,7 @@ import AddressForm from './components/Addressform';
 import OrderSummary from './components/ordersummary';
 import PaymentPage from './components/PaymentePage';
 import OrderTracking from './components/OrderTracking';
-import UserOrders from './components/UserOrders'; // Or './pages/UserOrders'
+import UserOrders from './components/UserOrders'; 
 import AdminOrders from './components/AdminOrders';
 import Navbar from "./components/Navbar";
 import ForgotPassword from "./components/ForgotPassword";
@@ -25,8 +25,6 @@ import About from './components/About';
 import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 
-// Centralized API base URL — change this in Render's Environment tab (VITE_API_URL),
-// never hardcode it anywhere else in this file.
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-3.onrender.com"
 
 function App() {
@@ -36,6 +34,10 @@ function App() {
   const [isDark, setIsDark] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchKeyword, setSearchKeyword] = useState("");
+  
+  // 1. ADDED: State to track the selected category ID
+  const [selectedCategory, setSelectedCategory] = useState("");
+  
   const [language, setLanguage] = useState('en');
   const [currency, setCurrency] = useState("INR");
   const [rates, setRates] = useState({});
@@ -52,22 +54,16 @@ function App() {
     }
   }, [isDark]);
 
-  // Fetch currency exchange rates (with proper cleanup to avoid race conditions)
+  // Fetch currency exchange rates
   useEffect(() => {
-    // 1. Ek flag banayenge (AbortController ki jagah)
     let isMounted = true;
 
     const fetchCurrencyData = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/Currency/Rate-change`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch currency rates.");
-        }
-
+        if (!response.ok) throw new Error("Failed to fetch currency rates.");
         const data = await response.json();
 
-        // 3. Data set karne se pehle check karenge ki component zinda hai ya nahi
         if (isMounted) {
           setRates(data);
           setRatesError(null);
@@ -82,40 +78,42 @@ function App() {
 
     fetchCurrencyData();
 
-    // 4. Silent Cleanup: Request cancel karne ki jagah, bas flag ko false kar do
     return () => {
       isMounted = false;
     };
   }, []);
 
+  // Main Product Fetching Logic
   useEffect(() => {
-    let isMounted = true; // Silent cleanup ke liye
+    let isMounted = true; 
     setLoading(true);
     setError(null);
 
-    // 1. DEFAULT URL (Normal + Pagination)
+    // Default URL
     let url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12`;
 
-    // 2. SEARCH URL (Agar search kiya hai)
+    // 2. UPDATED: Logic to handle Search OR Category filtering
     if (searchKeyword) {
       url = `${API_BASE_URL}/api/products/search?keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}&limit=12`;
+    } 
+    else if (selectedCategory) {
+      // Passes the subcategory ID to your backend
+      url = `${API_BASE_URL}/api/products/all?subcategory=${selectedCategory}&page=${currentPage}&limit=12`;
     }
-    // 3. BUDGET FILTER URL (Agar min/max price lagaya hai)
     else if (minprice && maxprice) {
       url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12&min=${minprice}&max=${maxprice}`;
     }
+    else if (selectedCategory) {
+  url = `${API_BASE_URL}/api/category/subcategory-products/${selectedCategory}`;
+}
 
-    // Ab bas API hit karni hai
     fetch(url)
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Backend API not found.");
-        }
+        if (!res.ok) throw new Error("Backend API not found.");
         return res.json();
       })
       .then((result) => {
         if (isMounted) {
-          // Data format check (Dynamic)
           let finalData = result.data || result.products || result || [];
           setSarees(finalData);
           setLoading(false);
@@ -124,33 +122,30 @@ function App() {
       .catch((err) => {
         if (isMounted) {
           console.error("Error fetching sarees:", err);
-          setError("Sarees load nahi ho payi. Backend check kar.");
+          setError("Failed to load products. Please check the backend connection.");
           setLoading(false);
         }
       });
 
-    // Cleanup function taaki memory leak na ho
     return () => {
       isMounted = false;
     };
 
-  // 🚨 YAHAN DHYAN DE: dependency array mein minprice aur maxprice zaroor likhna!
-  }, [currentPage, searchKeyword, minprice, maxprice]);
+  // 3. ADDED: selectedCategory added to dependency array
+  }, [currentPage, searchKeyword, selectedCategory, minprice, maxprice]);
 
-  const handleUserSearch = (keywordFromNav) => {
-    setSearchKeyword(keywordFromNav);
+
+  // Text Search Handler
+  const handleSearch = (keyword) => {
+    setSearchKeyword(keyword);
+    setSelectedCategory(""); // Clear category when typing a text search
     setCurrentPage(1);
   };
-  const toggleDark = () => setIsDark(!isDark);
 
-  // App.jsx (ya Navbar ke upar wale parent component) mein:
-  const handleSearch = (keyword) => {
-    console.log("Dynamically Filtering for:", keyword);
-
-    // 1. Search ya Category ko state mein set karo
-    setSearchKeyword(keyword);
-
-    // 2. IMPORTANT: Jab bhi naya category chuno, toh Page wapas 1 par le aao
+  // 4. ADDED: New Category Select Handler
+  const handleCategorySelect = (categoryId) => {
+    setSelectedCategory(categoryId);
+    setSearchKeyword(""); // Clear text search when selecting a category dropdown
     setCurrentPage(1);
   };
 
@@ -165,25 +160,7 @@ function App() {
       return data.translatedText;
     } catch (error) {
       console.error("Translation failed:", error);
-      return text; // Return original if translation fails
-    }
-  };
-
-  // App.jsx (fetchSarees function)
-  const fetchSarees = async () => {
-    setLoading(true);
-    try {
-      // Naya route: /filter use karo
-      const response = await fetch(`${API_BASE_URL}/api/products/filter?min=${minprice}&max=${maxprice}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setSarees(result.data);
-      }
-    } catch (error) {
-      console.error("Error fetching sarees:", error);
-    } finally {
-      setLoading(false);
+      return text;
     }
   };
 
@@ -192,7 +169,8 @@ function App() {
       <Navbar
         isDark={isDark}
         toggleDark={() => setIsDark(!isDark)}
-        onSearch={handleSearch} /* Ek hi onSearch rakha hai error avoid karne ke liye */
+        onSearch={handleSearch} 
+        onCategorySelect={handleCategorySelect} /* 5. ADDED: Passed the new function to Navbar */
         currency={currency}
         setCurrency={setCurrency}
         rates={rates}
@@ -205,7 +183,6 @@ function App() {
         setMaxPrice={setMaxprice}
       />
 
-      {/* 👇 TERA VIP MASTER SWITCH YAHAN LAGA DIYA 👇 */}
       <AdminSwitcher />
 
       <Routes>
@@ -218,17 +195,17 @@ function App() {
               error={error}
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
-              keyword={searchKeyword}
+              keyword={searchKeyword || (selectedCategory ? "Category Filter Applied" : "")} /* Adjusted keyword display */
               currency={currency}
               rates={rates}
               language={language}
             />
           }
         />
-        {/* 🚨 ADD THESE NEW ROUTES HERE 🚨 */}
+        
         <Route path="/orders" element={<UserOrders />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
-        {/* CORRECT/NEW CODE */}
+        
         <Route
           path="/product/:id"
           element={
@@ -247,7 +224,7 @@ function App() {
           path="/admin"
           element={
             <AdminRoute>
-              <AdminPage />  {/* Tera admin dashboard yahan aayega */}
+              <AdminPage /> 
             </AdminRoute>
           }
         />
@@ -260,22 +237,13 @@ function App() {
           }
         />
 
-        {/* <Route
-          path="/track-order/:orderId"
-          element={
-            <ProtectedRoute>
-              <ordertarcking />
-            </ProtectedRoute>
-          }
-        /> */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-<Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        {/* Other routes */}
         <Route
           path="/add-address"
           element={

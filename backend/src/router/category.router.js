@@ -6,12 +6,11 @@ const {
   Addcategory,
   getcategory,
   Addsubcategory,
-  getsubcategories,
+  getProductsBySubcategory,
 } = require('../controllers/category.controller');
 
 router.post('/add-category', Addcategory);
 router.get('/get-categories', getcategory);
 router.post('/add-subcategory', Addsubcategory);
-router.get('/get-subcategories/:category_id', getsubcategories);
-
+router.get('/subcategory-products/:subcategory_id', getProductsBySubcategory);
 module.exports = router;
