@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');

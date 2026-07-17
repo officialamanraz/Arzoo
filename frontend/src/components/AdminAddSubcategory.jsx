@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function AdminAddSubcategory() {
   const [subcategoryName, setSubcategoryName] = useState('');

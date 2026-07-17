@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // FIXED: Matching quotes for the URL string
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const statusColors = {
   pending: { bg: '#fff3cd', text: '#856404', icon: '⏳' },

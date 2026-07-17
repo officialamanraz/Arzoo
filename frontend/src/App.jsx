@@ -25,7 +25,7 @@ import About from './components/About';
 import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-3.onrender.com"
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function App() {
   const [sarees, setSarees] = useState([]);

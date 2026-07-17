@@ -21,7 +21,7 @@ const configdb = {
   host: process.env.host,
   user: process.env.user,
   password: process.env.password,
-  port: process.env.port,
+  port: process.env.db_port,
   database: process.env.database,
 };
 

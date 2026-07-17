@@ -5,7 +5,7 @@ import ReviewSection from '../components/ReviewSection';
 import Recommended from "../components/Recommended";
 import './ProductDetail.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 // Maps DB column name -> display label. Add/remove entries here only --
 // the list below renders itself dynamically, nothing is hardcoded in JSX.
 const DETAIL_FIELD_LABELS = {

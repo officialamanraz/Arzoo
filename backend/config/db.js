@@ -10,7 +10,7 @@ const pool = mysql.createPool({
   user: process.env.user,
   password: process.env.password,
   database: process.env.database,
-  port: process.env.port || 18821,
+  port: process.env.db_port || 3306,
   // Aiven requires this SSL block
   ssl: {
     rejectUnauthorized: false
