@@ -56,7 +56,7 @@ app.use('/api/categories', categoryRoutes);
 // instead -- tell me the filename and I'll wire it up exactly.
 
 
-// app.use('/api/subcategories', categoryRoutes);
+app.use('/api/subcategories', categoryRoutes);
 app.use('/api/location', locationRoute);
 app.use('/api/Currency', currencyRoute);
 app.use('/api/translate', translationRouter);
