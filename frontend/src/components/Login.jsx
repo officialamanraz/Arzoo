@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate,Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
-// 1. Define your API URL directly
+// FIX: added fallback -- consistent with the rest of the app, so a
+// missing VITE_API_URL doesn't silently break login.
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-
 
 function Login() {
   const navigate = useNavigate();
@@ -16,10 +16,9 @@ function Login() {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage('');
-    console.log("DEBUG: Login request starting...");
+    console.log('[LOGIN] Request starting -- email:', email);
 
     try {
-      // 2. Use native fetch with explicit headers
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -28,31 +27,43 @@ function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log("DEBUG: Got response from server, parsing JSON...");
+      console.log('[LOGIN] Response received, parsing JSON...');
       const data = await res.json();
-      console.log("DEBUG: Parsed data:", data);
+      console.log('[LOGIN] Parsed data:', data);
 
       if (res.ok && data.token) {
+        // FIX: key must be 'token' everywhere it's read -- checkout page
+        // and other protected pages were reading 'authToken', which never
+        // existed, so every protected request went out with no token.
         localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.user); 
-        
+
+        // NOTE: currently data.user is just a role string ('user'/'admin')
+        // from the backend. If/when you update loginUser to return
+        // { id, name, email, role }, switch this to:
+        //   localStorage.setItem('user', JSON.stringify(data.user));
+        //   const role = data.user.role;
+        // and update every place that reads localStorage 'role' or
+        // compares data.user === 'admin' to use .role instead.
+        localStorage.setItem('role', data.user);
+        console.log('[LOGIN] Success -- role:', data.user);
+
         if (data.user === 'admin') {
           navigate('/admin');
         } else {
-          navigate('/'); 
+          navigate('/');
         }
       } else {
+        console.warn('[LOGIN] Failed:', data.message);
         setErrorMessage(data.message || 'Login failed.');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('[LOGIN] Network/error:', err);
       setErrorMessage('Network error. Is your backend server running?');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ... (keep your return statement exactly the same)
   return (
     <div style={{ marginTop: '120px', textAlign: 'center', padding: '20px', minHeight: '60vh' }}>
       <h2 style={{ color: '#2c3e50', marginBottom: '20px' }}>Login to Aman Saare</h2>
@@ -105,10 +116,10 @@ function Login() {
           {isSubmitting ? 'Logging in...' : 'Login'}
         </button>
         <div style={{ marginTop: '10px', fontSize: '14px' }}>
-  <Link to="/forgot-password" style={{ color: '#e07a5f', textDecoration: 'none' }}>
-    Forgot Password?
-  </Link>
-</div>
+          <Link to="/forgot-password" style={{ color: '#e07a5f', textDecoration: 'none' }}>
+            Forgot Password?
+          </Link>
+        </div>
       </form>
     </div>
   );

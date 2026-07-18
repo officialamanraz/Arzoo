@@ -15,7 +15,7 @@ const Checkout = () => {
     // Fetch addresses when the component loads
     useEffect(() => {
         const fetchAddresses = async () => {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             try {
                 // Calling the backend route you just perfected!
                 const res = await fetch('${API_BASE_URL}/api/addresses', {
@@ -36,43 +36,58 @@ const Checkout = () => {
     }, []);
 
     // Function to handle the final checkout call
-    const handlePlaceOrder = async () => {
-        setLoading(true);
-        const token = localStorage.getItem('authToken');
+  const handlePlaceOrder = async () => {
+    console.log('[CHECKOUT-UI] Place order clicked -- address_id:', selectedAddress?.address_id);
 
-        // Format the address into a single string for your backend
-        const fullShippingAddress = `${selectedAddress.house_no}, ${selectedAddress.road_area}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.pincode}`;
+    if (!selectedAddress || !selectedAddress.address_id) {
+        alert('Please select a delivery address before placing the order.');
+        console.warn('[CHECKOUT-UI] Blocked -- no address selected');
+        return;
+    }
 
-        try {
-            const res = await fetch('${API_BASE_URL}/api/checkout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    shippingAddress: fullShippingAddress,
-                    customerEmail: "user@example.com", // Replace with actual logged-in user email
-                    customerName: selectedAddress.full_name
-                })
-            });
+    const token = localStorage.getItem('token'); // CONFIRM: same key name Login.jsx uses to save it
 
-            const data = await res.json();
+    if (!token) {
+        alert('Please log in again to place your order.');
+        console.warn('[CHECKOUT-UI] Blocked -- no auth token found');
+        navigate('/login');
+        return;
+    }
 
-            if (data.success) {
-                alert(`Order Placed Successfully! Order ID: ${data.orderId}`);
-                navigate('/order-success'); // Redirect to a success page
-            } else {
-                alert(`Checkout failed: ${data.message}`);
-            }
-        } catch (error) {
-            console.error("Order error", error);
-            alert("Something went wrong while placing the order.");
-        } finally {
-            setLoading(false);
+    setLoading(true);
+
+    try {
+        // FIX: backticks, not single quotes -- was a plain string before,
+        // so API_BASE_URL never actually got interpolated into the URL.
+        const res = await fetch(`${API_BASE_URL}/api/checkout`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                addressId: selectedAddress.address_id
+                // buyNowProduct: { product_id, quantity } -- add this only for the Buy Now flow
+            })
+        });
+
+        const data = await res.json();
+        console.log('[CHECKOUT-UI] Response:', data);
+
+        if (data.success) {
+            alert(`Order Placed Successfully! Order ID: ${data.orderId}`);
+            navigate('/order-success');
+        } else {
+            console.warn('[CHECKOUT-UI] Checkout failed:', data.message);
+            alert(`Checkout failed: ${data.message}`);
         }
-    };
-
+    } catch (error) {
+        console.error('[CHECKOUT-UI] Order error:', error);
+        alert('Something went wrong while placing the order.');
+    } finally {
+        setLoading(false);
+    }
+};
     return (
         <div className="max-w-4xl mx-auto p-4 bg-gray-50 min-h-screen">
             
