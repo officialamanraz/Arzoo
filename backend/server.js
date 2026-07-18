@@ -6,7 +6,8 @@ const app = express(); // Sirf ek hi baar app banega
 // Sirf EK cors() config rakho — specific origins ke saath, credentials support ke liye
 app.use(cors({
   origin: "*",
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
@@ -48,7 +49,7 @@ app.use('/api/Email', emailRouter);
 // 3. LISTEN: Sabse aakhir mein — Render ka dynamic PORT use karo, hardcode mat karo
 // Render environment variable PORT ko priority dega, 
 // nahi toh local ke liye 5000 use karega
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.db_port;
 app.listen(PORT, () => {
   console.log(`Server is running beautifully on port ${PORT}`);
 });

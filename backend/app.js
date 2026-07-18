@@ -2,7 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const path = require('path');
-const db = require('./DATABASE/mysql'); // mysql2/promise pool
+const db = require('./src/DATABASE/mysql'); // mysql2/promise pool
 
 // 1. App Engine Start
 const app = express();
@@ -24,18 +24,18 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 4. Router Imports
-const translationRouter = require('./router/translate.router');
-const authrouter = require('./router/auth.router');
-const cartrouter = require('./router/cart.router');
-const orderRouter = require('./router/order.router');
-const categoryRoutes = require('./router/category.router');
-const locationRoute = require('./router/Location.router');
-const currencyRoute = require('./router/currency.router');
-const contactRouter = require('./router/Email.router');
-const productrouter = require('./router/product.router');
-const ordersRouter = require('./router/order.router');
+const translationRouter = require('./src/router/translate.router');
+const authrouter = require('./src/router/auth.router');
+const cartrouter = require('./src/router/cart.router');
+const orderRouter = require('./src/router/order.router');
+const categoryRoutes = require('./src/router/category.router');
+const locationRoute = require('./src/router/Location.router');
+const currencyRoute = require('./src/router/currency.router');
+const contactRouter = require('./src/router/Email.router');
+const productrouter = require('./src/router/product.router');
+const ordersRouter = require('./src/router/order.router');
 const reviewRouter = require('./routes/review.router');
-const checkoutRouter = require('./router/checkout.router');
+const checkoutRouter = require('./src/router/checkout.router');
 const addressRouter = require('./src/router/addresses.router');
 
 // 5. Routes Attachments
@@ -45,16 +45,6 @@ app.use('/api/auth', authrouter);
 app.use('/api/cart', cartrouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/categories', categoryRoutes);
-
-// FIX: subcategory endpoints (Addsubcategory, getSubcategoriesByCategory,
-// getProductsBySubcategory in category.controller.js) were never mounted
-// at their own prefix, so any frontend call to /api/subcategories/* was
-// hitting no route at all -> 404. Mounting the same router here as well
-// so both prefixes work.
-// CONFIRM: if category.router.js only defines category routes (not
-// subcategory ones), point this at the correct subcategory router file
-// instead -- tell me the filename and I'll wire it up exactly.
-
 
 // app.use('/api/subcategories', categoryRoutes);
 app.use('/api/location', locationRoute);
@@ -146,7 +136,7 @@ app.get('/data', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.db_port
 
 app.listen(PORT, () => {
   console.log(`[SERVER] Running on port ${PORT}`);
