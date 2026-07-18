@@ -1,4 +1,5 @@
-const db = require('../DATABASE/mysql'); // FIXED: was '../../config/db' (path doesn't exist in this project)
+// backend/src/controllers/product.controller.js -- line 1
+const db = require('../../config/db'); // reverted -- this was correct all along// FIXED: was '../../config/db' (path doesn't exist in this project)
 
 // ==========================================
 // 1. GET ALL PRODUCTS (Basic)

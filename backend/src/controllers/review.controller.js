@@ -1,5 +1,5 @@
-const db = require('../DATABASE/mysql'); // FIXED: was '../../config/db' (path doesn't exist in this project)
-
+// backend/src/controllers/product.controller.js -- line 1
+const db = require('../../config/db'); // reverted -- this was correct all along
 // ==========================================
 // GET ALL REVIEWS FOR A PRODUCT + STATS
 // ==========================================
