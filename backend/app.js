@@ -14,7 +14,7 @@ if (!process.env.FRONTEND_URL) {
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin:'*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -136,7 +136,7 @@ app.get('/data', async (req, res) => {
   }
 });
 
-const PORT = process.env.db_port
+const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
   console.log(`[SERVER] Running on port ${PORT}`);
