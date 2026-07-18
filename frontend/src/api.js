@@ -10,7 +10,7 @@
 // Everywhere in the app, replace raw `fetch('https://arzoo-saree.onrender.com/...')`
 // calls with `apiFetch('/api/...')` from this file.
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://arzoo-saree.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Dynamic fetch wrapper.
@@ -36,9 +36,6 @@ export async function apiFetch(endpoint, options = {}) {
     
   });
 
-  // If the token is invalid/expired, auto-logout instead of failing silently.
- // If the token is invalid/expired, auto-logout instead of failing silently.
-  // FIX: Bypass this auto-logout logic IF the request is for the login page
   if (!response.ok) {
      const errorData = await response.json().catch(() => ({})); // response read karo
      throw new Error(errorData.message || 'Something went wrong');

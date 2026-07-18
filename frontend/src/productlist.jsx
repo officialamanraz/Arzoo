@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const ProductList = () => {
     // 1. Sarees ka data rakhne ke liye state (Shuru me khali array [])
     const [sarees, setSarees] = useState([]);
@@ -13,7 +13,7 @@ const ProductList = () => {
         // Backend ka wahi Postman wala URL
         const fetchSarees = async () => {
             try {
-                const response = await fetch('https://arzoo-saree.onrender.com/api/products/all?page=1&limit=10');
+                const response = await fetch('${API_BASE_URL}/api/products/all?page=1&limit=10');
                 const result = await response.json();
 
                 if (result.success) {
@@ -49,9 +49,9 @@ const ProductList = () => {
                 {sarees.map((saree) => (
                     <div key={saree.id} style={cardStyle}>
                         
-                        {/* Image URL backend ke static folder se */}
+                      {/* Image URL backend ke static folder se */}
                         <img 
-                            src={`https://arzoo-saree.onrender.com/uploads/${saree.image}`} 
+                            src={`${API_BASE_URL}/uploads/${saree.image}`} 
                             alt={saree.name} 
                             style={{ width: '100%', height: '250px', objectFit: 'cover', borderRadius: '5px' }}
                         />
