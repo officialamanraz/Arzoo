@@ -136,7 +136,7 @@ app.get('/data', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT;
+const PORT = process.env.port;
 
 app.listen(PORT, () => {
   console.log(`[SERVER] Running on port ${PORT}`);
