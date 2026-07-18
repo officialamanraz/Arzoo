@@ -1,10 +1,12 @@
-const db = require("../../config/db");
+const db = require('../DATABASE/mysql'); // FIXED: was '../../config/db' (path doesn't exist in this project)
 
-// Force the path to be correct based on your specific directory
+// ==========================================
+// GET ALL REVIEWS FOR A PRODUCT + STATS
+// ==========================================
 const getReviewsByProduct = async (req, res) => {
   try {
     const { product_id } = req.params;
-    console.log("[getReviewsByProduct] Incoming request, product_id:", product_id);
+    console.log("[REVIEW] Fetching reviews -- product_id:", product_id);
 
     const reviewsQuery = `
       SELECT
@@ -30,8 +32,8 @@ const getReviewsByProduct = async (req, res) => {
       GROUP BY rating_type
     `;
 
-    // FIXED: Dynamically pulls the ENUM column options instead of hardcoded array or selecting matching rows
-    const reviewoption = `
+    // Dynamically pulls the ENUM column options instead of a hardcoded array
+    const reviewOptionQuery = `
       SELECT COLUMN_TYPE 
       FROM INFORMATION_SCHEMA.COLUMNS 
       WHERE TABLE_NAME = 'Reviews' 
@@ -39,23 +41,25 @@ const getReviewsByProduct = async (req, res) => {
         AND TABLE_SCHEMA = DATABASE()
     `;
 
-    console.log("[getReviewsByProduct] Running reviewsQuery...");
-    // mysql2/promise returns an array where the first element is the rows
+    console.log("[REVIEW] Running reviewsQuery...");
     const [reviews] = await db.execute(reviewsQuery, [product_id]);
-    console.log("[getReviewsByProduct] reviewsQuery SUCCESS, rows found:", reviews.length);
+    console.log(`[REVIEW] reviewsQuery success -- ${reviews.length} row(s)`);
 
-    console.log("[getReviewsByProduct] Running statsQuery...");
+    console.log("[REVIEW] Running statsQuery...");
     const [stats] = await db.execute(statsQuery, [product_id]);
-    console.log("[getReviewsByProduct] statsQuery SUCCESS, rows found:", stats.length);
-    
-    console.log("[getReviewsByProduct] Running reviewoption schema query...");
-    const [schemaResult] = await db.execute(reviewoption);
+    console.log(`[REVIEW] statsQuery success -- ${stats.length} row(s)`);
 
-    // Create stats object dynamically
+    console.log("[REVIEW] Running rating_type schema query...");
+    const [schemaResult] = await db.execute(reviewOptionQuery);
+
     const reviewStats = {};
 
-    // Default options if schema mapping fails
-    let dynamicOptions = ['skip', 'timepass', 'go_for_it', 'perfection'];
+    // Fallback options if schema lookup fails for any reason
+    const FALLBACK_RATING_OPTIONS = process.env.FALLBACK_RATING_OPTIONS
+      ? process.env.FALLBACK_RATING_OPTIONS.split(',')
+      : ['skip', 'timepass', 'go_for_it', 'perfection'];
+
+    let dynamicOptions = FALLBACK_RATING_OPTIONS;
 
     if (schemaResult.length > 0) {
       const columnType = schemaResult[0].COLUMN_TYPE; // e.g. "enum('skip','timepass','go_for_it','perfection')"
@@ -63,9 +67,10 @@ const getReviewsByProduct = async (req, res) => {
       if (matches) {
         dynamicOptions = matches.map(option => option.replace(/'/g, ''));
       }
+    } else {
+      console.warn('[REVIEW] Could not read rating_type ENUM from schema -- using fallback options');
     }
 
-    // FIXED: Dynamic keys initialization based on your dynamicOptions variable
     dynamicOptions.forEach((optId) => {
       reviewStats[optId] = 0;
     });
@@ -79,7 +84,7 @@ const getReviewsByProduct = async (req, res) => {
       0
     );
 
-    console.log("[getReviewsByProduct] Final response -> totalReviews:", totalReviews, "stats:", reviewStats);
+    console.log(`[REVIEW] Response ready -- product_id: ${product_id}, totalReviews: ${totalReviews}`);
 
     return res.status(200).json({
       success: true,
@@ -89,7 +94,7 @@ const getReviewsByProduct = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("[getReviewsByProduct] CATCH BLOCK ERROR:", error.message);
+    console.error("[REVIEW] getReviewsByProduct error:", error.message);
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -97,17 +102,19 @@ const getReviewsByProduct = async (req, res) => {
   }
 };
 
+// ==========================================
+// ADD A REVIEW (verified-buyer image restriction)
+// ==========================================
 const addReview = async (req, res) => {
   try {
     const { product_id, rating_type, comment } = req.body;
-    const user_id = req.user.id;  // ✅ Changed from req.user.user_id
+    const user_id = req.user.id;
 
-    console.log("[addReview] Incoming body:", { product_id, rating_type, comment });
-    console.log("[addReview] user_id from req.user:", user_id);
-    console.log("[addReview] req.file:", req.file);
+    console.log("[REVIEW] Add review -- body:", { product_id, rating_type, comment });
+    console.log("[REVIEW] user_id:", user_id, "| file:", req.file ? req.file.filename : 'none');
 
     if (!product_id || !rating_type) {
-      console.warn("[addReview] Missing required fields! product_id:", product_id, "rating_type:", rating_type);
+      console.warn("[REVIEW] Add failed -- missing product_id or rating_type");
       return res.status(400).json({
         success: false,
         message: "Product ID and rating type are required"
@@ -122,17 +129,16 @@ const addReview = async (req, res) => {
       LIMIT 1
     `;
 
-    console.log("[addReview] Running verifyPurchaseQuery with:", [user_id, product_id]);
+    console.log("[REVIEW] Verifying purchase -- user_id:", user_id, "product_id:", product_id);
     const [result] = await db.execute(verifyPurchaseQuery, [user_id, product_id]);
-    console.log("[addReview] verifyPurchaseQuery result:", result);
 
     const is_verified_buyer = result.length > 0 ? 1 : 0;
     const image_url = req.file ? req.file.filename : null;
 
-    console.log("[addReview] is_verified_buyer:", is_verified_buyer, "image_url:", image_url);
+    console.log("[REVIEW] is_verified_buyer:", is_verified_buyer, "| image_url:", image_url);
 
     if (!is_verified_buyer && image_url) {
-      console.warn("[addReview] Blocked: non-verified buyer tried to upload image");
+      console.warn("[REVIEW] Blocked -- non-verified buyer tried to upload image");
       return res.status(403).json({
         success: false,
         message: "Only verified buyers can upload images with their review."
@@ -152,10 +158,10 @@ const addReview = async (req, res) => {
     `;
 
     const values = [product_id, user_id, rating_type, comment, image_url, is_verified_buyer];
-    console.log("[addReview] Running insertReviewQuery with values:", values);
+    console.log("[REVIEW] Inserting review...");
 
     const [insertResult] = await db.execute(insertReviewQuery, values);
-    console.log("[addReview] Insert SUCCESS, review_id:", insertResult.insertId);
+    console.log(`[REVIEW] Insert success -- review_id: ${insertResult.insertId}`);
 
     return res.status(201).json({
       success: true,
@@ -164,7 +170,7 @@ const addReview = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("[addReview] CATCH BLOCK ERROR:", error.message);
+    console.error("[REVIEW] addReview error:", error.message);
     return res.status(500).json({
       success: false,
       message: "Failed to add review: " + error.message

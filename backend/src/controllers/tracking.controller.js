@@ -5,6 +5,7 @@ const db = require('../DATABASE/mysql'); // mysql2/promise pool
 // ==========================================
 const getOrderTracking = async (req, res) => {
     const { orderId } = req.params; // this is the payment_id, e.g. ORD-1719999999999
+    console.log(`[TRACKING] Fetching tracking -- payment_id: ${orderId}`);
 
     try {
         const [orderRow] = await db.execute(
@@ -13,6 +14,7 @@ const getOrderTracking = async (req, res) => {
         );
 
         if (orderRow.length === 0) {
+            console.warn(`[TRACKING] Not found -- payment_id: ${orderId}`);
             return res.status(404).json({ success: false, message: 'Order not found.' });
         }
 
@@ -23,6 +25,7 @@ const getOrderTracking = async (req, res) => {
             [internalId]
         );
 
+        console.log(`[TRACKING] Fetch success -- order_id: ${internalId}, ${trackingHistory.length} milestone(s)`);
         return res.status(200).json({
             success: true,
             currentStatus: orderRow[0].status,
@@ -31,7 +34,7 @@ const getOrderTracking = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error fetching tracking metrics:', error);
+        console.error(`[TRACKING] Fetch error (payment_id: ${orderId}):`, error.message);
         return res.status(500).json({ success: false, error: 'Failed to load tracking data.' });
     }
 };
@@ -41,8 +44,10 @@ const getOrderTracking = async (req, res) => {
 // ==========================================
 const updateOrderStatus = async (req, res) => {
     const { orderId, newStatus, adminNote } = req.body;
+    console.log(`[TRACKING] Admin update -- payment_id: ${orderId}, newStatus: ${newStatus}`);
 
     if (!orderId || !newStatus) {
+        console.warn('[TRACKING] Update failed -- missing orderId or newStatus');
         return res.status(400).json({ success: false, message: 'orderId and newStatus are required' });
     }
 
@@ -57,11 +62,12 @@ const updateOrderStatus = async (req, res) => {
         );
 
         if (updateResult.affectedRows === 0) {
+            console.warn(`[TRACKING] Update failed -- payment_id ${orderId} not found`);
             await connection.rollback();
             return res.status(404).json({ success: false, message: 'Target order record missing.' });
         }
 
-        // FIX: use the same connection here, not the pool -- keeps the read inside the transaction
+        // Uses the same connection here, not the pool -- keeps the read inside the transaction
         const [orderRow] = await connection.execute(
             'SELECT order_id FROM orders WHERE payment_id = ?',
             [orderId]
@@ -74,11 +80,12 @@ const updateOrderStatus = async (req, res) => {
         );
 
         await connection.commit();
+        console.log(`[TRACKING] Update success -- order_id: ${internalId} -> ${newStatus}`);
         return res.status(200).json({ success: true, message: 'Order tracking status updated successfully!' });
 
     } catch (error) {
         await connection.rollback();
-        console.error('Admin status update exception:', error);
+        console.error(`[TRACKING] Update error (payment_id: ${orderId}):`, error.message);
         return res.status(500).json({ success: false, error: 'Failed to update order tracking status.' });
     } finally {
         connection.release();

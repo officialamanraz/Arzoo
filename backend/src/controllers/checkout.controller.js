@@ -3,12 +3,23 @@ const nodemailer = require('nodemailer');
 
 // Email transporter -- credentials from env only, never hardcoded
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_APP_PASSWORD
+    },
+    // Forces IPv4 instead of IPv6 -- avoids Render's ENETUNREACH error
+    family: 4,
+    tls: {
+        rejectUnauthorized: false
     }
 });
+
+if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.error('[CHECKOUT] Missing GMAIL_USER or GMAIL_APP_PASSWORD env var -- invoice emails will fail.');
+}
 
 // ==========================================
 // PLACE COD ORDER (server-side pricing -- never trust client for amounts)
@@ -19,8 +30,10 @@ const transporter = nodemailer.createTransport({
 const processCheckout = async (req, res) => {
     const user_id = req.user.id;
     const { addressId, buyNowProduct } = req.body;
+    console.log(`[CHECKOUT] Start -- user_id: ${user_id}, addressId: ${addressId}, buyNow: ${!!buyNowProduct}`);
 
     if (!addressId) {
+        console.warn(`[CHECKOUT] Failed -- no addressId (user_id: ${user_id})`);
         return res.status(400).json({ success: false, message: 'Delivery address is required' });
     }
 
@@ -37,6 +50,7 @@ const processCheckout = async (req, res) => {
         );
 
         if (addressRows.length === 0) {
+            console.warn(`[CHECKOUT] Failed -- address ${addressId} not found for user_id ${user_id}`);
             await connection.rollback();
             return res.status(404).json({ success: false, message: 'Address not found' });
         }
@@ -52,7 +66,12 @@ const processCheckout = async (req, res) => {
             [addr.state]
         );
 
-        const maxDays = zoneRows.length > 0 ? zoneRows[0].max_days : 7;
+        const defaultMaxDays = Number(process.env.DEFAULT_DELIVERY_DAYS) || 7;
+        const maxDays = zoneRows.length > 0 ? zoneRows[0].max_days : defaultMaxDays;
+
+        if (zoneRows.length === 0) {
+            console.warn(`[CHECKOUT] No shipping zone found for state "${addr.state}" -- using default ${defaultMaxDays} days`);
+        }
 
         const estimatedDeliveryDateObj = new Date();
         estimatedDeliveryDateObj.setDate(estimatedDeliveryDateObj.getDate() + maxDays);
@@ -69,6 +88,7 @@ const processCheckout = async (req, res) => {
         );
 
         if (userRows.length === 0) {
+            console.error(`[CHECKOUT] Failed -- user_id ${user_id} not found in users table`);
             await connection.rollback();
             return res.status(404).json({ success: false, message: 'User account not found' });
         }
@@ -87,6 +107,7 @@ const processCheckout = async (req, res) => {
             );
 
             if (productRows.length === 0) {
+                console.warn(`[CHECKOUT] Buy-now product ${buyNowProduct.product_id} not found`);
                 await connection.rollback();
                 return res.status(404).json({ success: false, message: 'Product not found' });
             }
@@ -110,9 +131,12 @@ const processCheckout = async (req, res) => {
         }
 
         if (cartItems.length === 0) {
+            console.warn(`[CHECKOUT] Failed -- empty cart (user_id: ${user_id})`);
             await connection.rollback();
             return res.status(400).json({ success: false, message: 'Cart is empty' });
         }
+
+        console.log(`[CHECKOUT] Processing ${cartItems.length} item(s) -- user_id: ${user_id}, mode: ${isBuyNow ? 'buyNow' : 'cart'}`);
 
         // ---- Server-side pricing math (no GST -- not GST registered yet) ----
         const subtotal = cartItems.reduce(
@@ -136,6 +160,7 @@ const processCheckout = async (req, res) => {
         );
 
         const newOrderId = orderResult.insertId;
+        console.log(`[CHECKOUT] Order created -- order_id: ${newOrderId}, payment_id: ${dynamicPaymentId}, total: ₹${totalAmount}`);
 
         // --- GENERATE INVOICE NUMBER ---
         const invoiceYear = new Date().getFullYear();
@@ -180,18 +205,24 @@ const processCheckout = async (req, res) => {
 
         if (!isBuyNow) {
             await connection.execute('DELETE FROM Cart WHERE user_id = ?', [user_id]);
+            console.log(`[CHECKOUT] Cart cleared -- user_id: ${user_id}`);
         }
 
         await connection.commit();
+        console.log(`[CHECKOUT] Transaction committed -- order_id: ${newOrderId}`);
 
-        // ---- Store Information & Settings ----
-        const storeName = process.env.STORE_NAME || 'Aman Saare';
-        const storeTagline = process.env.STORE_TAGLINE || 'Premium Handcrafted Elegance';
+        // ---- Store Information & Settings (all from env, no hardcoded business info) ----
+        const storeName = process.env.STORE_NAME;
+        const storeTagline = process.env.STORE_TAGLINE;
         const sellerGstin = process.env.SELLER_GSTIN || '';
-        const sellerAddress1 = process.env.SELLER_ADDRESS_1 || 'Main Market';
-        const sellerAddress2 = process.env.SELLER_ADDRESS_2 || 'Kaithoon, Kota, Rajasthan';
-        const supportEmail = process.env.EMAIL_USER || 'support@amansaare.com';
-        const supportPhone = process.env.SUPPORT_PHONE || '+91-XXXXXXXXXX';
+        const sellerAddress1 = process.env.SELLER_ADDRESS_1;
+        const sellerAddress2 = process.env.SELLER_ADDRESS_2;
+        const supportEmail = process.env.GMAIL_USER;
+        const supportPhone = process.env.SUPPORT_PHONE;
+
+        if (!storeName || !storeTagline || !sellerAddress1 || !sellerAddress2 || !supportPhone) {
+            console.warn('[CHECKOUT] One or more STORE_* / SELLER_* / SUPPORT_PHONE env vars are missing -- invoice will show blanks.');
+        }
 
         // Only show a GSTIN row if one is actually set (honest -- no fake "N/A" clutter)
         const gstinRowHtml = sellerGstin ? `GSTIN: ${sellerGstin}<br>` : '';
@@ -432,12 +463,16 @@ const processCheckout = async (req, res) => {
 
         // Send Email
         transporter.sendMail({
-            from: process.env.EMAIL_USER,
+            from: process.env.GMAIL_USER,
             to: customerEmail,
             subject: `Order Confirmed! Invoice ${invoiceNumber} - ${storeName}`,
             html: emailHtmlTemplate
         }, (mailErr) => {
-            if (mailErr) console.error('Billing email failed to send:', mailErr);
+            if (mailErr) {
+                console.error(`[CHECKOUT] Invoice email failed -- order_id: ${newOrderId}:`, mailErr.message);
+            } else {
+                console.log(`[CHECKOUT] Invoice email sent -- order_id: ${newOrderId}, to: ${customerEmail}`);
+            }
         });
 
         return res.status(200).json({
@@ -448,7 +483,7 @@ const processCheckout = async (req, res) => {
 
     } catch (error) {
         await connection.rollback();
-        console.error('Checkout failed:', error.message);
+        console.error(`[CHECKOUT] Failed -- user_id: ${user_id}:`, error.message);
         return res.status(500).json({ success: false, error: 'Checkout failed, please try again.' });
     } finally {
         connection.release();

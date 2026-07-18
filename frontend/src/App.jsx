@@ -25,7 +25,9 @@ import About from './components/About';
 import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// FIX: added fallback so a missing/typo'd VITE_API_URL env var on Render
+// doesn't silently turn every fetch into "undefined/api/...".
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
 
 function App() {
   const [sarees, setSarees] = useState([]);
@@ -34,10 +36,7 @@ function App() {
   const [isDark, setIsDark] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchKeyword, setSearchKeyword] = useState("");
-  
-  // 1. ADDED: State to track the selected category ID
   const [selectedCategory, setSelectedCategory] = useState("");
-  
   const [language, setLanguage] = useState('en');
   const [currency, setCurrency] = useState("INR");
   const [rates, setRates] = useState({});
@@ -59,6 +58,7 @@ function App() {
     let isMounted = true;
 
     const fetchCurrencyData = async () => {
+      console.log(`[APP] Fetching currency rates from ${API_BASE_URL}/api/Currency/Rate-change`);
       try {
         const response = await fetch(`${API_BASE_URL}/api/Currency/Rate-change`);
         if (!response.ok) throw new Error("Failed to fetch currency rates.");
@@ -67,10 +67,11 @@ function App() {
         if (isMounted) {
           setRates(data);
           setRatesError(null);
+          console.log(`[APP] Currency rates loaded -- ${Object.keys(data).length} currencies`);
         }
       } catch (err) {
         if (isMounted) {
-          console.error("Currency fetch error:", err);
+          console.error("[APP] Currency fetch error:", err);
           setRatesError("Could not load currency rates. Showing prices in INR.");
         }
       }
@@ -85,37 +86,43 @@ function App() {
 
   // Main Product Fetching Logic
   useEffect(() => {
-    let isMounted = true; 
+    let isMounted = true;
     setLoading(true);
     setError(null);
 
-let url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12`;
+    let url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12`;
 
-if (searchKeyword) {
-  url = `${API_BASE_URL}/api/products/search?keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}&limit=12`;
-} 
-else if (selectedCategory) {
-  url = `${API_BASE_URL}/api/category/subcategory-products/${selectedCategory}`;
-}
-else if (minprice && maxprice) {
-  url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12&min=${minprice}&max=${maxprice}`;
-}
+    if (searchKeyword) {
+      url = `${API_BASE_URL}/api/products/search?keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}&limit=12`;
+    }
+    else if (selectedCategory) {
+      // FIX: was '/api/category/...' (singular) -- router is mounted at
+      // '/api/categories' (plural) in server.js, so this 404'd every time
+      // a category filter was selected.
+      url = `${API_BASE_URL}/api/categories/subcategory-products/${selectedCategory}`;
+    }
+    else if (minprice && maxprice) {
+      url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12&min=${minprice}&max=${maxprice}`;
+    }
+
+    console.log(`[APP] Fetching products -- ${url}`);
 
     fetch(url)
       .then((res) => {
-        if (!res.ok) throw new Error("Backend API not found.");
+        if (!res.ok) throw new Error(`Backend API not found (status ${res.status}).`);
         return res.json();
       })
       .then((result) => {
         if (isMounted) {
           let finalData = result.data || result.products || result || [];
+          console.log(`[APP] Products loaded -- ${finalData.length} item(s)`);
           setSarees(finalData);
           setLoading(false);
         }
       })
       .catch((err) => {
         if (isMounted) {
-          console.error("Error fetching sarees:", err);
+          console.error("[APP] Error fetching sarees:", err);
           setError("Failed to load products. Please check the backend connection.");
           setLoading(false);
         }
@@ -124,10 +131,7 @@ else if (minprice && maxprice) {
     return () => {
       isMounted = false;
     };
-
-  // 3. ADDED: selectedCategory added to dependency array
   }, [currentPage, searchKeyword, selectedCategory, minprice, maxprice]);
-
 
   // Text Search Handler
   const handleSearch = (keyword) => {
@@ -136,7 +140,7 @@ else if (minprice && maxprice) {
     setCurrentPage(1);
   };
 
-  // 4. ADDED: New Category Select Handler
+  // New Category Select Handler
   const handleCategorySelect = (categoryId) => {
     setSelectedCategory(categoryId);
     setSearchKeyword(""); // Clear text search when selecting a category dropdown
@@ -153,7 +157,7 @@ else if (minprice && maxprice) {
       const data = await response.json();
       return data.translatedText;
     } catch (error) {
-      console.error("Translation failed:", error);
+      console.error("[APP] Translation failed:", error);
       return text;
     }
   };
@@ -163,8 +167,8 @@ else if (minprice && maxprice) {
       <Navbar
         isDark={isDark}
         toggleDark={() => setIsDark(!isDark)}
-        onSearch={handleSearch} 
-        onCategorySelect={handleCategorySelect} /* 5. ADDED: Passed the new function to Navbar */
+        onSearch={handleSearch}
+        onCategorySelect={handleCategorySelect}
         currency={currency}
         setCurrency={setCurrency}
         rates={rates}
@@ -189,17 +193,17 @@ else if (minprice && maxprice) {
               error={error}
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
-              keyword={searchKeyword || (selectedCategory ? "Category Filter Applied" : "")} /* Adjusted keyword display */
+              keyword={searchKeyword || (selectedCategory ? "Category Filter Applied" : "")}
               currency={currency}
               rates={rates}
               language={language}
             />
           }
         />
-        
+
         <Route path="/orders" element={<UserOrders />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
-        
+
         <Route
           path="/product/:id"
           element={
@@ -218,7 +222,7 @@ else if (minprice && maxprice) {
           path="/admin"
           element={
             <AdminRoute>
-              <AdminPage /> 
+              <AdminPage />
             </AdminRoute>
           }
         />

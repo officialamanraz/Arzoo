@@ -1,7 +1,8 @@
 const db = require('../DATABASE/mysql');
 
-// Default product image shown when a product has no image_url set
-const DEFAULT_PRODUCT_IMAGE = 'saare_1.jpeg';
+// Default product image shown when a product has no image_url set.
+// Moved to env var so it can be changed without a code deploy.
+const DEFAULT_PRODUCT_IMAGE = process.env.DEFAULT_PRODUCT_IMAGE || 'saare_1.jpeg';
 
 // ==========================================
 // 1. ADD TO CART (UPSERT: update quantity if it exists, otherwise insert)
@@ -9,8 +10,10 @@ const DEFAULT_PRODUCT_IMAGE = 'saare_1.jpeg';
 const AddToCart = async (req, res) => {
   const user_id = req.user.id;
   const { product_id, quantity } = req.body;
+  console.log(`[CART] Add-to-cart — user_id: ${user_id}, product_id: ${product_id}, qty: ${quantity}`);
 
   if (!product_id) {
+    console.warn(`[CART] Add-to-cart failed — no product_id (user_id: ${user_id})`);
     return res.status(400).json({ success: false, message: 'Product ID is required.' });
   }
 
@@ -29,17 +32,19 @@ const AddToCart = async (req, res) => {
         'UPDATE cart SET quantity = quantity + ?, updated_at = NOW() WHERE user_id = ? AND product_id = ?',
         [qty, user_id, product_id]
       );
+      console.log(`[CART] Quantity updated — cart_id: ${existing[0].cart_id}, +${qty}`);
       return res.status(200).json({ success: true, message: 'Cart quantity updated.' });
     }
 
     // Not in cart yet — insert a new row
-    await db.execute(
+    const [insertResult] = await db.execute(
       'INSERT INTO cart (user_id, product_id, quantity, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
       [user_id, product_id, qty]
     );
+    console.log(`[CART] Item inserted — cart_id: ${insertResult.insertId}`);
     return res.status(201).json({ success: true, message: 'Item added to cart.' });
   } catch (error) {
-    console.error('Add to cart error:', error.message);
+    console.error(`[CART] Add-to-cart error (user_id: ${user_id}):`, error.message);
     return res.status(500).json({ success: false, message: 'Server error while updating cart.', error: error.message });
   }
 };
@@ -49,6 +54,7 @@ const AddToCart = async (req, res) => {
 // ==========================================
 const getCart = async (req, res) => {
   const user_id = req.user.id;
+  console.log(`[CART] Fetching cart — user_id: ${user_id}`);
 
   try {
     const [rows] = await db.execute(
@@ -71,9 +77,10 @@ const getCart = async (req, res) => {
       in_stock: item.stock_qty >= item.quantity
     }));
 
+    console.log(`[CART] Returned ${formatted.length} item(s) for user_id: ${user_id}`);
     return res.status(200).json({ success: true, data: formatted });
   } catch (error) {
-    console.error('Get cart error:', error.message);
+    console.error(`[CART] Get-cart error (user_id: ${user_id}):`, error.message);
     return res.status(500).json({ success: false, message: 'Server error while fetching cart.', error: error.message });
   }
 };
@@ -84,6 +91,7 @@ const getCart = async (req, res) => {
 const RemoveFromCart = async (req, res) => {
   const user_id = req.user.id;
   const { cart_id } = req.params;
+  console.log(`[CART] Remove item — user_id: ${user_id}, cart_id: ${cart_id}`);
 
   try {
     // Only deletes the row if it belongs to the requesting user
@@ -93,12 +101,14 @@ const RemoveFromCart = async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
+      console.warn(`[CART] Remove failed — cart_id ${cart_id} not found for user_id ${user_id}`);
       return res.status(404).json({ success: false, message: 'Item not found or does not belong to you.' });
     }
 
+    console.log(`[CART] Item removed — cart_id: ${cart_id}`);
     return res.status(200).json({ success: true, message: 'Item removed from cart.' });
   } catch (error) {
-    console.error('Remove from cart error:', error.message);
+    console.error(`[CART] Remove error (user_id: ${user_id}):`, error.message);
     return res.status(500).json({ success: false, message: 'Server error while removing item.', error: error.message });
   }
 };

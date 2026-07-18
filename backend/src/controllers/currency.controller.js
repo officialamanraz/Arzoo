@@ -1,43 +1,48 @@
-const express = require("express");
-const app=express();
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
-const currencychange=async(req,res)=>{
+// External rates API -- moved to env var instead of hardcoded URL
+const CURRENCY_API_URL = process.env.CURRENCY_API_URL || 'https://fxapi.app/api/INR.json';
+const FLAG_CDN_BASE_URL = process.env.FLAG_CDN_BASE_URL || 'https://flagcdn.com/w20';
 
-    try{
-        const response = await fetch('https://fxapi.app/api/INR.json');
+const currencychange = async (req, res) => {
+    console.log(`[CURRENCY] Fetching rates from ${CURRENCY_API_URL}`);
 
-        if(!response.ok){
-            throw new Error(`External api failed to load data with status:${response.status}`);
+    try {
+        const response = await fetch(CURRENCY_API_URL);
+
+        if (!response.ok) {
+            throw new Error(`External API failed to load data with status: ${response.status}`);
         }
 
         const data = await response.json();
 
-        const formetetdata={};
+        const formattedData = {};
 
-        for(const currencycode in data.rates){
-            const currentrate = data.rates[currencycode];
+        for (const currencyCode in data.rates) {
+            const currentRate = data.rates[currencyCode];
 
-            const countrycode = currencycode.slice(0, 2).toLowerCase();
-            const flagurl=`https://flagcdn.com/w20/${countrycode}.png`;
-            
-            formetetdata[currencycode]={
-                rate:currentrate,
-                flag:flagurl
+            const countryCode = currencyCode.slice(0, 2).toLowerCase();
+            const flagUrl = `${FLAG_CDN_BASE_URL}/${countryCode}.png`;
+
+            formattedData[currencyCode] = {
+                rate: currentRate,
+                flag: flagUrl
             };
         }
-        
-        return res.status(200).json(formetetdata);
-    } catch(error){
-    
-        console.error("api fecth error",error.message)
+
+        console.log(`[CURRENCY] Success -- ${Object.keys(formattedData).length} currencies loaded`);
+        return res.status(200).json(formattedData);
+    } catch (error) {
+        console.error('[CURRENCY] Fetch error:', error.message);
 
         return res.status(500).json({
-            success:false,
-            message:"there is server error",
-            error:error.message
+            success: false,
+            message: 'There was a server error while fetching currency rates.',
+            error: error.message
         });
-    };
-
+    }
 };
 
-module.exports={currencychange}
+module.exports = { currencychange };

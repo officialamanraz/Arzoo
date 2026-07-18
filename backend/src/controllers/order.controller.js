@@ -4,6 +4,7 @@ const db = require('../DATABASE/mysql'); // mysql2/promise pool
 // ADMIN: Get all orders with their items
 // ==========================================
 const getadminorder = async (req, res) => {
+    console.log('[ORDER] Admin fetching all orders');
     try {
         const [ordersData] = await db.execute('SELECT * FROM orders ORDER BY order_id DESC');
 
@@ -18,9 +19,10 @@ const getadminorder = async (req, res) => {
             items: itemsData.filter((item) => item.order_id === order.order_id)
         }));
 
+        console.log(`[ORDER] Admin fetch success -- ${finalOrdersWithItems.length} order(s)`);
         return res.status(200).json({ success: true, data: finalOrdersWithItems });
     } catch (error) {
-        console.error('Error fetching admin orders:', error.message);
+        console.error('[ORDER] Admin fetch error:', error.message);
         return res.status(500).json({ success: false, message: 'Error fetching orders', error: error.message });
     }
 };
@@ -31,8 +33,10 @@ const getadminorder = async (req, res) => {
 const updateOrderStatus = async (req, res) => {
     // 1. We extract EXACTLY what the frontend sends
     const { orderId, newStatus, adminNote } = req.body;
+    console.log(`[ORDER] Update status -- order_id: ${orderId}, newStatus: ${newStatus}`);
 
     if (!orderId || !newStatus) {
+        console.warn('[ORDER] Update failed -- missing orderId or newStatus');
         return res.status(400).json({ 
             success: false, 
             message: 'Missing orderId or newStatus in request body' 
@@ -47,6 +51,7 @@ const updateOrderStatus = async (req, res) => {
         );
 
         if (updateResult.affectedRows === 0) {
+            console.warn(`[ORDER] Update failed -- order_id ${orderId} not found or unchanged`);
             return res.status(404).json({ 
                 success: false, 
                 message: 'Order not found or no changes made' 
@@ -59,11 +64,13 @@ const updateOrderStatus = async (req, res) => {
                 'INSERT INTO order_tracking (order_id, status, status_message) VALUES (?, ?, ?)',
                 [orderId, newStatus, adminNote || `Status updated to ${newStatus}`]
             );
+            console.log(`[ORDER] Tracking entry added -- order_id: ${orderId}`);
         } catch (trackingErr) {
-            console.log("Note: order_tracking update skipped. If you want tracking, ensure the table exists. Error:", trackingErr.message);
+            console.warn(`[ORDER] Tracking update skipped for order_id ${orderId}:`, trackingErr.message);
         }
 
         // 4. Return the happy JSON response!
+        console.log(`[ORDER] Status updated -- order_id: ${orderId} -> ${newStatus}`);
         return res.status(200).json({ 
             success: true, 
             message: 'Status updated successfully' 
@@ -71,7 +78,7 @@ const updateOrderStatus = async (req, res) => {
 
     } catch (error) {
         // 5. This prints the REAL error in your VS Code terminal if something goes wrong
-        console.error('CRITICAL BACKEND ERROR updating status:', error.message);
+        console.error(`[ORDER] CRITICAL error updating status (order_id: ${orderId}):`, error.message);
         return res.status(500).json({ 
             success: false, 
             error: 'Failed to update order status on the server.' 
@@ -84,6 +91,7 @@ const updateOrderStatus = async (req, res) => {
 // ==========================================
 const getmyorders = async (req, res) => {
     const user_id = req.user.id;
+    console.log(`[ORDER] Fetching orders -- user_id: ${user_id}`);
 
     try {
         const [ordersData] = await db.execute(
@@ -92,6 +100,7 @@ const getmyorders = async (req, res) => {
         );
 
         if (ordersData.length === 0) {
+            console.log(`[ORDER] No orders found -- user_id: ${user_id}`);
             return res.status(200).json({ success: true, message: 'No orders found for this user', data: [] });
         }
 
@@ -109,9 +118,10 @@ const getmyorders = async (req, res) => {
             items: itemsData.filter((item) => item.order_id === order.order_id)
         }));
 
+        console.log(`[ORDER] Fetch success -- user_id: ${user_id}, ${finalOrdersWithItems.length} order(s)`);
         return res.status(200).json({ success: true, data: finalOrdersWithItems });
     } catch (error) {
-        console.error('Error fetching my orders:', error.message);
+        console.error(`[ORDER] Fetch error (user_id: ${user_id}):`, error.message);
         return res.status(500).json({ success: false, message: 'Error fetching orders', error: error.message });
     }
 };
