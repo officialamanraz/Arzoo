@@ -1,10 +1,10 @@
-const express = require('express');
-const { verifyAdmin } = require('../middleware/authmiddleware');
-const { getSubcategories, addSubcategory } = require('../controllers/subcategory.controller');
+// const express = require('express');
+// const { verifyAdmin } = require('../middleware/authmiddleware');
+// const { getSubcategories, addSubcategory } = require('../controllers/subcategory.controller');
 
-const router = express.Router();
+// const router = express.Router();
 
-router.get('/list', getSubcategories);
-router.post('/add', verifyAdmin, addSubcategory);
+// router.get('/list', getSubcategories);
+// router.post('/add', verifyAdmin, addSubcategory);
 
-module.exports = router;
+// module.exports = router;
