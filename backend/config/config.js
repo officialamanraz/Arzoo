@@ -16,12 +16,16 @@ if (!process.env.host) {
 } else if (!process.env.JWT_SECRET) {
   throw new Error('env file me JWT_SECRET ka value nhi he');
 }
+else if (!process.env.db_port) {
+  throw new Error('env file me port ka value nhi he');
+} 
 
 const configdb = {
   host: process.env.host,
   user: process.env.user,
   password: process.env.password,
-  port: process.env.db_port,
+  port: process.env.port,
+  db_port: process.env.db_port,
   database: process.env.database,
 };
 
