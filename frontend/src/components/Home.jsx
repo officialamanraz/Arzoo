@@ -20,6 +20,9 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
   return (
     <>
       <HeroBanner />
+      <div className="hero-text" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+  {t('heroText')}
+</div>
 
       <section className="product-section" id="product">
         <h2 className="section-title">

@@ -5,6 +5,9 @@ import "./theme.css";
 import AdminSwitcher from './components/AdminSwitcher';
 
 // Components
+import AdminInventory from "./components/AdminInventory";
+import AdminAddProduct from "./components/AdminAddProduct";
+import AdminBanners from "./components/AdminBanners";
 import AdminBanners from "./components/AdminBanners";
 import AddressForm from './components/Addressform';
 import OrderSummary from './components/ordersummary';
@@ -204,6 +207,10 @@ function App() {
 
         <Route path="/orders" element={<UserOrders />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+<Route path="/admin/inventory" element={<AdminRoute><AdminInventory /></AdminRoute>} />
+<Route path="/admin/add-product" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
+<Route path="/admin/banners" element={<AdminRoute><AdminBanners /></AdminRoute>} />
 
         <Route
           path="/product/:id"
