@@ -13,7 +13,7 @@ const ProductList = () => {
         // Backend ka wahi Postman wala URL
         const fetchSarees = async () => {
             try {
-                const response = await fetch('${API_BASE_URL}/api/products/all?page=1&limit=10');
+       const response = await fetch(`${API_BASE_URL}/api/products/all?page=1&limit=10`);
                 const result = await response.json();
 
                 if (result.success) {

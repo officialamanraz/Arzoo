@@ -286,7 +286,9 @@ function AdminDashboard() {
               <label>Product Name</label>
               <input type="text" value={form.name} onChange={handleFieldChange('name')} required className="admin-input" />
             </div>
-
+<Link to="/admin/banners" style={{ /* same style */ }}>
+  🖼️ Manage Banners
+</Link>
             <div className="form-group-row">
               <div className="form-group">
                 <label>Price (₹)</label>

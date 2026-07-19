@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { uiTranslations } from '../languages';
+import HeroBanner from './HeroBanner'; 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeyword, keyword, currency, rates, language }) {
   
@@ -18,13 +19,7 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
 
   return (
     <>
-      {/* Hero Banner */}
-      <div className="banner">
-        <img src="/saare_1.jpeg" alt="Banner" style={{ filter: 'brightness(1)' }} />
-      </div>
-      <div className="hero-text" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-        {t('heroText')}
-      </div>
+      <HeroBanner />
 
       <section className="product-section" id="product">
         <h2 className="section-title">

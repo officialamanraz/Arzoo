@@ -5,6 +5,7 @@ import "./theme.css";
 import AdminSwitcher from './components/AdminSwitcher';
 
 // Components
+import AdminBanners from "./components/AdminBanners";
 import AddressForm from './components/Addressform';
 import OrderSummary from './components/ordersummary';
 import PaymentPage from './components/PaymentePage';
@@ -250,6 +251,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/admin/banners"
+  element={
+    <AdminRoute>
+      <AdminBanners />
+    </AdminRoute>
+  }
+/>
 
         <Route
           path="/order-summary"
