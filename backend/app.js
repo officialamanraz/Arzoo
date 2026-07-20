@@ -39,7 +39,7 @@ const checkoutRouter = require('./src/router/checkout.router');
 const addressRouter = require('./src/router/addresses.router');
 const bannersRouter = require('./src/router/banner.router');
 // 5. Routes Attachments
-app.use('/api/banner',bannersRouter);
+app.use('/api/banners',bannersRouter);
 app.use('/api/order', ordersRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/auth', authrouter);

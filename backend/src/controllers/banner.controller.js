@@ -19,7 +19,7 @@ const getALLbanners = async(req,res)=> {
 const getALLbannersAdmin= async(req,res)=>{
     try{
         const [ROWS] = await db.execute(
-            'select * from banners where is_active=1 order by display_order asc'
+           'select * from banners order by display_order asc'
         );
         res.json({success:true,
             data:ROWS
@@ -44,10 +44,10 @@ const createbanner = async(req,res)=>{
                 error:"image is required"
             });
         };
-        const [result]=await db.execute(
-            'insert into banners (image_url,title, subtitle, button_text, button_link, display_order) values(?,?,?,?,?,?)'
-            [image_url, title || null, subtitle || null, button_text || null, button_link || null, display_order || 0]
-        );
+       const [result] = await db.execute(
+    'insert into banners (image_url,title, subtitle, button_text, button_link, display_order) values(?,?,?,?,?,?)',
+    [image_url, title || null, subtitle || null, button_text || null, button_link || null, display_order || 0]
+);
         return res.status(201).json({
             success:true,
             banner_id:result.insertId
@@ -73,7 +73,7 @@ const updatebanner = async(req,res)=>{
             query += ',image_url=?';
             params.push(req.file.filename)
         };
-         query += ',where banner_id';
+         query += ',where banner_id=?';
          params.push(id);
         
          await db.execute(query,params);
