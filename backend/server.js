@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors'); // CORS zaruri hai
 const app = express(); // Sirf ek hi baar app banega
-
+const path = require('path');
 // 1. MIDDLEWARE: Sabse upar, routes se PEHLE
 // Sirf EK cors() config rakho — specific origins ke saath, credentials support ke liye
 app.use(cors({
