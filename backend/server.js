@@ -16,7 +16,7 @@ app.use('/uploads', express.static('uploads'));
 app.get('/test', (req, res) => {
   res.send('Bhai server mast chal raha hai!');
 });
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 2. ROUTES: Middleware ke baad
 const categoryRouter = require('./src/router/category.router')
 // const subcategoryRouter = require('./src/router/subcategory.router');
@@ -31,7 +31,9 @@ const checkoutRouter = require('./src/router/checkout.router');
 const trackingRouter = require('./src/router/tracking.router');
 const addressRouter = require('./src/router/Addresses.router');
 const emailRouter = require('./src/router/Email.router');
+const bannersRouter = require('./src/router/banner.router');
 
+app.use('/api/banners',bannersRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/location', locationRouter);
 app.use('/api/Currency', currencyRouter);
