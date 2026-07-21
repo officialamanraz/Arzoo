@@ -44,11 +44,10 @@ const createbanner = async(req,res)=>{
                 error:"image is required"
             });
         };
-       const [result] = await db.execute(
-    'insert into banners (image_url,title, subtitle, button_text, button_link, display_order) values(?,?,?,?,?,?)',
-    [image_url, title || null, subtitle || null, button_text || null, button_link || null, display_order || 0]
-);
-        return res.status(201).json({
+  const [result] = await db.execute(
+    'insert into banners (image_url,title, subtitle, button_text, button_link, display_order, is_active) values(?,?,?,?,?,?,?)',
+    [image_url, title || null, subtitle || null, button_text || null, button_link || null, display_order || 0, 1]
+);        return res.status(201).json({
             success:true,
             banner_id:result.insertId
         });
