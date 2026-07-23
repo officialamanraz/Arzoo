@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
 
+// 1. Initialization Check
 if (!process.env.JWT_SECRET) {
-  console.error('[AUTH-MW] Missing JWT_SECRET environment variable -- all token verification will fail.');
+  const errorMessage = 'Missing JWT_SECRET environment variable -- all token verification will fail.';
+  console.error(`[AUTH-MW ERROR] ${errorMessage}`);
+  throw new Error(errorMessage);
 }
 
 /**
@@ -26,7 +29,7 @@ const extractToken = (authHeader) => {
  * Centralized JWT Error Handler
  */
 const handleJwtError = (err, res, path) => {
-  console.error(`[AUTH-MW] ${err.name} on ${path}: ${err.message}`);
+  console.error(`[AUTH-MW ERROR] ${err.name} on ${path}: ${err.message}`);
 
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({ 
@@ -57,7 +60,7 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // Attach the decoded payload for the next middleware
     console.log(`[AUTH-MW] verifyToken success -- user_id: ${decoded.id}, role: ${decoded.role}, ${req.method} ${req.originalUrl}`);
     next();
   } catch (err) {
@@ -67,35 +70,30 @@ const verifyToken = (req, res, next) => {
 
 /**
  * Middleware: Verify Admin Role
+ * UPGRADED: Relies on verifyToken to decode the JWT first to save CPU cycles.
  */
 const verifyAdmin = (req, res, next) => {
-  const token = extractToken(req.headers['authorization']);
-
-  if (!token) {
-    console.warn(`[AUTH-MW] verifyAdmin -- no valid token on ${req.method} ${req.originalUrl}`);
+  // 1. Safety check: Ensure verifyToken ran first
+  if (!req.user) {
+    console.error(`[AUTH-MW ERROR] verifyAdmin failed -- req.user is missing. Did you forget to chain verifyToken before verifyAdmin on ${req.method} ${req.originalUrl}?`);
     return res.status(401).json({ 
       success: false, 
-      message: 'Authentication required. No valid token provided.' 
+      message: 'Authentication required. No valid session found.' 
     });
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (decoded.role !== 'admin') {
-      console.warn(`[AUTH-MW] verifyAdmin -- forbidden, user_id: ${decoded.id}, role: ${decoded.role}, ${req.method} ${req.originalUrl}`);
-      return res.status(403).json({
-        success: false,
-        message: 'Forbidden. Admin privileges required.'
-      });
-    }
-
-    req.user = decoded;
-    console.log(`[AUTH-MW] verifyAdmin success -- user_id: ${decoded.id}, ${req.method} ${req.originalUrl}`);
-    next();
-  } catch (err) {
-    return handleJwtError(err, res, req.originalUrl);
+  // 2. Check the role from the already-decoded token
+  if (req.user.role !== 'admin') {
+    console.warn(`[AUTH-MW] verifyAdmin -- forbidden, user_id: ${req.user.id}, role: ${req.user.role}, ${req.method} ${req.originalUrl}`);
+    return res.status(403).json({
+      success: false,
+      message: 'Forbidden. Admin privileges required.'
+    });
   }
+
+  // 3. Success
+  console.log(`[AUTH-MW] verifyAdmin success -- user_id: ${req.user.id}, ${req.method} ${req.originalUrl}`);
+  next();
 };
 
 module.exports = { verifyToken, verifyAdmin };

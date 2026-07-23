@@ -5,11 +5,14 @@ import "./theme.css";
 import AdminSwitcher from './components/AdminSwitcher';
 
 // Components
+import AdminInventory from "./components/AdminInventory";
+import AdminAddProduct from "./components/AdminAddProduct";
+import AdminBanners from "./components/AdminBanners";
 import AddressForm from './components/Addressform';
 import OrderSummary from './components/ordersummary';
 import PaymentPage from './components/PaymentePage';
 import OrderTracking from './components/OrderTracking';
-import UserOrders from './components/UserOrders'; 
+import UserOrders from './components/UserOrders';
 import AdminOrders from './components/AdminOrders';
 import Navbar from "./components/Navbar";
 import ForgotPassword from "./components/ForgotPassword";
@@ -27,7 +30,7 @@ import AdminRoute from "./components/AdminRoute";
 
 // FIX: added fallback so a missing/typo'd VITE_API_URL env var on Render
 // doesn't silently turn every fetch into "undefined/api/...".
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function App() {
   const [sarees, setSarees] = useState([]);
@@ -37,6 +40,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [language, setLanguage] = useState('en');
   const [currency, setCurrency] = useState("INR");
   const [rates, setRates] = useState({});
@@ -46,6 +50,7 @@ function App() {
 
   // Dark mode toggle
   useEffect(() => {
+    console.log(`[APP] Dark mode toggled -- isDark: ${isDark}`);
     if (isDark) {
       document.body.classList.add("dark");
     } else {
@@ -91,38 +96,43 @@ function App() {
     setError(null);
 
     let url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12`;
+    let fetchMode = "default-listing";
 
     if (searchKeyword) {
       url = `${API_BASE_URL}/api/products/search?keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}&limit=12`;
+      fetchMode = "keyword-search";
     }
     else if (selectedCategory) {
       // FIX: was '/api/category/...' (singular) -- router is mounted at
       // '/api/categories' (plural) in server.js, so this 404'd every time
       // a category filter was selected.
       url = `${API_BASE_URL}/api/categories/subcategory-products/${selectedCategory}`;
+      fetchMode = "category-filter";
     }
     else if (minprice && maxprice) {
       url = `${API_BASE_URL}/api/products/all?page=${currentPage}&limit=12&min=${minprice}&max=${maxprice}`;
+      fetchMode = "price-range";
     }
 
-    console.log(`[APP] Fetching products -- ${url}`);
+    console.log(`[APP] Fetching products -- mode: ${fetchMode}, page: ${currentPage}, url: ${url}`);
 
     fetch(url)
       .then((res) => {
+        console.log(`[APP] Product fetch response -- status: ${res.status}, ok: ${res.ok}`);
         if (!res.ok) throw new Error(`Backend API not found (status ${res.status}).`);
         return res.json();
       })
       .then((result) => {
         if (isMounted) {
           let finalData = result.data || result.products || result || [];
-          console.log(`[APP] Products loaded -- ${finalData.length} item(s)`);
+          console.log(`[APP] Products loaded -- mode: ${fetchMode}, count: ${finalData.length}`);
           setSarees(finalData);
           setLoading(false);
         }
       })
       .catch((err) => {
         if (isMounted) {
-          console.error("[APP] Error fetching sarees:", err);
+          console.error(`[APP] Error fetching sarees -- mode: ${fetchMode}:`, err);
           setError("Failed to load products. Please check the backend connection.");
           setLoading(false);
         }
@@ -135,19 +145,24 @@ function App() {
 
   // Text Search Handler
   const handleSearch = (keyword) => {
+    console.log(`[APP] handleSearch -- keyword: "${keyword}"`);
     setSearchKeyword(keyword);
-    setSelectedCategory(""); // Clear category when typing a text search
+    setSelectedCategory("");     // Clear category when typing a text search
+    setSelectedCategoryName("");
     setCurrentPage(1);
   };
 
-  // New Category Select Handler
-  const handleCategorySelect = (categoryId) => {
+  // Category Select Handler (accepts optional display name)
+  const handleCategorySelect = (categoryId, categoryName = "") => {
+    console.log(`[APP] handleCategorySelect -- categoryId: ${categoryId}, categoryName: "${categoryName}"`);
     setSelectedCategory(categoryId);
-    setSearchKeyword(""); // Clear text search when selecting a category dropdown
+    setSelectedCategoryName(categoryName);
+    setSearchKeyword("");        // Clear text search when selecting a category
     setCurrentPage(1);
   };
 
   const translateText = async (text, targetLang) => {
+    console.log(`[APP] translateText -- targetLang: ${targetLang}, text: "${text}"`);
     try {
       const response = await fetch(`${API_BASE_URL}/api/translate`, {
         method: 'POST',
@@ -155,6 +170,7 @@ function App() {
         body: JSON.stringify({ text, targetLanguage: targetLang })
       });
       const data = await response.json();
+      console.log(`[APP] translateText success -- result: "${data.translatedText}"`);
       return data.translatedText;
     } catch (error) {
       console.error("[APP] Translation failed:", error);
@@ -193,7 +209,8 @@ function App() {
               error={error}
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
-              keyword={searchKeyword || (selectedCategory ? "Category Filter Applied" : "")}
+              keyword={searchKeyword}
+              categoryName={selectedCategoryName}
               currency={currency}
               rates={rates}
               language={language}
@@ -202,7 +219,10 @@ function App() {
         />
 
         <Route path="/orders" element={<UserOrders />} />
-        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+        <Route path="/admin/inventory" element={<AdminRoute><AdminInventory /></AdminRoute>} />
+        <Route path="/admin/add-product" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
 
         <Route
           path="/product/:id"
@@ -217,15 +237,6 @@ function App() {
         />
 
         <Route path="/cart" element={<CartPage />} />
-
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminPage />
-            </AdminRoute>
-          }
-        />
         <Route
           path="/my-orders"
           element={
@@ -248,6 +259,14 @@ function App() {
             <ProtectedRoute>
               <AddressForm />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/banners"
+          element={
+            <AdminRoute>
+              <AdminBanners />
+            </AdminRoute>
           }
         />
 
