@@ -1,25 +1,34 @@
-// Ye do lines sabse zyada zaroori hain! Inke bina .env file nahi chalti.
+// Load environment variables strictly in non-production environments
 if (process.env.NODE_ENV !== 'production') {
+  console.log('[CONFIG] Non-production environment detected. Loading .env file...');
   require('dotenv').config();
 }
 
-if (!process.env.host) {
-  throw new Error('env file me host ka value nahi he');
-} else if (!process.env.user) {
-  throw new Error('env file me user ka value nhi he');
-} else if (!process.env.password) {
-  throw new Error('env file me password ka value nhi he');
-} else if (!process.env.port) {
-  throw new Error('env file me port ka value nhi he');
-} else if (!process.env.database) {
-  throw new Error('env file me database ka value nhi he');
-} else if (!process.env.JWT_SECRET) {
-  throw new Error('env file me JWT_SECRET ka value nhi he');
-}
-else if (!process.env.db_port) {
-  throw new Error('env file me port ka value nhi he');
-} 
+// Define all required environment variables in a single array
+const requiredEnvVars = [
+  'host',
+  'user',
+  'password',
+  'port',
+  'database',
+  'JWT_SECRET',
+  'db_port'
+];
 
+console.log('[CONFIG] Validating environment variables...');
+
+// Loop through the array to ensure no required variables are missing
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    const errorMessage = `Missing required environment variable: ${envVar}`;
+    console.error(`[CONFIG ERROR] ${errorMessage}`);
+    throw new Error(errorMessage);
+  }
+}
+
+console.log('[CONFIG] All required environment variables are present.');
+
+// Construct the configuration object
 const configdb = {
   host: process.env.host,
   user: process.env.user,
@@ -28,5 +37,7 @@ const configdb = {
   db_port: process.env.db_port,
   database: process.env.database,
 };
+
+console.log('[CONFIG] Database configuration object successfully created.');
 
 module.exports = configdb;
