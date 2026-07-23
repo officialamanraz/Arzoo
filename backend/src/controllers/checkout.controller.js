@@ -120,9 +120,10 @@ const processCheckout = async (req, res) => {
                 quantity: buyNowProduct.quantity || 1
             }];
         } else {
+            // FIXED: Changed "Cart c" to "cart c"
             const [rows] = await connection.execute(
                 `SELECT c.product_id, c.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code
-                 FROM Cart c
+                 FROM cart c
                  INNER JOIN products p ON c.product_id = p.product_id
                  WHERE c.user_id = ?`,
                 [user_id]
@@ -204,7 +205,8 @@ const processCheckout = async (req, res) => {
         );
 
         if (!isBuyNow) {
-            await connection.execute('DELETE FROM Cart WHERE user_id = ?', [user_id]);
+            // FIXED: Changed "DELETE FROM Cart" to "DELETE FROM cart"
+            await connection.execute('DELETE FROM cart WHERE user_id = ?', [user_id]);
             console.log(`[CHECKOUT] Cart cleared -- user_id: ${user_id}`);
         }
 
