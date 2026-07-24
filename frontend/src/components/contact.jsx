@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { apiFetch } from "../api";
+import './Contact.css';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -12,6 +13,8 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[Contact] Submitting form...', formData);
+    
     setLoading(true);
     setStatus('Sending your message...');
 
@@ -21,6 +24,7 @@ const Contact = () => {
         body: JSON.stringify(formData),
       });
       const result = await response.json();
+      console.log('[Contact] Server response:', result);
 
       if (result.success) {
         setStatus('Your message has been sent! 🚀');
@@ -29,7 +33,7 @@ const Contact = () => {
         setStatus('Something went wrong: ' + result.message);
       }
     } catch (error) {
-      console.error(error);
+      console.error('[Contact] Error submitting form:', error);
       setStatus('Could not connect to the server.');
     } finally {
       setLoading(false);
@@ -80,7 +84,7 @@ const Contact = () => {
               value={formData.message} 
               onChange={handleChange} 
               required 
-              className="contact-input"
+              className="contact-input contact-textarea"
             />
           </div>
           

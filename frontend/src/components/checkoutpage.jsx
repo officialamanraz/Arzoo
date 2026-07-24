@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './Checkout.css'; // Importing the separate CSS file
+
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 const Checkout = () => {
     const navigate = useNavigate();
     
@@ -12,44 +15,45 @@ const Checkout = () => {
     const [selectedAddress, setSelectedAddress] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Fetch addresses when the component loads
     useEffect(() => {
         const fetchAddresses = async () => {
+            console.log('[CHECKOUT] Component mounted. Fetching addresses...');
             const token = localStorage.getItem('token');
             try {
-                // Calling the backend route you just perfected!
-                const res = await fetch('${API_BASE_URL}/api/addresses', {
+                const res = await fetch(`${API_BASE_URL}/api/addresses`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
+                
+                console.log('[CHECKOUT] Addresses fetched successfully:', data);
                 if (data.success) {
                     setAddresses(data.addresses);
                     if (data.addresses.length > 0) {
                         setSelectedAddress(data.addresses[0]); // Select first by default
+                        console.log('[CHECKOUT] Default address set:', data.addresses[0]);
                     }
                 }
             } catch (error) {
-                console.error("Failed to load addresses", error);
+                console.error("[CHECKOUT] Failed to load addresses", error);
             }
         };
         fetchAddresses();
     }, []);
 
-    // Function to handle the final checkout call
   const handlePlaceOrder = async () => {
-    console.log('[CHECKOUT-UI] Place order clicked -- address_id:', selectedAddress?.address_id);
+    console.log('[CHECKOUT] Place order clicked -- address_id:', selectedAddress?.address_id);
 
     if (!selectedAddress || !selectedAddress.address_id) {
         alert('Please select a delivery address before placing the order.');
-        console.warn('[CHECKOUT-UI] Blocked -- no address selected');
+        console.warn('[CHECKOUT] Blocked -- no address selected');
         return;
     }
 
-    const token = localStorage.getItem('token'); // CONFIRM: same key name Login.jsx uses to save it
+    const token = localStorage.getItem('token'); 
 
     if (!token) {
         alert('Please log in again to place your order.');
-        console.warn('[CHECKOUT-UI] Blocked -- no auth token found');
+        console.warn('[CHECKOUT] Blocked -- no auth token found');
         navigate('/login');
         return;
     }
@@ -57,8 +61,6 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-        // FIX: backticks, not single quotes -- was a plain string before,
-        // so API_BASE_URL never actually got interpolated into the URL.
         const res = await fetch(`${API_BASE_URL}/api/checkout`, {
             method: 'POST',
             headers: {
@@ -67,114 +69,129 @@ const Checkout = () => {
             },
             body: JSON.stringify({
                 addressId: selectedAddress.address_id
-                // buyNowProduct: { product_id, quantity } -- add this only for the Buy Now flow
             })
         });
 
         const data = await res.json();
-        console.log('[CHECKOUT-UI] Response:', data);
+        console.log('[CHECKOUT] Server Response:', data);
 
         if (data.success) {
             alert(`Order Placed Successfully! Order ID: ${data.orderId}`);
             navigate('/order-success');
         } else {
-            console.warn('[CHECKOUT-UI] Checkout failed:', data.message);
+            console.warn('[CHECKOUT] Checkout failed:', data.message);
             alert(`Checkout failed: ${data.message}`);
         }
     } catch (error) {
-        console.error('[CHECKOUT-UI] Order error:', error);
+        console.error('[CHECKOUT] Order error:', error);
         alert('Something went wrong while placing the order.');
     } finally {
         setLoading(false);
     }
 };
+
     return (
-        <div className="max-w-4xl mx-auto p-4 bg-gray-50 min-h-screen">
-            
-            {/* STEP 1: ADDRESS */}
-            <div className={`bg-white p-6 rounded shadow mb-4 ${currentStep === 1 ? 'border-l-4 border-blue-500' : 'opacity-70'}`}>
-                <h2 className="text-xl font-bold mb-4 text-blue-600">1. Delivery Address</h2>
+        <div className="checkout-page">
+            <div className="checkout-container">
                 
-                {currentStep === 1 && (
-                    <div>
-                        {addresses.length === 0 ? (
-                            <p>No addresses found. Please add a new address.</p>
-                        ) : (
-                            addresses.map((addr) => (
-                                <div key={addr.address_id} className="border p-4 mb-3 rounded flex items-start gap-3">
-                                    <input 
-                                        type="radio" 
-                                        name="address" 
-                                        checked={selectedAddress?.address_id === addr.address_id}
-                                        onChange={() => setSelectedAddress(addr)}
-                                        className="mt-1"
-                                    />
-                                    <div>
-                                        <p className="font-semibold">{addr.full_name} <span className="text-sm font-normal text-gray-500">{addr.phone}</span></p>
-                                        <p className="text-sm text-gray-700">{addr.house_no}, {addr.road_area}, {addr.city}, {addr.state} - {addr.pincode}</p>
+                {/* STEP 1: ADDRESS */}
+                <div className={`checkout-step ${currentStep === 1 ? 'step-active' : 'step-inactive'}`}>
+                    <h2 className="step-title">1. Delivery Address</h2>
+                    
+                    {currentStep === 1 && (
+                        <div className="step-content">
+                            {addresses.length === 0 ? (
+                                <p className="no-data-text">No addresses found. Please add a new address.</p>
+                            ) : (
+                                addresses.map((addr) => (
+                                    <div key={addr.address_id} className="address-card">
+                                        <input 
+                                            type="radio" 
+                                            name="address" 
+                                            checked={selectedAddress?.address_id === addr.address_id}
+                                            onChange={() => {
+                                              console.log('[CHECKOUT] Address selected:', addr);
+                                              setSelectedAddress(addr);
+                                            }}
+                                            className="address-radio"
+                                        />
+                                        <div className="address-details">
+                                            <p className="address-name">
+                                                {addr.full_name} <span className="address-phone">{addr.phone}</span>
+                                            </p>
+                                            <p className="address-text">
+                                                {addr.house_no}, {addr.road_area}, {addr.city}, {addr.state} - {addr.pincode}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
-                        )}
-                        <button 
-                            onClick={() => setCurrentStep(2)} 
-                            disabled={!selectedAddress}
-                            className="bg-orange-500 text-white px-6 py-2 rounded mt-4 hover:bg-orange-600 disabled:bg-gray-400"
-                        >
-                            Deliver Here
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* STEP 2: ORDER SUMMARY */}
-            <div className={`bg-white p-6 rounded shadow mb-4 ${currentStep === 2 ? 'border-l-4 border-blue-500' : 'opacity-70'}`}>
-                <h2 className="text-xl font-bold mb-4 text-blue-600">2. Order Summary</h2>
-                
-                {currentStep === 2 && (
-                    <div>
-                        <p className="text-gray-600 mb-4">Your cart items will be fetched securely on the server.</p>
-                        <div className="flex gap-4">
+                                ))
+                            )}
                             <button 
-                                onClick={() => setCurrentStep(3)} 
-                                className="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600"
+                                onClick={() => {
+                                  console.log('[CHECKOUT] Moving to Step 2');
+                                  setCurrentStep(2);
+                                }} 
+                                disabled={!selectedAddress}
+                                className="btn-primary"
                             >
-                                Continue
+                                Deliver Here
                             </button>
-                            <button onClick={() => setCurrentStep(1)} className="text-blue-500">Back</button>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
+
+                {/* STEP 2: ORDER SUMMARY */}
+                <div className={`checkout-step ${currentStep === 2 ? 'step-active' : 'step-inactive'}`}>
+                    <h2 className="step-title">2. Order Summary</h2>
+                    
+                    {currentStep === 2 && (
+                        <div className="step-content">
+                            <p className="info-text">Your cart items will be fetched securely on the server.</p>
+                            <div className="btn-group">
+                                <button 
+                                    onClick={() => {
+                                      console.log('[CHECKOUT] Moving to Step 3');
+                                      setCurrentStep(3);
+                                    }} 
+                                    className="btn-primary"
+                                >
+                                    Continue
+                                </button>
+                                <button onClick={() => setCurrentStep(1)} className="btn-text">Back</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* STEP 3: PAYMENT */}
+                <div className={`checkout-step ${currentStep === 3 ? 'step-active' : 'step-inactive'}`}>
+                    <h2 className="step-title">3. Payment Options</h2>
+                    
+                    {currentStep === 3 && (
+                        <div className="step-content">
+                            <div className="payment-method-card">
+                                <label className="payment-label">
+                                    <input type="radio" checked readOnly className="payment-radio" />
+                                    <span className="payment-name">Cash on Delivery (COD)</span>
+                                </label>
+                                <p className="payment-desc">Pay with cash when your order arrives.</p>
+                            </div>
+
+                            <div className="btn-group">
+                                <button 
+                                    onClick={handlePlaceOrder} 
+                                    disabled={loading}
+                                    className="btn-primary btn-large"
+                                >
+                                    {loading ? 'Placing Order...' : 'Place Order'}
+                                </button>
+                                <button onClick={() => setCurrentStep(2)} className="btn-text">Back</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
             </div>
-
-            {/* STEP 3: PAYMENT */}
-            <div className={`bg-white p-6 rounded shadow ${currentStep === 3 ? 'border-l-4 border-blue-500' : 'opacity-70'}`}>
-                <h2 className="text-xl font-bold mb-4 text-blue-600">3. Payment Options</h2>
-                
-                {currentStep === 3 && (
-                    <div>
-                        <div className="border border-green-500 bg-green-50 p-4 rounded mb-6">
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <input type="radio" checked readOnly className="w-5 h-5 text-green-600" />
-                                <span className="font-semibold text-lg">Cash on Delivery (COD)</span>
-                            </label>
-                            <p className="text-sm text-gray-600 ml-8 mt-1">Pay with cash when your order arrives.</p>
-                        </div>
-
-                        <div className="flex gap-4">
-                            <button 
-                                onClick={handlePlaceOrder} 
-                                disabled={loading}
-                                className="bg-orange-500 text-white px-8 py-3 rounded font-bold text-lg hover:bg-orange-600 disabled:bg-gray-400"
-                            >
-                                {loading ? 'Placing Order...' : 'Place Order'}
-                            </button>
-                            <button onClick={() => setCurrentStep(2)} className="text-blue-500">Back</button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
         </div>
     );
 };

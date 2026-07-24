@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './RecommendedProducts.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -10,6 +11,8 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
 
   useEffect(() => {
     const fetchRecommendations = async () => {
+      console.log(`[RecommendedProducts] Fetching recommendations for Product ID: ${currentProductId}, Category ID: ${categoryId}`);
+      
       try {
         const params = new URLSearchParams({
           product_id: currentProductId,
@@ -25,11 +28,15 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
         );
         const data = await response.json();
 
+        console.log('[RecommendedProducts] Response received:', data);
+
         if (data.success) {
           setProducts(data.data || []);
+        } else {
+          console.warn('[RecommendedProducts] Failed to load recommendations:', data.message);
         }
       } catch (error) {
-        console.error("Error fetching recommendations:", error);
+        console.error("[RecommendedProducts] Error fetching recommendations:", error);
       } finally {
         setLoading(false);
       }
@@ -37,11 +44,13 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
 
     if (currentProductId && categoryId) {
       fetchRecommendations();
+    } else {
+      setLoading(false);
     }
   }, [currentProductId, categoryId, subcategoryId]);
 
   if (loading) {
-    return <p style={{ textAlign: 'center', color: '#666' }}>Loading recommendations...</p>;
+    return <p className="recommended-loading">Loading recommendations...</p>;
   }
 
   if (products.length === 0) {
@@ -49,42 +58,32 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
   }
 
   return (
-    <div style={{ marginTop: '60px', paddingTop: '40px', borderTop: '2px solid #eee' }}>
-      <h2 style={{ marginBottom: '20px', fontSize: '1.5em', color: '#333' }}>You Might Also Like</h2>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-        gap: '20px'
-      }}>
+    <div className="recommended-container">
+      <h2 className="recommended-title">You Might Also Like</h2>
+      
+      <div className="recommended-grid">
         {products.map((product) => (
           <div
             key={product.product_id}
-            onClick={() => navigate(`/product/${product.product_id}`)}
-            style={{
-              border: '1px solid #eee',
-              borderRadius: '12px',
-              padding: '15px',
-              textAlign: 'center',
-              transition: 'transform 0.2s',
-              cursor: 'pointer'
+            className="recommended-card"
+            onClick={() => {
+              console.log(`[RecommendedProducts] Navigating to recommended product ID: ${product.product_id}`);
+              navigate(`/product/${product.product_id}`);
+              // Ensure the page scrolls to top when a new product is selected
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
             <img
               src={`${API_BASE_URL}/uploads/${product.image_url || 'saare_1.jpeg'}`}
               alt={product.name || 'Saree'}
-              style={{
-                width: '100%',
-                height: '150px',
-                objectFit: 'cover',
-                borderRadius: '8px',
-                marginBottom: '10px'
+              className="recommended-img"
+              onError={(e) => { 
+                console.log(`[RecommendedProducts] Image failed to load for product ${product.product_id}. Using fallback.`);
+                e.target.src = '/saare_1.jpeg'; 
               }}
-              onError={(e) => e.target.src = '/saare_1.jpeg'}
             />
-            <h4 style={{ margin: '10px 0', color: '#333' }}>{product.name}</h4>
-            <p style={{ color: '#d63031', fontWeight: 'bold', margin: 0 }}>
+            <h4 className="recommended-name">{product.name}</h4>
+            <p className="recommended-price">
               ₹{Number(product.price).toLocaleString('en-IN')}
             </p>
           </div>

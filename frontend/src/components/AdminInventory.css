@@ -1,0 +1,28 @@
+/* =========================================
+   ADMIN INVENTORY — extra rules
+   Base table/card styling already lives in theme.css
+   (.admin-wrapper, .admin-list-glass, .admin-table, etc.)
+   This file only covers what used to be inline styles.
+   ========================================= */
+
+.admin-add-new-btn {
+  margin: 16px 0;
+  width: auto;
+  padding: 12px 24px;
+}
+
+.admin-empty-row {
+  text-align: center;
+  padding: 20px;
+}
+
+.admin-list-glass-full {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .admin-add-new-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

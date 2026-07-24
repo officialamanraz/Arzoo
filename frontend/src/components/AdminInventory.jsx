@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminNav from './AdminNav';
+import './AdminInventory.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -28,8 +29,6 @@ function AdminInventory() {
   }, []);
 
   const handleEdit = (product) => {
-    // Product ka poora data AddProduct page ko state ke through bhej rahe hain,
-    // taaki wahan alag se fetch na karna pade
     navigate('/admin/add-product', { state: { product } });
   };
 
@@ -56,13 +55,12 @@ function AdminInventory() {
 
       <button
         onClick={() => navigate('/admin/add-product')}
-        className="admin-submit-btn"
-        style={{ margin: '16px 0', width: 'auto', padding: '12px 24px' }}
+        className="admin-submit-btn admin-add-new-btn"
       >
         ➕ Add New Product
       </button>
 
-      <div className="admin-list-glass" style={{ width: '100%' }}>
+      <div className="admin-list-glass admin-list-glass-full">
         <div className="admin-table-container">
           <table className="admin-table">
             <thead>
@@ -75,7 +73,7 @@ function AdminInventory() {
             </thead>
             <tbody>
               {products.length === 0 ? (
-                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>No products found.</td></tr>
+                <tr><td colSpan="4" className="admin-empty-row">No products found.</td></tr>
               ) : (
                 products.map((product) => (
                   <tr key={product.product_id}>

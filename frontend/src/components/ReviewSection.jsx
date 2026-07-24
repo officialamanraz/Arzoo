@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
+import './ReviewSection.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Dynamic style definitions mapped to your backend rating fields
 const OPTION_UI_CONFIG = {
-  skip: { label: "Skip It", color: "bg-red-500" },
-  timepass: { label: "Timepass", color: "bg-yellow-500" },
-  go_for_it: { label: "Go For It", color: "bg-blue-500" },
-  perfection: { label: "Perfection!", color: "bg-green-500" },
+  skip: { label: "Skip It", colorClass: "color-red" },
+  timepass: { label: "Timepass", colorClass: "color-yellow" },
+  go_for_it: { label: "Go For It", colorClass: "color-blue" },
+  perfection: { label: "Perfection!", colorClass: "color-green" },
 };
 
 const ReviewSection = ({ productId }) => {
@@ -16,16 +17,19 @@ const ReviewSection = ({ productId }) => {
   const [totalReviews, setTotalReviews] = useState(0);
 
   const fetchReviews = async () => {
+    console.log(`[ReviewSection] Fetching reviews for product ID: ${productId}`);
     try {
       const response = await fetch(`${API_BASE_URL}/api/reviews/${productId}`);
       const data = await response.json();
+      console.log('[ReviewSection] Received review data:', data);
+
       if (data.success) {
         setReviews(data.reviews);
         setStats(data.stats);
         setTotalReviews(data.totalReviews);
       }
     } catch (error) {
-      console.error("Error fetching reviews:", error);
+      console.error("[ReviewSection] Error fetching reviews:", error);
     }
   };
 
@@ -36,14 +40,14 @@ const ReviewSection = ({ productId }) => {
   }, [productId]);
 
   return (
-    <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
-      <p className="mb-6 text-gray-600">Total Reviews: {totalReviews}</p>
+    <div className="review-section-container">
+      <h2 className="review-section-title">Customer Reviews</h2>
+      <p className="total-reviews-text">Total Reviews: {totalReviews}</p>
 
       {/* ============================== */}
       {/* 1. DYNAMIC PROGRESS BARS       */}
       {/* ============================== */}
-      <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+      <div className="stats-container">
         {Object.keys(stats || {}).map((optionId) => {
           const votes = stats[optionId] || 0;
           const percentage = totalReviews > 0 ? (votes / totalReviews) * 100 : 0;
@@ -51,79 +55,75 @@ const ReviewSection = ({ productId }) => {
           // Safe lookup matching config properties directly to your dataset keys
           const uiConfig = OPTION_UI_CONFIG[optionId] || { 
             label: optionId.replace(/_/g, " "), 
-            color: "bg-gray-500" 
+            colorClass: "color-gray" 
           };
 
           return (
-            <div key={optionId} className="mb-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="font-semibold capitalize">{uiConfig.label}</span>
-                <span>
+            <div key={optionId} className="progress-row">
+              <div className="progress-label-container">
+                <span className="progress-label">{uiConfig.label}</span>
+                <span className="progress-value">
                   {votes} vote(s) ({percentage.toFixed(0)}%)
                 </span>
               </div>
 
               {/* Progress Bar Track */}
-              <div className="w-full h-3 bg-gray-200 rounded overflow-hidden">
+              <div className="progress-track">
                 {/* Progress Bar Fill */}
                 <div
-                  className={`h-full ${uiConfig.color}`}
-                  style={{
-                    width: `${percentage}%`,
-                    transition: "width 0.3s ease",
-                  }}
+                  className={`progress-fill ${uiConfig.colorClass}`}
+                  style={{ width: `${percentage}%` }}
                 />
               </div>
             </div>
           );
         })}
       </div>
-      <div className="flex flex-col gap-4">
+
+      <div className="reviews-list">
         {reviews.length === 0 ? (
-          <p>No reviews yet. Be the first to review!</p>
+          <p className="no-reviews-text">No reviews yet. Be the first to review!</p>
         ) : (
           reviews.map((review) => {
             // Resolves lookups on the fly using your schema values directly
             const uiConfig = OPTION_UI_CONFIG[review.rating_type] || {
               label: review.rating_type ? review.rating_type.replace(/_/g, " ") : "Rating",
-              color: "bg-gray-500",
+              colorClass: "color-gray",
             };
 
             return (
-              <div key={review.review_id} className="border p-4 rounded shadow-sm">
+              <div key={review.review_id} className="review-card">
                 
                 {/* Header (Name, Badge, Date) */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <strong className="text-lg">{review.user_name}</strong>
+                <div className="review-header">
+                  <div className="reviewer-info">
+                    <strong className="reviewer-name">{review.user_name}</strong>
                     
                     {(review.is_verified_buyer === 1 || review.is_verified_buyer === true) && (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">
+                      <span className="verified-badge">
                         ✅ Verified Buyer
                       </span>
                     )}
                   </div>
-                  <span className="text-gray-500 text-sm">
+                  <span className="review-date">
                     {new Date(review.created_at).toLocaleDateString()}
                   </span>
                 </div>
 
                 {/* Rating Badge */}
-                <span
-                  className={`${uiConfig.color} text-white px-3 py-1 rounded-full text-xs font-bold inline-block mb-3 capitalize`}
-                >
+                <span className={`rating-badge ${uiConfig.colorClass}`}>
                   {uiConfig.label}
                 </span>
 
                 {/* Comment */}
-                <p className="text-gray-700 mb-3">{review.comment}</p>
+                <p className="review-comment">{review.comment}</p>
 
                 {/* Image (If uploaded) */}
                 {review.image_url && (
                   <img
                     src={`${API_BASE_URL}/uploads/${review.image_url}`}
-                    alt="Review"
-                    className="w-32 h-32 object-cover rounded-md border"
+                    alt="User Review"
+                    className="review-image"
                   />
                 )}
               </div>

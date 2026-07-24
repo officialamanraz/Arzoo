@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { apiFetch } from '../api';
+import './Signup.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -28,33 +28,35 @@ function Signup() {
   useEffect(() => {
     const controller = new AbortController();
 
-  const fetchLocations = async () => {
-  try {
-    const res =await fetch(`${API_BASE_URL}/api/location/states-districts`, {
-      signal: controller.signal,
-    });
+    const fetchLocations = async () => {
+      console.log('[Signup] Fetching locations data...');
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/location/states-districts`, {
+          signal: controller.signal,
+        });
+        
+        // DEBUGGING STEP: Read the response as raw text first
+        const textData = await res.text(); 
+        console.log("[Signup] Raw response from server:", textData);
+
+        // Attempt to parse the text into JSON
+        const data = JSON.parse(textData);
+        setLocationData(data);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('[Signup] Location API Error:', error);
+        }
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
     
-    // DEBUGGING STEP: Read the response as raw text first
-    const textData = await res.text(); 
-    console.log("🔍 RAW RESPONSE FROM SERVER:", textData);
-
-    // Attempt to parse the text into JSON
-    const data = JSON.parse(textData);
-    setLocationData(data);
-
-  } catch (error) {
-    if (error.name !== 'AbortError') {
-      console.error('Location API Error:', error);
-    }
-  } finally {
-    setLoadingLocations(false);
-  }
-};
     fetchLocations();
     return () => controller.abort();
   }, []);
 
   const handleStateChange = (e) => {
+    console.log(`[Signup] State changed to: ${e.target.value}`);
     setFormData({
       ...formData,
       state: e.target.value,
@@ -66,76 +68,43 @@ function Signup() {
     e.preventDefault();
     setErrorMessage('');
     setIsSubmitting(true);
+    console.log("[Signup] Registering user with data:", formData);
 
     try {
-      console.log("registering user..."+JSON.stringify(formData));
-      const res =await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
-          headers: { 'Content-Type': 'application/json' },   // 👈 yeh line add karo
-
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       const data = await res.json();
+      console.log("[Signup] Server response:", data);
 
       if (res.ok && data.token) {
-        console.log(res.data);
         // Auto-login after successful signup — store the token and
         // go straight to the home page, same as a normal login.
         localStorage.setItem('token', data.token);
         navigate('/');
-        window.location.reload(); // refresh Navbar so it shows logged-in state
+        window.location.reload(); // Refresh Navbar so it shows logged-in state
       } else {
+        console.warn("[Signup] Failed to register:", data.message);
         setErrorMessage(data.message || 'Signup failed. Please try again.');
       }
     } catch (err) {
-      console.log(err )
-      console.error('Signup error:', err);
+      console.error('[Signup] Request error:', err);
       setErrorMessage('Could not reach the server. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const inputStyle = {
-    padding: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-    outline: 'none',
-    fontSize: '15px',
-  };
-
   return (
-    <div style={{ marginTop: '80px', textAlign: 'center', padding: '20px', minHeight: '60vh' }}>
-      <h2 style={{ color: '#7c3f2f', marginBottom: '25px', fontFamily: 'Playfair Display, serif' }}>
-        Create Account
-      </h2>
+    <div className="signup-page">
+      <h2 className="signup-title">Create Account</h2>
 
-      <form
-        onSubmit={handleSignup}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '15px',
-          maxWidth: '350px',
-          margin: '0 auto',
-          background: '#fff',
-          padding: '30px',
-          borderRadius: '15px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
-        }}
-      >
+      <form onSubmit={handleSignup} className="signup-form">
         {errorMessage && (
-          <div
-            style={{
-              background: '#fdecea',
-              color: '#b3261e',
-              padding: '10px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              textAlign: 'left',
-            }}
-          >
+          <div className="signup-error-box">
             {errorMessage}
           </div>
         )}
@@ -145,23 +114,26 @@ function Signup() {
           placeholder="Full Name"
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
-          style={inputStyle}
+          className="signup-input"
         />
+        
         <input
           type="email"
           placeholder="Email Address"
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
-          style={inputStyle}
+          className="signup-input"
         />
+        
         <input
           type="password"
           placeholder="Password (min. 6 characters)"
           minLength="6"
           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           required
-          style={inputStyle}
+          className="signup-input"
         />
+        
         <input
           type="tel"
           placeholder="Phone Number"
@@ -169,18 +141,18 @@ function Signup() {
           title="Enter a 10-digit phone number"
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           required
-          style={inputStyle}
+          className="signup-input"
           maxLength="10"
         />
 
         {/* Smart Address Section (powered by backend location data) */}
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="form-row">
           {/* State Dropdown */}
           <select
             value={formData.state}
             onChange={handleStateChange}
             required
-            style={{ ...inputStyle, flex: 1, cursor: 'pointer' }}
+            className="signup-select"
           >
             <option value="">{loadingLocations ? 'Loading...' : 'Select State'}</option>
             {!loadingLocations &&
@@ -197,12 +169,7 @@ function Signup() {
             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
             required
             disabled={!formData.state}
-            style={{
-              ...inputStyle,
-              flex: 1,
-              cursor: formData.state ? 'pointer' : 'not-allowed',
-              background: formData.state ? '#fff' : '#f5f5f5',
-            }}
+            className={`signup-select ${!formData.state ? 'select-disabled' : ''}`}
           >
             <option value="">Select City</option>
             {formData.state &&
@@ -219,31 +186,20 @@ function Signup() {
           placeholder="House No, Building, Street, Area..."
           onChange={(e) => setFormData({ ...formData, fullAddress: e.target.value })}
           required
-          style={{ ...inputStyle, resize: 'vertical', minHeight: '80px' }}
+          className="signup-textarea"
         />
 
         <button
           type="submit"
           disabled={isSubmitting}
-          style={{
-            padding: '14px',
-            background: isSubmitting ? '#a87c6f' : '#7c3f2f',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            fontSize: '16px',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            marginTop: '10px',
-            transition: '0.3s',
-          }}
+          className="signup-submit-btn"
         >
           {isSubmitting ? 'Creating Account...' : 'Create Account'}
         </button>
 
-        <div style={{ marginTop: '15px', fontSize: '14px', color: '#555' }}>
+        <div className="signup-footer-text">
           Already have an account?{' '}
-          <Link to="/login" style={{ color: '#e07a5f', fontWeight: 'bold', textDecoration: 'none' }}>
+          <Link to="/login" className="signup-login-link">
             Sign In here
           </Link>
         </div>

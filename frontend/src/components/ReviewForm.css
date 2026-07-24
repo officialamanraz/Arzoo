@@ -1,0 +1,134 @@
+.review-form-wrapper {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  box-sizing: border-box;
+}
+
+.review-form-title {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  color: #333;
+  text-align: center;
+}
+
+.rating-section {
+  margin-bottom: 25px;
+}
+
+.rating-label {
+  margin-bottom: 12px;
+  font-weight: bold;
+  color: #555;
+  text-align: center;
+}
+
+.rating-buttons-container {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.rating-btn {
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.2s;
+  text-transform: capitalize;
+  font-size: 0.95rem;
+}
+
+.rating-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.rating-btn-active {
+  border: 2px solid #d63031;
+  background-color: #ffe5e5;
+  font-weight: bold;
+  color: #d63031;
+}
+
+.input-group {
+  margin-bottom: 18px;
+}
+
+.review-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.review-textarea:focus {
+  outline: none;
+  border-color: #d63031;
+}
+
+.char-counter {
+  margin: 6px 0 0 0;
+  font-size: 0.85rem;
+  color: #999;
+  text-align: right;
+}
+
+.upload-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+}
+
+.file-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 100%;
+  background-color: #fff;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.file-success-msg {
+  margin: 6px 0 0 0;
+  font-size: 0.9rem;
+  color: #28a745;
+  font-weight: 500;
+}
+
+.review-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: #d63031;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.review-submit-btn:hover {
+  background-color: #c51f1f;
+}
+
+@media (max-width: 480px) {
+  .review-form-wrapper {
+    padding: 20px;
+  }
+}

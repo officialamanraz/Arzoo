@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './AdminBanners.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -21,13 +22,15 @@ function AdminBanners() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchBanners = async () => {
+    console.log('[AdminBanners] Fetching banners...');
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/banners/all`);
       const result = await response.json();
+      console.log('[AdminBanners] Fetched result:', result);
       if (result.success) setBanners(result.data);
     } catch (err) {
-      console.error('[ADMIN BANNER] fetch error:', err.message);
+      console.error('[AdminBanners] Fetch error:', err.message);
     } finally {
       setLoading(false);
     }
@@ -51,6 +54,7 @@ function AdminBanners() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[AdminBanners] Submitting banner form...', form);
     setIsSubmitting(true);
 
     const formData = new FormData();
@@ -70,20 +74,22 @@ function AdminBanners() {
 
       const response = await fetch(url, { method, body: formData });
       if (response.ok) {
-        alert(isEditing ? 'Banner updated!' : 'Banner added!');
+        alert(isEditing ? 'Banner updated successfully!' : 'Banner added successfully!');
         fetchBanners();
         resetForm();
       } else {
-        alert('Kuch galat ho gaya. Server error.');
+        alert('Something went wrong. Server error.');
       }
     } catch (err) {
-      alert('Backend se connect nahi ho pa raha.');
+      console.error('[AdminBanners] Submission error:', err);
+      alert('Unable to connect to the backend.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleEdit = (banner) => {
+    console.log('[AdminBanners] Editing banner:', banner);
     setIsEditing(true);
     setEditId(banner.banner_id);
     setForm({
@@ -99,16 +105,23 @@ function AdminBanners() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Ye banner delete karna hai?')) return;
+    if (!window.confirm('Are you sure you want to delete this banner?')) return;
+    console.log(`[AdminBanners] Deleting banner ID: ${id}`);
+    
     try {
       const response = await fetch(`${API_BASE_URL}/api/banners/${id}`, { method: 'DELETE' });
-      if (response.ok) fetchBanners();
+      if (response.ok) {
+        fetchBanners();
+      } else {
+        alert('Failed to delete the banner.');
+      }
     } catch (err) {
+      console.error('[AdminBanners] Delete error:', err);
       alert('Delete failed.');
     }
   };
 
-  if (loading) return <div className="admin-loading">Banners load ho rahe hain...</div>;
+  if (loading) return <div className="admin-loading">Loading banners...</div>;
 
   return (
     <div className="admin-wrapper">
@@ -119,7 +132,7 @@ function AdminBanners() {
 
       <div className="admin-layout">
         {/* Left: Form */}
-        <div className="admin-form-glass">
+        <div className="admin-form-glass banner-form-section">
           <h3>{isEditing ? 'Edit Banner' : 'Add New Banner'}</h3>
           <form onSubmit={handleSubmit} className="admin-form">
 
@@ -149,9 +162,9 @@ function AdminBanners() {
                 <label>Display Order</label>
                 <input type="number" value={form.display_order} onChange={handleChange('display_order')} className="admin-input" min="0" />
               </div>
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
+              <div className="form-group checkbox-group">
                 <input type="checkbox" checked={form.is_active} onChange={handleChange('is_active')} id="is_active" />
-                <label htmlFor="is_active" style={{ margin: 0 }}>Active (homepage pe dikhega)</label>
+                <label htmlFor="is_active">Active (Visible on homepage)</label>
               </div>
             </div>
 
@@ -180,7 +193,7 @@ function AdminBanners() {
         </div>
 
         {/* Right: List */}
-        <div className="admin-list-glass">
+        <div className="admin-list-glass banner-list-section">
           <h3>All Banners</h3>
           <div className="admin-table-container">
             <table className="admin-table">
@@ -195,7 +208,7 @@ function AdminBanners() {
               </thead>
               <tbody>
                 {banners.length === 0 ? (
-                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>Koi banner nahi mila.</td></tr>
+                  <tr><td colSpan="5" className="empty-state">No banners found.</td></tr>
                 ) : (
                   banners.map((banner) => (
                     <tr key={banner.banner_id}>
