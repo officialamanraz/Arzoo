@@ -1,4 +1,5 @@
 const db = require('../DATABASE/mysql');
+const imagekit = require('../../config/imagekit');
 
 // Default product image shown when a product has no image_url set.
 // Moved to env var so it can be changed without a code deploy.
