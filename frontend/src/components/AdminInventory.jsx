@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-const imagePath = getImageUrl(product.image_url);
 import AdminNav from './AdminNav';
 import './AdminInventory.css';
 
@@ -81,7 +80,7 @@ function AdminInventory() {
                   <tr key={product.product_id}>
                     <td>
                       <img
-                        src={`${API_BASE_URL}/uploads/${product.image_url || 'saare_1.jpeg'}`}
+                        src={getImageUrl(product.image_url)}
                         alt={product.name || 'Product'}
                         className="admin-list-img"
                         onError={(e) => e.target.src = '/saare_1.jpeg'}

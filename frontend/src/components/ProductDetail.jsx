@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-const imagePath = getImageUrl(product.image_url);
 import ReviewForm from '../components/ReviewForm';
 import ReviewSection from '../components/ReviewSection';
 import Recommended from "../components/Recommended";
@@ -218,7 +217,7 @@ function ProductDetail({ currency, rates, language }) {
           <div className="gallery-section">
             <div className="main-image-wrapper" onClick={() => setIsLightboxOpen(true)}>
               <img
-                src={`${API_BASE_URL}/uploads/${sliderImages[activeImageIdx]}`}
+                src={getImageUrl(sliderImages[activeImageIdx])}
                 alt={saree.name}
                 className="main-image"
                 onError={(e) => { e.target.src = "/saare_1.jpeg"; }}
@@ -232,7 +231,7 @@ function ProductDetail({ currency, rates, language }) {
                 {sliderImages.map((img, idx) => (
                   <img
                     key={idx}
-                    src={`${API_BASE_URL}/uploads/${img}`}
+                    src={getImageUrl(img)}
                     alt={`Thumbnail ${idx}`}
                     className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
                     onClick={() => setActiveImageIdx(idx)}

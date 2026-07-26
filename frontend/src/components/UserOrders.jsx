@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl';
 import './UserOrders.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -331,7 +332,7 @@ function UserOrders() {
                     order.items.map((item, idx) => (
                       <div key={idx} className="order-item-row">
                         <img
-                          src={`${API_BASE_URL}/uploads/${item.image_url || 'saare_1.jpeg'}`}
+                          src={getImageUrl(banner.image_url)}
                           alt={item.name}
                           className="order-item-thumb"
                           onError={(e) => { e.target.src = '/saare_1.jpeg'; }}

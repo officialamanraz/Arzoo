@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-const imagePath = getImageUrl(product.image_url);
 import './AdminBanners.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -216,7 +215,7 @@ function AdminBanners() {
                     <tr key={banner.banner_id}>
                       <td>
                         <img
-                          src={`${API_BASE_URL}/uploads/${banner.image_url}`}
+                          src={getImageUrl(banner.image_url)}
                           alt={banner.title || 'Banner'}
                           className="admin-list-img"
                           onError={(e) => e.target.src = '/saare_1.jpeg'}

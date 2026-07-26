@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { uiTranslations } from '../languages';
 import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-const imagePath = getImageUrl(product.image_url);
 import HeroBanner from './HeroBanner';
 import './Home.css'; // Extracted CSS
 
@@ -65,7 +64,7 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
                 return (
                   <Link to={`/product/${sareeId}`} className="product-card" key={sareeId}>
                     <img
-                      src={imagePath}
+                      src={getImageUrl(imagePath)}
                       alt={saree.name || saree.title}
                       className="product-img"
                       onError={(e) => { 

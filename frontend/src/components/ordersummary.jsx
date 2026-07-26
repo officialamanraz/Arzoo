@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-const imagePath = getImageUrl(product.image_url);
 import './OrderSummary.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -189,7 +188,7 @@ export default function OrderSummary() {
                     <div className="cart-item-details">
                       <div className="cart-item-img-container">
                         <img 
-                          src={itemImage ? `${API_BASE_URL}/uploads/${itemImage}` : '/placeholder.png'} 
+                          src={itemImage ? getImageUrl(itemImage): '/placeholder.png'} 
                           alt={item.product_name} 
                           className="cart-item-img"
                           onError={(e) => { 

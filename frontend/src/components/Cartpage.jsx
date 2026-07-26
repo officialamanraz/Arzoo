@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-const imagePath = getImageUrl(product.image_url);
 import './CartPage.css'; // Importing the separate CSS file
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -83,7 +82,7 @@ function CartPage() {
             {cartItems.map((item) => (
               <div key={item.cart_id} className="cart-item">
                 <img
-                  src={`${API_BASE_URL}/uploads/${item.image_url || 'saare_1.jpeg'}`}
+                  src={getImageUrl(item.image_url)}
                   alt={item.name || 'Product'}
                   className="cart-item-img"
                   onError={(e) => { e.target.src = '/saare_1.jpeg'; }}

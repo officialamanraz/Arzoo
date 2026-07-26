@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl';
 import './RecommendedProducts.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -74,7 +75,7 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
             }}
           >
             <img
-              src={`${API_BASE_URL}/uploads/${product.image_url || 'saare_1.jpeg'}`}
+              src={getImageUrl(banner.image_url)}
               alt={product.name || 'Saree'}
               className="recommended-img"
               onError={(e) => { 
