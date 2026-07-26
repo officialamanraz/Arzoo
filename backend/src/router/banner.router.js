@@ -3,10 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const bannercontroller = require('../controllers/banner.controller');
 
-const storage = multer.diskStorage({
-    destination:(req,file,cb)=>cb(null,'uploads/'),
-    filename:(req,file,cb)=>cb(null, `${Date.now()}-${file.originalname}`)
-});
+const storage = multer.memoryStorage(); // CHANGED: diskStorage se memoryStorage
 
 const upload = multer({storage});
 

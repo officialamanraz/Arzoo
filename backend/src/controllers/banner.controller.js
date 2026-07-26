@@ -1,5 +1,6 @@
 const db = require('../DATABASE/mysql');
 const { registerUser } = require('./auth.controller');
+const imagekit = require('../DATABASE/../config/imagekit'); // apna sahi path lagao
 
 const getALLbanners = async(req,res)=> {
     try{
@@ -36,8 +37,15 @@ const getALLbannersAdmin= async(req,res)=>{
 const createbanner = async(req,res)=>{
     try{
         const { title, subtitle, button_text, button_link, display_order } = req.body;
-        const image_url = req.file?req.file.filename:null;
-
+       let image_url = null;
+if (req.file) {
+    const uploaded = await imagekit.upload({
+        file: req.file.buffer,
+        fileName: `${Date.now()}-${req.file.originalname}`,
+        folder: '/arzoo-saree/banners',
+    });
+    image_url = uploaded.url;
+}
         if(!image_url){
             return res.status(400).json({
                 success:false,
@@ -69,9 +77,14 @@ const updatebanner = async(req,res)=>{
         const params = [title || null, subtitle || null, button_text || null, button_link || null, display_order || 0, is_active ?? 1];
 
         if(req.file){
-            query += ',image_url=?';
-            params.push(req.file.filename)
-        };
+    const uploaded = await imagekit.upload({
+        file: req.file.buffer,
+        fileName: `${Date.now()}-${req.file.originalname}`,
+        folder: '/arzoo-saree/banners',
+    });
+    query += ',image_url=?';
+    params.push(uploaded.url);
+};
          query += ',where banner_id=?';
          params.push(id);
         

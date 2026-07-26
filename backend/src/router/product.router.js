@@ -23,18 +23,10 @@ router.get("/recommendations", getRecommendedProducts);
 router.get('/search', searchproduct);
 router.get('/product/:id', getProductById);
 router.get('/all', getallproduct);      // Pagination wala // Budget Filter wala
-router.post('/product', upload.array('image', 10), verifyToken, addproducts)
-router.delete('/product/:id', deleteproduct,verifyToken);
-router.put('/product/:id',upload.array('image',10), updateproduct,verifyToken);
-router.get('/product', product);
-
-// ==========================================
-// 3. IMAGE MANAGEMENT ROUTES (Naye)
-// ==========================================
-// Kisi existing product me aur photos daalne ke liye
-router.post('/product/:id/images', upload.array('image', 10),verifyToken, addNewImagesToProduct); 
-
-// Kisi ek kharab/purani photo ko delete karne ke liye
-router.delete('/product/image/:image_id', deleteSingleImage,verifyToken);
+router.post('/product', verifyToken, upload.array('image', 10), addproducts);
+router.delete('/product/:id', verifyToken, deleteproduct);
+router.put('/product/:id', verifyToken, upload.array('image',10), updateproduct);
+router.post('/product/:id/images', verifyToken, upload.array('image', 10), addNewImagesToProduct); 
+router.delete('/product/image/:image_id', verifyToken, deleteSingleImage);
 
 module.exports = router;
