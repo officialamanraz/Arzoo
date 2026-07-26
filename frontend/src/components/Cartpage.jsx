@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+const imagePath = getImageUrl(product.image_url);
 import './CartPage.css'; // Importing the separate CSS file
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;

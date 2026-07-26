@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+const imagePath = getImageUrl(product.image_url);
 import ReviewForm from '../components/ReviewForm';
 import ReviewSection from '../components/ReviewSection';
 import Recommended from "../components/Recommended";

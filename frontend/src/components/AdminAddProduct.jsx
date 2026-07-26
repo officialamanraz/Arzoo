@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+const imagePath = getImageUrl(product.image_url);
 import AdminNav from './AdminNav';
 import './AdminAddProduct.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL ;
 
 const emptyFormState = {
   name: '', price: '', description: '', baseColor: '', categoryId: '', subcategoryId: '',

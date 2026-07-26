@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { uiTranslations } from '../languages';
+import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+const imagePath = getImageUrl(product.image_url);
 import HeroBanner from './HeroBanner';
 import './Home.css'; // Extracted CSS
 
