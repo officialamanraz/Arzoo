@@ -82,10 +82,10 @@ const updatebanner = async(req,res)=>{
         fileName: `${Date.now()}-${req.file.originalname}`,
         folder: '/arzoo-saree/banners',
     });
-    query += ',image_url=?';
+    query += ', image_url=?';
     params.push(uploaded.url);
 };
-         query += ',where banner_id=?';
+         query += ' where banner_id=?';
          params.push(id);
         
          await db.execute(query,params);
