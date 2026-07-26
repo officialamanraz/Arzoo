@@ -33,16 +33,34 @@ function AdminInventory() {
     navigate('/admin/add-product', { state: { product } });
   };
 
-  const handleDelete = async (id) => {
+ const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/api/products/product/${id}`, { method: 'DELETE' });
-      if (response.ok) fetchProducts();
+      // 1. Get the token from wherever you saved it during login (e.g., localStorage)
+      const token = localStorage.getItem('token'); // Change 'token' if you saved it under a different key
+
+      const response = await fetch(`${API_BASE_URL}/api/products/product/${id}`, { 
+        method: 'DELETE',
+        // 2. Attach the Authorization header
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        fetchProducts();
+      } else {
+        // Optional: Handle backend error messages nicely
+        const errorData = await response.json();
+        alert(`Delete failed: ${errorData.message}`);
+      }
     } catch (err) {
-      alert('Delete failed.');
+      console.error('Delete error:', err);
+      alert('Delete failed due to a network or server error.');
     }
   };
-
   if (loading) return <div className="admin-loading">Loading Inventory...</div>;
 
   return (
