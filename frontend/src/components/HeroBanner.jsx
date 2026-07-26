@@ -68,17 +68,17 @@ function HeroBanner() {
 const imageUrl = getImageUrl(banner.image_url);
 
   return (
-    <div className="banner hero-banner">
-      <img
-        src={getImageUrl(image_url)}
-        alt={banner.title || 'Banner'}
-        className="hero-banner-img"
-        onError={(e) => {
-          console.error('[HeroBanner] Image failed to load:', imageUrl);
-          e.target.onerror = null;
-          e.target.src = '/saare_1.jpeg';
-        }}
-      />
+<div className="banner hero-banner">
+  <img
+    src={getImageUrl(banner.image_url)}
+    alt={banner.title || 'Banner'}
+    className="hero-banner-img"
+    onError={(e) => {
+      console.error('[HeroBanner] Image failed to load:', banner.image_url);
+      e.target.onerror = null;
+      e.target.src = '/saare_1.jpeg';
+    }}
+  />
 
       {(banner.title || banner.subtitle || banner.button_link) && (
         <div className="hero-banner-content">
