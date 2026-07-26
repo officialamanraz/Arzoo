@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-const imagePath = getImageUrl(product.image_url);
 import './ProductList.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
