@@ -66,7 +66,7 @@ const ProductList = () => {
             
             {/* Image URL from the backend's static folder */}
             <img 
-              src={`${API_BASE_URL}/uploads/${saree.image}`} 
+            src={getImageUrl(saree.image)}
               alt={saree.name} 
               className="product-card-img"
               onError={(e) => {

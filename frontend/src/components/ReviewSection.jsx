@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { getImageUrl } from '../getImageUrl';
 import './ReviewSection.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -121,7 +122,7 @@ const ReviewSection = ({ productId }) => {
                 {/* Image (If uploaded) */}
                 {review.image_url && (
                   <img
-                    src={`${API_BASE_URL}/uploads/${review.image_url}`}
+                    src={getImageUrl(review.image_url)}
                     alt="User Review"
                     className="review-image"
                   />

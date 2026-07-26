@@ -333,7 +333,7 @@ function ProductDetail({ currency, rates, language }) {
           )}
 
           <img
-            src={`${API_BASE_URL}/uploads/${sliderImages[activeImageIdx]}`}
+          src={getImageUrl(sliderImages[activeImageIdx])}
             alt={saree.name}
             className="lightbox-image"
             onClick={(e) => e.stopPropagation()}
