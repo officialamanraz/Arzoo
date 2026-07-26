@@ -70,7 +70,7 @@ const imageUrl = getImageUrl(banner.image_url);
   return (
     <div className="banner hero-banner">
       <img
-        src={getImageUrl(img)}
+        src={getImageUrl(image_url)}
         alt={banner.title || 'Banner'}
         className="hero-banner-img"
         onError={(e) => {
