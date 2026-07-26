@@ -75,7 +75,7 @@ function RecommendedProducts({ currentProductId, categoryId, subcategoryId }) {
             }}
           >
             <img
-              src={getImageUrl(banner.image_url)}
+              src={getImageUrl(e.image_url)}
               alt={product.name || 'Saree'}
               className="recommended-img"
               onError={(e) => { 
