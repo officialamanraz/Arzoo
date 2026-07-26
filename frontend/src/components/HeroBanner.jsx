@@ -65,12 +65,12 @@ function HeroBanner() {
   }
 
   const banner = banners[current];
-  const imageUrl = `${API_BASE_URL}/uploads/${banner.image_url}`;
+const imageUrl = getImageUrl(banner.image_url);
 
   return (
     <div className="banner hero-banner">
       <img
-        src={getImageUrl(imageUrl)}
+        src={getImageUrl(img)}
         alt={banner.title || 'Banner'}
         className="hero-banner-img"
         onError={(e) => {
