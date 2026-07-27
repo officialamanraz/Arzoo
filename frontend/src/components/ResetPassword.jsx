@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import './ResetPassword.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -15,10 +16,13 @@ function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[ResetPassword] Attempting password reset for token:', token);
+    
     setMessage('');
     setIsError(false);
 
     if (newPassword !== confirmPassword) {
+      console.warn('[ResetPassword] Passwords do not match.');
       setIsError(true);
       setMessage('Passwords do not match.');
       return;
@@ -34,16 +38,20 @@ function ResetPassword() {
       });
 
       const data = await res.json();
+      console.log('[ResetPassword] Server response:', data);
 
       if (res.ok) {
         setMessage('Password reset successfully! Redirecting to login...');
-        setTimeout(() => navigate('/login'), 2000);
+        setTimeout(() => {
+          console.log('[ResetPassword] Redirecting to login page.');
+          navigate('/login');
+        }, 2000);
       } else {
         setIsError(true);
         setMessage(data.message || 'Reset failed. The link may have expired.');
       }
     } catch (err) {
-      console.error('Reset password error:', err);
+      console.error('[ResetPassword] Network or server error:', err);
       setIsError(true);
       setMessage('Could not reach the server. Please try again later.');
     } finally {
@@ -52,68 +60,52 @@ function ResetPassword() {
   };
 
   return (
-    <div style={{ marginTop: '120px', textAlign: 'center', padding: '20px', minHeight: '60vh' }}>
-      <h2 style={{ color: '#2c3e50', marginBottom: '20px' }}>Reset Your Password</h2>
+    <div className="reset-password-page">
+      <div className="reset-password-container">
+        <h2>Reset Your Password</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '300px', margin: '0 auto' }}
-      >
-        {message && (
-          <div
-            style={{
-              background: isError ? '#fdecea' : '#e6f4ea',
-              color: isError ? '#b3261e' : '#1e7e34',
-              padding: '10px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              textAlign: 'left',
-            }}
+        <form onSubmit={handleSubmit} className="reset-password-form">
+          {message && (
+            <div className={`message-box ${isError ? 'message-error' : 'message-success'}`}>
+              {message}
+            </div>
+          )}
+
+          <input
+            type="password"
+            placeholder="New Password (min. 6 characters)"
+            minLength="6"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+            className="auth-input"
+          />
+          
+          <input
+            type="password"
+            placeholder="Confirm New Password"
+            minLength="6"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className="auth-input"
+          />
+          
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="auth-submit-btn"
           >
-            {message}
+            {isSubmitting ? 'Resetting...' : 'Reset Password'}
+          </button>
+
+          <div className="back-to-login">
+            <Link to="/login" className="login-link">
+              Back to Login
+            </Link>
           </div>
-        )}
-
-        <input
-          type="password"
-          placeholder="New Password (min. 6 characters)"
-          minLength="6"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          required
-          style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc' }}
-        />
-        <input
-          type="password"
-          placeholder="Confirm New Password"
-          minLength="6"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc' }}
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          style={{
-            padding: '12px',
-            background: isSubmitting ? '#ffab8a' : '#ff5722',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {isSubmitting ? 'Resetting...' : 'Reset Password'}
-        </button>
-
-        <div style={{ marginTop: '15px', fontSize: '14px', color: '#555' }}>
-          <Link to="/login" style={{ color: '#e07a5f', fontWeight: 'bold', textDecoration: 'none' }}>
-            Back to Login
-          </Link>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

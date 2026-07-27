@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
 import AdminNav from './AdminNav';
+import './AdminInventory.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -28,21 +30,37 @@ function AdminInventory() {
   }, []);
 
   const handleEdit = (product) => {
-    // Product ka poora data AddProduct page ko state ke through bhej rahe hain,
-    // taaki wahan alag se fetch na karna pade
     navigate('/admin/add-product', { state: { product } });
   };
 
-  const handleDelete = async (id) => {
+ const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/api/products/product/${id}`, { method: 'DELETE' });
-      if (response.ok) fetchProducts();
+      // 1. Get the token from wherever you saved it during login (e.g., localStorage)
+      const token = localStorage.getItem('token'); // Change 'token' if you saved it under a different key
+
+      const response = await fetch(`${API_BASE_URL}/api/products/product/${id}`, { 
+        method: 'DELETE',
+        // 2. Attach the Authorization header
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        fetchProducts();
+      } else {
+        // Optional: Handle backend error messages nicely
+        const errorData = await response.json();
+        alert(`Delete failed: ${errorData.message}`);
+      }
     } catch (err) {
-      alert('Delete failed.');
+      console.error('Delete error:', err);
+      alert('Delete failed due to a network or server error.');
     }
   };
-
   if (loading) return <div className="admin-loading">Loading Inventory...</div>;
 
   return (
@@ -56,13 +74,12 @@ function AdminInventory() {
 
       <button
         onClick={() => navigate('/admin/add-product')}
-        className="admin-submit-btn"
-        style={{ margin: '16px 0', width: 'auto', padding: '12px 24px' }}
+        className="admin-submit-btn admin-add-new-btn"
       >
         ➕ Add New Product
       </button>
 
-      <div className="admin-list-glass" style={{ width: '100%' }}>
+      <div className="admin-list-glass admin-list-glass-full">
         <div className="admin-table-container">
           <table className="admin-table">
             <thead>
@@ -75,13 +92,13 @@ function AdminInventory() {
             </thead>
             <tbody>
               {products.length === 0 ? (
-                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>No products found.</td></tr>
+                <tr><td colSpan="4" className="admin-empty-row">No products found.</td></tr>
               ) : (
                 products.map((product) => (
                   <tr key={product.product_id}>
                     <td>
                       <img
-                        src={`${API_BASE_URL}/uploads/${product.image_url || 'saare_1.jpeg'}`}
+                        src={getImageUrl(product.image_url)}
                         alt={product.name || 'Product'}
                         className="admin-list-img"
                         onError={(e) => e.target.src = '/saare_1.jpeg'}

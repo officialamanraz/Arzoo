@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import './ReviewForm.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -14,7 +15,12 @@ const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!rating) return alert("Please select a rating!");
+    console.log('[ReviewForm] Submitting review...');
+    
+    if (!rating) {
+      console.warn('[ReviewForm] Rating is missing.');
+      return alert("Please select a rating!");
+    }
 
     const formData = new FormData();
     formData.append("product_id", productId);
@@ -31,8 +37,10 @@ const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
       });
 
       const data = await response.json();
+      console.log('[ReviewForm] Response from server:', data);
+
       if (data.success) {
-        alert("Review added!");
+        alert("Review added successfully!");
         setRating("");
         setComment("");
         setImage(null);
@@ -41,34 +49,27 @@ const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
         alert(data.message);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("[ReviewForm] Network error during submission:", error);
     }
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '30px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' }}>
-      <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '1.3em', color: '#333', textAlign: 'center' }}>Share Your Opinion</h3>
+    <div className="review-form-wrapper">
+      <h3 className="review-form-title">Share Your Opinion</h3>
       
       {/* Rating Buttons */}
-      <div style={{ marginBottom: '20px' }}>
-        <p style={{ marginBottom: '10px', fontWeight: 'bold', color: '#555', textAlign: 'center' }}>How would you rate this product?</p>
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <div className="rating-section">
+        <p className="rating-label">How would you rate this product?</p>
+        <div className="rating-buttons-container">
           {optionsToRender.map((optionId) => (
             <button
               key={optionId}
               type="button"
-              onClick={() => setRating(optionId)}
-              style={{
-                padding: '10px 16px',
-                border: rating === optionId ? '2px solid #d63031' : '1px solid #ddd',
-                backgroundColor: rating === optionId ? '#ffe5e5' : '#fff',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: rating === optionId ? 'bold' : 'normal',
-                color: rating === optionId ? '#d63031' : '#555',
-                transition: 'all 0.2s',
-                textTransform: 'capitalize'
+              onClick={() => {
+                console.log(`[ReviewForm] Selected rating: ${optionId}`);
+                setRating(optionId);
               }}
+              className={`rating-btn ${rating === optionId ? 'rating-btn-active' : ''}`}
             >
               {optionId.replace(/_/g, " ")}
             </button>
@@ -78,66 +79,38 @@ const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
 
       {/* Comment Input */}
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
+        <div className="input-group">
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Share your experience with this product..."
-            style={{
-              width: '100%',
-              minHeight: '100px',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontFamily: 'inherit',
-              fontSize: '1em',
-              resize: 'none',
-              boxSizing: 'border-box'
-            }}
+            className="review-textarea"
+            maxLength={500}
           />
-          <p style={{ margin: '5px 0 0 0', fontSize: '0.85em', color: '#999' }}>
+          <p className="char-counter">
             {comment.length}/500 characters
           </p>
         </div>
 
         {/* Image Upload */}
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#555' }}>
+        <div className="input-group">
+          <label className="upload-label">
             📸 Upload Image (Optional - Verified Buyers Only)
           </label>
           <input
             type="file"
-            onChange={(e) => setImage(e.target.files[0])}
-            accept="image/*"
-            style={{
-              padding: '8px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              width: '100%',
-              boxSizing: 'border-box'
+            onChange={(e) => {
+              console.log('[ReviewForm] Image selected:', e.target.files[0]?.name);
+              setImage(e.target.files[0]);
             }}
+            accept="image/*"
+            className="file-input"
           />
-          {image && <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#28a745' }}>✅ {image.name}</p>}
+          {image && <p className="file-success-msg">✅ {image.name}</p>}
         </div>
 
         {/* Submit Button */}
-        <button
-          type="submit"
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#d63031',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '1em',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-          }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#c51f1f'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#d63031'}
-        >
+        <button type="submit" className="review-submit-btn">
           Post Review
         </button>
       </form>

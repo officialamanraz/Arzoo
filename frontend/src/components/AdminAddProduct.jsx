@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';// agar components/ folder se import kar rahe ho
 import AdminNav from './AdminNav';
+import './AdminAddProduct.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arzoo-3.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL ;
 
 const emptyFormState = {
   name: '', price: '', description: '', baseColor: '', categoryId: '', subcategoryId: '',
@@ -14,7 +15,7 @@ const emptyFormState = {
 function AdminAddProduct() {
   const navigate = useNavigate();
   const location = useLocation();
-  const editingProduct = location.state?.product || null; // AdminInventory se aaya hua data, agar edit mode hai
+  const editingProduct = location.state?.product || null; // Passed from Inventory if in edit mode
 
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -25,10 +26,13 @@ function AdminAddProduct() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchCategories = async () => {
+    console.log('[AdminAddProduct] Fetching categories...');
     try {
       const response = await fetch(`${API_BASE_URL}/api/category/get-categories`);
       if (!response.ok) throw new Error(`Failed to fetch categories. Status: ${response.status}`);
       const result = await response.json();
+      console.log('[AdminAddProduct] Categories fetched:', result);
+      
       if (result && result.data) {
         setCategories(result.data);
         if (!editingProduct) {
@@ -36,15 +40,16 @@ function AdminAddProduct() {
         }
       }
     } catch (error) {
-      console.error('Error fetching categories:', error.message);
+      console.error('[AdminAddProduct] Error fetching categories:', error.message);
     }
   };
 
   useEffect(() => {
     fetchCategories();
 
-    // Agar Inventory page se edit ke liye aaya hai, form pre-fill kar
+    // Pre-fill form if navigating from Inventory page for editing
     if (editingProduct) {
+      console.log('[AdminAddProduct] Pre-filling form for editing:', editingProduct);
       setForm({
         name: editingProduct.name || '',
         price: editingProduct.price || '',
@@ -76,10 +81,13 @@ function AdminAddProduct() {
   useEffect(() => {
     const fetchSubcategories = async () => {
       if (!form.categoryId) { setSubcategories([]); return; }
+      console.log(`[AdminAddProduct] Fetching subcategories for Category ID: ${form.categoryId}`);
+      
       try {
         const response = await fetch(`${API_BASE_URL}/api/category/get-subcategories/${form.categoryId}`);
         if (!response.ok) throw new Error(`Failed to fetch subcategories. Status: ${response.status}`);
         const result = await response.json();
+        
         if (result && result.data) {
           setSubcategories(result.data);
           if (!isEditing && result.data.length > 0) {
@@ -89,7 +97,7 @@ function AdminAddProduct() {
           setSubcategories([]);
         }
       } catch (error) {
-        console.error('Error fetching subcategories:', error.message);
+        console.error('[AdminAddProduct] Error fetching subcategories:', error.message);
         setSubcategories([]);
       }
     };
@@ -113,6 +121,7 @@ function AdminAddProduct() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[AdminAddProduct] Submitting product...', form);
     setIsSubmitting(true);
 
     const formData = new FormData();
@@ -153,11 +162,13 @@ function AdminAddProduct() {
       const response = await fetch(url, { method, body: formData });
       if (response.ok) {
         alert(isEditing ? 'Product updated successfully!' : 'Product added successfully!');
-        navigate('/admin/inventory'); // Save ke baad seedha inventory list pe wapas
+        console.log('[AdminAddProduct] Success! Redirecting to inventory.');
+        navigate('/admin/inventory'); // Redirect to inventory list after saving
       } else {
         alert('Action failed. Server returned an error.');
       }
     } catch (err) {
+      console.error('[AdminAddProduct] Submission error:', err);
       alert('Action failed. Please check the server connection.');
     } finally {
       setIsSubmitting(false);
@@ -172,7 +183,7 @@ function AdminAddProduct() {
 
       <AdminNav />
 
-      <div className="admin-form-glass" style={{ maxWidth: '700px', margin: '20px auto' }}>
+      <div className="admin-form-glass form-container">
         <form onSubmit={handleSubmit} className="admin-form">
           <div className="form-group">
             <label>Product Name</label>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+import './AdminOrders.css';
 
-// FIXED: Matching quotes for the URL string
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const statusColors = {
@@ -31,6 +32,7 @@ function AdminOrders() {
   }, []);
 
   const fetchOrders = async () => {
+    console.log('[AdminOrders] Fetching all orders...');
     setLoading(true);
     const token = localStorage.getItem('token');
 
@@ -43,7 +45,7 @@ function AdminOrders() {
       });
 
       const res = await response.json();
-      console.log("Admin Orders Response:", res);
+      console.log('[AdminOrders] Orders fetch response:', res);
 
       if (res.success) {
         const allOrders = res.data || [];
@@ -51,10 +53,10 @@ function AdminOrders() {
         setFilteredOrders(allOrders);
         calculateStats(allOrders);
       } else {
-        console.error("Orders fetch failed:", res.message);
+        console.error('[AdminOrders] Orders fetch failed:', res.message);
       }
     } catch (err) {
-      console.error("Error fetching orders:", err);
+      console.error('[AdminOrders] Error fetching orders:', err);
     } finally {
       setLoading(false);
     }
@@ -68,10 +70,12 @@ function AdminOrders() {
       shipped: ordersData.filter(o => o.status === 'shipped').length,
       delivered: ordersData.filter(o => o.status === 'delivered').length
     };
+    console.log('[AdminOrders] Calculated Stats:', newStats);
     setStats(newStats);
   };
 
   const handleFilterChange = (status) => {
+    console.log(`[AdminOrders] Filtering orders by status: ${status}`);
     setFilterStatus(status);
     if (status === 'all') {
       setFilteredOrders(orders);
@@ -81,6 +85,7 @@ function AdminOrders() {
   };
 
   const handleStatusChange = async (order, newStatus) => {
+    console.log(`[AdminOrders] Updating order #${order.order_id} to status: ${newStatus}`);
     const token = localStorage.getItem('token');
 
     try {
@@ -98,6 +103,8 @@ function AdminOrders() {
       });
 
       const res = await response.json();
+      console.log('[AdminOrders] Status update response:', res);
+      
       if (res.success) {
         const updatedOrders = orders.map((o) =>
           o.order_id === order.order_id ? { ...o, status: newStatus } : o
@@ -116,7 +123,7 @@ function AdminOrders() {
         alert('Failed to update status: ' + res.message);
       }
     } catch (err) {
-      console.error('Error updating status:', err);
+      console.error('[AdminOrders] Error updating status:', err);
       alert('Error updating status');
     }
   };
@@ -133,59 +140,37 @@ function AdminOrders() {
   };
 
   if (loading) {
-    return <div style={{ padding: '100px', textAlign: 'center' }}>Loading Orders... ⏳</div>;
+    return <div className="admin-loading">Loading Orders... ⏳</div>;
   }
 
   return (
-    <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', padding: '30px 20px' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="admin-orders-page">
+      <div className="orders-container">
+        
         {/* Header with Back Button */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-          <h1 style={{ margin: 0, color: '#333' }}>📦 Order Management</h1>
-          <button
-            onClick={() => navigate('/admin')}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
+        <div className="orders-header">
+          <h1>📦 Order Management</h1>
+          <button className="back-btn" onClick={() => navigate('/admin')}>
             ← Back to Admin Panel
           </button>
         </div>
 
         {/* Stats Badges */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '15px',
-          marginBottom: '30px'
-        }}>
+        <div className="stats-grid">
           <StatBadge label="Total Orders" count={stats.total} bgColor="#007bff" />
-          <StatBadge label="Pending" count={stats.pending} bgColor="#ffc107" />
+          <StatBadge label="Pending" count={stats.pending} bgColor="#ffc107" textColor="#333" />
           <StatBadge label="Processing" count={stats.processing} bgColor="#17a2b8" />
           <StatBadge label="Shipped" count={stats.shipped} bgColor="#20c997" />
           <StatBadge label="Delivered" count={stats.delivered} bgColor="#28a745" />
         </div>
 
         {/* Filter Dropdown */}
-        <div style={{ marginBottom: '30px' }}>
-          <label style={{ marginRight: '10px', fontWeight: 'bold', color: '#333' }}>Filter by Status:</label>
+        <div className="filter-section">
+          <label className="filter-label">Filter by Status:</label>
           <select
             value={filterStatus}
             onChange={(e) => handleFilterChange(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              fontSize: '1em',
-              cursor: 'pointer',
-              fontWeight: '500'
-            }}
+            className="filter-select"
           >
             <option value="all">All Orders</option>
             <option value="pending">Pending</option>
@@ -193,124 +178,78 @@ function AdminOrders() {
             <option value="shipped">Shipped</option>
             <option value="delivered">Delivered</option>
           </select>
-          <p style={{ margin: '10px 0 0 0', color: '#666', fontSize: '0.9em' }}>
+          <p className="filter-info">
             Showing {filteredOrders.length} of {orders.length} orders
           </p>
         </div>
 
         {/* Orders Cards */}
         {filteredOrders.length === 0 ? (
-          <div style={{
-            background: '#fff',
-            padding: '50px',
-            textAlign: 'center',
-            borderRadius: '12px',
-            color: '#666'
-          }}>
+          <div className="empty-orders">
             <p>No orders found with this filter.</p>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-            gap: '20px'
-          }}>
+          <div className="orders-grid">
             {filteredOrders.map((order) => (
-              <div
-                key={order.order_id}
-                style={{
-                  background: '#fff',
-                  padding: '20px',
-                  borderRadius: '12px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  border: '1px solid #eee',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                }}
-              >
+              <div key={order.order_id} className="order-card">
+                
                 {/* Order Header */}
-                <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #eee' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                    <div>
-                      <h3 style={{ margin: '0 0 5px 0', color: '#333' }}>Order #{order.order_id}</h3>
-                      <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '0.9em' }}>
-                        📅 {formatDate(order.ordered_at)}
-                      </p>
-                    </div>
-                    <div
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '16px',
-                        backgroundColor: statusColors[order.status]?.bg,
-                        color: statusColors[order.status]?.text,
-                        fontWeight: 'bold',
-                        fontSize: '0.85em',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {statusColors[order.status]?.icon} {order.status.toUpperCase()}
-                    </div>
+                <div className="order-card-header">
+                  <div className="order-header-info">
+                    <h3>Order #{order.order_id}</h3>
+                    <p>📅 {formatDate(order.ordered_at)}</p>
+                  </div>
+                  <div 
+                    className="order-status-badge"
+                    style={{
+                      backgroundColor: statusColors[order.status]?.bg,
+                      color: statusColors[order.status]?.text
+                    }}
+                  >
+                    {statusColors[order.status]?.icon} {order.status.toUpperCase()}
                   </div>
                 </div>
 
                 {/* User Info */}
-                <div style={{ marginBottom: '15px', backgroundColor: '#f9f9f9', padding: '12px', borderRadius: '8px' }}>
-                  <p style={{ margin: '0 0 5px 0', color: '#666', fontSize: '0.9em' }}>👤 Customer:</p>
-                  <p style={{ margin: '0', fontWeight: '500', color: '#333' }}>{order.user_id}</p>
+                <div className="order-user-info">
+                  <p className="user-label">👤 Customer:</p>
+                  <p className="user-id">{order.user_id}</p>
                 </div>
 
                 {/* Items */}
-                <div style={{ marginBottom: '15px' }}>
-                  <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '0.9em', fontWeight: 'bold' }}>📦 Items:</p>
+                <div className="order-items-section">
+                  <p className="items-label">📦 Items:</p>
                   {order.items && order.items.length > 0 ? (
-                    <div style={{ backgroundColor: '#f9f9f9', padding: '10px', borderRadius: '8px', maxHeight: '120px', overflowY: 'auto' }}>
+                    <div className="order-items-list">
                       {order.items.map((item, idx) => (
-                        <div key={idx} style={{ padding: '6px 0', borderBottom: idx !== order.items.length - 1 ? '1px solid #eee' : 'none', fontSize: '0.9em' }}>
-                          <span style={{ fontWeight: '500', color: '#333' }}>{item.name}</span>
-                          <span style={{ color: '#666', marginLeft: '8px' }}>x{item.quantity}</span>
-                          <span style={{ color: '#d63031', marginLeft: '8px', fontWeight: 'bold' }}>₹{(item.quantity * item.unit_price).toLocaleString('en-IN')}</span>
+                        <div key={idx} className={`order-item ${idx !== order.items.length - 1 ? 'border-bottom' : ''}`}>
+                          <span className="item-name">{item.name}</span>
+                          <span className="item-qty">x{item.quantity}</span>
+                          <span className="item-price">₹{(item.quantity * item.unit_price).toLocaleString('en-IN')}</span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p style={{ color: '#999', fontSize: '0.9em' }}>No items</p>
+                    <p className="no-items">No items</p>
                   )}
                 </div>
 
                 {/* Total */}
-                <div style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #eee' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <p style={{ margin: 0, color: '#666' }}>Total Amount:</p>
-                    <p style={{ margin: 0, fontSize: '1.2em', fontWeight: 'bold', color: '#d63031' }}>
-                      ₹{Number(order.total_amount).toLocaleString('en-IN')}
-                    </p>
-                  </div>
+                <div className="order-total-section">
+                  <p>Total Amount:</p>
+                  <p className="total-price">
+                    ₹{Number(order.total_amount).toLocaleString('en-IN')}
+                  </p>
                 </div>
 
                 {/* Status Change */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9em', color: '#666', fontWeight: '500' }}>
-                    Change Status:
-                  </label>
+                <div className="status-update-section">
+                  <label>Change Status:</label>
                   <select
                     value={order.status}
                     onChange={(e) => handleStatusChange(order, e.target.value)}
+                    className="status-select"
                     style={{
-                      width: '100%',
-                      padding: '8px',
-                      borderRadius: '6px',
-                      border: '1px solid #ddd',
-                      fontSize: '0.9em',
-                      cursor: 'pointer',
-                      fontWeight: '500',
                       backgroundColor: statusColors[order.status]?.bg,
                       color: statusColors[order.status]?.text
                     }}
@@ -331,20 +270,11 @@ function AdminOrders() {
 }
 
 // Stat Badge Component
-function StatBadge({ label, count, bgColor }) {
+function StatBadge({ label, count, bgColor, textColor = 'white' }) {
   return (
-    <div
-      style={{
-        background: bgColor,
-        color: 'white',
-        padding: '20px',
-        borderRadius: '12px',
-        textAlign: 'center',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}
-    >
-      <p style={{ margin: '0 0 8px 0', fontSize: '0.9em', opacity: 0.9 }}>{label}</p>
-      <h2 style={{ margin: 0, fontSize: '2em', fontWeight: 'bold' }}>{count}</h2>
+    <div className="stat-badge" style={{ background: bgColor, color: textColor }}>
+      <p>{label}</p>
+      <h2>{count}</h2>
     </div>
   );
 }

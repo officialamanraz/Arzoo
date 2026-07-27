@@ -1,6 +1,6 @@
 // backend/src/controllers/product.controller.js -- line 1
 const db = require('../../config/db'); // reverted -- this was correct all along// FIXED: was '../../config/db' (path doesn't exist in this project)
-
+const imagekit = require('../../config/imagekit'); // path apne folder structure ke hisaab se check karo
 // ==========================================
 // 1. GET ALL PRODUCTS (Basic)
 // ==========================================
@@ -104,8 +104,14 @@ const addproducts = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Stock quantity cannot be negative' });
   }
 
-  if (req.files && req.files.length > 0) {
-    mainImage = req.files[0].filename;
+if (req.files && req.files.length > 0) {
+    const uploadedMain = await imagekit.upload({
+      file: req.files[0].buffer,
+      fileName: `${Date.now()}-${req.files[0].originalname}`,
+      folder: '/arzoo-saree/products',
+    });
+    mainImage = uploadedMain.url;
+
     if (req.files.length > 1) {
       extraImages = req.files.slice(1);
     }
@@ -149,9 +155,16 @@ const addproducts = async (req, res) => {
 
     if (extraImages.length > 0) {
       const insertImagesQuery = `INSERT INTO product_images (product_id, image_url, is_primary) VALUES ?`;
-      const imageValues = extraImages.map(file => [newProductId, '/uploads/' + file.filename, false]);
-
-      try {
+    const uploadedExtras = await Promise.all(
+  extraImages.map(file =>
+    imagekit.upload({
+      file: file.buffer,
+      fileName: `${Date.now()}-${file.originalname}`,
+      folder: '/arzoo-saree/products',
+    })
+  )
+);
+const imageValues = uploadedExtras.map(uploaded => [newProductId, uploaded.url, false]);      try {
         await db.query(insertImagesQuery, [imageValues]); // bulk VALUES ? syntax needs .query, not .execute
         console.log(`[PRODUCT] ${extraImages.length} extra image(s) saved -- product_id: ${newProductId}`);
       } catch (imgErr) {
@@ -335,10 +348,16 @@ const addNewImagesToProduct = async (req, res) => {
     return res.status(400).json({ success: false, message: 'At least one image file is required to upload.' });
   }
 
-  const imageValues = req.files.map((file) => {
-    const imageUrl = '/uploads/' + file.filename;
-    return [product_id, imageUrl, false];
-  });
+  const uploadedImages = await Promise.all(
+  req.files.map(file =>
+    imagekit.upload({
+      file: file.buffer,
+      fileName: `${Date.now()}-${file.originalname}`,
+      folder: '/arzoo-saree/products',
+    })
+  )
+);
+const imageValues = uploadedImages.map(uploaded => [product_id, uploaded.url, false]);
 
   const insertImagesQuery = 'INSERT INTO product_images (product_id, image_url, is_primary) VALUES ?';
 

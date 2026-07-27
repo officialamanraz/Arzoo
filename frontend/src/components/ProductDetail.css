@@ -24,9 +24,6 @@
   color: #000;
 }
 
-/* Grid Setup for Desktop -- align-items: start stops the two columns
-   from stretching to match each other's height, which was leaving a
-   tall blank gap under the shorter column (the image side) */
 .details-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -75,6 +72,7 @@
   opacity: 0;
   transition: opacity 0.2s ease;
 }
+
 .main-image-wrapper:hover .zoom-hint { opacity: 1; }
 
 .sold-out-badge {
@@ -170,9 +168,11 @@
 .action-buttons-row {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .add-to-cart-btn {
+  flex: 1;
   background: #111;
   color: #fff;
   border: none;
@@ -182,11 +182,13 @@
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.3s;
+  min-width: 150px;
 }
 .add-to-cart-btn:hover:not(:disabled) { background: #333; }
 .add-to-cart-btn:disabled { background: #ccc; cursor: not-allowed; }
 
 .buy-now-btn {
+  flex: 1;
   padding: 15px 24px;
   background-color: #A8325E;
   color: #fff;
@@ -196,11 +198,12 @@
   font-size: 1.1rem;
   cursor: pointer;
   transition: background 0.3s;
+  min-width: 150px;
 }
 .buy-now-btn:hover:not(:disabled) { background-color: #8a2950; }
 .buy-now-btn:disabled { background: #ccc; cursor: not-allowed; }
 
-/* Finer Details Table/List */
+/* Finer Details */
 .finer-details {
   margin-top: 1rem;
   border-top: 1px solid #eee;
@@ -239,33 +242,7 @@
   font-weight: 600;
 }
 
-/* Responsive Mobile Adjustments */
-@media (max-width: 768px) {
-  .details-container {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    padding: 1.5rem;
-  }
-
-  .gallery-section {
-    position: static;
-  }
-
-  .product-title {
-    font-size: 1.6rem;
-  }
-
-  .finer-details-list li {
-    grid-template-columns: 1fr;
-    gap: 0.2rem;
-  }
-}
-
-/* -----------------------------------------
-   Edge-to-edge review section
-   Breaks out of .main-container's max-width so the background
-   truly spans the full viewport width, as requested.
-   ----------------------------------------- */
+/* Review Section Edge-to-Edge */
 .full-width-review-section {
   width: 100vw;
   position: relative;
@@ -295,11 +272,10 @@
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-sizing: border-box;
 }
 
-/* -----------------------------------------
-   Lightbox / image slider modal
-   ----------------------------------------- */
+/* Lightbox Modal */
 .lightbox-overlay {
   position: fixed;
   inset: 0;
@@ -372,7 +348,31 @@
   font-size: 0.85rem;
 }
 
+/* Responsive Mobile Adjustments */
 @media (max-width: 768px) {
+  .details-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 1.5rem;
+  }
+
+  .gallery-section {
+    position: static;
+  }
+
+  .product-title {
+    font-size: 1.6rem;
+  }
+
+  .finer-details-list li {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+  
   .lightbox-nav-btn { width: 40px; height: 40px; font-size: 1.5rem; }
   .lightbox-close-btn { top: 12px; right: 12px; }
+  
+  .review-form-container {
+    padding: 20px;
+  }
 }

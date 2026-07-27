@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import './Login.css'; // Extracted CSS
 
-// FIX: added fallback -- consistent with the rest of the app, so a
-// missing VITE_API_URL doesn't silently break login.
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function Login() {
@@ -16,7 +15,7 @@ function Login() {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage('');
-    console.log('[LOGIN] Request starting -- email:', email);
+    console.log('[Login] Authentication request starting -- email:', email);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -27,25 +26,14 @@ function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log('[LOGIN] Response received, parsing JSON...');
+      console.log('[Login] Response received, parsing JSON...');
       const data = await res.json();
-      console.log('[LOGIN] Parsed data:', data);
+      console.log('[Login] Parsed data:', data);
 
       if (res.ok && data.token) {
-        // FIX: key must be 'token' everywhere it's read -- checkout page
-        // and other protected pages were reading 'authToken', which never
-        // existed, so every protected request went out with no token.
         localStorage.setItem('token', data.token);
-
-        // NOTE: currently data.user is just a role string ('user'/'admin')
-        // from the backend. If/when you update loginUser to return
-        // { id, name, email, role }, switch this to:
-        //   localStorage.setItem('user', JSON.stringify(data.user));
-        //   const role = data.user.role;
-        // and update every place that reads localStorage 'role' or
-        // compares data.user === 'admin' to use .role instead.
         localStorage.setItem('role', data.user);
-        console.log('[LOGIN] Success -- role:', data.user);
+        console.log('[Login] Authentication successful -- assigned role:', data.user);
 
         if (data.user === 'admin') {
           navigate('/admin');
@@ -53,11 +41,11 @@ function Login() {
           navigate('/');
         }
       } else {
-        console.warn('[LOGIN] Failed:', data.message);
+        console.warn('[Login] Authentication failed:', data.message);
         setErrorMessage(data.message || 'Login failed.');
       }
     } catch (err) {
-      console.error('[LOGIN] Network/error:', err);
+      console.error('[Login] Network/error:', err);
       setErrorMessage('Network error. Is your backend server running?');
     } finally {
       setIsSubmitting(false);
@@ -65,62 +53,48 @@ function Login() {
   };
 
   return (
-    <div style={{ marginTop: '120px', textAlign: 'center', padding: '20px', minHeight: '60vh' }}>
-      <h2 style={{ color: '#2c3e50', marginBottom: '20px' }}>Login to Aman Saare</h2>
-      <form
-        onSubmit={handleLogin}
-        style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '300px', margin: '0 auto' }}
-      >
-        {errorMessage && (
-          <div
-            style={{
-              background: '#fdecea',
-              color: '#b3261e',
-              padding: '10px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              textAlign: 'left',
-            }}
-          >
-            {errorMessage}
-          </div>
-        )}
+    <div className="login-page">
+      <div className="login-container">
+        <h2 className="login-title">Login to Arzoo Saree</h2>
+        
+        <form onSubmit={handleLogin} className="login-form">
+          {errorMessage && (
+            <div className="message-error">
+              {errorMessage}
+            </div>
+          )}
 
-        <input
-          type="email"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc' }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc' }}
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          style={{
-            padding: '12px',
-            background: isSubmitting ? '#ffab8a' : '#ff5722',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {isSubmitting ? 'Logging in...' : 'Login'}
-        </button>
-        <div style={{ marginTop: '10px', fontSize: '14px' }}>
-          <Link to="/forgot-password" style={{ color: '#e07a5f', textDecoration: 'none' }}>
-            Forgot Password?
-          </Link>
-        </div>
-      </form>
+          <input
+            type="email"
+            placeholder="Email"
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="auth-input"
+          />
+          
+          <input
+            type="password"
+            placeholder="Password"
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="auth-input"
+          />
+          
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="auth-submit-btn"
+          >
+            {isSubmitting ? 'Logging in...' : 'Login'}
+          </button>
+          
+          <div className="forgot-password-link">
+            <Link to="/forgot-password">
+              Forgot Password?
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

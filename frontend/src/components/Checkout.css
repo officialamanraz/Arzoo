@@ -1,0 +1,184 @@
+.checkout-page {
+  background-color: #f9fafb;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.checkout-container {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.checkout-step {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: opacity 0.3s ease;
+}
+
+.step-active {
+  border-left: 4px solid #3b82f6;
+  opacity: 1;
+}
+
+.step-inactive {
+  opacity: 0.7;
+}
+
+.step-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #2563eb;
+}
+
+.step-content {
+  margin-top: 16px;
+}
+
+.no-data-text, .info-text {
+  color: #4b5563;
+  margin-bottom: 16px;
+}
+
+.address-card {
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.address-radio {
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.address-details {
+  flex: 1;
+}
+
+.address-name {
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.address-phone {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+.address-text {
+  font-size: 0.875rem;
+  color: #374151;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.btn-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.btn-primary {
+  background-color: #f97316;
+  color: #ffffff;
+  padding: 8px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #ea580c;
+}
+
+.btn-primary:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-primary.btn-large {
+  padding: 12px 32px;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.btn-text {
+  color: #3b82f6;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-text:hover {
+  text-decoration: underline;
+}
+
+.payment-method-card {
+  border: 1px solid #22c55e;
+  background-color: #f0fdf4;
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.payment-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.payment-radio {
+  width: 20px;
+  height: 20px;
+  accent-color: #16a34a;
+}
+
+.payment-name {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.payment-desc {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin: 4px 0 0 32px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .checkout-container {
+    gap: 16px;
+  }
+  
+  .checkout-step {
+    padding: 16px;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn-text {
+    padding: 12px;
+    text-align: center;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+  }
+}

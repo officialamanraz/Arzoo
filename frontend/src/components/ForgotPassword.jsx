@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import './ForgotPassword.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -11,6 +12,8 @@ function ForgotPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(`[ForgotPassword] Submitting reset request for email: ${email}`);
+    
     setIsSubmitting(true);
     setMessage('');
     setIsError(false);
@@ -23,6 +26,7 @@ function ForgotPassword() {
       });
 
       const data = await res.json();
+      console.log('[ForgotPassword] Server response:', data);
 
       if (res.ok) {
         setMessage(data.message || 'If that email exists, a reset link has been sent.');
@@ -31,7 +35,7 @@ function ForgotPassword() {
         setMessage(data.message || 'Something went wrong.');
       }
     } catch (err) {
-      console.error('Forgot password error:', err);
+      console.error('[ForgotPassword] Request error:', err);
       setIsError(true);
       setMessage('Could not reach the server. Please try again later.');
     } finally {
@@ -40,61 +44,44 @@ function ForgotPassword() {
   };
 
   return (
-    <div style={{ marginTop: '120px', textAlign: 'center', padding: '20px', minHeight: '60vh' }}>
-      <h2 style={{ color: '#2c3e50', marginBottom: '20px' }}>Forgot Password</h2>
-      <p style={{ color: '#666', marginBottom: '20px', maxWidth: '350px', marginLeft: 'auto', marginRight: 'auto' }}>
-        Enter your account email. We'll send you a link to reset your password.
-      </p>
+    <div className="forgot-password-page">
+      <div className="forgot-password-container">
+        <h2>Forgot Password</h2>
+        <p className="subtitle-text">
+          Enter your account email. We'll send you a link to reset your password.
+        </p>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '300px', margin: '0 auto' }}
-      >
-        {message && (
-          <div
-            style={{
-              background: isError ? '#fdecea' : '#e6f4ea',
-              color: isError ? '#b3261e' : '#1e7e34',
-              padding: '10px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              textAlign: 'left',
-            }}
+        <form onSubmit={handleSubmit} className="forgot-password-form">
+          {message && (
+            <div className={`message-box ${isError ? 'message-error' : 'message-success'}`}>
+              {message}
+            </div>
+          )}
+
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="auth-input"
+          />
+          
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="auth-submit-btn"
           >
-            {message}
+            {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+          </button>
+
+          <div className="back-to-login">
+            <Link to="/login" className="login-link">
+              Back to Login
+            </Link>
           </div>
-        )}
-
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc' }}
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          style={{
-            padding: '12px',
-            background: isSubmitting ? '#ffab8a' : '#ff5722',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {isSubmitting ? 'Sending...' : 'Send Reset Link'}
-        </button>
-
-        <div style={{ marginTop: '15px', fontSize: '14px', color: '#555' }}>
-          <Link to="/login" style={{ color: '#e07a5f', fontWeight: 'bold', textDecoration: 'none' }}>
-            Back to Login
-          </Link>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

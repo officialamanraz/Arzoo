@@ -1,0 +1,146 @@
+.signup-page {
+  margin-top: 80px;
+  text-align: center;
+  padding: 20px;
+  min-height: 60vh;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.signup-title {
+  color: #7c3f2f;
+  margin-bottom: 25px;
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  box-sizing: border-box;
+}
+
+.signup-error-box {
+  background: #fdecea;
+  color: #b3261e;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: left;
+  border: 1px solid #f5c6cb;
+}
+
+.signup-input {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 0.95rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.signup-input:focus {
+  border-color: #7c3f2f;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.signup-select {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 0.95rem;
+  flex: 1;
+  cursor: pointer;
+  background-color: #fff;
+  transition: border-color 0.2s;
+}
+
+.signup-select:focus {
+  border-color: #7c3f2f;
+}
+
+.select-disabled {
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+  color: #888;
+}
+
+.signup-textarea {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 0.95rem;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.signup-textarea:focus {
+  border-color: #7c3f2f;
+}
+
+.signup-submit-btn {
+  padding: 14px;
+  background-color: #7c3f2f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.05rem;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+.signup-submit-btn:hover:not(:disabled) {
+  background-color: #5e2f23;
+}
+
+.signup-submit-btn:disabled {
+  background-color: #a87c6f;
+  cursor: not-allowed;
+}
+
+.signup-footer-text {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.signup-login-link {
+  color: #e07a5f;
+  font-weight: bold;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.signup-login-link:hover {
+  color: #c9684f;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .form-row {
+    flex-direction: column;
+  }
+}

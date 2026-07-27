@@ -9,37 +9,37 @@ const getReviewsByProduct = async (req, res) => {
     console.log("[REVIEW] Fetching reviews -- product_id:", product_id);
 
     const reviewsQuery = `
-      SELECT
-          r.review_id,
-          r.product_id,
-          r.user_id,
-          u.name AS user_name,
-          r.rating_type,
-          r.comment,
-          r.image_url,
-          r.is_verified_buyer,
-          r.created_at
-      FROM Reviews r
-      JOIN Users u ON r.user_id = u.user_id
-      WHERE r.product_id = ?
-      ORDER BY r.created_at DESC
-    `;
+  SELECT
+      r.review_id,
+      r.product_id,
+      r.user_id,
+      u.name AS user_name,
+      r.rating_type,
+      r.comment,
+      r.image_url,
+      r.is_verified_buyer,
+      r.created_at
+  FROM reviews r
+  JOIN users u ON r.user_id = u.user_id
+  WHERE r.product_id = ?
+  ORDER BY r.created_at DESC
+`;
 
-    const statsQuery = `
-      SELECT rating_type, COUNT(*) AS total
-      FROM Reviews
-      WHERE product_id = ?
-      GROUP BY rating_type
-    `;
+const statsQuery = `
+  SELECT rating_type, COUNT(*) AS total
+  FROM reviews
+  WHERE product_id = ?
+  GROUP BY rating_type
+`;
 
     // Dynamically pulls the ENUM column options instead of a hardcoded array
-    const reviewOptionQuery = `
-      SELECT COLUMN_TYPE 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_NAME = 'Reviews' 
-        AND COLUMN_NAME = 'rating_type' 
-        AND TABLE_SCHEMA = DATABASE()
-    `;
+const reviewOptionQuery = `
+  SELECT COLUMN_TYPE 
+  FROM INFORMATION_SCHEMA.COLUMNS 
+  WHERE TABLE_NAME = 'reviews' 
+    AND COLUMN_NAME = 'rating_type' 
+    AND TABLE_SCHEMA = DATABASE()
+`;
 
     console.log("[REVIEW] Running reviewsQuery...");
     const [reviews] = await db.execute(reviewsQuery, [product_id]);

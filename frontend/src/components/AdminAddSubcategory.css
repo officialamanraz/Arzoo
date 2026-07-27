@@ -1,0 +1,25 @@
+/* =========================================
+   ADMIN ADD SUBCATEGORY
+   Reuses .admin-form-glass / .admin-input / .admin-submit-btn
+   already defined in theme.css so it matches the rest of the
+   admin panel instead of introducing a new one-off style.
+   ========================================= */
+
+.subcategory-page-wrapper {
+  max-width: 500px;
+  margin: 100px auto 40px;
+  padding: 0 20px;
+}
+
+.subcategory-page-wrapper h2 {
+  font-family: var(--font-display);
+  color: var(--text-dark, #111827);
+  margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .subcategory-page-wrapper {
+    margin: 90px auto 30px;
+    padding: 0 16px;
+  }
+}

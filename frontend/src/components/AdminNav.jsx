@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import './AdminNav.css';
 
 const adminLinks = [
   { path: '/admin', label: '🏠 Dashboard' },
@@ -13,22 +14,14 @@ function AdminNav() {
   const location = useLocation();
 
   return (
-    <div style={{ display: 'flex', gap: '12px', margin: '16px 0', flexWrap: 'wrap' }}>
+    <div className="admin-nav">
       {adminLinks.map((link) => {
         const isActive = location.pathname === link.path;
         return (
           <Link
             key={link.path}
             to={link.path}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: isActive ? '#b3244c' : '#f0f0f0',
-              color: isActive ? '#fff' : '#333',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              textDecoration: 'none',
-              transition: 'all 0.2s'
-            }}
+            className={`admin-nav-link${isActive ? ' active' : ''}`}
           >
             {link.label}
           </Link>

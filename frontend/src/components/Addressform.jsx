@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate,useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import './AddressForm.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-
 function AddressForm() {
   const navigate = useNavigate();
-const location = useLocation();
+  const location = useLocation();
   const [form, setForm] = useState({
     fullName: '',
     phone: '',
@@ -33,13 +33,14 @@ const location = useLocation();
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // Auto-fill State + City from the pincode using India Post's public API (no API key, no hardcoded data)
   const handlePincodeBlur = async () => {
     if (form.pincode.length !== 6) return;
+    console.log(`[AddressForm] Looking up pincode: ${form.pincode}`);
 
     try {
       const res = await fetch(`https://api.postalpincode.in/pincode/${form.pincode}`);
       const data = await res.json();
+      console.log('[AddressForm] Pincode response:', data);
 
       if (data[0]?.Status === 'Success') {
         const office = data[0].PostOffice[0];
@@ -50,12 +51,12 @@ const location = useLocation();
         }));
       }
     } catch (err) {
-      console.error('Pincode lookup failed:', err);
+      console.error('[AddressForm] Pincode lookup failed:', err);
     }
   };
 
-  // Use browser geolocation + OpenStreetMap's free reverse-geocoding to auto-fill the address
   const handleUseMyLocation = () => {
+    console.log('[AddressForm] Attempting to get geolocation...');
     if (!navigator.geolocation) {
       setLocationMessage('Location access is not supported on this browser.');
       return;
@@ -67,12 +68,14 @@ const location = useLocation();
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        console.log(`[AddressForm] Geolocation success: lat ${latitude}, lon ${longitude}`);
 
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
           );
           const data = await res.json();
+          console.log('[AddressForm] Reverse geocoding response:', data);
           const addr = data.address || {};
 
           setForm((prev) => ({
@@ -83,13 +86,14 @@ const location = useLocation();
             roadArea: addr.road || prev.roadArea
           }));
         } catch (err) {
-          console.error('Reverse geocoding failed:', err);
+          console.error('[AddressForm] Reverse geocoding failed:', err);
           setLocationMessage('Could not fetch address for your location. Please fill manually.');
         } finally {
           setLocating(false);
         }
       },
-      () => {
+      (err) => {
+        console.warn('[AddressForm] Geolocation permission denied or failed.', err);
         setLocating(false);
         setLocationMessage('Please provide location permission to auto-fill your address.');
       }
@@ -108,9 +112,12 @@ const location = useLocation();
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-const buyNowProduct = location.state?.buyNowProduct;
+
+  const buyNowProduct = location.state?.buyNowProduct;
+
   const handleSaveAddress = async () => {
     if (!validate()) return;
+    console.log('[AddressForm] Submitting form data:', form);
     setSaving(true);
     setSubmitError('');
     const token = localStorage.getItem('token');
@@ -126,20 +133,21 @@ const buyNowProduct = location.state?.buyNowProduct;
       });
 
       const data = await res.json();
+      console.log('[AddressForm] Save address response:', data);
+
       if (data.success) {
-        console.log(data);
-        // 4. MAIN CHANGE: Yahan addressId ke sath-sath buyNowProduct ko bhi aage bhej do
+        // Pass buyNowProduct along with the addressId forward
         navigate('/order-summary', { 
           state: { 
             addressId: data.addressId,
-            buyNowProduct: buyNowProduct // Carrying the baggage forward!
+            buyNowProduct: buyNowProduct 
           } 
         });
       } else {
         setSubmitError(data.message || 'Could not save address.');
       }
     } catch (err) {
-      console.error('Save address error:', err);
+      console.error('[AddressForm] Save address error:', err);
       setSubmitError('Something went wrong while saving your address.');
     } finally {
       setSaving(false);
@@ -147,21 +155,16 @@ const buyNowProduct = location.state?.buyNowProduct;
   };
 
   return (
-    <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
+    <div className="address-page">
       {/* Header */}
-      <div style={{ background: '#fff', padding: '20px 24px', borderBottom: '1px solid #eee' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', maxWidth: '900px', margin: '0 auto' }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{ background: 'none', border: 'none', fontSize: '1.3em', cursor: 'pointer' }}
-          >
-            ←
-          </button>
-          <h2 style={{ margin: 0, color: '#333' }}>Add delivery address</h2>
+      <div className="address-header">
+        <div className="header-inner">
+          <button onClick={() => navigate(-1)} className="back-btn">←</button>
+          <h2>Add delivery address</h2>
         </div>
 
         {/* Stepper */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '24px', gap: '8px' }}>
+        <div className="stepper-container">
           <Step number={1} label="Address" active />
           <StepLine />
           <Step number={2} label="Order Summary" />
@@ -171,144 +174,52 @@ const buyNowProduct = location.state?.buyNowProduct;
       </div>
 
       {/* Form */}
-      <div style={{ maxWidth: '700px', margin: '24px auto', background: '#fff', borderRadius: '12px', padding: '30px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-
-        <FieldInput
-          name="fullName"
-          placeholder="Full Name (Required)*"
-          value={form.fullName}
-          onChange={handleChange}
-          error={errors.fullName}
-        />
-
-        <FieldInput
-          name="phone"
-          placeholder="Phone number (Required)*"
-          value={form.phone}
-          onChange={handleChange}
-          error={errors.phone}
-          type="tel"
-          maxLength={10}
-        />
+      <div className="address-form-container">
+        <FieldInput name="fullName" placeholder="Full Name (Required)*" value={form.fullName} onChange={handleChange} error={errors.fullName} />
+        <FieldInput name="phone" placeholder="Phone number (Required)*" value={form.phone} onChange={handleChange} error={errors.phone} type="tel" maxLength={10} />
 
         {!showAlternatePhone ? (
-          <button
-            type="button"
-            onClick={() => setShowAlternatePhone(true)}
-            style={linkButtonStyle}
-          >
+          <button type="button" onClick={() => setShowAlternatePhone(true)} className="link-btn">
             + Add Alternate Phone Number
           </button>
         ) : (
-          <FieldInput
-            name="alternatePhone"
-            placeholder="Alternate Phone Number"
-            value={form.alternatePhone}
-            onChange={handleChange}
-            type="tel"
-            maxLength={10}
-          />
+          <FieldInput name="alternatePhone" placeholder="Alternate Phone Number" value={form.alternatePhone} onChange={handleChange} type="tel" maxLength={10} />
         )}
 
-        {locationMessage && (
-          <p style={{ color: '#c0392b', fontSize: '0.85em', margin: '16px 0 4px' }}>{locationMessage}</p>
-        )}
+        {locationMessage && <p className="error-text">{locationMessage}</p>}
 
-        <div style={{ display: 'flex', gap: '16px', marginTop: '20px' }}>
-          <div style={{ flex: 1 }}>
-            <FieldInput
-              name="pincode"
-              placeholder="Pincode (Required)*"
-              value={form.pincode}
-              onChange={handleChange}
-              onBlur={handlePincodeBlur}
-              error={errors.pincode}
-              maxLength={6}
-            />
+        <div className="form-row">
+          <div className="flex-1">
+            <FieldInput name="pincode" placeholder="Pincode (Required)*" value={form.pincode} onChange={handleChange} onBlur={handlePincodeBlur} error={errors.pincode} maxLength={6} />
           </div>
-          <button
-            type="button"
-            onClick={handleUseMyLocation}
-            disabled={locating}
-            style={useLocationButtonStyle}
-          >
+          <button type="button" onClick={handleUseMyLocation} disabled={locating} className="location-btn">
             {locating ? 'Locating...' : '📍 Use my location'}
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '16px', marginTop: '4px' }}>
-          <div style={{ flex: 1 }}>
-            <FieldInput
-              name="state"
-              placeholder="State (Required)*"
-              value={form.state}                                                                                                                                                                                                                                                                                                                                                                                                                                                       
-              onChange={handleChange}
-              error={errors.state}
-            />
+        <div className="form-row">
+          <div className="flex-1">
+            <FieldInput name="state" placeholder="State (Required)*" value={form.state} onChange={handleChange} error={errors.state} />
           </div>
-          <div style={{ flex: 1 }}>
-            <FieldInput
-              name="city"
-              placeholder="City (Required)*"
-              value={form.city}
-              onChange={handleChange}
-              error={errors.city}
-            />
+          <div className="flex-1">
+            <FieldInput name="city" placeholder="City (Required)*" value={form.city} onChange={handleChange} error={errors.city} />
           </div>
         </div>
 
-        <FieldInput
-          name="houseNo"
-          placeholder="House No., Building Name (Required)*"
-          value={form.houseNo}
-          onChange={handleChange}
-          error={errors.houseNo}
-        />
-
-        <FieldInput
-          name="roadArea"
-          placeholder="Road name, Area, Colony (Required)*"
-          value={form.roadArea}
-          onChange={handleChange}
-          error={errors.roadArea}
-        />
+        <FieldInput name="houseNo" placeholder="House No., Building Name (Required)*" value={form.houseNo} onChange={handleChange} error={errors.houseNo} />
+        <FieldInput name="roadArea" placeholder="Road name, Area, Colony (Required)*" value={form.roadArea} onChange={handleChange} error={errors.roadArea} />
 
         {!showLandmark ? (
-          <button type="button" onClick={() => setShowLandmark(true)} style={linkButtonStyle}>
+          <button type="button" onClick={() => setShowLandmark(true)} className="link-btn">
             + Add Nearby Famous Shop/Mall/Landmark
           </button>
         ) : (
-          <FieldInput
-            name="landmark"
-            placeholder="Nearby Landmark"
-            value={form.landmark}
-            onChange={handleChange}
-          />
+          <FieldInput name="landmark" placeholder="Nearby Landmark" value={form.landmark} onChange={handleChange} />
         )}
 
-        {submitError && (
-          <p style={{ color: '#721c24', backgroundColor: '#f8d7da', padding: '10px', borderRadius: '8px', fontSize: '0.9em', marginTop: '16px' }}>
-            {submitError}
-          </p>
-        )}
+        {submitError && <p className="submit-error-box">{submitError}</p>}
 
-        <button
-          type="button"
-          onClick={handleSaveAddress}
-          disabled={saving}
-          style={{
-            width: '100%',
-            padding: '14px',
-            marginTop: '24px',
-            backgroundColor: saving ? '#c98a2c99' : '#A8325E',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '10px',
-            fontWeight: 'bold',
-            fontSize: '1em',
-            cursor: saving ? 'not-allowed' : 'pointer'
-          }}
-        >
+        <button type="button" onClick={handleSaveAddress} disabled={saving} className="submit-btn">
           {saving ? 'Saving...' : 'Deliver Here'}
         </button>
       </div>
@@ -316,80 +227,27 @@ const buyNowProduct = location.state?.buyNowProduct;
   );
 }
 
-// ---------- Small building-block components ----------
-
+// Subcomponents
 function Step({ number, label, active }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '90px' }}>
-      <div
-        style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: active ? '#2874f0' : '#e0e0e0',
-          color: active ? '#fff' : '#888',
-          fontWeight: 'bold'
-        }}
-      >
-        {number}
-      </div>
-      <span style={{ marginTop: '6px', fontSize: '0.85em', color: active ? '#333' : '#999' }}>{label}</span>
+    <div className="step-wrapper">
+      <div className={`step-circle ${active ? 'active' : ''}`}>{number}</div>
+      <span className={`step-label ${active ? 'active' : ''}`}>{label}</span>
     </div>
   );
 }
 
 function StepLine() {
-  return <div style={{ width: '80px', height: '2px', backgroundColor: '#e0e0e0', marginBottom: '20px' }} />;
+  return <div className="step-line" />;
 }
 
 function FieldInput({ name, placeholder, value, onChange, onBlur, error, type = 'text', maxLength }) {
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-        maxLength={maxLength}
-        style={{
-          width: '100%',
-          padding: '14px',
-          borderRadius: '8px',
-          border: error ? '1px solid #c0392b' : '1px solid #ddd',
-          fontSize: '0.95em',
-          boxSizing: 'border-box'
-        }}
-      />
-      {error && <p style={{ color: '#c0392b', fontSize: '0.8em', margin: '6px 0 0' }}>{error}</p>}
+    <div className="input-group">
+      <input type={type} name={name} placeholder={placeholder} value={value} onChange={onChange} onBlur={onBlur} maxLength={maxLength} className={`form-input ${error ? 'input-error' : ''}`} />
+      {error && <p className="error-text">{error}</p>}
     </div>
   );
 }
-
-const linkButtonStyle = {
-  background: 'none',
-  border: 'none',
-  color: '#2874f0',
-  cursor: 'pointer',
-  fontSize: '0.9em',
-  padding: 0,
-  marginBottom: '16px',
-  display: 'block'
-};
-
-const useLocationButtonStyle = {
-  padding: '0 20px',
-  backgroundColor: '#2874f0',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '8px',
-  fontWeight: 'bold',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap'
-};
 
 export default AddressForm;

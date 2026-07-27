@@ -1,0 +1,58 @@
+/* =========================================
+   ADMIN NAV
+   ========================================= */
+
+.admin-nav {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.admin-nav-link {
+  padding: 10px 20px;
+  background-color: #f0f0f0;
+  color: #333;
+  border-radius: 8px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-nav-link:hover {
+  background-color: #e2e2e2;
+}
+
+.admin-nav-link.active {
+  background-color: #b3244c;
+  color: #fff;
+}
+
+.admin-nav-link.active:hover {
+  background-color: #96203f;
+}
+
+/* =========================================
+   RESPONSIVE — scrollable pill row on mobile
+   instead of an awkward multi-line wrap
+   ========================================= */
+@media (max-width: 640px) {
+  .admin-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    gap: 8px;
+  }
+
+  .admin-nav::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .admin-nav-link {
+    padding: 9px 16px;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+}

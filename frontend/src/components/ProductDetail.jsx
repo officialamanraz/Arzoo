@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
 import ReviewForm from '../components/ReviewForm';
 import ReviewSection from '../components/ReviewSection';
 import Recommended from "../components/Recommended";
 import './ProductDetail.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-// Maps DB column name -> display label. Add/remove entries here only --
-// the list below renders itself dynamically, nothing is hardcoded in JSX.
+
+// Maps DB column name -> display label. 
 const DETAIL_FIELD_LABELS = {
   primary_color: 'Primary Color',
   other_color: 'Other Colors',
@@ -43,23 +44,28 @@ function ProductDetail({ currency, rates, language }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const handleReviewAdded = () => {
+    console.log('[ProductDetail] Review added, refreshing section.');
     setRefreshReviews(prev => prev + 1);
   };
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        console.log(`[ProductDetail] Fetching product details for ID: ${id}`);
         setLoading(true);
         const response = await fetch(`${API_BASE_URL}/api/products/product/${id}`);
         const result = await response.json();
 
+        console.log('[ProductDetail] Fetch response:', result);
         if (result && result.data) {
           setSaree(result.data);
           setTranslatedName(result.data.name);
           setTranslatedDesc(result.data.description);
+        } else {
+          console.warn('[ProductDetail] Product not found.');
         }
       } catch (error) {
-        console.error("Error fetching product:", error);
+        console.error("[ProductDetail] Error fetching product:", error);
       } finally {
         setLoading(false);
       }
@@ -68,6 +74,7 @@ function ProductDetail({ currency, rates, language }) {
   }, [id]);
 
   const handleBuyNow = () => {
+    console.log('[ProductDetail] Initiating Buy Now for:', saree?.name);
     if (!saree) return;
     navigate('/add-address', {
       state: {
@@ -86,6 +93,7 @@ function ProductDetail({ currency, rates, language }) {
     if (!saree || !language || language === 'en') return;
 
     const fetchTranslations = async () => {
+      console.log(`[ProductDetail] Translating to language: ${language}`);
       setIsTranslating(true);
       try {
         const [nameRes, descRes] = await Promise.all([
@@ -105,7 +113,7 @@ function ProductDetail({ currency, rates, language }) {
         setTranslatedName(nData.translatedText || saree.name);
         setTranslatedDesc(dData.translatedText || saree.description);
       } catch (err) {
-        console.error("Translation error:", err);
+        console.error("[ProductDetail] Translation error:", err);
       } finally {
         setIsTranslating(false);
       }
@@ -131,7 +139,6 @@ function ProductDetail({ currency, rates, language }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLightboxOpen, activeImageIdx]);
 
   const sliderImages = saree?.images && Array.isArray(saree.images) ? saree.images : [saree?.image_url || "/saare_1.jpeg"];
@@ -154,8 +161,10 @@ function ProductDetail({ currency, rates, language }) {
 
   const handleAddToCart = async (sareeId) => {
     if (isOutOfStock) return;
+    console.log(`[ProductDetail] Adding item to cart: ${sareeId}`);
     setIsAdding(true);
     const token = localStorage.getItem('token');
+    
     try {
       const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
         method: 'POST',
@@ -165,16 +174,20 @@ function ProductDetail({ currency, rates, language }) {
         },
         body: JSON.stringify({ product_id: sareeId, quantity: 1 }),
       });
-      if (response.ok) alert("Item added to cart successfully!");
-      else alert("Could not add item to cart.");
+      if (response.ok) {
+        alert("Item added to cart successfully!");
+      } else {
+        alert("Could not add item to cart.");
+      }
     } catch (error) {
-      console.error("Connection error:", error);
+      console.error("[ProductDetail] Connection error during Add to Cart:", error);
     } finally {
       setIsAdding(false);
     }
   };
 
   const handleToggleLike = () => {
+    console.log(`[ProductDetail] Toggling like status for product: ${id}`);
     const likedList = JSON.parse(localStorage.getItem('likedProducts') || '[]');
     let updated;
     if (likedList.includes(id)) {
@@ -204,7 +217,7 @@ function ProductDetail({ currency, rates, language }) {
           <div className="gallery-section">
             <div className="main-image-wrapper" onClick={() => setIsLightboxOpen(true)}>
               <img
-                src={`${API_BASE_URL}/uploads/${sliderImages[activeImageIdx]}`}
+                src={getImageUrl(sliderImages[activeImageIdx])}
                 alt={saree.name}
                 className="main-image"
                 onError={(e) => { e.target.src = "/saare_1.jpeg"; }}
@@ -218,7 +231,7 @@ function ProductDetail({ currency, rates, language }) {
                 {sliderImages.map((img, idx) => (
                   <img
                     key={idx}
-                    src={`${API_BASE_URL}/uploads/${img}`}
+                    src={getImageUrl(img)}
                     alt={`Thumbnail ${idx}`}
                     className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
                     onClick={() => setActiveImageIdx(idx)}
@@ -285,7 +298,7 @@ function ProductDetail({ currency, rates, language }) {
         </div>
       </div>
 
-      {/* Edge-to-edge review section -- breaks out of the max-width container on purpose */}
+      {/* Edge-to-edge review section */}
       <div className="full-width-review-section">
         <div className="review-inner-container">
           <div className="review-form-container">
@@ -320,7 +333,7 @@ function ProductDetail({ currency, rates, language }) {
           )}
 
           <img
-            src={`${API_BASE_URL}/uploads/${sliderImages[activeImageIdx]}`}
+          src={getImageUrl(sliderImages[activeImageIdx])}
             alt={saree.name}
             className="lightbox-image"
             onClick={(e) => e.stopPropagation()}
@@ -340,20 +353,7 @@ function ProductDetail({ currency, rates, language }) {
           {sliderImages.length > 1 && (
             <div className="lightbox-counter">{activeImageIdx + 1} / {sliderImages.length}</div>
           )}
-          <ReviewForm 
-        productId={productId} 
-        onReviewAdded={fetchReviews} 
-        availableOptions={Object.keys(stats || {})} 
-      />
-
-      {/* 3. Review Section: Isme ab direct state data pass kar sakte hain */}
-      <ReviewSection 
-        productId={productId}
-        reviews={reviews}
-        stats={stats}
-        totalReviews={totalReviews}
-      />
-    </div>
+        </div>
       )}
     </div>
   );

@@ -1,52 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import './Payment.css'; // Extracted CSS
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-
 
 export default function PaymentPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 1. Extract all state passed from OrderSummary exactly once
+  // Extract all state passed from OrderSummary exactly once
   const { addressId, totalAmount, buyNowProduct, customerEmail } = location.state || {};
 
   const [placingOrder, setPlacingOrder] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    console.log('[PaymentPage] Initializing component. State received:', location.state);
+    
     // Can't reach payment without completing the address step first
     if (!addressId) {
+      console.warn('[PaymentPage] Missing addressId, redirecting to /add-address');
       navigate('/add-address');
     }
   }, [addressId, navigate]);
 
   const handlePlaceOrder = async () => {
+    console.log('[PaymentPage] Place order (COD) clicked.');
     setPlacingOrder(true);
     setError('');
     const token = localStorage.getItem('token');
-try {
-  const res = await fetch(`${API_BASE_URL}/api/orders/checkout`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    // ✅ Fixed: backend padhta hai req.body.addressId
-    body: JSON.stringify({ 
-  addressId,
-  buyNowProduct
-})
-  });
+    
+    try {
+      const payload = { 
+        addressId,
+        buyNowProduct
+      };
+      console.log('[PaymentPage] Submitting payload to checkout API:', payload);
+
+      const res = await fetch(`${API_BASE_URL}/api/orders/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        // ✅ Fixed: Backend reads req.body.addressId
+        body: JSON.stringify(payload)
+      });
+      
       const data = await res.json();
+      console.log('[PaymentPage] Server response:', data);
 
       if (data.success) {
+        console.log(`[PaymentPage] Order successful! Navigating to tracking page for ID: ${data.orderId}`);
         navigate(`/track-order/${data.orderId}`);
       } else {
+        console.error('[PaymentPage] Order placement failed:', data.message || data.error);
         setError(data.message || data.error || 'Could not place your order.');
       }
     } catch (err) {
-      console.error('Order placement error:', err);
+      console.error('[PaymentPage] Order placement exception:', err);
       setError('Something went wrong while placing your order.');
     } finally {
       setPlacingOrder(false);
@@ -56,12 +68,12 @@ try {
   if (!addressId) return null;
 
   return (
-    <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', paddingBottom: '40px' }}>
+    <div className="payment-page">
 
       {/* Header & Stepper */}
-      <div style={{ background: '#fff', padding: '20px 24px', borderBottom: '1px solid #eee' }}>
-        <h2 style={{ margin: 0, color: '#333', textAlign: 'center' }}>Checkout</h2>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '24px', gap: '8px' }}>
+      <div className="payment-header">
+        <h2>Checkout</h2>
+        <div className="stepper-container">
           <Step number={1} label="Address" completed />
           <StepLine completed />
           <Step number={2} label="Order Summary" completed />
@@ -70,67 +82,55 @@ try {
         </div>
       </div>
 
-      <div style={{
-        maxWidth: '900px', margin: '24px auto', display: 'flex', gap: '20px',
-        padding: '0 20px', alignItems: 'flex-start', flexWrap: 'wrap'
-      }}>
+      <div className="payment-content-wrapper">
 
         {/* LEFT: Payment method (COD only) */}
-        <div style={{ flex: '1 1 60%', ...cardStyle }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: '#878787' }}>PAYMENT METHOD</h3>
+        <div className="payment-left-pane">
+          <div className="payment-card">
+            <h3 className="section-title">PAYMENT METHOD</h3>
 
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '14px',
-            border: '2px solid #A8325E', borderRadius: '8px', padding: '18px',
-            backgroundColor: '#fdf7f4'
-          }}>
-            <input type="radio" checked readOnly style={{ width: '18px', height: '18px' }} />
-            <div>
-              <p style={{ margin: 0, fontWeight: 'bold', color: '#212121' }}>💵 Cash on Delivery</p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '0.85em', color: '#878787' }}>
-                Pay the delivery agent in cash when your order arrives.
-              </p>
+            <div className="payment-method-box">
+              <input type="radio" checked readOnly className="payment-radio" />
+              <div>
+                <p className="payment-method-title">💵 Cash on Delivery</p>
+                <p className="payment-method-desc">
+                  Pay the delivery agent in cash when your order arrives.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <p style={{ marginTop: '16px', fontSize: '0.8em', color: '#aaa' }}>
-            Online payment options will be added soon.
-          </p>
-
-          {error && (
-            <p style={{ color: '#721c24', backgroundColor: '#f8d7da', padding: '10px', borderRadius: '8px', fontSize: '0.9em', marginTop: '16px' }}>
-              {error}
+            <p className="payment-coming-soon">
+              Online payment options will be added soon.
             </p>
-          )}
+
+            {error && (
+              <p className="payment-error-message">
+                {error}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* RIGHT: Total + Place order */}
-        <div style={{ flex: '1 1 30%', ...cardStyle }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: '#878787', borderBottom: '1px solid #f0f0f0', paddingBottom: '12px' }}>
-            ORDER TOTAL
-          </h3>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '20px' }}>
-            <span>Total Amount</span>
-            <span>₹{Number(totalAmount || 0).toFixed(2)}</span>
-          </div>
+        <div className="payment-right-pane">
+          <div className="payment-card">
+            <h3 className="order-total-header">
+              ORDER TOTAL
+            </h3>
+            
+            <div className="total-amount-row">
+              <span>Total Amount</span>
+              <span>₹{Number(totalAmount || 0).toFixed(2)}</span>
+            </div>
 
-          <button
-            onClick={handlePlaceOrder}
-            disabled={placingOrder}
-            style={{
-              width: '100%',
-              backgroundColor: placingOrder ? '#c98a2c99' : '#A8325E',
-              color: '#fff',
-              border: 'none',
-              padding: '16px',
-              fontSize: '1.05rem',
-              fontWeight: 'bold',
-              borderRadius: '8px',
-              cursor: placingOrder ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {placingOrder ? 'Placing Order...' : 'Place Order (COD)'}
-          </button>
+            <button
+              onClick={handlePlaceOrder}
+              disabled={placingOrder}
+              className={`place-order-btn ${placingOrder ? 'btn-disabled' : ''}`}
+            >
+              {placingOrder ? 'Placing Order...' : 'Place Order (COD)'}
+            </button>
+          </div>
         </div>
 
       </div>
@@ -138,22 +138,14 @@ try {
   );
 }
 
-const cardStyle = {
-  background: '#fff',
-  borderRadius: '8px',
-  boxShadow: '0 1px 2px 0 rgba(0,0,0,0.1)',
-  padding: '24px'
-};
-
+// Subcomponents
 function Step({ number, label, active, completed }) {
-  const bgColor = active || completed ? '#2874f0' : '#e0e0e0';
-  const color = active || completed ? '#fff' : '#888';
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '90px' }}>
-      <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: bgColor, color, fontWeight: 'bold' }}>
+    <div className="step-wrapper">
+      <div className={`step-circle ${active || completed ? 'active' : ''}`}>
         {completed ? '✓' : number}
       </div>
-      <span style={{ marginTop: '6px', fontSize: '0.85em', color: active || completed ? '#333' : '#999', fontWeight: active ? 'bold' : 'normal' }}>
+      <span className={`step-label ${active || completed ? 'active-text' : ''} ${active ? 'bold-text' : ''}`}>
         {label}
       </span>
     </div>
@@ -161,5 +153,5 @@ function Step({ number, label, active, completed }) {
 }
 
 function StepLine({ completed }) {
-  return <div style={{ width: '80px', height: '2px', backgroundColor: completed ? '#2874f0' : '#e0e0e0', marginBottom: '20px' }} />;
-} 
+  return <div className={`step-line ${completed ? 'completed-line' : ''}`} />;
+}

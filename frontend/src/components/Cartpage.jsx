@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+import './CartPage.css'; // Importing the separate CSS file
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -10,6 +12,7 @@ function CartPage() {
 
   useEffect(() => {
     const fetchCart = async () => {
+      console.log('[CartPage] Fetching cart data...');
       setLoading(true);
       const token = localStorage.getItem('token');
 
@@ -20,14 +23,15 @@ function CartPage() {
         });
 
         const res = await response.json();
+        console.log('[CartPage] Cart data response:', res);
 
         if (res.success) {
           setCartItems(res.data || res.cart || []);
         } else {
-          console.error('Cart fetch failed:', res.message);
+          console.error('[CartPage] Cart fetch failed:', res.message);
         }
       } catch (err) {
-        console.error('Error fetching cart:', err);
+        console.error('[CartPage] Error fetching cart:', err);
       } finally {
         setLoading(false);
       }
@@ -38,6 +42,8 @@ function CartPage() {
 
   const handleRemoveItem = async (cartId) => {
     if (!window.confirm('Remove this item?')) return;
+    console.log(`[CartPage] Attempting to remove item with cartId: ${cartId}`);
+    
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/cart/remove/${cartId}`, {
@@ -45,11 +51,13 @@ function CartPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       const res = await response.json();
+      
+      console.log('[CartPage] Remove item response:', res);
       if (res.success) {
         setCartItems((prev) => prev.filter((item) => item.cart_id !== cartId));
       }
     } catch (error) {
-      console.error('Remove Error:', error);
+      console.error('[CartPage] Remove Error:', error);
     }
   };
 
@@ -58,54 +66,50 @@ function CartPage() {
     0
   );
 
-  if (loading) return <div style={{ padding: '150px', textAlign: 'center' }}>Loading Cart...</div>;
+  if (loading) return <div className="cart-loading">Loading Cart...</div>;
 
   return (
-    <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', padding: '100px 20px' }}>
+    <div className="cart-page-container">
       {cartItems.length === 0 ? (
-        <div style={{ background: '#fff', padding: '50px', textAlign: 'center', maxWidth: '500px', margin: '0 auto', borderRadius: '20px' }}>
+        <div className="cart-empty">
           <h3>Cart is empty!</h3>
-          <Link to="/">Go Back to Shopping</Link>
+          <Link to="/" className="cart-link">Go Back to Shopping</Link>
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: '30px', maxWidth: '1100px', margin: '0 auto', flexWrap: 'wrap' }}>
-          <div style={{ flex: '2', background: '#fff', padding: '20px', borderRadius: '20px' }}>
+        <div className="cart-layout">
+          <div className="cart-items-section">
             <h2>My Cart ({cartItems.length} Items)</h2>
             {cartItems.map((item) => (
-              <div key={item.cart_id} style={{ display: 'flex', alignItems: 'center', padding: '15px 0', borderBottom: '1px solid #eee' }}>
+              <div key={item.cart_id} className="cart-item">
                 <img
-                  src={`${API_BASE_URL}/uploads/${item.image_url || 'saare_1.jpeg'}`}
-                  alt={item.name || 'Saree'}
-                  style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '12px', marginRight: '20px' }}
+                  src={getImageUrl(item.image_url)}
+                  alt={item.name || 'Product'}
+                  className="cart-item-img"
                   onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
                 />
-                <div style={{ flex: 1 }}>
-                  <h4>{item.name || 'Saree'}</h4>
+                <div className="cart-item-details">
+                  <h4>{item.name || 'Product'}</h4>
                   <p>Qty: {item.quantity}</p>
                   <strong>₹{Number(item.price || 0).toLocaleString('en-IN')}</strong>
                 </div>
-                <button onClick={() => handleRemoveItem(item.cart_id)}>Remove</button>
+                <button 
+                  className="btn-remove" 
+                  onClick={() => handleRemoveItem(item.cart_id)}
+                >
+                  Remove
+                </button>
               </div>
             ))}
           </div>
 
-          <div style={{ flex: '1', minWidth: '300px', background: '#fff', padding: '30px', borderRadius: '20px' }}>
+          <div className="cart-bill-section">
             <h3>Bill Details</h3>
-            <p>Total: ₹{totalAmount.toLocaleString('en-IN')}</p>
-
+            <p className="total-amount">Total: ₹{totalAmount.toLocaleString('en-IN')}</p>
             <button
-              onClick={() => navigate('/add-address')}
-              style={{
-                width: '100%',
-                padding: '14px 24px',
-                backgroundColor: '#A8325E',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '10px',
-                fontWeight: 'bold',
-                fontSize: '1em',
-                cursor: 'pointer',
-                marginTop: '16px'
+              className="btn-proceed"
+              onClick={() => {
+                console.log('[CartPage] Proceeding to buy. Total amount:', totalAmount);
+                navigate('/add-address');
               }}
             >
               Proceed to Buy
