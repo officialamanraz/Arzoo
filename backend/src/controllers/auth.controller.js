@@ -13,13 +13,11 @@ if (process.env.NODE_ENV !== 'production') {
 // with safe fallbacks only for non-secret defaults.
 // ==========================================
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-const APP_NAME = process.env.APP_NAME || 'Arzoo Saree';
-const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
 const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || process.env.GMAIL_USER;
 const FRONTEND_URL = process.env.FRONTEND_URL;
-const MIN_PASSWORD_LENGTH = Number(process.env.MIN_PASSWORD_LENGTH) || 6;
-const BCRYPT_SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
+const MIN_PASSWORD_LENGTH = Number(process.env.MIN_PASSWORD_LENGTH);
+const BCRYPT_SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS)
 const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.RESET_TOKEN_EXPIRY_MINUTES) || 60;
 
 if (!JWT_SECRET) {
@@ -95,9 +93,6 @@ const registerUser = async (req, res) => {
     });
   }
 
-  // Combine address fields into a single formatted string for storage
-  // (frontend sends state/city/fullAddress separately; users table
-  // currently has a single `address` column).
   const fullFormattedAddress = [fullAddress, city, state].filter(Boolean).join(', ');
 
   try {
