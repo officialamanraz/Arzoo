@@ -6,7 +6,7 @@ const {
     verifyPayment
 } = require('../controllers/payment');
 
-const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware');
+const { verifyToken, verifyAdmin } = require('../middleware/authmiddleware');
 
 router.post('/create-order', verifyToken, orderCreate);
 router.post('/verify', verifyToken, verifyPayment);
