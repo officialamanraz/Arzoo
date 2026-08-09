@@ -2,15 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import "./theme.css";
-import AdminSwitcher from './components/AdminSwitcher';
 
 // Components
+import AdminSwitcher from './components/AdminSwitcher';
+import Checkout from './components/Checkoutpage'; // Ensure Checkout.jsx is in the components folder
 import AdminInventory from "./components/AdminInventory";
 import AdminAddProduct from "./components/AdminAddProduct";
 import AdminBanners from "./components/AdminBanners";
 import AddressForm from './components/Addressform';
 import OrderSummary from './components/ordersummary';
-import PaymentPage from './components/PaymentePage';
 import OrderTracking from './components/OrderTracking';
 import UserOrders from './components/UserOrders';
 import AdminOrders from './components/AdminOrders';
@@ -28,8 +28,6 @@ import About from './components/About';
 import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 
-// FIX: added fallback so a missing/typo'd VITE_API_URL env var on Render
-// doesn't silently turn every fetch into "undefined/api/...".
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function App() {
@@ -103,9 +101,6 @@ function App() {
       fetchMode = "keyword-search";
     }
     else if (selectedCategory) {
-      // FIX: was '/api/category/...' (singular) -- router is mounted at
-      // '/api/categories' (plural) in server.js, so this 404'd every time
-      // a category filter was selected.
       url = `${API_BASE_URL}/api/categories/subcategory-products/${selectedCategory}`;
       fetchMode = "category-filter";
     }
@@ -157,7 +152,7 @@ function App() {
     console.log(`[APP] handleCategorySelect -- categoryId: ${categoryId}, categoryName: "${categoryName}"`);
     setSelectedCategory(categoryId);
     setSelectedCategoryName(categoryName);
-    setSearchKeyword("");        // Clear text search when selecting a category
+    SearchKeyword("");        // Clear text search when selecting a category
     setCurrentPage(1);
   };
 
@@ -261,6 +256,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
         <Route
           path="/admin/banners"
           element={
@@ -283,25 +279,18 @@ function App() {
           path="/payment"
           element={
             <ProtectedRoute>
-              <PaymentPage />
+              <Checkout />
             </ProtectedRoute>
           }
         />
+        
         <Route path="/track-order/:orderId" element={<OrderTracking />} />
+        
         <Route
           path="/checkout"
           element={
             <ProtectedRoute>
-              <div
-                style={{
-                  padding: "50px",
-                  textAlign: "center",
-                  marginTop: "100px",
-                }}
-              >
-                <h2>Checkout Page</h2>
-                <p>The final "Place Order" button will appear here.</p>
-              </div>
+              <Checkout />
             </ProtectedRoute>
           }
         />

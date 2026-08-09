@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('./src/DATABASE/mysql');
-const imagekit = require('./config/imagekit');
+const imagekit = require('./config/@imagekit/nodejs');
 
 const IMAGES_FOLDER = path.join(__dirname, 'uploads');
 

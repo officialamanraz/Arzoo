@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
-const { processCheckout } = require('../controllers/checkout.controller');
-const { getOrderTracking } = require('../controllers/tracking.controller'); // Removed updateOrderStatus from here
-const { getadminorder, getmyorders, updateOrderStatus } = require('../controllers/order.controller'); // ADDED IT HERE!
-const { getCart } = require('../controllers/cart.controller');
+const { processCheckout } = require('../controllers/checkout');
+const { getOrderTracking } = require('../controllers/tracking'); // Removed updateOrderStatus from here
+const { getadminorder, getmyorders, updateOrderStatus } = require('../controllers/order'); // ADDED IT HERE!
+const { getCart } = require('../controllers/cart');
 const { verifyToken, verifyAdmin } = require('../middleware/authmiddleware');
 
 // Customer places a COD order

@@ -332,7 +332,8 @@ function UserOrders() {
                     order.items.map((item, idx) => (
                       <div key={idx} className="order-item-row">
                         <img
-                          src={getImageUrl(banner.image_url)}
+                          // FIX: Changed from `banner.image_url` to `item.image_url || item.image`
+                          src={getImageUrl(item.image_url || item.image)} 
                           alt={item.name}
                           className="order-item-thumb"
                           onError={(e) => { e.target.src = '/saare_1.jpeg'; }}

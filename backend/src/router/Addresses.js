@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { addAddress, getMyAddresses, getAddressById } = require('../controllers/Addresses.controller');
+const { addAddress, getMyAddresses, getAddressById } = require('../controllers/Addresses');
 const { verifyToken } = require('../middleware/authmiddleware');
 
 // Save a new delivery address for the logged-in user

@@ -1,5 +1,5 @@
 const db = require('../DATABASE/mysql');
-const { registerUser } = require('./auth.controller');
+const { registerUser } = require('./auth');
 const imagekit = require('../../config/imagekit');// apna sahi path lagao
 
 const getALLbanners = async(req,res)=> {

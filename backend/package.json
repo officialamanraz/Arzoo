@@ -13,6 +13,7 @@
   "type": "commonjs",
   "dependencies": {
     "@getbrevo/brevo": "^6.0.2",
+    "@imagekit/nodejs": "^7.10.0",
     "@vitalets/google-translate-api": "^9.2.1",
     "axios": "^1.18.0",
     "bcrypt": "^6.0.0",
@@ -20,12 +21,12 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "imagekit": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "multer": "^2.2.0",
     "mysql2": "^3.22.5",
     "nodemailer": "^9.0.1",
+    "razorpay": "^2.9.8",
     "react-router-dom": "^7.18.0",
     "react-toastify": "^11.1.0"
   },

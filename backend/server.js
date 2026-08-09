@@ -31,27 +31,28 @@ app.get('/test', (req, res) => {
 });
 
 // 4. Router Imports (deduped -- each router required ONCE)
-const translationRouter = require('./src/router/translate.router');
-const authRouter = require('./src/router/auth.router');
-const cartRouter = require('./src/router/cart.router');
-const orderRouter = require('./src/router/order.router');
-const categoryRouter = require('./src/router/category.router');
-const locationRouter = require('./src/router/Location.router');
-const currencyRouter = require('./src/router/currency.router');
-const emailRouter = require('./src/router/Email.router');
-const productRouter = require('./src/router/product.router');
-const reviewRouter = require('./src/router/review.router');
-const checkoutRouter = require('./src/router/checkout.router');
-const trackingRouter = require('./src/router/tracking.router');
-const addressRouter = require('./src/router/Addresses.router');
-const bannersRouter = require('./src/router/banner.router');
-
+const translationRouter = require('./src/router/translate');
+const authRouter = require('./src/router/auth');
+const cartRouter = require('./src/router/cart');
+const orderRouter = require('./src/router/order');
+const categoryRouter = require('./src/router/category');
+const locationRouter = require('./src/router/Location');
+const currencyRouter = require('./src/router/currency');
+const emailRouter = require('./src/router/Email');
+const productRouter = require('./src/router/product');
+const reviewRouter = require('./src/router/review');
+const checkoutRouter = require('./src/router/checkout');
+const trackingRouter = require('./src/router/tracking');
+const addressRouter = require('./src/router/Addresses');
+const bannersRouter = require('./src/router/banner');
+const paymentRouter = require('./src/router/payment')
 // NOTE: subcategory.router.js is intentionally NOT mounted --
 // category.router.js already handles subcategory routes
 // (subcategory-products, get-subcategories, add-subcategory).
 
 // 5. Route Attachments
 // IMPORTANT: plural '/api/categories' matches what the frontend (App.jsx / API_BASE_URL calls) expects.
+app.use('/api/payment',paymentRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
 app.use('/api/auth', authRouter);

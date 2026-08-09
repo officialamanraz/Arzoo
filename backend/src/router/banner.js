@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require('multer');
-const bannercontroller = require('../controllers/banner.controller');
+const bannercontroller = require('../controllers/banner');
 
 const storage = multer.memoryStorage(); // CHANGED: diskStorage se memoryStorage
 

@@ -6,7 +6,7 @@ const {
   AddToCart,
   getCart,
   RemoveFromCart,
-} = require('../controllers/cart.controller');
+} = require('../controllers/cart');
 
 // Ab teeno routes fully secure hain!
 // Cart routes — sirf login check (koi bhi logged-in user kar sakta hai)

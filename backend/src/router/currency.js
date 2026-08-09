@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const {currencychange}=require("../controllers/currency.controller")
+const {currencychange}=require("../controllers/currency")
 
 router.get('/Rate-change',currencychange);
 

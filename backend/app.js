@@ -24,20 +24,20 @@
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // // 4. Router Imports
-// const translationRouter = require('./src/router/translate.router');
-// const authrouter = require('./src/router/auth.router');
-// const cartrouter = require('./src/router/cart.router');
-// const orderRouter = require('./src/router/order.router');
-// const categoryRoutes = require('./src/router/category.router');
-// const locationRoute = require('./src/router/Location.router');
-// const currencyRoute = require('./src/router/currency.router');
-// const contactRouter = require('./src/router/Email.router');
-// const productrouter = require('./src/router/product.router');
-// const ordersRouter = require('./src/router/order.router');
-// const reviewRouter = require('./router/review.router');
-// const checkoutRouter = require('./src/router/checkout.router');
-// const addressRouter = require('./src/router/addresses.router');
-// const bannersRouter = require('./src/router/banner.router');
+// const translationRouter = require('./src/router/translate');
+// const authrouter = require('./src/router/auth');
+// const cartrouter = require('./src/router/cart');
+// const orderRouter = require('./src/router/order');
+// const categoryRoutes = require('./src/router/category');
+// const locationRoute = require('./src/router/Location');
+// const currencyRoute = require('./src/router/currency');
+// const contactRouter = require('./src/router/Email');
+// const productrouter = require('./src/router/product');
+// const ordersRouter = require('./src/router/order');
+// const reviewRouter = require('./router/review');
+// const checkoutRouter = require('./src/router/checkout');
+// const addressRouter = require('./src/router/addresses');
+// const bannersRouter = require('./src/router/banner');
 // // 5. Routes Attachments
 // app.use('/api/banners',bannersRouter);
 // app.use('/api/order', ordersRouter);

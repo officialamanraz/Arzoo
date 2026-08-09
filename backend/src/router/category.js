@@ -8,7 +8,7 @@ const {
   Addsubcategory,
   getProductsBySubcategory,
   getSubcategoriesByCategory
-} = require('../controllers/category.controller');
+} = require('../controllers/category');
 
 router.post('/add-category', Addcategory);
 router.get('/get-categories', getcategory);

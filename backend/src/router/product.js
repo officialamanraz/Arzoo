@@ -16,7 +16,7 @@ const {
   addNewImagesToProduct, // 👈 Naya Add Kiya
   deleteSingleImage,
   getRecommendedProducts     // 👈 Naya Add Kiya
-} = require('../controllers/product.controller');
+} = require('../controllers/product');
 
 // 2. Ab saare routes SIRF EK BAAR likho
 router.get("/recommendations", getRecommendedProducts);

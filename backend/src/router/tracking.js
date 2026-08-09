@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const {getOrderTracking,
-    updateOrderStatus} = require('../controllers/tracking.controller');
+    updateOrderStatus} = require('../controllers/tracking');
 
 // Route for the user's frontend UI progress tracking bar
 router.get('/:orderId',getOrderTracking);

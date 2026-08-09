@@ -1,7 +1,25 @@
+/* =========================================
+   CHECKOUT & PAYMENT STYLES
+   ========================================= */
+
+:root {
+  --font-display: 'Fraunces', serif;
+  --font-tag: monospace;
+  --primary: #A8325E;
+  --primary-hover: #8f294f;
+  --accent: #e5d3c8;
+  --text-dark: #333333;
+  --text-light: #666666;
+  --white: #ffffff;
+  --border: #eeeeee;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
 .checkout-page {
   background-color: #f9fafb;
   min-height: 100vh;
-  padding: 20px;
+  padding: 40px 20px;
 }
 
 .checkout-container {
@@ -12,16 +30,97 @@
   gap: 20px;
 }
 
-.checkout-step {
-  background-color: #ffffff;
+/* =========================================
+   STEPPER HEADER
+   ========================================= */
+
+.payment-header {
+  background-color: var(--white);
   padding: 24px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 8px;
+}
+
+.payment-header h2 {
+  font-family: var(--font-display, 'Fraunces', serif);
+  font-size: 1.75rem;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.step-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.step-circle.active {
+  background-color: var(--primary, #A8325E);
+  color: var(--white);
+}
+
+.step-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.step-label.active-text {
+  color: var(--text-dark);
+}
+
+.step-label.bold-text {
+  font-weight: 600;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background-color: #e5e7eb;
+  min-width: 30px;
+  max-width: 60px;
+}
+
+.step-line.completed-line {
+  background-color: var(--primary, #A8325E);
+}
+
+/* =========================================
+   CHECKOUT STEPS & CONTENT
+   ========================================= */
+
+.checkout-step {
+  background-color: var(--white);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
   transition: opacity 0.3s ease;
 }
 
 .step-active {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--primary, #A8325E);
   opacity: 1;
 }
 
@@ -29,11 +128,13 @@
   opacity: 0.7;
 }
 
-.step-title {
+.section-title {
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 16px;
-  color: #2563eb;
+  color: var(--primary, #A8325E);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .step-content {
@@ -41,23 +142,44 @@
 }
 
 .no-data-text, .info-text {
-  color: #4b5563;
+  color: var(--text-light);
   margin-bottom: 16px;
 }
 
+.payment-error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+/* =========================================
+   ADDRESS CARD STYLES
+   ========================================= */
+
 .address-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   padding: 16px;
   margin-bottom: 12px;
   border-radius: 6px;
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  background-color: var(--white);
+  transition: border-color 0.2s;
+}
+
+.address-card:hover {
+  border-color: var(--accent);
 }
 
 .address-radio {
   margin-top: 4px;
   cursor: pointer;
+  accent-color: var(--primary, #A8325E);
 }
 
 .address-details {
@@ -67,12 +189,13 @@
 .address-name {
   font-weight: 600;
   margin: 0 0 4px 0;
+  color: var(--text-dark);
 }
 
 .address-phone {
   font-size: 0.875rem;
   font-weight: 400;
-  color: #6b7280;
+  color: var(--text-light);
   margin-left: 8px;
 }
 
@@ -83,57 +206,22 @@
   line-height: 1.4;
 }
 
-.btn-group {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 20px;
-}
-
-.btn-primary {
-  background-color: #f97316;
-  color: #ffffff;
-  padding: 8px 24px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: #ea580c;
-}
-
-.btn-primary:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
-
-.btn-primary.btn-large {
-  padding: 12px 32px;
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
-.btn-text {
-  color: #3b82f6;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.btn-text:hover {
-  text-decoration: underline;
-}
+/* =========================================
+   PAYMENT METHOD CARDS
+   ========================================= */
 
 .payment-method-card {
-  border: 1px solid #22c55e;
-  background-color: #f0fdf4;
+  border: 1px solid var(--border);
+  background-color: var(--white);
   padding: 16px;
   border-radius: 6px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.payment-method-card.payment-selected {
+  border: 1px solid #22c55e;
+  background-color: #f0fdf4;
 }
 
 .payment-label {
@@ -147,20 +235,77 @@
   width: 20px;
   height: 20px;
   accent-color: #16a34a;
+  cursor: pointer;
 }
 
 .payment-name {
   font-weight: 600;
   font-size: 1.125rem;
+  color: var(--text-dark);
 }
 
 .payment-desc {
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--text-light);
   margin: 4px 0 0 32px;
 }
 
-/* Responsive adjustments */
+/* =========================================
+   BUTTON STYLES
+   ========================================= */
+
+.btn-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.btn-primary {
+  background-color: var(--primary, #A8325E);
+  color: var(--white);
+  padding: 10px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover, #8f294f);
+}
+
+.btn-primary:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-primary.btn-large {
+  padding: 12px 32px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  width: 100%;
+}
+
+.btn-text {
+  color: var(--primary, #A8325E);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.btn-text:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+
 @media (max-width: 640px) {
   .checkout-container {
     gap: 16px;
@@ -168,6 +313,14 @@
   
   .checkout-step {
     padding: 16px;
+  }
+
+  .stepper-container {
+    gap: 6px;
+  }
+
+  .step-label {
+    display: none; /* Hide step text labels on very small mobile screens */
   }
   
   .btn-group {
