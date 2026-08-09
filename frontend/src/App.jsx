@@ -5,7 +5,7 @@ import "./theme.css";
 
 // Components
 import AdminSwitcher from './components/AdminSwitcher';
-import Checkout from './components/Checkoutpage'; // Ensure Checkout.jsx is in the components folder
+import Checkout from './components/checkoutpage'; // Ensure Checkout.jsx is in the components folder
 import AdminInventory from "./components/AdminInventory";
 import AdminAddProduct from "./components/AdminAddProduct";
 import AdminBanners from "./components/AdminBanners";
