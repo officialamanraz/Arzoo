@@ -10,14 +10,14 @@ const server = http.createServer(app);
 const io = new Server(server,{
   cors:{
     origin:'*',
-    method:['GET','POST']
+    methods:['GET','POST']
   }
 });
 app.set('io',io);
 io.on('connection',(socket)=>{
-  console.log('[SOCKET] clinet connect',socket.id);
-  socket.on('disconnet',()=>{
-    console.log('[socket] client disconnect',socket.id)
+  console.log('[SOCKET] client connected',socket.id);
+  socket.on('disconnect',()=>{
+    console.log('[SOCKET] client disconnected',socket.id)
   })
 })
 if (!process.env.FRONTEND_URL) {
@@ -29,7 +29,7 @@ app.use(morgan('dev'));
 app.use(cors({
   origin: '*',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use('/payments/webhook/',express.raw({type:'application/json'}));
