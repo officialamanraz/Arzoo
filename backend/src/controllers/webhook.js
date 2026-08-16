@@ -35,10 +35,10 @@ const razorpayWebhook = async (req, res) => {
     const io = req.app.get('io'); // socket instance yaha se milega
 
     if (event.event === 'payment.captured') {
-      await db.execute(
-        'update orders set payment_status="paid", status="processing" where razorpay_order_id = ?',
-        [razorpayOrderId]
-      );
+  await db.execute(
+   'update orders set payment_status="paid", status="processing" where razorpay_order_id = ?'
+    [razorpay_order_id]
+);
       console.log('[WEBHOOK] Order marked paid+processing:', razorpayOrderId);
 
       const [orderRows] = await db.execute(
@@ -52,9 +52,9 @@ const razorpayWebhook = async (req, res) => {
 
     if (event.event === 'payment.failed') {
       await db.execute(
-        'update orders set payment_status="unpaid", status="cancelled" where razorpay_order_id = ?',
-        [razorpayOrderId]
-      );
+  "update orders set payment_status='unpaid', status='cancelled' where razorpay_order_id = ?"
+    [razorpay_order_id]
+);
 
       const [orderRows] = await db.execute(
         'select * from orders where razorpay_order_id = ?',

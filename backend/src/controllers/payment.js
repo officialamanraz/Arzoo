@@ -83,10 +83,10 @@ const verifyPayment = async (req, res) => {
 
             const internalOrderId = rows[0].order_id;
 
-            await db.execute(
-                'update orders set payment_status="paid", payment_id=? where razorpay_order_id=?',
-                [razorpay_payment_id, razorpay_order_id]
-            );
+await db.execute(
+    "update orders set payment_status='paid', payment_id=? where razorpay_order_id=?",
+    [razorpay_payment_id, razorpay_order_id]
+);
 
             // NOW it's safe to send the invoice -- payment is confirmed
             sendInvoiceEmail(internalOrderId).catch(err =>
@@ -98,10 +98,10 @@ const verifyPayment = async (req, res) => {
                 message: "payment successful"
             });
         } else {
-            await db.execute(
-                'update orders set payment_status="unpaid" where razorpay_order_id=?',
-                [razorpay_order_id]
-            );
+await db.execute(
+    "update orders set payment_status='unpaid' where razorpay_order_id=?",
+    [razorpay_order_id]
+);
             return res.status(400).json({
                 success: false,
                 message: "Invalid signature, payment verification failed"
