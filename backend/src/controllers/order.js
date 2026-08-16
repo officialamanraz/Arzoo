@@ -6,7 +6,12 @@ const imagekit = require('../../config/imagekit');
 const getadminorder = async (req, res) => {
     console.log('[ORDER] Admin fetching all orders');
     try {
-        const [ordersData] = await db.execute('SELECT * FROM orders ORDER BY order_id DESC');
+        const [ordersData] = await db.execute(
+            `SELECT o.*, u.name AS user_name
+             FROM orders o
+             LEFT JOIN users u ON o.user_id = u.user_id
+             ORDER BY o.order_id DESC`
+        );
 
         const [itemsData] = await db.execute(
             `SELECT oi.*, p.name, p.image_url

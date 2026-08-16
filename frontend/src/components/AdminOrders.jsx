@@ -6,13 +6,15 @@ import './AdminOrders.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-const statusColors = {
-  pending: { bg: '#fff3cd', text: '#856404', icon: '⏳' },
-  processing: { bg: '#cfe2ff', text: '#084298', icon: '⚙️' },
-  shipped: { bg: '#d1ecf1', text: '#0c5460', icon: '📦' },
-  delivered: { bg: '#d4edda', text: '#155724', icon: '✅' },
-  cancelled: { bg: '#f8d7da', text: '#721c24', icon: '❌' }
+const statusConfig = {
+  pending:    { label: 'Pending',    bg: '#fff3cd', text: '#856404', dot: '#f5b400' },
+  processing: { label: 'Processing', bg: '#e0ecff', text: '#1d4ed8', dot: '#3b82f6' },
+  shipped:    { label: 'Shipped',    bg: '#e0f2fe', text: '#0369a1', dot: '#0ea5e9' },
+  delivered:  { label: 'Delivered',  bg: '#dcfce7', text: '#15803d', dot: '#22c55e' },
+  cancelled:  { label: 'Cancelled',  bg: '#fee2e2', text: '#b91c1c', dot: '#ef4444' }
 };
+
+const statusOrder = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 function AdminOrders() {
   const navigate = useNavigate();
@@ -22,11 +24,7 @@ function AdminOrders() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [liveUpdateFlash, setLiveUpdateFlash] = useState(null);
   const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    processing: 0,
-    shipped: 0,
-    delivered: 0
+    total: 0, pending: 0, processing: 0, shipped: 0, delivered: 0
   });
 
   useEffect(() => {
@@ -77,9 +75,7 @@ function AdminOrders() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/orders/admin/all`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       const res = await response.json();
@@ -107,12 +103,10 @@ function AdminOrders() {
       shipped: ordersData.filter(o => o.status === 'shipped').length,
       delivered: ordersData.filter(o => o.status === 'delivered').length
     };
-    console.log('[AdminOrders] Calculated Stats:', newStats);
     setStats(newStats);
   };
 
   const handleFilterChange = (status) => {
-    console.log(`[AdminOrders] Filtering orders by status: ${status}`);
     setFilterStatus(status);
   };
 
@@ -135,7 +129,6 @@ function AdminOrders() {
       });
 
       const res = await response.json();
-      console.log('[AdminOrders] Status update response:', res);
 
       if (res.success) {
         const updatedOrders = orders.map((o) =>
@@ -143,7 +136,6 @@ function AdminOrders() {
         );
         setOrders(updatedOrders);
         calculateStats(updatedOrders);
-        alert('Order status updated! ✅');
       } else {
         alert('Failed to update status: ' + res.message);
       }
@@ -156,16 +148,18 @@ function AdminOrders() {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     });
   };
 
   if (loading) {
-    return <div className="admin-loading">Loading Orders... ⏳</div>;
+    return (
+      <div className="admin-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading orders...</p>
+      </div>
+    );
   }
 
   return (
@@ -173,33 +167,35 @@ function AdminOrders() {
       <div className="orders-container">
 
         <div className="orders-header">
-          <h1>📦 Order Management</h1>
+          <div>
+            <h1>Order Management</h1>
+            <p className="orders-subtitle">Track and update customer orders in real time</p>
+          </div>
           <button className="back-btn" onClick={() => navigate('/admin')}>
             ← Back to Admin Panel
           </button>
         </div>
 
         <div className="stats-grid">
-          <StatBadge label="Total Orders" count={stats.total} bgColor="#007bff" />
-          <StatBadge label="Pending" count={stats.pending} bgColor="#ffc107" textColor="#333" />
-          <StatBadge label="Processing" count={stats.processing} bgColor="#17a2b8" />
-          <StatBadge label="Shipped" count={stats.shipped} bgColor="#20c997" />
-          <StatBadge label="Delivered" count={stats.delivered} bgColor="#28a745" />
+          <StatCard label="Total Orders" count={stats.total} color="#6366f1" />
+          <StatCard label="Pending" count={stats.pending} color="#f5b400" />
+          <StatCard label="Processing" count={stats.processing} color="#3b82f6" />
+          <StatCard label="Shipped" count={stats.shipped} color="#0ea5e9" />
+          <StatCard label="Delivered" count={stats.delivered} color="#22c55e" />
         </div>
 
         <div className="filter-section">
-          <label className="filter-label">Filter by Status:</label>
-          <select
-            value={filterStatus}
-            onChange={(e) => handleFilterChange(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">All Orders</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-          </select>
+          <div className="filter-pills">
+            {['all', ...statusOrder].map((s) => (
+              <button
+                key={s}
+                className={`filter-pill ${filterStatus === s ? 'active' : ''}`}
+                onClick={() => handleFilterChange(s)}
+              >
+                {s === 'all' ? 'All' : statusConfig[s].label}
+              </button>
+            ))}
+          </div>
           <p className="filter-info">
             Showing {filteredOrders.length} of {orders.length} orders
           </p>
@@ -211,75 +207,99 @@ function AdminOrders() {
           </div>
         ) : (
           <div className="orders-grid">
-            {filteredOrders.map((order) => (
-              <div
-                key={order.order_id}
-                className={`order-card ${liveUpdateFlash === order.order_id ? 'order-card-flash' : ''}`}
-              >
-                <div className="order-card-header">
-                  <div className="order-header-info">
-                    <h3>Order #{order.order_id}</h3>
-                    <p>📅 {formatDate(order.ordered_at)}</p>
-                  </div>
-                  <div
-                    className="order-status-badge"
-                    style={{
-                      backgroundColor: statusColors[order.status]?.bg,
-                      color: statusColors[order.status]?.text
-                    }}
-                  >
-                    {statusColors[order.status]?.icon} {order.status.toUpperCase()}
-                  </div>
-                </div>
+            {filteredOrders.map((order) => {
+              const config = statusConfig[order.status] || statusConfig.pending;
+              const firstItem = order.items?.[0];
 
-                <div className="order-user-info">
-                  <p className="user-label">👤 Customer:</p>
-                  <p className="user-id">{order.user_id}</p>
-                </div>
-
-                <div className="order-items-section">
-                  <p className="items-label">📦 Items:</p>
-                  {order.items && order.items.length > 0 ? (
-                    <div className="order-items-list">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className={`order-item ${idx !== order.items.length - 1 ? 'border-bottom' : ''}`}>
-                          <span className="item-name">{item.name}</span>
-                          <span className="item-qty">x{item.quantity}</span>
-                          <span className="item-price">₹{(item.quantity * item.unit_price).toLocaleString('en-IN')}</span>
-                        </div>
-                      ))}
+              return (
+                <div
+                  key={order.order_id}
+                  className={`order-card ${liveUpdateFlash === order.order_id ? 'order-card-flash' : ''}`}
+                >
+                  <div className="order-card-top">
+                    <div className="order-thumb">
+                      {firstItem?.image_url ? (
+                        <img src={getImageUrl(firstItem.image_url)} alt={firstItem.name} />
+                      ) : (
+                        <div className="order-thumb-placeholder">📦</div>
+                      )}
+                      {order.items?.length > 1 && (
+                        <span className="order-thumb-count">+{order.items.length - 1}</span>
+                      )}
                     </div>
-                  ) : (
-                    <p className="no-items">No items</p>
-                  )}
-                </div>
 
-                <div className="order-total-section">
-                  <p>Total Amount:</p>
-                  <p className="total-price">
-                    ₹{Number(order.total_amount).toLocaleString('en-IN')}
-                  </p>
-                </div>
+                    <div className="order-card-headinfo">
+                      <h3>Order #{order.order_id}</h3>
+                      <p className="order-time">{formatDate(order.ordered_at)}</p>
+                    </div>
 
-                <div className="status-update-section">
-                  <label>Change Status:</label>
-                  <select
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(order, e.target.value)}
-                    className="status-select"
-                    style={{
-                      backgroundColor: statusColors[order.status]?.bg,
-                      color: statusColors[order.status]?.text
-                    }}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                  </select>
+                    <span
+                      className="order-status-badge"
+                      style={{ backgroundColor: config.bg, color: config.text }}
+                    >
+                      <span className="status-dot" style={{ backgroundColor: config.dot }}></span>
+                      {config.label}
+                    </span>
+                  </div>
+
+                  <div className="order-customer-row">
+                    <span className="customer-avatar">
+                      {(order.user_name || 'U').charAt(0).toUpperCase()}
+                    </span>
+                    <span className="customer-name">{order.user_name || 'Unknown Customer'}</span>
+                  </div>
+
+                  <div className="order-items-section">
+                    {order.items && order.items.length > 0 ? (
+                      <div className="order-items-list">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="order-item-row">
+                            <div className="order-item-img">
+                              {item.image_url ? (
+                                <img src={getImageUrl(item.image_url)} alt={item.name} />
+                              ) : (
+                                <div className="order-item-img-placeholder">🧵</div>
+                              )}
+                            </div>
+                            <div className="order-item-details">
+                              <span className="item-name">{item.name}</span>
+                              <span className="item-qty">Qty: {item.quantity}</span>
+                            </div>
+                            <span className="item-price">
+                              ₹{(item.quantity * item.unit_price).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="no-items">No items</p>
+                    )}
+                  </div>
+
+                  <div className="order-footer">
+                    <div className="order-total-section">
+                      <span className="total-label">Total</span>
+                      <span className="total-price">
+                        ₹{Number(order.total_amount).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    <div className="status-update-section">
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order, e.target.value)}
+                        className="status-select"
+                        style={{ backgroundColor: config.bg, color: config.text }}
+                      >
+                        {statusOrder.map((s) => (
+                          <option key={s} value={s}>{statusConfig[s].label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -287,11 +307,11 @@ function AdminOrders() {
   );
 }
 
-function StatBadge({ label, count, bgColor, textColor = 'white' }) {
+function StatCard({ label, count, color }) {
   return (
-    <div className="stat-badge" style={{ background: bgColor, color: textColor }}>
-      <p>{label}</p>
-      <h2>{count}</h2>
+    <div className="stat-card" style={{ borderTopColor: color }}>
+      <p className="stat-label">{label}</p>
+      <h2 className="stat-count" style={{ color }}>{count}</h2>
     </div>
   );
 }
