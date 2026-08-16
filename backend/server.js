@@ -3,10 +3,23 @@ const morgan = require('morgan');
 const cors = require('cors');
 const path = require('path');
 const db = require('./src/DATABASE/mysql'); // mysql2/promise pool
-
-// 1. App Engine Start
+const http = require('http');
+const {Server} = requier('socket.io')
 const app = express();
-
+const server = http.createServer(app);
+const io = new Server(server,{
+  cors:{
+    origin:'*',
+    method:['GET','POST']
+  }
+});
+app.set('io',io);
+io.on('connection',(socket)=>{
+  console.log('[SOCKET] clinet connect',socket.id);
+  socket.on('disconnet',()=>{
+    console.log('[socket] client disconnect',socket.id)
+  })
+})
 if (!process.env.FRONTEND_URL) {
   console.error('[SERVER] Missing FRONTEND_URL environment variable -- CORS may block requests.');
 }
@@ -18,6 +31,7 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
+app.use('/payments/webhook/',express.raw({type:'application/json'}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -147,7 +161,7 @@ app.get('/data', async (req, res) => {
 // 6. LISTEN -- uppercase env var, Render-friendly fallback
 const PORT = process.env.PORT || 8000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`[SERVER] Running on port ${PORT}`);
 });
 

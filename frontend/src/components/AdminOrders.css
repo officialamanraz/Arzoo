@@ -298,3 +298,11 @@
     margin-top: 10px;
   }
 }
+.order-card-flash {
+  animation: flashHighlight 3s ease;
+}
+
+@keyframes flashHighlight {
+  0% { box-shadow: 0 0 0 3px #28a745; background-color: #f0fff4; }
+  100% { box-shadow: none; background-color: transparent; }
+}

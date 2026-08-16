@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+import { getImageUrl } from '../getImageUrl';
+import socket from '../socket';
 import './AdminOrders.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -19,6 +20,7 @@ function AdminOrders() {
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [liveUpdateFlash, setLiveUpdateFlash] = useState(null);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -29,7 +31,43 @@ function AdminOrders() {
 
   useEffect(() => {
     fetchOrders();
+
+    socket.on('order_updated', (data) => {
+      console.log('[AdminOrders] Real-time order update received:', data);
+      const updatedOrder = data.order;
+
+      setOrders((prevOrders) => {
+        const exists = prevOrders.find(o => o.order_id === updatedOrder.order_id);
+        let newOrders;
+
+        if (exists) {
+          newOrders = prevOrders.map((o) =>
+            o.order_id === updatedOrder.order_id ? { ...o, ...updatedOrder } : o
+          );
+        } else {
+          newOrders = [updatedOrder, ...prevOrders];
+        }
+
+        calculateStats(newOrders);
+        return newOrders;
+      });
+
+      setLiveUpdateFlash(updatedOrder.order_id);
+      setTimeout(() => setLiveUpdateFlash(null), 3000);
+    });
+
+    return () => {
+      socket.off('order_updated');
+    };
   }, []);
+
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredOrders(orders);
+    } else {
+      setFilteredOrders(orders.filter(o => o.status === filterStatus));
+    }
+  }, [orders, filterStatus]);
 
   const fetchOrders = async () => {
     console.log('[AdminOrders] Fetching all orders...');
@@ -50,7 +88,6 @@ function AdminOrders() {
       if (res.success) {
         const allOrders = res.data || [];
         setOrders(allOrders);
-        setFilteredOrders(allOrders);
         calculateStats(allOrders);
       } else {
         console.error('[AdminOrders] Orders fetch failed:', res.message);
@@ -77,11 +114,6 @@ function AdminOrders() {
   const handleFilterChange = (status) => {
     console.log(`[AdminOrders] Filtering orders by status: ${status}`);
     setFilterStatus(status);
-    if (status === 'all') {
-      setFilteredOrders(orders);
-    } else {
-      setFilteredOrders(orders.filter(o => o.status === status));
-    }
   };
 
   const handleStatusChange = async (order, newStatus) => {
@@ -104,20 +136,13 @@ function AdminOrders() {
 
       const res = await response.json();
       console.log('[AdminOrders] Status update response:', res);
-      
+
       if (res.success) {
         const updatedOrders = orders.map((o) =>
           o.order_id === order.order_id ? { ...o, status: newStatus } : o
         );
         setOrders(updatedOrders);
         calculateStats(updatedOrders);
-        
-        if (filterStatus === 'all') {
-           setFilteredOrders(updatedOrders);
-        } else {
-           setFilteredOrders(updatedOrders.filter(o => o.status === filterStatus));
-        }
-        
         alert('Order status updated! ✅');
       } else {
         alert('Failed to update status: ' + res.message);
@@ -146,8 +171,7 @@ function AdminOrders() {
   return (
     <div className="admin-orders-page">
       <div className="orders-container">
-        
-        {/* Header with Back Button */}
+
         <div className="orders-header">
           <h1>📦 Order Management</h1>
           <button className="back-btn" onClick={() => navigate('/admin')}>
@@ -155,7 +179,6 @@ function AdminOrders() {
           </button>
         </div>
 
-        {/* Stats Badges */}
         <div className="stats-grid">
           <StatBadge label="Total Orders" count={stats.total} bgColor="#007bff" />
           <StatBadge label="Pending" count={stats.pending} bgColor="#ffc107" textColor="#333" />
@@ -164,7 +187,6 @@ function AdminOrders() {
           <StatBadge label="Delivered" count={stats.delivered} bgColor="#28a745" />
         </div>
 
-        {/* Filter Dropdown */}
         <div className="filter-section">
           <label className="filter-label">Filter by Status:</label>
           <select
@@ -183,7 +205,6 @@ function AdminOrders() {
           </p>
         </div>
 
-        {/* Orders Cards */}
         {filteredOrders.length === 0 ? (
           <div className="empty-orders">
             <p>No orders found with this filter.</p>
@@ -191,15 +212,16 @@ function AdminOrders() {
         ) : (
           <div className="orders-grid">
             {filteredOrders.map((order) => (
-              <div key={order.order_id} className="order-card">
-                
-                {/* Order Header */}
+              <div
+                key={order.order_id}
+                className={`order-card ${liveUpdateFlash === order.order_id ? 'order-card-flash' : ''}`}
+              >
                 <div className="order-card-header">
                   <div className="order-header-info">
                     <h3>Order #{order.order_id}</h3>
                     <p>📅 {formatDate(order.ordered_at)}</p>
                   </div>
-                  <div 
+                  <div
                     className="order-status-badge"
                     style={{
                       backgroundColor: statusColors[order.status]?.bg,
@@ -210,13 +232,11 @@ function AdminOrders() {
                   </div>
                 </div>
 
-                {/* User Info */}
                 <div className="order-user-info">
                   <p className="user-label">👤 Customer:</p>
                   <p className="user-id">{order.user_id}</p>
                 </div>
 
-                {/* Items */}
                 <div className="order-items-section">
                   <p className="items-label">📦 Items:</p>
                   {order.items && order.items.length > 0 ? (
@@ -234,7 +254,6 @@ function AdminOrders() {
                   )}
                 </div>
 
-                {/* Total */}
                 <div className="order-total-section">
                   <p>Total Amount:</p>
                   <p className="total-price">
@@ -242,7 +261,6 @@ function AdminOrders() {
                   </p>
                 </div>
 
-                {/* Status Change */}
                 <div className="status-update-section">
                   <label>Change Status:</label>
                   <select
@@ -269,7 +287,6 @@ function AdminOrders() {
   );
 }
 
-// Stat Badge Component
 function StatBadge({ label, count, bgColor, textColor = 'white' }) {
   return (
     <div className="stat-badge" style={{ background: bgColor, color: textColor }}>
