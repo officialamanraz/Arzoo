@@ -32,6 +32,7 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "prettier": "^3.8.4"
   },
   "prettier": {
@@ -39,5 +40,8 @@
     "singleQuote": true,
     "tabWidth": 2,
     "trailingComma": "es5"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true
   }
 }
