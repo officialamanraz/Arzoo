@@ -154,7 +154,7 @@ const getmyorders = async (req, res) => {
             );
         } else {
             [orderRows] = await db.execute(
-                'SELECT total_amount FROM orders WHERE order_id = ? AND user_id = ? AND (tracking_ref IS NULL OR tracking_ref = "")',
+                'SELECT total_amount FROM orders WHERE order_id = ? AND user_id = ? AND (tracking_ref IS NULL OR tracking_ref =?)',
                 [order_id, user_id]
             );
         }
