@@ -129,14 +129,14 @@ const getmyorders = async (req, res) => {
         console.error(`[ORDER] Fetch error (user_id: ${user_id}):`, error.message);
         return res.status(500).json({ success: false, message: 'Error fetching orders', error: error.message });
     }
-};
-const orderCreate = async (req, res) => {
+};const orderCreate = async (req, res) => {
     try {
         const { order_id } = req.body;
         const user_id = req.user.id;
-        const {tracking_ref}=req.body;
-        const sourcevisiter =tracking_ref??null;
-       
+        const { tracking_ref } = req.body;
+        
+        // Ensure tracking_ref is explicitly null if undefined or empty
+        const sourcevisiter = (tracking_ref && tracking_ref !== 'undefined') ? tracking_ref : null;
 
         if (!order_id) {
             return res.status(400).json({
@@ -145,10 +145,19 @@ const orderCreate = async (req, res) => {
             });
         }
 
-        const [orderRows] = await db.execute(
-            'select total_amount from orders where order_id = ? and user_id = ? and tracking_ref=?',
-            [order_id, user_id,tracking_ref]
-        );
+        // Safe query handling for optional tracking_ref
+        let orderRows;
+        if (sourcevisiter) {
+            [orderRows] = await db.execute(
+                'SELECT total_amount FROM orders WHERE order_id = ? AND user_id = ? AND tracking_ref = ?',
+                [order_id, user_id, sourcevisiter]
+            );
+        } else {
+            [orderRows] = await db.execute(
+                'SELECT total_amount FROM orders WHERE order_id = ? AND user_id = ? AND (tracking_ref IS NULL OR tracking_ref = "")',
+                [order_id, user_id]
+            );
+        }
 
         if (orderRows.length === 0) {
             return res.status(404).json({
@@ -168,7 +177,7 @@ const orderCreate = async (req, res) => {
         const razorpayOrder = await razorpayInstance.orders.create(options);
 
         await db.execute(
-            'update orders set razorpay_order_id = ? where order_id = ?',
+            'UPDATE orders SET razorpay_order_id = ? WHERE order_id = ?',
             [razorpayOrder.id, order_id]
         );
 
@@ -187,6 +196,5 @@ const orderCreate = async (req, res) => {
         });
     }
 };
-
 // Export all three functions in one clean statement
 module.exports = { getadminorder, updateOrderStatus, getmyorders, orderCreate, };
