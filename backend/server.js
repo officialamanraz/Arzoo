@@ -44,7 +44,10 @@ app.get('/test', (req, res) => {
   console.log('[SERVER] GET /test -- health check hit');
   res.send('Server is running fine!');
 });
-
+// Server start hote hi ye ek baar database mein column add kar dega
+db.execute("ALTER TABLE orders ADD COLUMN tracking_ref VARCHAR(50) NULL DEFAULT NULL;")
+  .then(() => console.log("✅ Database mein tracking_ref column jud gaya!"))
+  .catch(err => console.log("Note (Ignore if exists):", err.message));
 // 4. Router Imports (deduped -- each router required ONCE)
 const translationRouter = require('./src/router/translate');
 const authRouter = require('./src/router/auth');
