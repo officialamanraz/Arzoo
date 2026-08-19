@@ -206,102 +206,75 @@ function AdminOrders() {
             <p>No orders found with this filter.</p>
           </div>
         ) : (
-          <div className="orders-grid">
-            {filteredOrders.map((order) => {
-              const config = statusConfig[order.status] || statusConfig.pending;
-              const firstItem = order.items?.[0];
+         <div className="orders-grid">
+  {filteredOrders.map((order) => {
+    const config = statusConfig[order.status] || statusConfig.pending;
+    // We only take the first item to prevent duplicate images
+    const firstItem = order.items?.[0];
 
-              return (
-                <div
-                  key={order.order_id}
-                  className={`order-card ${liveUpdateFlash === order.order_id ? 'order-card-flash' : ''}`}
-                >
-                  <div className="order-card-top">
-                    <div className="order-thumb">
-                      {firstItem?.image_url ? (
-                        <img src={getImageUrl(firstItem.image_url)} alt={firstItem.name} />
-                      ) : (
-                        <div className="order-thumb-placeholder">📦</div>
-                      )}
-                      {order.items?.length > 1 && (
-                        <span className="order-thumb-count">+{order.items.length - 1}</span>
-                      )}
-                    </div>
-
-                    <div className="order-card-headinfo">
-                      <h3>Order #{order.order_id}</h3>
-                      <p className="order-time">{formatDate(order.ordered_at)}</p>
-                    </div>
-
-                    <span
-                      className="order-status-badge"
-                      style={{ backgroundColor: config.bg, color: config.text }}
-                    >
-                      <span className="status-dot" style={{ backgroundColor: config.dot }}></span>
-                      {config.label}
-                    </span>
-                  </div>
-
-                  <div className="order-customer-row">
-                    <span className="customer-avatar">
-                      {(order.user_name || 'U').charAt(0).toUpperCase()}
-                    </span>
-                    <span className="customer-name">{order.user_name || 'Unknown Customer'}</span>
-                  </div>
-
-                  <div className="order-items-section">
-                    {order.items && order.items.length > 0 ? (
-                      <div className="order-items-list">
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="order-item-row">
-                            <div className="order-item-img">
-                              {item.image_url ? (
-                                <img src={getImageUrl(item.image_url)} alt={item.name} />
-                              ) : (
-                                <div className="order-item-img-placeholder">🧵</div>
-                              )}
-                            </div>
-                            <div className="order-item-details">
-                              <span className="item-name">{item.name}</span>
-                              <span className="item-qty">Qty: {item.quantity}</span>
-                            </div>
-                            <span className="item-price">
-                              ₹{(item.quantity * item.unit_price).toLocaleString('en-IN')}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="no-items">No items</p>
-                    )}
-                  </div>
-
-                  <div className="order-footer">
-                    <div className="order-total-section">
-                      <span className="total-label">Total</span>
-                      <span className="total-price">
-                        ₹{Number(order.total_amount).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-
-                    <div className="status-update-section">
-                      <select
-                        value={order.status}
-                        onChange={(e) => handleStatusChange(order, e.target.value)}
-                        className="status-select"
-                        style={{ backgroundColor: config.bg, color: config.text }}
-                      >
-                        {statusOrder.map((s) => (
-                          <option key={s} value={s}>{statusConfig[s].label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+    return (
+      <div
+        key={order.order_id}
+        className={`order-card ${liveUpdateFlash === order.order_id ? 'order-card-flash' : ''}`}
+      >
+        {/* 1. Header: Customer Name & Order No */}
+        <div className="order-header-new">
+          <div className="customer-profile">
+            <span className="customer-avatar">
+              {(order.user_name || 'U').charAt(0).toUpperCase()}
+            </span>
+            <span className="customer-name">{order.user_name || 'Unknown Customer'}</span>
           </div>
-        )}
+          <span className="order-id">#{order.order_id}</span>
+        </div>
+
+        {/* 2. Media: Single Product Image */}
+        <div className="order-main-image">
+          {firstItem?.image_url ? (
+            <img src={getImageUrl(firstItem.image_url)} alt={firstItem?.name} />
+          ) : (
+            <div className="img-placeholder">📦</div>
+          )}
+          {order.items?.length > 1 && (
+            <div className="more-items-badge">+{order.items.length - 1} more item(s)</div>
+          )}
+        </div>
+
+        {/* 3 & 4. Details & Pricing: Product Name and Total Price */}
+        <div className="order-product-details">
+          <div className="product-name-qty">
+            <span className="product-name">{firstItem?.name || 'Unknown Product'}</span>
+            <span className="product-qty">Qty: {firstItem?.quantity || 1}</span>
+          </div>
+          <div className="order-product-price">
+            ₹{Number(order.total_amount).toLocaleString('en-IN')}
+          </div>
+        </div>
+
+        {/* 5. Footer: Order Time & Status Update */}
+        <div className="order-footer-new">
+          <div className="order-time-display">
+            <span className="time-label">Ordered at</span>
+            <span className="time-value">{formatDate(order.ordered_at)}</span>
+          </div>
+
+          <div className="status-update-section">
+            <select
+              value={order.status}
+              onChange={(e) => handleStatusChange(order, e.target.value)}
+              className="status-select"
+              style={{ backgroundColor: config.bg, color: config.text }}
+            >
+              {statusOrder.map((s) => (
+                <option key={s} value={s}>{statusConfig[s].label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+    );
+  })}
+</div>        )}
       </div>
     </div>
   );
