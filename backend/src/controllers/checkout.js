@@ -9,9 +9,9 @@ const { sendInvoiceEmail } = require('./sendInvoiceEmail');
 // ==========================================
 const processCheckout = async (req, res) => {
     const user_id = req.user.id;
-    const { addressId, buyNowProduct, paymentMethod } = req.body;
+    const { addressId, buyNowProduct, paymentMethod,tracking_ref } = req.body;
     const method = paymentMethod === 'online' ? 'online' : 'cod'; // default to cod if not sent
-
+    const sourcevisiter = tracking_ref??null; 
     console.log(`[CHECKOUT] Start -- user_id: ${user_id}, addressId: ${addressId}, buyNow: ${!!buyNowProduct}, method: ${method}`);
 
     if (!addressId) {
@@ -128,9 +128,9 @@ const processCheckout = async (req, res) => {
         const [orderResult] = await connection.execute(
             `INSERT INTO orders
                 (user_id, total_amount, status, payment_id, payment_method, payment_status,
-                 shipping_address, customer_email, address_id, subtotal, estimated_delivery)
-             VALUES (?, ?, 'pending', ?, ?, 'unpaid', ?, ?, ?, ?, ?)`,
-            [user_id, totalAmount, dynamicPaymentId, method, shippingAddressFull, customerEmail, addressId, subtotal, estimatedDeliverySQL]
+                 shipping_address, customer_email, address_id, subtotal, estimated_delivery,tracking_ref)
+             VALUES (?, ?, 'pending', ?, ?, 'unpaid', ?, ?, ?, ?, ?,?)`,
+            [user_id, totalAmount, dynamicPaymentId, method, shippingAddressFull, customerEmail, addressId, subtotal, estimatedDeliverySQL,sourcevisiter]
         );
 
         const newOrderId = orderResult.insertId;

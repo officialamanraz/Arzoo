@@ -73,10 +73,15 @@ const Checkout = () => {
         setError('');
 
         try {
+            // 👉 NAYA CODE: SessionStorage se tracking ID nikalna
+            const storedTrackingRef = sessionStorage.getItem('tracking_ref') || null;
+
             const payload = {
                 addressId: selectedAddress.address_id,
                 paymentMethod: paymentMethod,
-                ...(buyNowProduct && { buyNowProduct })
+                ...(buyNowProduct && { buyNowProduct }),
+                // 👉 NAYA CODE: Payload mein tracking_ref attach kar do
+                tracking_ref: storedTrackingRef 
             };
 
             const res = await fetch(`${API_BASE_URL}/api/orders/checkout`, {
@@ -98,6 +103,9 @@ const Checkout = () => {
             }
 
             if (paymentMethod === 'cod') {
+                // 👉 NAYA CODE: COD Order success ho gaya, memory clear kar do
+                sessionStorage.removeItem('tracking_ref');
+                
                 alert(`Order Placed Successfully! Order ID: ${data.orderId}`);
                 navigate(`/track-order/${data.orderId}`);
                 setLoading(false);
@@ -164,6 +172,9 @@ const Checkout = () => {
                         const verifyData = await verifyRes.json();
 
                         if (verifyData.success) {
+                            // 👉 NAYA CODE: Online Payment success ho gaya, memory clear kar do
+                            sessionStorage.removeItem('tracking_ref');
+                            
                             alert(`Payment Successful! Order ID: ${displayOrderId}`);
                             navigate(`/track-order/${displayOrderId}`);
                         } else {

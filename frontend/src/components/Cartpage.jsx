@@ -9,7 +9,20 @@ function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+// 👉 NAYA CODE: URL se Tracking ID pakadne wala logic
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const trackingRef = urlParams.get('ref');
 
+    if (trackingRef) {
+      sessionStorage.setItem('tracking_ref', trackingRef);
+      console.log('[CartPage] Tracking ID saved in session:', trackingRef);
+
+      // URL clean karna taaki ?ref=... hat jaye
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+  }, []);
   useEffect(() => {
     const fetchCart = async () => {
       console.log('[CartPage] Fetching cart data...');

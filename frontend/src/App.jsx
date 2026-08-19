@@ -45,7 +45,21 @@ function App() {
   const [ratesError, setRatesError] = useState(null);
   const [minprice, setMinprice] = useState(0);
   const [maxprice, setMaxprice] = useState(300000);
+useEffect(() => {
+    // 1. Current URL se parameters nikalo
+    const urlParams = new URLSearchParams(window.location.search);
+    const trackingRef = urlParams.get('ref');
 
+    // 2. Agar 'ref' milta hai, toh sessionStorage mein save karo
+    if (trackingRef) {
+      sessionStorage.setItem('tracking_ref', trackingRef);
+      console.log("Tracking ID saved:", trackingRef);
+
+      // 3. URL se '?ref=ABC' hata do taaki URL clean ho jaye
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+  }, []);
   // Dark mode toggle
   useEffect(() => {
     console.log(`[APP] Dark mode toggled -- isDark: ${isDark}`);

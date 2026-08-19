@@ -130,6 +130,63 @@ const getmyorders = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Error fetching orders', error: error.message });
     }
 };
+const orderCreate = async (req, res) => {
+    try {
+        const { order_id } = req.body;
+        const user_id = req.user.id;
+        const {tracking_ref}=req.body;
+        const sourcevisiter =tracking_ref??null;
+       
+
+        if (!order_id) {
+            return res.status(400).json({
+                success: false,
+                message: "order_id is required"
+            });
+        }
+
+        const [orderRows] = await db.execute(
+            'select total_amount from orders where order_id = ? and user_id = ? and tracking_ref=?',
+            [order_id, user_id,tracking_ref]
+        );
+
+        if (orderRows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+
+        const totalAmount = orderRows[0].total_amount;
+
+        const options = {
+            amount: Math.round(totalAmount * 100), 
+            currency: "INR",
+            receipt: `order_rcpt_${order_id}`,
+        };
+
+        const razorpayOrder = await razorpayInstance.orders.create(options);
+
+        await db.execute(
+            'update orders set razorpay_order_id = ? where order_id = ?',
+            [razorpayOrder.id, order_id]
+        );
+
+        return res.status(200).json({
+            success: true,
+            razorpay_order_id: razorpayOrder.id,
+            currency: razorpayOrder.currency,
+            amount: razorpayOrder.amount
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "failed to create razorpay order",
+            error: error.message
+        });
+    }
+};
 
 // Export all three functions in one clean statement
-module.exports = { getadminorder, updateOrderStatus, getmyorders };
+module.exports = { getadminorder, updateOrderStatus, getmyorders, orderCreate, };

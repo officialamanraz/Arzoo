@@ -21,5 +21,6 @@ router.get('/admin/all', verifyToken, verifyAdmin, getadminorder);
 
 // Admin: update status + add tracking milestone
 router.patch('/admin/status', verifyToken, verifyAdmin, updateOrderStatus);
+router.post('/create-order', verifyToken, orderCreate);
 
 module.exports = router;
