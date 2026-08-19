@@ -129,7 +129,7 @@ const Checkout = () => {
                 return;
             }
 
-            const razorpayRes = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
+            const razorpayRes = await fetch(`${API_BASE_URL}/api/orders/create-order`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
