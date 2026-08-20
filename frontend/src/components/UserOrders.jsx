@@ -60,6 +60,29 @@ function UserOrders() {
 
     fetchOrders();
   }, []);
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}/cancel`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Order cancelled successfully!");
+        // UI ko turant update karne ke liye state update kar do
+        setOrders(orders.map(o => o.order_id === orderId ? { ...o, status: 'cancelled' } : o));
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      alert("Something went wrong");
+    }
+};
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -367,6 +390,15 @@ function UserOrders() {
                 {/* Merged clean Order Card Footer */}
                 <div className="order-card-footer">
                   <div className="order-footer-actions">
+                    {/* Agar status pending ya processing hai, tabhi Cancel button dikhega */}
+{(order.status === 'pending' || order.status === 'processing') && (
+    <button 
+        onClick={() => handleCancelOrder(order.order_id)} 
+        style={{ padding: '10px 20px', background: 'transparent', color: '#dc3545', border: '1px solid #dc3545', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+    >
+        Cancel Order
+    </button>
+)}
                     <Link to={`/track-order/${order.payment_id}`} className="track-order-btn">
                       Track Order
                     </Link>
