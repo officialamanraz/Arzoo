@@ -185,6 +185,7 @@ function UserOrders() {
 
           <div class="order-meta-strip">
             <span>Order ID: <strong>${order.payment_id}</strong></span>
+            ${order.tracking_ref ? `<span>Dealer Ref: <strong>${order.tracking_ref}</strong></span>` : ''}
           </div>
 
           <div class="parties-section">
@@ -313,12 +314,22 @@ function UserOrders() {
                 </div>
 
                 {/* Payment + Delivery info strip */}
+               {/* Payment + Delivery info strip */}
                 <div className="order-extra-info">
                   <p>
                     <span className="field-label">Payment:</span>{' '}
                     {order.payment_method ? order.payment_method.toUpperCase() : 'N/A'}
                     {' '}({order.payment_status ? order.payment_status.toUpperCase() : 'N/A'})
                   </p>
+                  
+                  {/* 👇 Naya Tracking Ref / Dealer ID block 👇 */}
+                  {order.tracking_ref && (
+                    <p>
+                      <span className="field-label">Dealer ID:</span>{' '}
+                      <strong style={{ color: '#A8325E' }}>{order.tracking_ref}</strong>
+                    </p>
+                  )}
+
                   {order.estimated_delivery && (
                     <p>
                       <span className="field-label">Estimated Delivery:</span>{' '}
@@ -326,7 +337,6 @@ function UserOrders() {
                     </p>
                   )}
                 </div>
-
                 <div className="order-items-block">
                   {order.items && order.items.length > 0 ? (
                     order.items.map((item, idx) => (
