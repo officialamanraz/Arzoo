@@ -226,36 +226,44 @@
   font-size: 12px;
   font-weight: 600;
 }
-
-/* 3 & 4. Details & Pricing */
+/* Product Details Row ko flex banayega taaki ek line me rahein */
 .order-product-details {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
-}
-.product-name-qty {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.product-name {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-dark, #1f1f1f);
-  line-height: 1.4;
-}
-.product-qty {
-  font-size: 13px;
-  color: #6b7280;
-}
-.order-product-price {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--primary, #c2185b);
-  white-space: nowrap;
+  gap: 15px; /* Title aur Price ke beech space */
+  width: 100%;
+  margin-top: 10px;
 }
 
+/* Name aur Qty ko left side me set karega */
+.product-name-qty {
+  flex: 1; /* Bachi hui jagah lega */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Lamba naam hone par box ke bahar na jaye aur 2 line ke baad ... lag jaye */
+.product-name {
+  font-weight: 600;
+  color: #333;
+  word-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 2 line se zyada lamba naam chup jayega */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+/* Price ko bahar nikalne se rokega */
+.order-product-price {
+  flex-shrink: 0; /* Price compressed nahi hoga */
+  white-space: nowrap; /* Ek hi line me ₹12,50,000 rakhega */
+  font-weight: 700;
+  color: #A8325E;
+  font-size: 1.1rem;
+}
 /* 5. Footer */
 .order-footer-new {
   padding-top: 16px;
@@ -293,4 +301,28 @@
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding-right: 30px;
+}
+/* Product title aur price ko ek line mein handle karne ke liye */
+.admin-product-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Taaki lamba naam upar se shuru ho */
+  gap: 10px; /* Title aur price aapas me na takrayein */
+  width: 100%;
+}
+
+.admin-product-title {
+  flex: 1; /* Title baaki bachi hui jagah le lega */
+  word-wrap: break-word; /* Agar naam bohot lamba hai toh 2nd line me aayega */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Sirf 2 line dikhayega, phir ... aa jayega */
+  -webkit-box-orient: vertical;
+}
+
+.admin-product-price {
+  flex-shrink: 0; /* Ye price ko dabne ya bahar nikalne nahi dega */
+  white-space: nowrap; /* Price hamesha ek hi line me rahega */
+  font-weight: bold;
+  color: #A8325E; /* Tumhari theme ka color */
 }
