@@ -175,16 +175,25 @@ const getmyorders = async (req, res) => {
 const cancelOrder = async (req, res) => {
     try {
         const orderId = req.params.id;
-        const userId = req.user.userId; // Token se aayega
+        
+        // FIX: Tumhara token middleware ID jahan bhi save karta ho, ye automatically dhundh lega
+        const userId = req.userId || (req.user && req.user.userId) || (req.user && req.user.id);
 
-        // Pehle check karo ki order is user ka hai aur shipped toh nahi ho gaya
+        console.log(`[DEBUG] Attempting to cancel Order ID: ${orderId}, by User ID: ${userId}`);
+
+        if (!userId) {
+            console.error("🔥 Error: User ID is undefined. Token is not providing user info.");
+            return res.status(401).json({ success: false, message: "Authentication Error: User ID missing" });
+        }
+
+        // Check if order belongs to user
         const [orders] = await db.execute(
             "SELECT status FROM orders WHERE order_id = ? AND user_id = ?", 
             [orderId, userId]
         );
 
         if (orders.length === 0) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(404).json({ success: false, message: "Order not found or access denied" });
         }
 
         const currentStatus = orders[0].status;
@@ -195,16 +204,18 @@ const cancelOrder = async (req, res) => {
             });
         }
 
-        // Database me status Cancelled kar do
+        // Update status to cancelled
         await db.execute(
             "UPDATE orders SET status = 'cancelled' WHERE order_id = ?", 
             [orderId]
         );
 
+        console.log(`✅ Order ${orderId} successfully cancelled by User ${userId}`);
         return res.status(200).json({ success: true, message: "Order cancelled successfully" });
 
     } catch (error) {
-        console.error("Cancel Order Error:", error);
+        // 🔥 Ye line Render logs mein EXACT error print karegi ki code kahan fata
+        console.error("🔥 CRITICAL CRASH IN CANCEL ORDER:", error);
         return res.status(500).json({ success: false, message: "Failed to cancel order" });
     }
 };
