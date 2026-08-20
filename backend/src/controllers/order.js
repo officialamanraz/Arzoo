@@ -171,7 +171,7 @@ const getmyorders = async (req, res) => {
         });
     }
 };
-// User Cancels their own order
+
 const cancelOrder = async (req, res) => {
     try {
         const orderId = req.params.id;
@@ -185,8 +185,6 @@ const cancelOrder = async (req, res) => {
             console.error("🔥 Error: User ID is undefined. Token is not providing user info.");
             return res.status(401).json({ success: false, message: "Authentication Error: User ID missing" });
         }
-
-        // Check if order belongs to user
         const [orders] = await db.execute(
             "SELECT status FROM orders WHERE order_id = ? AND user_id = ?", 
             [orderId, userId]
