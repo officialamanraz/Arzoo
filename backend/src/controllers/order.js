@@ -190,6 +190,7 @@ const getmyorders = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("RAZORPAY ERROR DETAILS:", error);
         return res.status(500).json({
             success: false,
             message: "failed to create razorpay order",
