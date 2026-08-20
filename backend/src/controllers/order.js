@@ -8,7 +8,7 @@ const getadminorder = async (req, res) => {
     console.log('[ORDER] Admin fetching all orders');
     try {
         const [ordersData] = await db.execute(
-            `SELECT o.*, u.name AS user_name
+            `SELECT o.*, u.name AS user_name, u.phone AS customer_phone
              FROM orders o
              LEFT JOIN users u ON o.user_id = u.user_id
              ORDER BY o.order_id DESC`
