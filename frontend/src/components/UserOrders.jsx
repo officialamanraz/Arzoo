@@ -185,7 +185,7 @@ function UserOrders() {
 
           <div class="order-meta-strip">
             <span>Order ID: <strong>${order.payment_id}</strong></span>
-            ${order.tracking_ref ? `<span>Dealer Ref: <strong>${order.tracking_ref}</strong></span>` : ''}
+            ${order.tracking_ref ? `<span>tracking Ref: <strong>${order.tracking_ref}</strong></span>` : ''}
           </div>
 
           <div class="parties-section">
