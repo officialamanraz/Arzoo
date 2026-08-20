@@ -44,14 +44,6 @@ await db.execute(
                 message: "payment successful"
             });
             {/* Agar status pending ya processing hai, tabhi Cancel button dikhega */}
-{(order.status === 'pending' || order.status === 'processing') && (
-    <button 
-        onClick={() => handleCancelOrder(order.order_id)} 
-        style={{ padding: '10px 20px', background: 'transparent', color: '#dc3545', border: '1px solid #dc3545', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-    >
-        Cancel Order
-    </button>
-)}
         } else {
 await db.execute(
     "update orders set payment_status='unpaid' where razorpay_order_id=?",
