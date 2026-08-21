@@ -206,8 +206,31 @@ function ProductDetail({ currency, rates, language }) {
   const finerDetails = Object.entries(DETAIL_FIELD_LABELS)
     .filter(([field]) => saree[field] !== null && saree[field] !== undefined && saree[field] !== '' && saree[field] !== 'null')
     .map(([field, label]) => ({ label, value: saree[field] }));
+    const handleWhatsAppInquiry = () => {
+    // SECURITY LAYER 1: Fetching number securely from environment
+    const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
 
-  return (
+    if (!phoneNumber) {
+        console.error("Security Alert: WhatsApp number missing in .env");
+        alert("WhatsApp booking is currently unavailable. Please try again later.");
+        return;
+    }
+
+    // Checking if product data actually exists to prevent blank messages
+    if (!sarees || sarees.length === 0) return;
+
+    // Yahan tumhara jo bhi product object ka naam hai wo use karo (jaise product.name ya saree.title)
+    // Example ke liye main 'product' maan raha hu jo detail page pe render ho raha hai
+    const message = `Hello! I am interested in VIP Booking.\n\n*Product:* ${product.name}\n*Price:* ${currency} ${product.price}\n*Link:* ${window.location.href}`;
+
+    // SECURITY LAYER 2: Strict Encoding prevents XSS or URL injection
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
+    // SECURITY LAYER 3: noopener and noreferrer prevent reverse tab hijacking
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+};
+return (
     <div className="product-detail-page">
       <div className="main-container">
         <Link to="/" className="back-link">← Back to Collection</Link>
@@ -280,6 +303,36 @@ function ProductDetail({ currency, rates, language }) {
                 {isOutOfStock ? "Sold Out" : "Buy Now"}
               </button>
             </div>
+
+            {/* VIP WhatsApp Secure Button */}
+            <button 
+                onClick={handleWhatsAppInquiry} 
+                style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    gap: '10px',
+                    width: '100%', 
+                    padding: '12px 20px', 
+                    marginTop: '15px',
+                    backgroundColor: '#25D366', 
+                    color: '#ffffff', 
+                    fontWeight: 'bold', 
+                    fontSize: '16px',
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px rgba(37, 211, 102, 0.3)',
+                    transition: 'transform 0.2s ease'
+                }}
+                onMouseOver={(e) => e.target.style.transform = 'scale(1.02)'}
+                onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
+                </svg>
+                Inquire on WhatsApp for VIP Booking
+            </button>
 
             {finerDetails.length > 0 && (
               <div className="finer-details">

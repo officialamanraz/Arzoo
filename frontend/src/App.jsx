@@ -5,7 +5,7 @@ import "./theme.css";
 
 // Components
 import AdminSwitcher from './components/AdminSwitcher';
-import Checkout from './components/checkoutpage'; // Ensure Checkout.jsx is in the components folder
+import Checkout from './components/checkoutpage'; 
 import AdminInventory from "./components/AdminInventory";
 import AdminAddProduct from "./components/AdminAddProduct";
 import AdminBanners from "./components/AdminBanners";
@@ -34,7 +34,6 @@ function App() {
   const [sarees, setSarees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isDark, setIsDark] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -45,7 +44,15 @@ function App() {
   const [ratesError, setRatesError] = useState(null);
   const [minprice, setMinprice] = useState(0);
   const [maxprice, setMaxprice] = useState(300000);
-useEffect(() => {
+  
+  // 1. Initial load par localStorage check karega
+  const [isDark, setIsDark] = useState(() => {
+    const savedTheme = localStorage.getItem("theme");
+    // Agar localStorage mein 'dark' save hai, toh true dega, warna false
+    return savedTheme === "dark"; 
+  });
+
+  useEffect(() => {
     // 1. Current URL se parameters nikalo
     const urlParams = new URLSearchParams(window.location.search);
     const trackingRef = urlParams.get('ref');
@@ -60,13 +67,21 @@ useEffect(() => {
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
   }, []);
+  
   // Dark mode toggle
   useEffect(() => {
     console.log(`[APP] Dark mode toggled -- isDark: ${isDark}`);
+    
+    // documentElement ka matlab hai <html> tag, jo body se zyada safe hai
+    const root = document.documentElement; 
+
     if (isDark) {
-      document.body.classList.add("dark");
+        root.classList.add("dark");
+        // User ki choice browser mein save kar do taaki refresh par na hate
+        localStorage.setItem("theme", "dark"); 
     } else {
-      document.body.classList.remove("dark");
+        root.classList.remove("dark");
+        localStorage.setItem("theme", "light");
     }
   }, [isDark]);
 
@@ -156,17 +171,17 @@ useEffect(() => {
   const handleSearch = (keyword) => {
     console.log(`[APP] handleSearch -- keyword: "${keyword}"`);
     setSearchKeyword(keyword);
-    setSelectedCategory("");     // Clear category when typing a text search
+    setSelectedCategory("");     
     setSelectedCategoryName("");
     setCurrentPage(1);
   };
 
-  // Category Select Handler (accepts optional display name)
+  // Category Select Handler
   const handleCategorySelect = (categoryId, categoryName = "") => {
     console.log(`[APP] handleCategorySelect -- categoryId: ${categoryId}, categoryName: "${categoryName}"`);
     setSelectedCategory(categoryId);
     setSelectedCategoryName(categoryName);
-    SearchKeyword("");        // Clear text search when selecting a category
+    setSearchKeyword("");        // FIXED TYPO HERE
     setCurrentPage(1);
   };
 
@@ -311,6 +326,6 @@ useEffect(() => {
       </Routes>
     </>
   );
-}
+} 
 
 export default App;
