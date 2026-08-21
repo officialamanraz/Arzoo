@@ -935,3 +935,44 @@ textarea.admin-input { resize: vertical; min-height: 110px; }
   .gallery-section { max-width: 100%; }
   .finer-label { min-width: 120px; }
 }
+/* =========================================
+   GLOBAL DARK MODE FIXES
+========================================= */
+
+/* Har page ka general background dark karne ke liye */
+html.dark body {
+  background-color: #121212 !important;
+  color: #f1f1f1 !important;
+}
+
+/* Home Page ke Product Cards ka white space hatane ke liye */
+html.dark .product-card,
+html.dark .card {
+  background-color: #1e1e1e !important;
+  border-color: #333 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5) !important;
+}
+
+/* Product Detail Page ka background dark karne ke liye */
+html.dark .product-detail-page,
+html.dark .main-container,
+html.dark .info-box,
+html.dark .full-width-review-section {
+  background-color: #121212 !important;
+  color: #fff !important;
+}
+
+/* Product details ke text colors theek karne ke liye */
+html.dark .product-title,
+html.dark .product-price,
+html.dark .finer-label,
+html.dark .finer-value,
+html.dark .product-desc {
+  color: #e0e0e0 !important;
+}
+
+/* Back Link theek dikhne ke liye */
+html.dark .back-link {
+  color: #4da6ff !important;
+}

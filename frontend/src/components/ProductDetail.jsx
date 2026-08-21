@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+import { getImageUrl } from '../getImageUrl'; 
 import ReviewForm from '../components/ReviewForm';
 import ReviewSection from '../components/ReviewSection';
 import Recommended from "../components/Recommended";
@@ -8,7 +8,6 @@ import './ProductDetail.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-// Maps DB column name -> display label. 
 const DETAIL_FIELD_LABELS = {
   primary_color: 'Primary Color',
   other_color: 'Other Colors',
@@ -44,25 +43,20 @@ function ProductDetail({ currency, rates, language }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const handleReviewAdded = () => {
-    console.log('[ProductDetail] Review added, refreshing section.');
     setRefreshReviews(prev => prev + 1);
   };
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        console.log(`[ProductDetail] Fetching product details for ID: ${id}`);
         setLoading(true);
         const response = await fetch(`${API_BASE_URL}/api/products/product/${id}`);
         const result = await response.json();
 
-        console.log('[ProductDetail] Fetch response:', result);
         if (result && result.data) {
           setSaree(result.data);
           setTranslatedName(result.data.name);
           setTranslatedDesc(result.data.description);
-        } else {
-          console.warn('[ProductDetail] Product not found.');
         }
       } catch (error) {
         console.error("[ProductDetail] Error fetching product:", error);
@@ -74,7 +68,6 @@ function ProductDetail({ currency, rates, language }) {
   }, [id]);
 
   const handleBuyNow = () => {
-    console.log('[ProductDetail] Initiating Buy Now for:', saree?.name);
     if (!saree) return;
     navigate('/add-address', {
       state: {
@@ -93,7 +86,6 @@ function ProductDetail({ currency, rates, language }) {
     if (!saree || !language || language === 'en') return;
 
     const fetchTranslations = async () => {
-      console.log(`[ProductDetail] Translating to language: ${language}`);
       setIsTranslating(true);
       try {
         const [nameRes, descRes] = await Promise.all([
@@ -127,29 +119,21 @@ function ProductDetail({ currency, rates, language }) {
     setIsLiked(likedList.includes(id));
   }, [id]);
 
-  // Close lightbox on Escape, navigate images with arrow keys
   useEffect(() => {
     if (!isLightboxOpen) return;
-
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') setIsLightboxOpen(false);
       if (e.key === 'ArrowRight') showNextImage();
       if (e.key === 'ArrowLeft') showPrevImage();
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isLightboxOpen, activeImageIdx]);
 
   const sliderImages = saree?.images && Array.isArray(saree.images) ? saree.images : [saree?.image_url || "/saare_1.jpeg"];
 
-  const showNextImage = () => {
-    setActiveImageIdx((prev) => (prev + 1) % sliderImages.length);
-  };
-
-  const showPrevImage = () => {
-    setActiveImageIdx((prev) => (prev - 1 + sliderImages.length) % sliderImages.length);
-  };
+  const showNextImage = () => setActiveImageIdx((prev) => (prev + 1) % sliderImages.length);
+  const showPrevImage = () => setActiveImageIdx((prev) => (prev - 1 + sliderImages.length) % sliderImages.length);
 
   const getConvertedPrice = (basePrice) => {
     if (currency === 'INR' || !rates || !rates[currency]) return basePrice;
@@ -161,7 +145,6 @@ function ProductDetail({ currency, rates, language }) {
 
   const handleAddToCart = async (sareeId) => {
     if (isOutOfStock) return;
-    console.log(`[ProductDetail] Adding item to cart: ${sareeId}`);
     setIsAdding(true);
     const token = localStorage.getItem('token');
     
@@ -174,20 +157,16 @@ function ProductDetail({ currency, rates, language }) {
         },
         body: JSON.stringify({ product_id: sareeId, quantity: 1 }),
       });
-      if (response.ok) {
-        alert("Item added to cart successfully!");
-      } else {
-        alert("Could not add item to cart.");
-      }
+      if (response.ok) alert("Item added to cart successfully!");
+      else alert("Could not add item to cart.");
     } catch (error) {
-      console.error("[ProductDetail] Connection error during Add to Cart:", error);
+      console.error("[ProductDetail] Error:", error);
     } finally {
       setIsAdding(false);
     }
   };
 
   const handleToggleLike = () => {
-    console.log(`[ProductDetail] Toggling like status for product: ${id}`);
     const likedList = JSON.parse(localStorage.getItem('likedProducts') || '[]');
     let updated;
     if (likedList.includes(id)) {
@@ -200,38 +179,28 @@ function ProductDetail({ currency, rates, language }) {
     localStorage.setItem('likedProducts', JSON.stringify(updated));
   };
 
+  // CORRECTED WHATSAPP FUNCTION
+  const handleWhatsAppInquiry = () => {
+    if (!saree) return;
+    const message = `Hello! I am interested in VIP Booking.\n\n*Product:* ${saree.name}\n*Price:* ${currency} ${getConvertedPrice(saree.price)}\n*Link:* ${window.location.href}`;
+    const encodedMessage = encodeURIComponent(message);
+    const secureRedirectUrl = `${API_BASE_URL}/api/whatsapp/redirect?text=${encodedMessage}`;
+    window.open(secureRedirectUrl, "_blank", "noopener,noreferrer");
+  };
+
   if (loading) return <div className="main-container"><h2>Loading product details...</h2></div>;
   if (!saree) return <div className="main-container"><h2>Product not found!</h2></div>;
 
   const finerDetails = Object.entries(DETAIL_FIELD_LABELS)
     .filter(([field]) => saree[field] !== null && saree[field] !== undefined && saree[field] !== '' && saree[field] !== 'null')
     .map(([field, label]) => ({ label, value: saree[field] }));
-    const handleWhatsAppInquiry = () => {
-    // SECURITY LAYER 1: Fetching number securely from environment
-   const handleWhatsAppInquiry = () => {
-    // Agar product data load nahi hua hai toh click rok do
-    if (!saree) return;
 
-    // 1. WhatsApp ke liye message format ready karo
-    const message = `Hello! I am interested in VIP Booking.\n\n*Product:* ${saree.name}\n*Price:* ${currency} ${getConvertedPrice(saree.price)}\n*Link:* ${window.location.href}`;
-
-    // 2. Message ko safe URL language (encoded) me convert karo
-    const encodedMessage = encodeURIComponent(message);
-
-    // 3. SECURE MAGICAL STEP: Direct WhatsApp ki jagah apna Backend API link banao
-    const secureRedirectUrl = `${API_BASE_URL}/api/whatsapp/redirect?text=${encodedMessage}`;
-
-    // 4. User ko naye tab mein backend link par bhej do (Jo backend se WhatsApp par redirect ho jayega)
-    window.open(secureRedirectUrl, "_blank", "noopener,noreferrer");
-};
-};
-return (
+  return (
     <div className="product-detail-page">
       <div className="main-container">
         <Link to="/" className="back-link">← Back to Collection</Link>
 
         <div className="details-container">
-
           <div className="gallery-section">
             <div className="main-image-wrapper" onClick={() => setIsLightboxOpen(true)}>
               <img
@@ -265,7 +234,6 @@ return (
               <button
                 className={`like-btn ${isLiked ? 'liked' : ''}`}
                 onClick={handleToggleLike}
-                aria-label="Like this product"
               >
                 {isLiked ? '❤️' : '🤍'}
               </button>
@@ -282,19 +250,10 @@ return (
             )}
 
             <div className="action-buttons-row">
-              <button
-                onClick={() => handleAddToCart(saree.product_id)}
-                disabled={isAdding || isOutOfStock}
-                className="add-to-cart-btn"
-              >
+              <button onClick={() => handleAddToCart(saree.product_id)} disabled={isAdding || isOutOfStock} className="add-to-cart-btn">
                 {isOutOfStock ? "Sold Out" : isAdding ? "Adding..." : "Add to Cart"}
               </button>
-
-              <button
-                onClick={handleBuyNow}
-                disabled={isOutOfStock}
-                className="buy-now-btn"
-              >
+              <button onClick={handleBuyNow} disabled={isOutOfStock} className="buy-now-btn">
                 {isOutOfStock ? "Sold Out" : "Buy Now"}
               </button>
             </div>
@@ -303,22 +262,11 @@ return (
             <button 
                 onClick={handleWhatsAppInquiry} 
                 style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    gap: '10px',
-                    width: '100%', 
-                    padding: '12px 20px', 
-                    marginTop: '15px',
-                    backgroundColor: '#25D366', 
-                    color: '#ffffff', 
-                    fontWeight: 'bold', 
-                    fontSize: '16px',
-                    border: 'none', 
-                    borderRadius: '8px', 
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 6px rgba(37, 211, 102, 0.3)',
-                    transition: 'transform 0.2s ease'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                    width: '100%', padding: '12px 20px', marginTop: '15px',
+                    backgroundColor: '#25D366', color: '#ffffff', fontWeight: 'bold', fontSize: '16px',
+                    border: 'none', borderRadius: '8px', cursor: 'pointer',
+                    boxShadow: '0 4px 6px rgba(37, 211, 102, 0.3)', transition: 'transform 0.2s ease'
                 }}
                 onMouseOver={(e) => e.target.style.transform = 'scale(1.02)'}
                 onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
@@ -345,16 +293,14 @@ return (
           </div>
         </div>
       </div>
-
+      
       {/* Edge-to-edge review section */}
       <div className="full-width-review-section">
         <div className="review-inner-container">
           <div className="review-form-container">
             <ReviewForm productId={saree.product_id} onReviewAdded={handleReviewAdded} />
           </div>
-
           <ReviewSection productId={saree.product_id} key={refreshReviews} />
-
           <Recommended
             currentProductId={saree.product_id}
             categoryId={saree.category_id}
@@ -362,42 +308,24 @@ return (
           />
         </div>
       </div>
-
+      
       {/* Lightbox / image slider modal */}
       {isLightboxOpen && (
         <div className="lightbox-overlay" onClick={() => setIsLightboxOpen(false)}>
-          <button className="lightbox-close-btn" onClick={() => setIsLightboxOpen(false)} aria-label="Close">
-            ✕
-          </button>
-
+          <button className="lightbox-close-btn" onClick={() => setIsLightboxOpen(false)}>✕</button>
           {sliderImages.length > 1 && (
-            <button
-              className="lightbox-nav-btn lightbox-prev-btn"
-              onClick={(e) => { e.stopPropagation(); showPrevImage(); }}
-              aria-label="Previous image"
-            >
-              ‹
-            </button>
+            <button className="lightbox-nav-btn lightbox-prev-btn" onClick={(e) => { e.stopPropagation(); showPrevImage(); }}>‹</button>
           )}
-
           <img
-          src={getImageUrl(sliderImages[activeImageIdx])}
+            src={getImageUrl(sliderImages[activeImageIdx])}
             alt={saree.name}
             className="lightbox-image"
             onClick={(e) => e.stopPropagation()}
             onError={(e) => { e.target.src = "/saare_1.jpeg"; }}
           />
-
           {sliderImages.length > 1 && (
-            <button
-              className="lightbox-nav-btn lightbox-next-btn"
-              onClick={(e) => { e.stopPropagation(); showNextImage(); }}
-              aria-label="Next image"
-            >
-              ›
-            </button>
+            <button className="lightbox-nav-btn lightbox-next-btn" onClick={(e) => { e.stopPropagation(); showNextImage(); }}>›</button>
           )}
-
           {sliderImages.length > 1 && (
             <div className="lightbox-counter">{activeImageIdx + 1} / {sliderImages.length}</div>
           )}
