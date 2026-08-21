@@ -1,22 +1,17 @@
-// controllers/whatsappController.js
-
 const redirectWhatsApp = (req, res) => {
     try {
-        // Backend .env se number nikalna
-        const phoneNumber = process.env.WHATSAPP_NUMBER; 
-        
-        if (!phoneNumber) {
-            console.error("[WhatsApp API] Number missing in .env");
-            return res.status(500).send("WhatsApp service is currently unavailable.");
-        }
+        // BACKEND HARDCODE: Yeh 100% secure hai kyunki ye server par chal raha hai.
+        // Hacker isko 'Inspect Element' karke kabhi nahi dekh sakta.
+        // Niche "919876543210" ki jagah apna asli WhatsApp number daal do.
+        const phoneNumber = "919530060288"; 
 
-        // Frontend se aane wala encoded message
+        // Frontend se jo message aaya hai usko uthao
         const message = req.query.text || ''; 
         
-        // Final secure URL banana
+        // WhatsApp ka final link banao
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
         
-        // User ko redirect karna
+        // User ko seedha WhatsApp par phek do (Redirect)
         res.redirect(whatsappUrl);
     } catch (error) {
         console.error("[WhatsApp API] Error:", error);
