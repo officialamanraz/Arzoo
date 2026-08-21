@@ -208,27 +208,22 @@ function ProductDetail({ currency, rates, language }) {
     .map(([field, label]) => ({ label, value: saree[field] }));
     const handleWhatsAppInquiry = () => {
     // SECURITY LAYER 1: Fetching number securely from environment
-    const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
+   const handleWhatsAppInquiry = () => {
+    // Agar product data load nahi hua hai toh click rok do
+    if (!saree) return;
 
-    if (!phoneNumber) {
-        console.error("Security Alert: WhatsApp number missing in .env");
-        alert("WhatsApp booking is currently unavailable. Please try again later.");
-        return;
-    }
+    // 1. WhatsApp ke liye message format ready karo
+    const message = `Hello! I am interested in VIP Booking.\n\n*Product:* ${saree.name}\n*Price:* ${currency} ${getConvertedPrice(saree.price)}\n*Link:* ${window.location.href}`;
 
-    // Checking if product data actually exists to prevent blank messages
-    if (!sarees || sarees.length === 0) return;
-
-    // Yahan tumhara jo bhi product object ka naam hai wo use karo (jaise product.name ya saree.title)
-    // Example ke liye main 'product' maan raha hu jo detail page pe render ho raha hai
-    const message = `Hello! I am interested in VIP Booking.\n\n*Product:* ${product.name}\n*Price:* ${currency} ${product.price}\n*Link:* ${window.location.href}`;
-
-    // SECURITY LAYER 2: Strict Encoding prevents XSS or URL injection
+    // 2. Message ko safe URL language (encoded) me convert karo
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
-    // SECURITY LAYER 3: noopener and noreferrer prevent reverse tab hijacking
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    // 3. SECURE MAGICAL STEP: Direct WhatsApp ki jagah apna Backend API link banao
+    const secureRedirectUrl = `${API_BASE_URL}/api/whatsapp/redirect?text=${encodedMessage}`;
+
+    // 4. User ko naye tab mein backend link par bhej do (Jo backend se WhatsApp par redirect ho jayega)
+    window.open(secureRedirectUrl, "_blank", "noopener,noreferrer");
+};
 };
 return (
     <div className="product-detail-page">

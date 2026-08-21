@@ -64,6 +64,13 @@ const trackingRouter = require('./src/router/tracking');
 const addressRouter = require('./src/router/Addresses');
 const bannersRouter = require('./src/router/banner');
 const paymentRouter = require('./src/router/payment')
+// server.js (ya index.js / app.js)
+
+// 1. Upar jahan baaki routes import ho rahe hain wahan ye likho:
+const whatsappRoutes = require('./src/router/whatsapp');
+
+// 2. Niche jahan app.use() likhe hain, wahan isko attach kar do:
+app.use('/api/whatsapp', whatsappRoutes);
 // NOTE: subcategory.router.js is intentionally NOT mounted --
 // category.router.js already handles subcategory routes
 // (subcategory-products, get-subcategories, add-subcategory).
