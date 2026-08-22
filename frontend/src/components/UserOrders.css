@@ -59,7 +59,7 @@
    Order card
    ----------------------------------------- */
 .order-card {
-  background: #fff;
+  background:var(--color-white);
   padding: 24px;
   margin-bottom: 20px;
   border-radius: 14px;

@@ -4,7 +4,7 @@
 }
 
 .address-header {
-  background: #fff;
+  background:var(--color-white);
   padding: 20px 24px;
   border-bottom: 1px solid #eee;
 }
@@ -58,7 +58,7 @@
 
 .step-circle.active {
   background-color: #2874f0;
-  color: #fff;
+  color:var(white);
 }
 
 .step-label {
@@ -81,7 +81,7 @@
 .address-form-container {
   max-width: 700px;
   margin: 24px auto;
-  background: #fff;
+  background:var(white);
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
@@ -143,7 +143,7 @@
 .location-btn {
   padding: 0 20px;
   background-color: #2874f0;
-  color: #fff;
+  color:var(white);
   border: none;
   border-radius: 8px;
   font-weight: bold;
@@ -157,7 +157,7 @@
   padding: 14px;
   margin-top: 24px;
   background-color: #A8325E;
-  color: #fff;
+  color:var(white);
   border: none;
   border-radius: 10px;
   font-weight: bold;

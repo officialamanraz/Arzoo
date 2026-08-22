@@ -12,7 +12,7 @@
 }
 
 .stat-badge {
-  background: #fff;
+  background:var(white);
   padding: 8px 16px;
   border-radius: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -28,7 +28,7 @@
 .banner-form-section {
   flex: 1;
   min-width: 300px;
-  background: #fff;
+  background:var(white);
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);

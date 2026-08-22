@@ -42,7 +42,7 @@
 }
 
 .tracking-card {
-  background: #fff;
+  background: VAR(WHITE);
   border-radius: 16px;
   padding: 30px;
   margin-top: 16px;

@@ -31,7 +31,7 @@
   text-align: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
-  background-color: #fff;
+  background-color:var(--color-white);
 }
 
 .recommended-card:hover {
