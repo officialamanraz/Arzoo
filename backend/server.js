@@ -2,114 +2,136 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const path = require('path');
-const db = require('./src/DATABASE/mysql'); // mysql2/promise pool
 const http = require('http');
-const {Server} = require('socket.io')
+const { Server } = require('socket.io');
+
+// Security Packages
+const helmet = require('helmet');
+const xssClean = require('xss-clean');
+const hpp = require('hpp');
+const rateLimit = require('express-rate-limit');
+
+// Database
+const db = require('./src/DATABASE/mysql');
+
+// ==========================================
+// 1. APP & SOCKET INITIALIZATION
+// ==========================================
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server,{
-  cors:{
-    origin:'*',
-    methods:['GET','POST']
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || '*',
+    methods: ['GET', 'POST']
   }
 });
-app.set('io',io);
-io.on('connection',(socket)=>{
-  console.log('[SOCKET] client connected',socket.id);
-  socket.on('disconnect',()=>{
-    console.log('[SOCKET] client disconnected',socket.id)
-  })
-})
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('[SOCKET] Client connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('[SOCKET] Client disconnected:', socket.id);
+  });
+});
+
 if (!process.env.FRONTEND_URL) {
-  console.error('[SERVER] Missing FRONTEND_URL environment variable -- CORS may block requests.');
+  console.error('⚠️ [SERVER WARNING] Missing FRONTEND_URL. Defaulting to wildcard CORS.');
 }
 
-// 2. MIDDLEWARE -- always before routes
-app.use(morgan('dev'));
+// ==========================================
+// 2. SECURITY & GLOBAL MIDDLEWARES (The Shield)
+// ==========================================
+// Layer 1: Helmet for HTTP Header Security
+app.use(helmet());
+
+// Layer 2: Strict CORS
 app.use(cors({
-  origin: '*',
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-const rateLimit = require('express-rate-lmit');
 
-const globleLmiter = rateLimit({
-  windowMS: 1*60*1000,
-  mx:100,
-  message:"server is busy",
-  standardHeaders:true,
-  legacyHeaders:false,
+// Layer 3: Rate Limiting (DDoS Protection)
+const globalLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // Limit each IP to 100 requests per minute
+  message: { success: false, message: "Server is busy. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
-app.use(globleLmiter);
-app.use('/payments/webhook/',express.raw({type:'application/json'}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(globalLimiter);
 
-// 3. Static files
+// Layer 4: Webhook Raw Parser (Must be before express.json limit)
+app.use('/payments/webhook/', express.raw({ type: 'application/json' }));
+
+// Layer 5: Body Parser with Payload Limit & Data Sanitization
+app.use(express.json({ limit: '10kb' })); // Prevents large payload attacks
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(xssClean()); // Protects against Cross-Site Scripting (XSS)
+app.use(hpp()); // Protects against HTTP Parameter Pollution
+
+// Logger
+app.use(morgan('dev'));
+
+// Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Quick sanity check route
-app.get('/test', (req, res) => {
-  console.log('[SERVER] GET /test -- health check hit');
-  res.send('Server is running fine!');
-});
-// Server start hote hi ye ek baar database mein column add kar dega
+// ==========================================
+// 3. DATABASE INITIALIZATION
+// ==========================================
 db.execute("ALTER TABLE orders ADD COLUMN tracking_ref VARCHAR(50) NULL DEFAULT NULL;")
-  .then(() => console.log("✅ Database mein tracking_ref column jud gaya!"))
-  .catch(err => console.log("Note (Ignore if exists):", err.message));
-// 4. Router Imports (deduped -- each router required ONCE)
-const translationRouter = require('./src/router/translate');
+  .then(() => console.log("✅ [DB] 'tracking_ref' column ensured in orders table."))
+  .catch(err => console.log("ℹ️ [DB] Column setup note (ignore if already exists)."));
+
+// ==========================================
+// 4. ROUTE ATTACHMENTS
+// ==========================================
 const authRouter = require('./src/router/auth');
+const categoryRouter = require('./src/router/category');
+const productRouter = require('./src/router/product');
 const cartRouter = require('./src/router/cart');
 const orderRouter = require('./src/router/order');
-const categoryRouter = require('./src/router/category');
-const locationRouter = require('./src/router/Location');
-const currencyRouter = require('./src/router/currency');
-const emailRouter = require('./src/router/Email');
-const productRouter = require('./src/router/product');
 const reviewRouter = require('./src/router/review');
 const checkoutRouter = require('./src/router/checkout');
+const paymentRouter = require('./src/router/payment');
 const trackingRouter = require('./src/router/tracking');
+const locationRouter = require('./src/router/Location');
 const addressRouter = require('./src/router/Addresses');
+const currencyRouter = require('./src/router/currency');
+const emailRouter = require('./src/router/Email');
 const bannersRouter = require('./src/router/banner');
-const paymentRouter = require('./src/router/payment')
-// server.js (ya index.js / app.js)
-
-// 1. Upar jahan baaki routes import ho rahe hain wahan ye likho:
+const translationRouter = require('./src/router/translate');
 const whatsappRoutes = require('./src/router/whatsapp');
 
-// 2. Niche jahan app.use() likhe hain, wahan isko attach kar do:
-app.use('/api/whatsapp', whatsappRoutes);
-// NOTE: subcategory.router.js is intentionally NOT mounted --
-// category.router.js already handles subcategory routes
-// (subcategory-products, get-subcategories, add-subcategory).
+// Health Check
+app.get('/test', (req, res) => {
+  console.log('[SERVER] GET /test -- Health check hit');
+  res.status(200).send('Server is running with Pro-Security 🛡️!');
+});
 
-// 5. Route Attachments
-// IMPORTANT: plural '/api/categories' matches what the frontend (App.jsx / API_BASE_URL calls) expects.
-app.use('/api/payment',paymentRouter);
+// API Routes
+app.use('/api/auth', authRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/location', locationRouter);
-app.use('/api/Currency', currencyRouter);
-app.use('/api/reviews', reviewRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/reviews', reviewRouter);
 app.use('/api/checkout', checkoutRouter);
+app.use('/api/payment', paymentRouter);
 app.use('/api/tracking', trackingRouter);
+app.use('/api/location', locationRouter);
 app.use('/api/addresses', addressRouter);
-app.use('/api/contact', emailRouter);   // contact form
-app.use('/api/translate', translationRouter);
+app.use('/api/Currency', currencyRouter);
+app.use('/api/contact', emailRouter);
 app.use('/api/banners', bannersRouter);
+app.use('/api/translate', translationRouter);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // ==========================================
-// LEGACY / RAW ROUTES
-// NOTE: These belong in the routes folder like everything else -- kept
-// here for now but fixed to use async/await + db.execute, since the pool
-// is mysql2/promise and does not support callback-style db.query(cb).
+// 5. LEGACY / RAW ROUTES
 // ==========================================
-
 app.get('/api/products-raw', async (req, res) => {
   console.log('[SERVER] GET /api/products-raw');
   try {
@@ -129,11 +151,8 @@ app.get('/api/products-raw', async (req, res) => {
 
 app.post('/data', async (req, res) => {
   const dataArray = req.body;
-  console.log(`[SERVER] POST /data -- ${Array.isArray(dataArray) ? dataArray.length : 0} item(s)`);
-
   if (!Array.isArray(dataArray)) {
-    console.warn('[SERVER] POST /data failed -- body is not an array');
-    return res.status(400).json({ error: 'Request body must be an array [...]' });
+    return res.status(400).json({ error: 'Request body must be an array' });
   }
 
   const sqlQuery = `INSERT INTO sarees_detailed (id, title, price, thumbnail, primary_color, other_color, border_type, pattern, craft, weave, zari_type, blouse, border_motifs, origin, fabric_material, khats, product_weight, blouse_length, saree_length, saree_width) VALUES ?`;
@@ -154,8 +173,7 @@ app.post('/data', async (req, res) => {
   });
 
   try {
-    const [result] = await db.query(sqlQuery, [values]); // bulk VALUES ? syntax needs .query, not .execute
-    console.log(`[SERVER] POST /data success -- ${result.affectedRows} row(s) inserted`);
+    const [result] = await db.query(sqlQuery, [values]); 
     return res.status(201).json({ message: `Success! ${result.affectedRows} sarees added.` });
   } catch (err) {
     console.error('[SERVER] POST /data error:', err.message);
@@ -164,26 +182,35 @@ app.post('/data', async (req, res) => {
 });
 
 app.get('/data', async (req, res) => {
-  console.log('[SERVER] GET /data');
   try {
     const [results] = await db.execute('SELECT * FROM sarees_detailed');
-    const formattedData = results.map((saree) => ({
-      id: saree.id, title: saree.title, price: saree.price, thumbnail: saree.thumbnail,
-      'more-detail': { /* existing logic unchanged */ },
-      measurement: { /* existing logic unchanged */ }
-    }));
-    return res.status(200).json({ message: 'Success', data: formattedData });
+    return res.status(200).json({ message: 'Success', data: results });
   } catch (err) {
-    console.error('[SERVER] GET /data error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 });
 
-// 6. LISTEN -- uppercase env var, Render-friendly fallback
-const PORT = process.env.PORT || 8000;
+// ==========================================
+// 6. GLOBAL ERROR HANDLER (The Safety Net)
+// ==========================================
+app.use('*', (req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+});
 
+app.use((err, req, res, next) => {
+  console.error('[GLOBAL ERROR]', err.message);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  });
+});
+
+// ==========================================
+// 7. START SERVER
+// ==========================================
+const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
-  console.log(`[SERVER] Running on port ${PORT}`);
+  console.log(`🚀 [SERVER] Running smoothly on port ${PORT}`);
 });
 
 module.exports = app;
