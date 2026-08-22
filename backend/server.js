@@ -14,6 +14,9 @@ const rateLimit = require('express-rate-limit');
 // Database
 const db = require('./src/DATABASE/mysql');
 
+// Webhook controller (Razorpay server-to-server confirmation)
+const { razorpayWebhook } = require('./src/controllers/webhook'); // adjust path if yours differs
+
 // ==========================================
 // 1. APP & SOCKET INITIALIZATION
 // ==========================================
@@ -63,8 +66,14 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// Layer 4: Webhook Raw Parser (Must be before express.json limit)
-app.use('/payments/webhook/', express.raw({ type: 'application/json' }));
+// Layer 4: Razorpay Webhook -- needs the RAW body for signature verification,
+// so it's registered as its own standalone route with express.raw(),
+// BEFORE the global express.json() parser below touches it.
+app.post(
+  '/api/payment/webhook',
+  express.raw({ type: 'application/json' }),
+  razorpayWebhook
+);
 
 // Layer 5: Body Parser with Payload Limit & Data Sanitization
 app.use(express.json({ limit: '10kb' })); // Prevents large payload attacks
@@ -119,7 +128,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/reviews', reviewRouter);
 app.use('/api/checkout', checkoutRouter);
-app.use('/api/payment', paymentRouter);
+app.use('/api/payment', paymentRouter); // handles /create-order and /verify (webhook is separate, above)
 app.use('/api/tracking', trackingRouter);
 app.use('/api/location', locationRouter);
 app.use('/api/addresses', addressRouter);
@@ -173,7 +182,7 @@ app.post('/data', async (req, res) => {
   });
 
   try {
-    const [result] = await db.query(sqlQuery, [values]); 
+    const [result] = await db.query(sqlQuery, [values]);
     return res.status(201).json({ message: `Success! ${result.affectedRows} sarees added.` });
   } catch (err) {
     console.error('[SERVER] POST /data error:', err.message);
@@ -193,7 +202,9 @@ app.get('/data', async (req, res) => {
 // ==========================================
 // 6. GLOBAL ERROR HANDLER (The Safety Net)
 // ==========================================
-app.use('*', (req, res) => {
+// Express 5 uses path-to-regexp v6+, which no longer accepts a bare '*'.
+// Use '/*splat' (a named wildcard) instead for a catch-all 404 route.
+app.use('/*splat', (req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
