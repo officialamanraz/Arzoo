@@ -1,7 +1,7 @@
-const db = require('../../config/db'); // reverted -- this was correct all along// FIXED: was '../../config/db' (path doesn't exist in this project)
+const db = require('../../config/db');
 const imagekit = require('../../config/imagekit');
-const Nodecache = require("node-cache");
-const myCache = new NodeCache ({stdTTL:600})
+const NodeCache = require("node-cache");
+const myCache = new NodeCache({ stdTTL: 600 });
 const product = async (req, res) => {
   console.log('[PRODUCT] Fetching all products (basic)');
   try {
