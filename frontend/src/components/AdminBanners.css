@@ -1,6 +1,6 @@
 .admin-wrapper {
   padding: 20px;
-  background-color: #f4f6f8;
+  background-color: var(--bg-light);
   min-height: 100vh;
 }
 
@@ -10,7 +10,7 @@
 }
 
 .admin-header-stats h2 {
-  color: #333;
+  color: var(--text-dark);
 }
 
 .form-container {
@@ -19,10 +19,10 @@
 }
 
 .admin-form-glass {
-  background:var(--white);
+  background: var(--white);
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .form-group {
@@ -34,15 +34,22 @@
   display: block;
   font-weight: 600;
   margin-bottom: 8px;
-  color: #444;
+  color: var(--text-dark);
 }
 
 .admin-input, .admin-file-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 6px;
   box-sizing: border-box;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .form-group-row {
@@ -51,7 +58,7 @@
 }
 
 .admin-fieldset {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 20px;
   margin-top: 20px;
@@ -61,11 +68,11 @@
 .admin-fieldset legend {
   padding: 0 10px;
   font-weight: bold;
-  color: #A8325E;
+  color: var(--primary);
 }
 
 .edit-note {
-  color: #666;
+  color: var(--text-light);
   display: block;
   margin-top: 5px;
 }
@@ -73,8 +80,8 @@
 .admin-submit-btn {
   width: 100%;
   padding: 14px;
-  background-color: #A8325E;
-  color: white;
+  background-color: var(--primary);
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-size: 1.1em;
@@ -85,11 +92,12 @@
 }
 
 .admin-submit-btn:hover {
-  background-color: #8c274d;
+  background-color: var(--primary-hover);
 }
 
 .admin-submit-btn:disabled {
-  background-color: #ccc;
+  background-color: var(--border);
+  color: var(--text-light);
   cursor: not-allowed;
 }
 
@@ -97,12 +105,17 @@
   width: 100%;
   padding: 14px;
   background-color: transparent;
-  color: #333;
-  border: 1px solid #ccc;
+  color: var(--text-dark);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 1em;
   cursor: pointer;
   margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.admin-cancel-btn:hover {
+  background-color: var(--bg-light);
 }
 
 /* Responsive Styles */

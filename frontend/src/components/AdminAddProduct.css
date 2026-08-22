@@ -1,6 +1,10 @@
+/* =========================================
+   Admin Layout & Forms (Dynamic Variable Fix)
+   ========================================= */
+
 .admin-wrapper {
   padding: 20px;
-  background-color: #f4f6f8;
+  background-color: var(--bg-light);
   min-height: 100vh;
 }
 
@@ -12,10 +16,10 @@
 }
 
 .stat-badge {
-  background:var(--white);
+  background: var(--white);
   padding: 8px 16px;
   border-radius: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .admin-layout {
@@ -28,20 +32,22 @@
 .banner-form-section {
   flex: 1;
   min-width: 300px;
-  background:var(--white);
+  background: var(--white);
   padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
 }
 
 .banner-list-section {
   flex: 2;
   min-width: 300px;
-  background:var(--white);
+  background: var(--white);
   padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 .form-group {
@@ -53,15 +59,22 @@
   display: block;
   font-weight: 600;
   margin-bottom: 8px;
-  color: #444;
+  color: var(--text-dark);
 }
 
 .admin-input, .admin-file-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 6px;
   box-sizing: border-box;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .form-group-row {
@@ -74,6 +87,7 @@
   align-items: center;
   gap: 8px;
   margin-top: 20px;
+  color: var(--text-dark);
 }
 
 .checkbox-group label {
@@ -83,24 +97,34 @@
 .admin-submit-btn {
   width: 100%;
   padding: 12px;
-  background-color: #A8325E;
-  color: white;
+  background-color: var(--primary);
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
   margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.admin-submit-btn:hover {
+  background-color: var(--primary-hover);
 }
 
 .admin-cancel-btn {
   width: 100%;
   padding: 12px;
   background-color: transparent;
-  color: #333;
-  border: 1px solid #ccc;
+  color: var(--text-dark);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.admin-cancel-btn:hover {
+  background-color: var(--bg-light);
 }
 
 .admin-table-container {
@@ -115,11 +139,12 @@
 .admin-table th, .admin-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dark);
 }
 
 .admin-table th {
-  background-color: #f9f9f9;
+  background-color: var(--bg-light);
   font-weight: 600;
 }
 
@@ -128,6 +153,7 @@
   height: 50px;
   object-fit: cover;
   border-radius: 6px;
+  border: 1px solid var(--border);
 }
 
 .action-btn {
@@ -152,14 +178,14 @@
 .empty-state {
   text-align: center;
   padding: 20px;
-  color: #888;
+  color: var(--text-light);
 }
 
 .admin-loading {
   text-align: center;
   padding: 50px;
   font-size: 1.2em;
-  color: #555;
+  color: var(--text-light);
 }
 
 /* Responsive adjustments */

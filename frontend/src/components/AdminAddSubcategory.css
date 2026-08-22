@@ -1,25 +1,25 @@
-/* =========================================
-   ADMIN ADD SUBCATEGORY
-   Reuses .admin-form-glass / .admin-input / .admin-submit-btn
-   already defined in theme.css so it matches the rest of the
-   admin panel instead of introducing a new one-off style.
-   ========================================= */
+.form-container { max-width: 700px; margin: 20px auto; }
+.admin-form-glass, .banner-form-section, .banner-list-section { background: var(--white); padding: 30px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); flex: 1; min-width: 300px; }
+.banner-list-section { flex: 2; overflow: hidden; }
 
-.subcategory-page-wrapper {
-  max-width: 500px;
-  margin: 100px auto 40px;
-  padding: 0 20px;
-}
+.form-group { margin-bottom: 16px; flex: 1; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark); }
+.admin-input, .admin-file-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; background-color: var(--bg-light); color: var(--text-dark); }
+.admin-input:focus { outline: none; border-color: var(--primary); }
+.form-group-row { display: flex; gap: 20px; }
 
-.subcategory-page-wrapper h2 {
-  font-family: var(--font-display);
-  color: var(--text-dark, #111827);
-  margin-bottom: 20px;
-}
+.admin-fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 20px; margin-bottom: 20px; }
+.admin-fieldset legend { padding: 0 10px; font-weight: bold; color: var(--primary); }
+.edit-note { color: var(--text-light); display: block; margin-top: 5px; }
 
-@media (max-width: 640px) {
-  .subcategory-page-wrapper {
-    margin: 90px auto 30px;
-    padding: 0 16px;
-  }
-}
+.admin-submit-btn { width: 100%; padding: 14px; background-color: var(--primary); color: #ffffff; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; }
+.admin-submit-btn:hover { background-color: var(--primary-hover); }
+.admin-submit-btn:disabled { background-color: var(--border); color: var(--text-light); cursor: not-allowed; }
+
+.admin-cancel-btn { width: 100%; padding: 14px; background-color: transparent; color: var(--text-dark); border: 1px solid var(--border); border-radius: 8px; font-size: 1em; cursor: pointer; margin-top: 10px; }
+.admin-cancel-btn:hover { background-color: var(--bg-light); }
+
+.checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 20px; color: var(--text-dark); }
+.checkbox-group label { margin: 0; }
+
+@media (max-width: 768px) { .form-group-row { flex-direction: column; gap: 0; } }

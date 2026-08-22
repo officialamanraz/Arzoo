@@ -1,28 +1,12 @@
-/* =========================================
-   ADMIN INVENTORY — extra rules
-   Base table/card styling already lives in theme.css
-   (.admin-wrapper, .admin-list-glass, .admin-table, etc.)
-   This file only covers what used to be inline styles.
-   ========================================= */
+.admin-table-container { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th, .admin-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text-dark); }
+.admin-table th { background-color: var(--bg-light); font-weight: 600; }
+.admin-list-img { width: 80px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
 
-.admin-add-new-btn {
-  margin: 16px 0;
-  width: auto;
-  padding: 12px 24px;
-}
+.action-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px; font-size: 0.9em; }
+.edit-btn { background-color: #3b82f6; color: white; }
+.delete-btn { background-color: #ef4444; color: white; }
 
-.admin-empty-row {
-  text-align: center;
-  padding: 20px;
-}
-
-.admin-list-glass-full {
-  width: 100%;
-}
-
-@media (max-width: 640px) {
-  .admin-add-new-btn {
-    width: 100%;
-    text-align: center;
-  }
-}
+.empty-state { text-align: center; padding: 20px; color: var(--text-light); }
+.admin-loading { text-align: center; padding: 50px; font-size: 1.2em; color: var(--text-light); }
