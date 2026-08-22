@@ -1,9 +1,7 @@
-// backend/src/controllers/product.controller.js -- line 1
 const db = require('../../config/db'); // reverted -- this was correct all along// FIXED: was '../../config/db' (path doesn't exist in this project)
-const imagekit = require('../../config/imagekit'); // path apne folder structure ke hisaab se check karo
-// ==========================================
-// 1. GET ALL PRODUCTS (Basic)
-// ==========================================
+const imagekit = require('../../config/imagekit');
+const Nodecache = require("node-cache");
+const myCache = new NodeCache ({stdTTL:600})
 const product = async (req, res) => {
   console.log('[PRODUCT] Fetching all products (basic)');
   try {
@@ -26,14 +24,19 @@ const product = async (req, res) => {
   }
 };
 
-// ==========================================
-// 2. GET PRODUCT BY ID (With Multiple Images)
-// ==========================================
 const getProductById = async (req, res) => {
   const productId = req.params.id;
   console.log(`[PRODUCT] Fetching by id: ${productId}`);
 
   try {
+    // 1. CACHE LOGIC: Check memory first
+    const cacheKey = `product_${productId}`;
+    if (myCache.has(cacheKey)) {
+      console.log(`[PRODUCT] Success (Served from CACHE) -- product_id: ${productId}`);
+      return res.status(200).json(myCache.get(cacheKey));
+    }
+
+    // 2. Fetch from Database if NOT in cache (Tumhara asli SQL logic)
     const productQuery = `SELECT * FROM products WHERE product_id = ?`;
     const [productResults] = await db.execute(productQuery, [productId]);
 
@@ -44,6 +47,7 @@ const getProductById = async (req, res) => {
 
     const product = productResults[0];
 
+    // 3. Fetch Images
     const imagesQuery = `SELECT image_url FROM product_images WHERE product_id = ?`;
     const [imageResults] = await db.execute(imagesQuery, [productId]);
 
@@ -60,9 +64,16 @@ const getProductById = async (req, res) => {
     }
 
     product.images = allImages;
+    
+    // Final response object jo humein user ko dena hai
+    const responseData = { success: true, data: product };
 
-    console.log(`[PRODUCT] Fetch success -- product_id: ${productId}, ${allImages.length} image(s)`);
-    return res.status(200).json({ success: true, data: product });
+    // 4. Save to CACHE for future requests (Agli baar ke liye save kar lo)
+    myCache.set(cacheKey, responseData);
+
+    console.log(`[PRODUCT] Fetch success (Fetched from DB) -- product_id: ${productId}, ${allImages.length} image(s)`);
+    return res.status(200).json(responseData);
+    
   } catch (err) {
     console.error(`[PRODUCT] Error fetching product by id (${productId}):`, err.message);
     return res.status(500).json({ 
@@ -72,7 +83,6 @@ const getProductById = async (req, res) => {
     });
   }
 };
-
 // ==========================================
 // 3. ADD PRODUCT
 // ==========================================

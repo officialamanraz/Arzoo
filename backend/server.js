@@ -32,6 +32,16 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+const rateLimit = require('express-rate-lmit');
+
+const globleLmiter = rateLimit({
+  windowMS: 1*60*1000,
+  mx:100,
+  message:"server is busy",
+  standardHeaders:true,
+  legacyHeaders:false,
+});
+app.use(globleLmiter);
 app.use('/payments/webhook/',express.raw({type:'application/json'}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
