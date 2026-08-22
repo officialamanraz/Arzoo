@@ -16,7 +16,7 @@ const rateLimit = require('express-rate-limit');
 const db = require('./src/DATABASE/mysql');
 
 // Webhook controller (Razorpay server-to-server confirmation)
-const { razorpayWebhook } = require('./src/controllers/webhook.controller'); // adjust path if yours differs
+const { razorpayWebhook } = require('./src/controllers/webhook'); // adjust path if yours differs
 
 // ==========================================
 // 1. APP & SOCKET INITIALIZATION
