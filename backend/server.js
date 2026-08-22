@@ -7,15 +7,16 @@ const { Server } = require('socket.io');
 
 // Security Packages
 const helmet = require('helmet');
-const xssClean = require('xss-clean');
-const hpp = require('hpp');
 const rateLimit = require('express-rate-limit');
+// NOTE: xss-clean and hpp removed -- both are unmaintained and directly
+// reassign req.query, which Express 5 made a read-only getter. Using them
+// crashes every request with "Cannot set property query...".
 
 // Database
 const db = require('./src/DATABASE/mysql');
 
 // Webhook controller (Razorpay server-to-server confirmation)
-const { razorpayWebhook } = require('./src/controllers/webhook'); // adjust path if yours differs
+const { razorpayWebhook } = require('./src/controllers/webhook.controller'); // adjust path if yours differs
 
 // ==========================================
 // 1. APP & SOCKET INITIALIZATION
@@ -78,8 +79,6 @@ app.post(
 // Layer 5: Body Parser with Payload Limit & Data Sanitization
 app.use(express.json({ limit: '10kb' })); // Prevents large payload attacks
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-app.use(xssClean()); // Protects against Cross-Site Scripting (XSS)
-app.use(hpp()); // Protects against HTTP Parameter Pollution
 
 // Logger
 app.use(morgan('dev'));
