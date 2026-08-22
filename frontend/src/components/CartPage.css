@@ -12,7 +12,7 @@
 }
 
 .cart-empty {
-  background: #fff;
+  background:var(--white);
   padding: 50px;
   text-align: center;
   max-width: 500px;
@@ -44,7 +44,7 @@
 .cart-items-section {
   flex: 2;
   min-width: 300px;
-  background: #fff;
+  background:var(--white);
   padding: 20px;
   border-radius: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -107,7 +107,7 @@
 .cart-bill-section {
   flex: 1;
   min-width: 300px;
-  background: #fff;
+  background:var(--white);
   padding: 30px;
   border-radius: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -125,7 +125,7 @@
   width: 100%;
   padding: 14px 24px;
   background-color: #A8325E;
-  color: #fff;
+  color:var(--white);
   border: none;
   border-radius: 10px;
   font-weight: bold;

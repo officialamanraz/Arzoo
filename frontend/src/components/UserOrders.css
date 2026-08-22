@@ -37,7 +37,7 @@
 }
 
 .orders-empty-card {
-  background: #fff;
+  background:var(--color-white);
   padding: 50px;
   text-align: center;
   max-width: 500px;

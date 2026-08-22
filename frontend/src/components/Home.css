@@ -66,7 +66,7 @@
 }
 
 .product-card {
-  background: #fff;
+  background:var(--white);
   border-radius: 10px;
   overflow: hidden;
   text-decoration: none;
