@@ -1,51 +1,36 @@
-const db = require('../DATABASE/mysql');
-const imagekit = require('../../config/imagekit');
-
-// Default product image shown when a product has no image_url set.
-// Moved to env var so it can be changed without a code deploy.
-const DEFAULT_PRODUCT_IMAGE = process.env.DEFAULT_PRODUCT_IMAGE || 'saare_1.jpeg';
+const { 
+  RemoveFromCartindb,
+  getcartbydb,
+  addtocartindb,
+  ItemNotFoundError,
+  updateCartQuantityInDB
+} = require('../services/cartservice'); // Ensure the file name casing matches your actual file exactly
 
 // ==========================================
 // 1. ADD TO CART (UPSERT: update quantity if it exists, otherwise insert)
 // ==========================================
 const AddToCart = async (req, res) => {
-  const user_id = req.user.id;
-  const { product_id, quantity } = req.body;
-  console.log(`[CART] Add-to-cart — user_id: ${user_id}, product_id: ${product_id}, qty: ${quantity}`);
+  const userId = req.user.id; 
+  const { product_id, quantity } = req.body; 
+  console.log(`[CART] Add-to-cart — user_id: ${userId}, product_id: ${product_id}, qty: ${quantity}`);
 
   if (!product_id) {
-    console.warn(`[CART] Add-to-cart failed — no product_id (user_id: ${user_id})`);
+    console.warn(`[CART] Add-to-cart failed — no product_id (user_id: ${userId})`);
     return res.status(400).json({ success: false, message: 'Product ID is required.' });
   }
 
-  const qty = Number(quantity) > 0 ? Number(quantity) : 1;
-
   try {
-    // Check whether this product is already in the user's cart
-    const [existing] = await db.execute(
-      'SELECT cart_id FROM cart WHERE user_id = ? AND product_id = ?',
-      [user_id, product_id]
-    );
-
-    if (existing.length > 0) {
-      // Already in cart — increment the quantity
-      await db.execute(
-        'UPDATE cart SET quantity = quantity + ?, updated_at = NOW() WHERE user_id = ? AND product_id = ?',
-        [qty, user_id, product_id]
-      );
-      console.log(`[CART] Quantity updated — cart_id: ${existing[0].cart_id}, +${qty}`);
-      return res.status(200).json({ success: true, message: 'Cart quantity updated.' });
-    }
-
-    // Not in cart yet — insert a new row
-    const [insertResult] = await db.execute(
-      'INSERT INTO cart (user_id, product_id, quantity, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
-      [user_id, product_id, qty]
-    );
-    console.log(`[CART] Item inserted — cart_id: ${insertResult.insertId}`);
-    return res.status(201).json({ success: true, message: 'Item added to cart.' });
+    const result = await addtocartindb(userId, product_id, quantity);
+    const message = result.action === 'updated' ? 'Cart quantity updated.' : 'Item added to cart.';
+    
+    return res.status(201).json({
+      success: true,
+      message: message,
+      result: result
+    });
   } catch (error) {
-    console.error(`[CART] Add-to-cart error (user_id: ${user_id}):`, error.message);
+    // FIX: Changed user_id to userId to match the variable declaration
+    console.error(`[CART] Add-to-cart error (user_id: ${userId}):`, error.message);
     return res.status(500).json({ success: false, message: 'Server error while updating cart.', error: error.message });
   }
 };
@@ -58,28 +43,8 @@ const getCart = async (req, res) => {
   console.log(`[CART] Fetching cart — user_id: ${user_id}`);
 
   try {
-    const [rows] = await db.execute(
-      `SELECT c.cart_id, c.user_id, c.product_id, c.quantity,
-              p.name, p.price, p.stock_qty, p.image_url
-       FROM cart c
-       INNER JOIN products p ON c.product_id = p.product_id
-       WHERE c.user_id = ?`,
-      [user_id]
-    );
-
-    const formatted = rows.map((item) => ({
-      cart_id: item.cart_id,
-      product_id: item.product_id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      image_url: item.image_url || DEFAULT_PRODUCT_IMAGE,
-      item_total: item.price * item.quantity,
-      in_stock: item.stock_qty >= item.quantity
-    }));
-
-    console.log(`[CART] Returned ${formatted.length} item(s) for user_id: ${user_id}`);
-    return res.status(200).json({ success: true, data: formatted });
+    const cartitem = await getcartbydb(user_id);
+    return res.status(200).json({ success: true, data: cartitem });
   } catch (error) {
     console.error(`[CART] Get-cart error (user_id: ${user_id}):`, error.message);
     return res.status(500).json({ success: false, message: 'Server error while fetching cart.', error: error.message });
@@ -95,23 +60,51 @@ const RemoveFromCart = async (req, res) => {
   console.log(`[CART] Remove item — user_id: ${user_id}, cart_id: ${cart_id}`);
 
   try {
-    // Only deletes the row if it belongs to the requesting user
-    const [result] = await db.execute(
-      'DELETE FROM cart WHERE cart_id = ? AND user_id = ?',
-      [cart_id, user_id]
-    );
-
-    if (result.affectedRows === 0) {
-      console.warn(`[CART] Remove failed — cart_id ${cart_id} not found for user_id ${user_id}`);
-      return res.status(404).json({ success: false, message: 'Item not found or does not belong to you.' });
-    }
-
-    console.log(`[CART] Item removed — cart_id: ${cart_id}`);
+    // FIX: Removed the trailing comma
+    await RemoveFromCartindb(cart_id, user_id);
     return res.status(200).json({ success: true, message: 'Item removed from cart.' });
   } catch (error) {
     console.error(`[CART] Remove error (user_id: ${user_id}):`, error.message);
+    
+    if (error instanceof ItemNotFoundError) {
+      return res.status(404).json({ success: false, message: 'Cart item not found.' });
+    }
+    
     return res.status(500).json({ success: false, message: 'Server error while removing item.', error: error.message });
   }
 };
+// Ensure you import updateCartQuantityInDB and ItemNotFoundError at the top of the file
 
-module.exports = { AddToCart, getCart, RemoveFromCart };
+// ==========================================
+// 4. UPDATE CART QUANTITY
+// ==========================================
+const updateCartItemQuantity = async (req, res) => {
+    const user_id = req.user.id;
+    const { cart_id } = req.params; // Expecting cart_id in the URL (e.g., /cart/:cart_id)
+    const { quantity } = req.body;  // Expecting the new quantity in the JSON body
+
+    console.log(`[CART] Update quantity -- user_id: ${user_id}, cart_id: ${cart_id}, qty: ${quantity}`);
+
+    if (quantity === undefined || quantity === null) {
+        return res.status(400).json({ success: false, message: 'Quantity is required.' });
+    }
+
+    try {
+        await updateCartQuantityInDB(cart_id, user_id, quantity);
+        return res.status(200).json({ success: true, message: 'Cart quantity updated successfully.' });
+    } catch (error) {
+        console.error(`[CART] Update quantity error (user_id: ${user_id}):`, error.message);
+        
+        if (error.message === 'INVALID_QUANTITY') {
+            return res.status(400).json({ success: false, message: 'Quantity must be at least 1.' });
+        }
+        
+        if (error instanceof ItemNotFoundError) {
+            return res.status(404).json({ success: false, message: 'Cart item not found or unauthorized.' });
+        }
+        
+        return res.status(500).json({ success: false, message: 'Server error while updating cart.', error: error.message });
+    }
+};
+
+module.exports = { AddToCart, getCart, RemoveFromCart,updateCartItemQuantity};

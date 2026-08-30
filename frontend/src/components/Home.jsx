@@ -1,13 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { uiTranslations } from '../languages';
-import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+import { getImageUrl } from '../getImageUrl';
 import HeroBanner from './HeroBanner';
-import './Home.css'; // Extracted CSS
+import './Home.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeyword, keyword, categoryName, currency, rates, language }) {
+function Home({ 
+  sarees, loading, error, currentPage, setCurrentPage, 
+  keyword, categoryName, subcategoryName, 
+  currency, rates, language, totalPages = 1 
+}) {
 
   const getConvertedPrice = (basePrice) => {
     if (currency === 'INR' || !rates || !rates[currency]) return basePrice;
@@ -19,11 +21,45 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
     return uiTranslations[currentLang]?.[key] || uiTranslations['en'][key];
   };
 
-  const handlePageChange = (direction) => {
-    const newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
-    console.log(`[Home] Navigating to page ${newPage}`);
-    setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const ITEMS_PER_PAGE = 12;
+  
+  const displayedSarees = sarees && sarees.length > ITEMS_PER_PAGE 
+    ? sarees.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    : sarees;
+
+  const actualTotalPages = sarees && sarees.length > ITEMS_PER_PAGE 
+    ? Math.ceil(sarees.length / ITEMS_PER_PAGE)
+    : Math.max(1, totalPages);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= actualTotalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const getPageTitle = () => {
+    if (keyword) return `${t('searchResults')} "${keyword}"`;
+    if (subcategoryName) return subcategoryName; 
+    if (categoryName) return categoryName;
+    return t('featured');
+  };
+
+  const getPageNumbers = () => {
+    let startPage = Math.max(1, currentPage - 1);
+    let endPage = Math.min(actualTotalPages, currentPage + 1);
+
+    if (currentPage === 1) {
+      endPage = Math.min(actualTotalPages, 3);
+    } else if (currentPage === actualTotalPages) {
+      startPage = Math.max(1, actualTotalPages - 2);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
   };
 
   return (
@@ -36,11 +72,7 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
 
       <section className="product-section" id="product">
         <h2 className="section-title">
-          {categoryName
-            ? categoryName
-            : keyword
-              ? `${t('searchResults')} "${keyword}"`
-              : t('featured')}
+          {getPageTitle().toUpperCase()}
         </h2>
 
         {error && <h3 className="error-message">⚠️ {error}</h3>}
@@ -49,16 +81,16 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
           <div className="loader-container">
             <h3 className="pulse-text">{t('loading')}</h3>
           </div>
-        ) : sarees?.length === 0 ? (
+        ) : !displayedSarees || displayedSarees.length === 0 ? (
           <div className="empty-state">
             <h3>{t('noSarees')}</h3>
           </div>
         ) : (
           <>
             <div className="product-grid">
-              {sarees?.map((saree) => {
+              {displayedSarees.map((saree) => {
                 const imageName = saree.image_url || saree.thumbnail || saree.image;
-               const imagePath = getImageUrl(imageName);
+                const imagePath = getImageUrl(imageName);
                 const sareeId = saree.product_id || saree.id;
 
                 return (
@@ -68,7 +100,6 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
                       alt={saree.name || saree.title}
                       className="product-img"
                       onError={(e) => { 
-                        console.log(`[Home] Image failed to load for product ${sareeId}. Using fallback.`);
                         e.target.src = "/saare_1.jpeg"; 
                       }}
                     />
@@ -87,24 +118,32 @@ function Home({ sarees, loading, error, currentPage, setCurrentPage, searchKeywo
               })}
             </div>
 
-            {/* Pagination: shown for default listing AND category filter, hidden only for actual keyword search */}
-            {!keyword && (
+            {/* 🚨 FIX: Restored your exact original fallback! Forces display if 12 items exist */}
+            {(actualTotalPages > 1 || (sarees && sarees.length === ITEMS_PER_PAGE)) && (
               <div className="pagination-container">
                 <button
-                  onClick={() => handlePageChange('prev')}
+                  onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="pagination-btn"
                 >
                   {t('previous')}
                 </button>
 
-                <span className="pagination-page">
-                  {t('page')} {currentPage}
-                </span>
+                <div className="pagination-numbers">
+                  {getPageNumbers().map(num => (
+                    <button 
+                      key={num}
+                      onClick={() => handlePageChange(num)}
+                      className={`page-num-btn ${currentPage === num ? 'active' : ''}`}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
 
                 <button
-                  onClick={() => handlePageChange('next')}
-                  disabled={!sarees || sarees.length < 12}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === actualTotalPages && sarees.length < ITEMS_PER_PAGE}
                   className="pagination-btn"
                 >
                   {t('next')}

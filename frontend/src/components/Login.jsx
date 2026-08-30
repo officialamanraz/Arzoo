@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import './Login.css'; // Extracted CSS
+import './Login.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function Login() {
   const navigate = useNavigate();
@@ -30,12 +30,21 @@ function Login() {
       const data = await res.json();
       console.log('[Login] Parsed data:', data);
 
-      if (res.ok && data.token) {
+      if (res.ok && data.token && data.user) {
+        // 1. Token save karein
         localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.user);
-        console.log('[Login] Authentication successful -- assigned role:', data.user);
+        
+        // 2. User ka poora data JSON string banakar save karein (Navbar mein name/image ke liye zaroori hai)
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // 3. Role ko specifically alag se save karein taaki [object Object] na aaye
+        const userRole = data.user.role; 
+        localStorage.setItem('role', userRole);
+        
+        console.log('[Login] Authentication successful -- assigned role:', userRole);
 
-        if (data.user === 'admin') {
+        // 4. Role check karke redirect karein
+        if (userRole === 'admin') {
           navigate('/admin');
         } else {
           navigate('/');

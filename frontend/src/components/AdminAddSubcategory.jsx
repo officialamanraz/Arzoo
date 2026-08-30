@@ -12,7 +12,7 @@ function AdminAddSubcategory() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/subcategories/get-categories`);
+        const response = await fetch(`${API_BASE_URL}/api/subcategories/`);
 
         if (!response.ok) {
           throw new Error(`Server error: ${response.status}`);

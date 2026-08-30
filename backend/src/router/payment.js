@@ -5,7 +5,7 @@ const {
     verifyPayment
 } = require('../controllers/payment');
 const{razorpayWebhook} = require('../controllers/webhook');
-const { verifyToken, verifyAdmin } = require('../middleware/authmiddleware');
+const { verifyToken} = require('../middleware/authmiddleware');
 router.post('/webhook',razorpayWebhook)
 router.post('/verify', verifyToken, verifyPayment);
 

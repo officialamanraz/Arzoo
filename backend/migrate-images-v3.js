@@ -41,7 +41,7 @@ const migrate = async () => {
 
     try {
       const fileBuffer = fs.readFileSync(path.join(IMAGES_FOLDER, realFile));
-      const uploaded = await imagekit.upload({
+      const uploaded = await imagekit.files.upload({
         file: fileBuffer,
         fileName: `${Date.now()}-${realFile}`,
         folder: '/arzoo-saree/products',

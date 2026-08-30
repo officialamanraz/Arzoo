@@ -77,8 +77,10 @@ app.post(
 );
 
 // Layer 5: Body Parser with Payload Limit & Data Sanitization
-app.use(express.json({ limit: '10kb' })); // Prevents large payload attacks
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+// File: backend/server.js
+// 4K aur badi files ko bina error accept karne ke liye limit 50mb kar di
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Logger
 app.use(morgan('dev'));
@@ -112,7 +114,9 @@ const emailRouter = require('./src/router/Email');
 const bannersRouter = require('./src/router/banner');
 const translationRouter = require('./src/router/translate');
 const whatsappRoutes = require('./src/router/whatsapp');
-
+const dealerRoutes = require('./src/router/dealer');
+const likeRoutes = require('./src/router/like');
+const commentRoutes = require('./src/router/comments')
 // Health Check
 app.get('/test', (req, res) => {
   console.log('[SERVER] GET /test -- Health check hit');
@@ -120,6 +124,7 @@ app.get('/test', (req, res) => {
 });
 
 // API Routes
+app.use('/api/dealer',dealerRoutes)
 app.use('/api/auth', authRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
@@ -136,6 +141,8 @@ app.use('/api/contact', emailRouter);
 app.use('/api/banners', bannersRouter);
 app.use('/api/translate', translationRouter);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/likes',likeRoutes);
+app.use('/api/comments',commentRoutes);
 
 // ==========================================
 // 5. LEGACY / RAW ROUTES

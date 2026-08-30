@@ -1,0 +1,81 @@
+/* File: AdminDealerReport.css */
+
+.dealer-report-container {
+  padding: 20px;
+  font-family: sans-serif;
+}
+
+.dealer-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.dealer-table th,
+.dealer-table td {
+  border: 1px solid #ccc;
+  padding: 12px;
+}
+
+.dealer-table thead tr {
+  background-color: #f4f4f4;
+}
+
+.text-blue {
+  color: #0056b3; /* Thoda professional blue */
+  font-weight: bold;
+}
+
+.text-green {
+  color: #28a745; /* Professional green */
+  font-weight: bold;
+}
+
+.btn-toggle {
+  padding: 6px 12px;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.btn-toggle:hover {
+  background-color: #e2e6ea;
+}
+
+.expanded-details-cell {
+  background-color: #fafafa;
+  padding: 20px;
+}
+
+.details-flex-container {
+  display: flex;
+  gap: 40px;
+}
+
+.details-column {
+  flex: 1;
+}
+
+.details-heading {
+  margin-top: 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.details-list {
+  padding-left: 20px;
+}
+
+.details-list-item {
+  margin-bottom: 8px;
+}
+
+/* Dynamic Status Colors */
+.status-paid {
+  color: #28a745;
+}
+
+.status-unpaid {
+  color: #dc3545;
+}

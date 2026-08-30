@@ -1,32 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { indianLanguages } from '../languages';
-import { Link } from 'react-router-dom';
-import './Navbar.css'; // Extracted CSS
+import { Link, useNavigate } from 'react-router-dom';
+import './Navbar.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function Navbar({
   isDark, toggleDark, currency, setCurrency, rates, ratesError,
-  onSearch, onCategorySelect, language, setLanguage,
+  onSearch, onCategorySelect, onSubcategorySelect, language, setLanguage,
   minPrice, setMinPrice, maxPrice, setMaxPrice
 }) {
-
   const [open, setOpen] = useState(false);
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [keyword, setKeyword] = useState("");
 
-  const token = localStorage.getItem('token');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
-  const openSidebar = () => {
-    console.log('[Navbar] Sidebar opened');
-    setOpen(true);
-  };
-  
-  const closeSidebar = () => {
-    console.log('[Navbar] Sidebar closed');
-    setOpen(false);
-  };
+  const [subcategories, setSubcategories] = useState([]);
+  const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
+
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const role = localStorage.getItem('role'); // Added to check for admin
+  const navigate = useNavigate();
+
+  // Fetch top-level categories once, on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/categories`);
+        const data = await response.json();
+        if (data.success && data.categories) {
+          setCategories(data.categories);
+        }
+      } catch (error) {
+        console.error('[Navbar] Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Fetch subcategories whenever the selected category changes.
+  // Clears the subcategory list immediately if no category is selected.
+  useEffect(() => {
+    if (!selectedCategoryId) {
+      setSubcategories([]);
+      return;
+    }
+
+    const fetchSubcategories = async () => {
+      setIsLoadingSubcategories(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/categories/get-subcategories/${selectedCategoryId}`);
+        const data = await response.json();
+        setSubcategories(data.success ? data.data : []);
+      } catch (error) {
+        console.error('[Navbar] Failed to fetch subcategories:', error);
+        setSubcategories([]);
+      } finally {
+        setIsLoadingSubcategories(false);
+      }
+    };
+
+    fetchSubcategories();
+  }, [selectedCategoryId]);
+
+  const openSidebar = () => setOpen(true);
+  const closeSidebar = () => setOpen(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -37,8 +79,11 @@ function Navbar({
   }, []);
 
   const handleSearch = () => {
-    console.log(`[Navbar] Search triggered -- keyword: "${keyword}"`);
-    if (onSearch) onSearch(keyword);
+    if (onSearch) {
+      onSearch(keyword);
+    } else {
+      navigate(`/products?search=${keyword}`);
+    }
   };
 
   const handleSearchKeyDown = (e) => {
@@ -46,31 +91,40 @@ function Navbar({
   };
 
   const handleLogout = () => {
-    console.log('[Navbar] Logout -- clearing token and reloading');
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('role');
     closeSidebar();
     window.location.reload();
-  };
-
-  const handleSignout = async () => {
-    console.log('[Navbar] Signout -- clearing token, redirecting to /login');
-    localStorage.removeItem('token');
-    window.location.href = '/login';
   };
 
   const handleCategoryChange = (e) => {
     const categoryId = e.target.value;
     const categoryName = e.target.options[e.target.selectedIndex]?.text || "";
 
+    setSelectedCategoryId(categoryId);
+
     if (!categoryId) return;
-    console.log(`[Navbar] Category selected -- id: ${categoryId}, name: "${categoryName}"`);
 
     if (onCategorySelect) {
       onCategorySelect(categoryId, categoryName);
     } else {
-      console.warn('[Navbar] onCategorySelect prop missing -- falling back to URL redirect');
-      window.location.href = `/products?subcategory=${categoryId}`;
+      window.location.href = `/products?category=${categoryId}`;
     }
+  };
+
+  const handleSubcategoryChange = (e) => {
+    const subcategoryId = e.target.value;
+    const subcategoryName = e.target.options[e.target.selectedIndex]?.text || "";
+
+    if (!subcategoryId) return;
+
+    if (onSubcategorySelect) {
+      onSubcategorySelect(subcategoryId, subcategoryName);
+    } else {
+      navigate(`/products?subcategory=${subcategoryId}`);
+    }
+
     closeSidebar();
   };
 
@@ -83,14 +137,18 @@ function Navbar({
 
   return (
     <>
-      <nav className="navbar">
-        
-        {/* 1. LEFT SIDE */}
+      <nav className={`navbar ${isDark ? 'dark-theme' : ''}`}>
+
+        {/* LEFT SIDE */}
         <div className="nav-left">
           <button className="menu-btn" onClick={openSidebar} aria-label="Open menu">
-            ☰
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
           </button>
-          
+
           <Link to="/" className="nav-logo">
             Arzoo Saree
           </Link>
@@ -104,12 +162,12 @@ function Navbar({
           </div>
         </div>
 
-        {/* 2. CENTER */}
+        {/* CENTER SEARCH */}
         <div className="nav-center">
           <div className="search-container">
             <input
               type="text"
-              placeholder="Search saree..."
+              placeholder="Search beautiful sarees..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={handleSearchKeyDown}
@@ -121,16 +179,11 @@ function Navbar({
           </div>
         </div>
 
-        {/* 3. RIGHT SIDE */}
+        {/* RIGHT SIDE */}
         <div className="nav-right">
-          
-          {/* Language selector */}
           <select
             className="lang-select"
-            onChange={(e) => {
-              console.log(`[Navbar] Language changed to: ${e.target.value}`);
-              if (setLanguage) setLanguage(e.target.value);
-            }}
+            onChange={(e) => setLanguage && setLanguage(e.target.value)}
             value={language || 'en'}
             title="Select Language"
           >
@@ -139,13 +192,8 @@ function Navbar({
             ))}
           </select>
 
-          {/* Currency selector */}
           <div className="currency-dropdown-container">
-            <div
-              className="currency-toggle"
-              onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
-              title="Change Currency"
-            >
+            <div className="currency-toggle" onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}>
               <strong>{currency}</strong>
               <span className="caret-icon">{isCurrencyOpen ? '▲' : '▼'}</span>
             </div>
@@ -159,28 +207,44 @@ function Navbar({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="currency-search-input"
                 />
-                
-                <div className="currency-list">
+               <div className="currency-list">
                   {ratesError ? (
                     <p className="currency-error">{ratesError}</p>
                   ) : rates && Object.keys(rates).length > 0 ? (
-                    Object.entries(rates)
-                      .filter(([code]) => code.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map(([code, data]) => (
+                    <>
+                      {/* 🚨 FIX: Hardcoded INR always at the top */}
+                      {"INR".toLowerCase().includes(searchQuery.toLowerCase()) && (
                         <div
-                          key={code}
                           className="currency-item"
                           onClick={() => {
-                            console.log(`[Navbar] Currency changed to: ${code}`);
-                            setCurrency(code);
+                            setCurrency("INR");
                             setIsCurrencyOpen(false);
                             setSearchQuery("");
                           }}
                         >
-                          <img src={data.flag} alt={`${code} flag`} className="currency-flag" />
-                          <span className="currency-code">{code}</span>
+                          <span className="currency-flag" style={{ fontSize: "1.2rem", marginRight: "8px" }}>🇮🇳</span>
+                          <span className="currency-code">INR</span>
                         </div>
-                      ))
+                      )}
+
+                      {/* Your existing API currencies */}
+                      {Object.entries(rates)
+                        .filter(([code]) => code.toLowerCase().includes(searchQuery.toLowerCase()) && code !== "INR") // Added code !== "INR" to prevent duplicates
+                        .map(([code, data]) => (
+                          <div
+                            key={code}
+                            className="currency-item"
+                            onClick={() => {
+                              setCurrency(code);
+                              setIsCurrencyOpen(false);
+                              setSearchQuery("");
+                            }}
+                          >
+                            <img src={data.flag} alt={`${code} flag`} className="currency-flag" />
+                            <span className="currency-code">{code}</span>
+                          </div>
+                        ))}
+                    </>
                   ) : (
                     <p className="currency-loading">Loading currencies...</p>
                   )}
@@ -190,35 +254,44 @@ function Navbar({
           </div>
 
           <Link to="/cart" aria-label="Go to cart" className="cart-link">
-            🛒 <span className="cart-text">Cart</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span className="cart-text">Cart</span>
           </Link>
 
-          <button className="theme-toggle" onClick={toggleDark} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}>
+          <button className="theme-toggle" onClick={toggleDark}>
             {isDark ? '☀️' : '🌙'}
           </button>
         </div>
       </nav>
 
-      {/* ==========================================
-          SIDEBAR OVERLAY & DRAWER
-          ========================================== */}
+      {/* SIDEBAR DRAWER */}
       <div className={`side-overlay ${open ? 'active' : ''}`} onClick={closeSidebar} />
 
-      <div className={`side-sidebar ${open ? 'open' : ''}`}>
+      <div className={`side-sidebar ${open ? 'open' : ''} ${isDark ? 'dark-theme' : ''}`}>
         <div className="side-sidebar-header">
           <div className="sidebar-user-info">
-            <span className="user-icon">👤</span>
+            <div className="user-avatar">
+              {token && user.profile_image ? (
+                <img src={user.profile_image} alt="User" className="sidebar-profile-img" />
+              ) : (
+                <span className="user-icon">👤</span>
+              )}
+            </div>
+
             <div className="user-details">
               {token ? (
                 <>
-                  <h3>Hello, Welcome</h3>
-                  <button onClick={handleSignout} className="signout-btn">
-                    Sign Out
-                  </button>
+                  {/* Updated to show username if available, then name, then 'User' */}
+                  <h3>Welcome, {user.username || user.name || 'User'}</h3>
+                  <button onClick={handleLogout} className="signout-btn">Sign Out</button>
                 </>
               ) : (
                 <Link to="/signup" onClick={closeSidebar} className="signin-link">
-                  <h3>Hello, Sign In</h3>
+                  <h3>Welcome, Guest</h3>
                   <span>Click here to register</span>
                 </Link>
               )}
@@ -228,51 +301,70 @@ function Navbar({
         </div>
 
         <div className="side-sidebar-content">
-          
-          {/* Account Section */}
           <div className="sidebar-section">
             <h4>Your Account</h4>
             <div className="sidebar-links">
-              <Link to="/admin" onClick={closeSidebar} className="sidebar-link">Admin Panel</Link>
+              
+              {/* Admin Panel is now conditionally rendered ONLY for admins */}
+              {role === 'admin' && (
+                <Link to="/admin" onClick={closeSidebar} className="sidebar-link">
+                  <span className="link-icon">⚙️</span> Admin Panel
+                </Link>
+              )}
+              
               {token ? (
                 <>
-                  <Link to="/orders" onClick={closeSidebar} className="sidebar-link">Your Orders</Link>
-                  <button onClick={handleLogout} className="sidebar-logout-btn">Logout</button>
+                  {/* New Update Profile Link */}
+                  <Link to="/profile" onClick={closeSidebar} className="sidebar-link">
+                    <span className="link-icon">👤</span> Update Profile
+                  </Link>
+                  <Link to="/my-orders" onClick={closeSidebar} className="sidebar-link">
+                    <span className="link-icon">📦</span> My Orders
+                  </Link>
                 </>
               ) : (
-                <Link to="/login" onClick={closeSidebar} className="sidebar-link primary-text">Login Here</Link>
+                <Link to="/login" onClick={closeSidebar} className="sidebar-link primary-text">
+                  Login to your account
+                </Link>
               )}
             </div>
           </div>
 
           <div className="side-divider"></div>
 
-          {/* Categories Section */}
           <div className="sidebar-section">
-            <h4>Shop By Categories</h4>
-            <select
-              className="premium-select"
-              onChange={handleCategoryChange}
-              defaultValue=""
-            >
-              <option value="">Select Category...</option>
-              <option value="1">Bridal Wear</option>
-              <option value="2">Casual Wear</option>
-              <option value="3">Party Wear</option>
-              <option value="4">Festival Outfit</option>
-              <option value="5">Office Wear</option>
+            <h4>Shop By Category</h4>
+            <select className="premium-select" onChange={handleCategoryChange} value={selectedCategoryId}>
+              <option value="">Select a Category...</option>
+              {categories.map((cat) => (
+                <option key={cat.category_id} value={cat.category_id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
+
+            {/* Subcategory dropdown only appears once a category is selected */}
+            {selectedCategoryId && (
+              <select
+                className="premium-select subcategory-select"
+                onChange={handleSubcategoryChange}
+                defaultValue=""
+                disabled={isLoadingSubcategories}
+              >
+                <option value="">
+                  {isLoadingSubcategories ? 'Loading subcategories...' : 'Select a Subcategory...'}
+                </option>
+                {subcategories.map((sub) => (
+                  <option key={sub.subcategory_id} value={sub.subcategory_id}>
+                    {sub.subcategory_name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="side-divider"></div>
-          
-          <Link to="/my-orders" className="sidebar-direct-link" onClick={closeSidebar}>
-            📦 My Orders
-          </Link>
-          
-          <div className="side-divider"></div>
 
-          {/* Price Filter Section */}
           <div className="sidebar-section">
             <h4>Filter by Price</h4>
             <input
@@ -292,40 +384,28 @@ function Navbar({
             <div className="price-inputs-container">
               <div className="price-input-group">
                 <label>Min Price</label>
-                <select
-                  value={minPrice || 0}
-                  onChange={(e) => setMinPrice(Number(e.target.value))}
-                  className="premium-select small-select"
-                >
-                  <option value="10000">Min</option>
-                  <option value="25000">25000</option>
-                  <option value="50000">50000</option>
-                  <option value="75000">75000</option>
-                  <option value="100000">100000</option>
+                <select value={minPrice || 0} onChange={(e) => setMinPrice(Number(e.target.value))} className="premium-select small-select">
+                  <option value="0">₹0</option>
+                  <option value="10000">₹10K</option>
+                  <option value="25000">₹25K</option>
+                  <option value="50000">₹50K</option>
+                  <option value="75000">₹75K</option>
+                  <option value="100000">₹100K</option>
                 </select>
               </div>
-
-              <span className="price-separator">to</span>
-
+              <span className="price-separator">-</span>
               <div className="price-input-group">
                 <label>Max Price</label>
-                <select
-                  value={maxPrice || 300000}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="premium-select small-select"
-                >
-                  <option value="120000">120000</option>
-                  <option value="150000">150000</option>
-                  <option value="175000">175000</option>
-                  <option value="200000">200000</option>
-                  <option value="250000">250000</option>
-                  <option value="275000">275000</option>
-                  <option value="300000">300000</option>
+                <select value={maxPrice || 300000} onChange={(e) => setMaxPrice(Number(e.target.value))} className="premium-select small-select">
+                  <option value="50000">₹50K</option>
+                  <option value="100000">₹100K</option>
+                  <option value="150000">₹150K</option>
+                  <option value="200000">₹200K</option>
+                  <option value="300000">₹300K+</option>
                 </select>
               </div>
             </div>
           </div>
-          
           <div className="side-divider"></div>
         </div>
       </div>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-import './OrderSummary.css'; // Extracted CSS
+import { uiTranslations } from '../languages'; 
+import { getImageUrl } from '../getImageUrl'; // 👈 YAHAN ADD KIYA HAI HOME PAGE WALA FUNCTION
+import './OrderSummary.css'; 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-export default function OrderSummary() {
+export default function OrderSummary({ language }) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -15,23 +16,21 @@ export default function OrderSummary() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  // State for customer email (required for invoice)
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
+
+  // Dynamic Translation Function
+  const t = (key) => {
+    const currentLang = language || 'en';
+    return uiTranslations[currentLang]?.[key] || uiTranslations['en'][key] || key;
+  };
 
   useEffect(() => {
-    console.log('[OrderSummary] Initializing component. State received:', location.state);
-    
     if (!addressId) {
-      console.warn('[OrderSummary] No address ID found. Redirecting to /add-address');
       navigate('/add-address');
       return;
     }
 
     const fetchOrderData = async () => {
       try {
-        console.log(`[OrderSummary] Fetching data for address ID: ${addressId}`);
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
@@ -39,17 +38,14 @@ export default function OrderSummary() {
         const addressData = await addressRes.json();
 
         if (addressData.success) {
-          console.log('[OrderSummary] Address data loaded:', addressData.address);
           setAddress(addressData.address);
         } else {
-          console.error('[OrderSummary] Failed to load address details:', addressData.message);
-          setError('Failed to load address details.');
+          setError(t('error')); 
           setLoading(false);
           return; 
         }
 
         if (buyNowProduct) {
-          console.log('[OrderSummary] Processing Buy Now product:', buyNowProduct);
           setCartItems([{
             ...buyNowProduct,
             product_id: buyNowProduct.product_id || buyNowProduct.id, 
@@ -58,24 +54,20 @@ export default function OrderSummary() {
             quantity: buyNowProduct.quantity || 1
           }]);
         } else {
-          console.log('[OrderSummary] Fetching cart items...');
           const cartRes = await fetch(`${API_BASE_URL}/api/orders/cart`, { headers });
           const cartData = await cartRes.json();
 
           if (cartData.success) {
-            console.log(`[OrderSummary] Cart items loaded (${cartData.data.length} items)`);
             const items = cartData.data.map(item => ({
               ...item,
               unit_price: item.price
             }));
             setCartItems(items);
           } else {
-            console.error('[OrderSummary] Failed to load cart details:', cartData.message);
-            setError('Failed to load cart details.');
+            setError(t('error'));
           }
         }
       } catch (err) {
-        console.error('[OrderSummary] Network error during data fetch:', err);
         setError('Network error.');
       } finally {
         setLoading(false);
@@ -83,7 +75,7 @@ export default function OrderSummary() {
     };
 
     fetchOrderData();
-  }, [addressId, buyNowProduct, navigate]);
+  }, [addressId, buyNowProduct, navigate, language]);
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + Number(item.unit_price) * (item.quantity || 1),
@@ -91,35 +83,43 @@ export default function OrderSummary() {
   );
 
   const handleContinueToPayment = () => {
-    console.log('[OrderSummary] Continue to payment clicked.');
-    
-    // Validate Email before continuing
-    if (!customerEmail || !customerEmail.includes('@')) {
-      console.warn('[OrderSummary] Invalid email provided.');
-      setEmailError('Please provide a valid email ID for the invoice.');
-      return;
-    }
-    
-    console.log('[OrderSummary] Proceeding to payment route with state.');
     navigate('/payment', {
       state: { 
         addressId, 
         totalAmount: subtotal,
-        buyNowProduct,
-        customerEmail // Passing email to the final checkout step
+        buyNowProduct
       }
     });
   };
 
-  if (loading) return <div className="loading-state">Loading Order Summary...</div>;
+  // 🚨 SMART IMAGE EXTRACTOR: Ab yeh Home Page wale getImageUrl() ko use karega!
+  const extractImage = (item) => {
+    try {
+      let rawData = item.images || item.image_url || item.image || item.thumbnail;
+      if (!rawData) return '/placeholder.png';
+
+      // Agar JSON string me array aaya hai, usko parse karo
+      if (typeof rawData === 'string' && rawData.startsWith('[')) {
+        rawData = JSON.parse(rawData);
+      }
+
+      let imageName = Array.isArray(rawData) ? rawData[0] : rawData;
+      
+      // Home page wale function me image bhej do
+      return getImageUrl(imageName);
+    } catch (e) {
+      console.error("[OrderSummary] Image extraction failed for:", item.product_name);
+      return '/placeholder.png';
+    }
+  };
+
+  if (loading) return <div className="loading-state">{t('loading')}</div>;
   if (error) return <div className="error-state">{error}</div>;
 
   return (
     <div className="summary-page">
-      
-      {/* Header and Stepper */}
       <div className="summary-header">
-        <h2>Checkout</h2>
+        <h2>{t('navCart') || 'Checkout'}</h2>
         <div className="stepper-container">
           <Step number={1} label="Address" completed />
           <StepLine completed />
@@ -130,17 +130,13 @@ export default function OrderSummary() {
       </div>
 
       <div className="summary-content-wrapper">
-        
-        {/* Left Side: Address, Email, Items */}
         <div className="summary-left-pane">
 
           {address && (
             <div className="summary-card">
               <div className="card-header">
                 <h3>DELIVER TO:</h3>
-                <button onClick={() => navigate('/add-address')} className="change-btn">
-                  Change
-                </button>
+                <button onClick={() => navigate('/add-address')} className="change-btn">Change</button>
               </div>
               <div className="address-name-row">
                 <strong>{address.full_name}</strong>
@@ -153,66 +149,35 @@ export default function OrderSummary() {
             </div>
           )}
 
-          {/* Email Input Section for Invoice */}
-          <div className="summary-card">
-             <h3 className="section-subtitle">INVOICE DETAILS:</h3>
-             <p className="section-desc">Email ID required for digital invoice and delivery tracking.</p>
-             <input 
-                type="email" 
-                placeholder="Enter your Email ID" 
-                value={customerEmail}
-                onChange={(e) => {
-                  setCustomerEmail(e.target.value);
-                  setEmailError('');
-                }}
-                className={`email-input ${emailError ? 'input-error' : ''}`}
-             />
-             {emailError && <p className="error-text">{emailError}</p>}
-          </div>
-
-          {/* Cart Items */}
           <div className="summary-card no-padding">
             {cartItems.length === 0 ? (
-              <p className="empty-cart-text">Your cart is empty.</p>
+              <p className="empty-cart-text">{t('cartEmpty')}</p>
             ) : (
-              cartItems.map((item, index) => {
-                const itemImage = Array.isArray(item.images) && item.images.length > 0 
-                  ? item.images[0] 
-                  : (item.image_url || item.image);
-
-                return (
-                  <div
-                    key={item.product_id || index}
-                    className={`cart-item-row ${index !== cartItems.length - 1 ? 'border-bottom' : ''}`}
-                  >
-                    <div className="cart-item-details">
-                      <div className="cart-item-img-container">
-                        <img 
-                          src={itemImage ? getImageUrl(itemImage): '/placeholder.png'} 
-                          alt={item.product_name} 
-                          className="cart-item-img"
-                          onError={(e) => { 
-                            console.log(`[OrderSummary] Failed to load image for ${item.product_name}. Using fallback.`);
-                            e.target.src = "/placeholder.png"; 
-                          }} 
-                        />
-                      </div>
-                      <div className="cart-item-info">
-                        <h4>{item.product_name}</h4>
-                        <span className="cart-item-qty">Qty: {item.quantity || 1}</span>
-                        <span className="cart-item-price">
-                          ₹{(Number(item.unit_price) * (item.quantity || 1)).toFixed(2)}
-                        </span>
-                      </div>
+              cartItems.map((item, index) => (
+                <div key={item.product_id || index} className={`cart-item-row ${index !== cartItems.length - 1 ? 'border-bottom' : ''}`}>
+                  <div className="cart-item-details">
+                    <div className="cart-item-img-container">
+                      <img 
+                        src={extractImage(item)} 
+                        alt={item.product_name} 
+                        className="cart-item-img"
+                        onError={(e) => { e.target.src = "/saare_1.jpeg"; }} 
+                      />
+                    </div>
+                    <div className="cart-item-info">
+                      <h4>{item.product_name}</h4>
+                      <span className="cart-item-qty">Qty: {item.quantity || 1}</span>
+                      <span className="cart-item-price">
+                        ₹{(Number(item.unit_price) * (item.quantity || 1)).toFixed(2)}
+                      </span>
                     </div>
                   </div>
-                );
-              })
+                </div>
+              ))
             )}
           </div>
         </div>
 
-        {/* Right Side: Price Details */}
         <div className="summary-right-pane">
           <div className="summary-card">
             <h3 className="price-details-header">PRICE DETAILS</h3>
@@ -229,7 +194,7 @@ export default function OrderSummary() {
               disabled={cartItems.length === 0}
               className="continue-btn"
             >
-              CONTINUE
+              CONTINUE TO PAYMENT
             </button>
           </div>
         </div>
@@ -238,7 +203,6 @@ export default function OrderSummary() {
   );
 }
 
-// Subcomponents
 function Step({ number, label, active, completed }) {
   return (
     <div className="step-wrapper">

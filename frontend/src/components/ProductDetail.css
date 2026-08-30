@@ -1,8 +1,7 @@
-/* =========================================
-   PRODUCT DETAIL PAGE
-   ========================================= */
+/* =========================================================
+   GENERAL LAYOUT
+========================================================= */
 
-/* General Layout */
 .product-detail-page {
   font-family: var(--font-body, 'Inter', sans-serif);
   background-color: var(--bg-light);
@@ -15,19 +14,6 @@
   padding: 2rem;
 }
 
-.back-link {
-  display: inline-block;
-  text-decoration: none;
-  color: var(--text-light);
-  font-weight: 500;
-  transition: color 0.3s;
-  margin-bottom: 1.5rem;
-}
-
-.back-link:hover {
-  color: var(--primary);
-}
-
 .details-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -36,16 +22,20 @@
   background: var(--white);
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
 }
 
-/* Gallery Section */
+
+/* =========================================================
+   GALLERY
+========================================================= */
+
 .gallery-section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   position: sticky;
   top: 20px;
+  min-width: 0;
 }
 
 .main-image-wrapper {
@@ -55,310 +45,656 @@
   overflow: hidden;
   background: var(--bg-light);
   cursor: zoom-in;
+  margin-bottom: 10px;
+
+  /* Important for clickable image */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.main-image {
+.zoomable-image {
   width: 100%;
   height: auto;
+  min-height: 250px;
   object-fit: cover;
   display: block;
+
+  transition: transform 0.1s ease-out;
+
+  /* Prevent browser drag */
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: auto;
 }
 
-.zoom-hint {
+/* Click hint */
+.image-zoom-hint {
   position: absolute;
-  bottom: 12px;
   right: 12px;
-  background: rgba(0, 0, 0, 0.55);
+  bottom: 12px;
+
+  background: rgba(0, 0, 0, 0.65);
   color: #fff;
-  padding: 4px 10px;
-  border-radius: 20px;
+
+  padding: 6px 10px;
+  border-radius: 6px;
+
   font-size: 0.75rem;
+
+  pointer-events: none;
+
   opacity: 0;
   transition: opacity 0.2s ease;
 }
 
-.main-image-wrapper:hover .zoom-hint { opacity: 1; }
+.main-image-wrapper:hover .image-zoom-hint {
+  opacity: 1;
+}
+
+
+/* =========================================================
+   SOLD OUT
+========================================================= */
 
 .sold-out-badge {
   position: absolute;
   top: 15px;
   left: 15px;
-  background: #d9534f;
+
+  background: rgba(198, 40, 40, 0.95);
   color: #fff;
-  padding: 5px 15px;
-  border-radius: 4px;
+
+  padding: 7px 13px;
+  border-radius: 20px;
+
+  font-size: 0.85rem;
   font-weight: bold;
-  font-size: 0.9rem;
+
+  z-index: 2;
 }
+
+
+/* =========================================================
+   SOCIAL ACTION BAR
+========================================================= */
+
+.social-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 5px 0;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+
+  font-size: 1.6rem;
+
+  cursor: pointer;
+
+  color: var(--text-dark);
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+
+  padding: 0;
+
+  width: 35px;
+  height: 35px;
+}
+
+.social-btn:hover {
+  transform: scale(1.1);
+}
+
+.social-btn:active {
+  transform: scale(0.95);
+}
+
+.social-btn.liked {
+  color: #ef4444;
+}
+
+
+/* =========================================================
+   WHATSAPP ICON
+========================================================= */
+
+.whatsapp-btn {
+  color: #25D366;
+}
+
+.whatsapp-btn:hover {
+  color: #25D366;
+}
+
+.whatsapp-icon {
+  width: 26px;
+  height: 26px;
+
+  display: block;
+
+  fill: currentColor;
+}
+
+
+/* =========================================================
+   LIKES
+========================================================= */
+
+.likes-count {
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+
+/* =========================================================
+   INLINE COMMENTS
+========================================================= */
+
+.inline-comments-section {
+  margin-bottom: 15px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.inline-comments-list {
+  max-height: 200px;
+
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.inline-comments-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.inline-comments-list::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 4px;
+}
+
+.inline-comment-item {
+  font-size: 0.9rem;
+  line-height: 1.4;
+
+  color: #262626;
+
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.inline-comment-item strong {
+  margin-right: 6px;
+  font-weight: 600;
+}
+
+.no-comments-inline {
+  font-size: 0.85rem;
+  color: #8e8e8e;
+}
+
+.inline-comment-form {
+  display: flex;
+
+  border-top: 1px solid #efefef;
+
+  padding-top: 10px;
+  margin-top: 5px;
+}
+
+.inline-comment-input {
+  flex: 1;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  font-size: 0.9rem;
+
+  padding: 5px 0;
+}
+
+.inline-comment-post {
+  background: none;
+  border: none;
+
+  color: #0095f6;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  padding: 0 5px;
+}
+
+.inline-comment-post:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+
+/* =========================================================
+   THUMBNAILS
+========================================================= */
 
 .thumbnail-row {
   display: flex;
+
   gap: 10px;
+
   overflow-x: auto;
+
   padding-bottom: 5px;
+  margin-top: 10px;
 }
 
 .thumbnail {
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
+
   object-fit: cover;
+
   border-radius: 6px;
+
   cursor: pointer;
+
   border: 2px solid transparent;
-  transition: border 0.3s ease;
+
+  transition:
+    border 0.3s ease,
+    transform 0.2s ease;
+
+  user-select: none;
+  -webkit-user-drag: none;
+
+  flex-shrink: 0;
+}
+
+.thumbnail:hover {
+  transform: scale(1.03);
 }
 
 .thumbnail-active {
   border-color: var(--primary);
 }
 
-/* Info Section */
+
+/* =========================================================
+   INFO SECTION
+========================================================= */
+
 .info-box {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
 }
 
-.title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
 .product-title {
   margin: 0;
+
   font-size: 2rem;
+
   color: var(--text-dark);
+
   line-height: 1.2;
-  font-family: var(--font-display, 'Fraunces', serif);
-}
-
-.like-btn {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.like-btn:active {
-  transform: scale(1.2);
 }
 
 .product-price {
   font-size: 1.5rem;
+
   color: var(--text-dark);
+
   margin: 0;
+
   font-weight: 700;
 }
 
 .stock-badge {
   display: inline-block;
+
   padding: 5px 12px;
+
   border-radius: 20px;
+
   font-size: 0.85rem;
+
   font-weight: bold;
+
   width: fit-content;
 }
 
-.in-stock { background: rgba(46, 125, 50, 0.15); color: #2e7d32; }
-.out-of-stock { background: rgba(198, 40, 40, 0.15); color: #c62828; }
+.in-stock {
+  background: rgba(46, 125, 50, 0.15);
+  color: #2e7d32;
+}
+
+.out-of-stock {
+  background: rgba(198, 40, 40, 0.15);
+  color: #c62828;
+}
 
 .product-desc {
   color: var(--text-light);
+
   line-height: 1.6;
+
   font-size: 1rem;
 }
 
+
+/* =========================================================
+   QUANTITY SELECTOR
+========================================================= */
+
+.quantity-selector-container {
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+
+  margin-top: 10px;
+}
+
+.qty-label {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+
+  border: 1px solid var(--border);
+
+  border-radius: 8px;
+
+  overflow: hidden;
+}
+
+.qty-btn {
+  background: var(--bg-light);
+
+  border: none;
+
+  padding: 8px 16px;
+
+  font-size: 1.2rem;
+
+  cursor: pointer;
+
+  color: var(--text-dark);
+}
+
+.qty-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qty-display {
+  padding: 0 16px;
+
+  font-weight: bold;
+
+  font-size: 1.1rem;
+
+  min-width: 20px;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
 .action-buttons-row {
   display: flex;
+
   gap: 12px;
+
   flex-wrap: wrap;
 }
 
 .add-to-cart-btn {
   flex: 1;
+
   background: var(--text-dark);
-  color: var(--bg-light);
+
+  color: #fff;
+
   border: none;
-  padding: 15px 20px;
-  font-size: 1.1rem;
-  font-weight: bold;
+
+  padding: 15px;
+
   border-radius: 8px;
+
   cursor: pointer;
-  transition: opacity 0.3s;
-  min-width: 150px;
+
+  font-size: 1.1rem;
+
+  font-weight: bold;
 }
-.add-to-cart-btn:hover:not(:disabled) { opacity: 0.8; }
-.add-to-cart-btn:disabled { background: var(--border); color: var(--text-light); cursor: not-allowed; }
 
 .buy-now-btn {
   flex: 1;
-  padding: 15px 24px;
-  background-color: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-  min-width: 150px;
-}
-.buy-now-btn:hover:not(:disabled) { background-color: var(--primary-hover); }
-.buy-now-btn:disabled { background-color: var(--border); color: var(--text-light); cursor: not-allowed; }
 
-/* Finer Details */
+  background: var(--primary);
+
+  color: #fff;
+
+  border: none;
+
+  padding: 15px;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  font-size: 1.1rem;
+
+  font-weight: bold;
+}
+
+.add-to-cart-btn:disabled,
+.buy-now-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   FINER DETAILS
+========================================================= */
+
 .finer-details {
   margin-top: 1rem;
+
   border-top: 1px solid var(--border);
+
   padding-top: 1.5rem;
 }
 
-.finer-details-title {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  color: var(--text-dark);
-}
-
 .finer-details-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
   display: flex;
+
   flex-direction: column;
+
   gap: 0.8rem;
+
+  list-style: none;
+
+  padding: 0;
 }
 
 .finer-details-list li {
   display: grid;
+
   grid-template-columns: 1fr 2fr;
-  font-size: 0.95rem;
+
+  gap: 10px;
 }
 
 .finer-label {
-  color: var(--text-light);
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.finer-value {
-  color: var(--text-dark);
   font-weight: 600;
 }
 
-/* Review Section Edge-to-Edge */
-.full-width-review-section {
+.finer-value {
+  word-break: break-word;
+}
+
+
+/* =========================================================
+   LIGHTBOX
+========================================================= */
+
+.lightbox-overlay {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
   width: 100vw;
-  position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
-  background: var(--bg-light);
-  padding: 40px 0;
-  margin-top: 40px;
+  height: 100vh;
+
+  background: rgba(0, 0, 0, 0.92);
+
+  z-index: 2147483647;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  cursor: zoom-out;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+}
+
+.lightbox-image {
+  display: block;
+
+  max-width: 92vw;
+  max-height: 92vh;
+
+  width: auto;
+  height: auto;
+
+  border-radius: 6px;
+
+  object-fit: contain;
+
+  cursor: default;
+
+  user-select: none;
+
+  -webkit-user-drag: none;
+
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close-btn {
+  position: fixed;
+
+  top: 20px;
+  right: 25px;
+
+  width: 45px;
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.4);
+
+  border: none;
+
+  color: white;
+
+  font-size: 2rem;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  border-radius: 50%;
+
+  z-index: 2147483648;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.lightbox-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+
+  transform: scale(1.05);
+}
+
+
+/* =========================================================
+   REVIEWS
+========================================================= */
+
+.full-width-review-section {
+  width: 100%;
 }
 
 .review-inner-container {
   max-width: 1200px;
+
   margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
+
+  padding: 2rem;
 }
 
 .review-form-container {
-  max-width: 600px;
-  margin: 0 auto;
   width: 100%;
-  background: var(--white);
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm);
-  box-sizing: border-box;
 }
 
-/* Lightbox Modal (Kept hardcoded overlay logic for contrast) */
-.lightbox-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 10, 10, 0.9);
-  z-index: 3000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: zoom-out;
-}
 
-.lightbox-image {
-  max-width: 90vw;
-  max-height: 85vh;
-  object-fit: contain;
-  border-radius: 6px;
-  cursor: default;
-}
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
-.lightbox-close-btn {
-  position: absolute;
-  top: 20px;
-  right: 24px;
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
-  color: #fff;
-  font-size: 1.4rem;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease;
-}
-.lightbox-close-btn:hover { background: rgba(255, 255, 255, 0.3); }
-
-.lightbox-nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
-  color: #fff;
-  font-size: 2rem;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease;
-}
-.lightbox-nav-btn:hover { background: rgba(255, 255, 255, 0.3); }
-
-.lightbox-prev-btn { left: 24px; }
-.lightbox-next-btn { right: 24px; }
-
-.lightbox-counter {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-}
-
-/* Responsive Mobile Adjustments */
 @media (max-width: 768px) {
+
+  .main-container {
+    padding: 1rem;
+  }
+
   .details-container {
     grid-template-columns: 1fr;
+
     gap: 2rem;
+
     padding: 1.5rem;
   }
 
@@ -370,15 +706,77 @@
     font-size: 1.6rem;
   }
 
+  .product-price {
+    font-size: 1.3rem;
+  }
+
+  .lightbox-overlay {
+    padding: 10px;
+  }
+
+  .lightbox-image {
+    max-width: 96vw;
+    max-height: 90vh;
+  }
+
+  .lightbox-close-btn {
+    top: 15px;
+    right: 15px;
+
+    width: 40px;
+    height: 40px;
+
+    font-size: 1.7rem;
+  }
+
+  .image-zoom-hint {
+    opacity: 1;
+    font-size: 0.7rem;
+  }
+
   .finer-details-list li {
     grid-template-columns: 1fr;
-    gap: 0.2rem;
+    gap: 3px;
   }
-  
-  .lightbox-nav-btn { width: 40px; height: 40px; font-size: 1.5rem; }
-  .lightbox-close-btn { top: 12px; right: 12px; }
-  
-  .review-form-container {
-    padding: 20px;
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .details-container {
+    padding: 1rem;
+  }
+
+  .social-action-bar {
+    gap: 12px;
+  }
+
+  .social-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 1.4rem;
+  }
+
+  .whatsapp-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .action-buttons-row {
+    flex-direction: column;
+  }
+
+  .add-to-cart-btn,
+  .buy-now-btn {
+    width: 100%;
+  }
+
+  .thumbnail {
+    width: 60px;
+    height: 60px;
   }
 }

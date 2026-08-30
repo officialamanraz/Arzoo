@@ -1,30 +1,20 @@
-const db = require('../DATABASE/mysql'); // mysql2/promise pool
-const imagekit = require('../../config/imagekit');
-const razorpayInstance = require('../../config/razorpay');
+const {adminorder,
+    updatestatusinDB,
+    getmyorderfromdb,
+    createorders,
+    ordercencel
+} = require('../services/orderservice');
 // ==========================================
 // ADMIN: Get all orders with their items
 // ==========================================
 const getadminorder = async (req, res) => {
     console.log('[ORDER] Admin fetching all orders');
     try {
-        const [ordersData] = await db.execute(
-            `SELECT o.*, u.name AS user_name, u.phone AS customer_phone
-             FROM orders o
-             LEFT JOIN users u ON o.user_id = u.user_id
-             ORDER BY o.order_id DESC`
-        );
-
-        const [itemsData] = await db.execute(
-            `SELECT oi.*, p.name, p.image_url
-             FROM orderitems oi
-             INNER JOIN products p ON oi.product_id = p.product_id`
-        );
-
-        const finalOrdersWithItems = ordersData.map((order) => ({
+        const {orders,items} = await adminorder();
+        const finalOrdersWithItems = orders.map((order) => ({
             ...order,
-            items: itemsData.filter((item) => item.order_id === order.order_id)
+            items: items.filter((item) => item.order_id === order.order_id)
         }));
-
         console.log(`[ORDER] Admin fetch success -- ${finalOrdersWithItems.length} order(s)`);
         return res.status(200).json({ success: true, data: finalOrdersWithItems });
     } catch (error) {
@@ -41,26 +31,27 @@ const updateOrderStatus = async (req, res) => {
         const orderId = req.params.id;
         const { status } = req.body;
 
-        // Valid status check
+        // 1. Validation BEFORE touching the database (Ekdum safe)
         const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
         if (!validStatuses.includes(status)) {
+            console.warn(`[ORDER] Invalid status update attempt: ${status}`);
             return res.status(400).json({ success: false, message: "Invalid status value" });
         }
 
-        // Database update
-        const [result] = await db.execute(
-            "UPDATE orders SET status = ? WHERE order_id = ?",
-            [status, orderId]
-        );
+        // 2. Sab theek hai, ab Service ko call karo
+        await updatestatusinDB(orderId, status);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ success: false, message: "Order not found" });
-        }
-
+        console.log(`[ORDER] Status updated -- order_id: ${orderId}, new_status: ${status}`);
         return res.status(200).json({ success: true, message: `Order status updated to ${status}` });
 
     } catch (error) {
-        console.error("Update Status Error:", error);
+        console.error("Update Status Error:", error.message);
+        
+        // 3. Service ka error handle kiya
+        if (error.message === 'ORDER_NOT_FOUND') {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+        
         return res.status(500).json({ success: false, message: "Failed to update order status" });
     }
 };
@@ -68,152 +59,118 @@ const updateOrderStatus = async (req, res) => {
 // ==========================================
 // CUSTOMER: Get my orders with items (now includes product image)
 // ==========================================
+// File: src/controllers/orderController.js
+
 const getmyorders = async (req, res) => {
-    const user_id = req.user.id;
+    const user_id = req.user.id; // Yeh auth middleware se aayega
     console.log(`[ORDER] Fetching orders -- user_id: ${user_id}`);
 
     try {
-        const [ordersData] = await db.execute(
-            'SELECT * FROM orders WHERE user_id = ? ORDER BY ordered_at DESC',
-            [user_id]
-        );
+        // 1. Service se sahi naam ke saath data manga
+        const { orders, items } = await getmyorderfromdb(user_id);
 
-        if (ordersData.length === 0) {
-            console.log(`[ORDER] No orders found -- user_id: ${user_id}`);
-            return res.status(200).json({ success: true, message: 'No orders found for this user', data: [] });
+        // 2. Agar khali orders aaye hain (Naya user), toh aage badhne ki zaroorat nahi
+        if (orders.length === 0) {
+            return res.status(200).json({ success: true, message: 'No orders found', data: [] });
         }
 
-        const [itemsData] = await db.execute(
-            `SELECT oi.*, p.name, p.image_url
-             FROM orderitems oi
-             INNER JOIN products p ON oi.product_id = p.product_id
-             INNER JOIN orders o ON oi.order_id = o.order_id
-             WHERE o.user_id = ?`,
-            [user_id]
-        );
-
-        const finalOrdersWithItems = ordersData.map((order) => ({
+        // 3. Tumhara awesome Map/Filter logic
+        const finalOrdersWithItems = orders.map((order) => ({
             ...order,
-            items: itemsData.filter((item) => item.order_id === order.order_id)
+            items: items.filter((item) => item.order_id === order.order_id)
         }));
 
         console.log(`[ORDER] Fetch success -- user_id: ${user_id}, ${finalOrdersWithItems.length} order(s)`);
         return res.status(200).json({ success: true, data: finalOrdersWithItems });
+
     } catch (error) {
         console.error(`[ORDER] Fetch error (user_id: ${user_id}):`, error.message);
         return res.status(500).json({ success: false, message: 'Error fetching orders', error: error.message });
     }
-};const orderCreate = async (req, res) => {
+};
+// File: src/controllers/orderController.js
+// Upar import zaroor karna: const { createRazorpayOrderInDB } = require('../services/orderService');
+
+const orderCreate = async (req, res) => {
     try {
-        const { order_id } = req.body;
-        const user_id = req.user.id;
-        const { tracking_ref } = req.body;
+        const { order_id, tracking_ref } = req.body;
+        const user_id = req.user.id; // Yeh auth middleware se aayega
         
-        // Ensure tracking_ref is explicitly null if undefined or empty
-        const sourcevisiter = (tracking_ref && tracking_ref !== 'undefined') ? tracking_ref : null;
+        console.log(`[PAYMENT] Creating Razorpay order -- order_id: ${order_id}, user_id: ${user_id}`);
 
+        // 1. Basic Validation (Controller ka main kaam)
         if (!order_id) {
-            return res.status(400).json({
-                success: false,
-                message: "order_id is required"
-            });
+            return res.status(400).json({ success: false, message: "order_id is required" });
         }
 
-        // Safe query handling for optional tracking_ref
-        let orderRows;
-        if (sourcevisiter) {
-            [orderRows] = await db.execute(
-                'SELECT total_amount FROM orders WHERE order_id = ? AND user_id = ? AND tracking_ref = ?',
-                [order_id, user_id, sourcevisiter]
-            );
-        } else {
-            [orderRows] = await db.execute(
-                'SELECT total_amount,tracking_ref FROM orders WHERE order_id = ? AND user_id = ?',
-                [order_id, user_id]
-            );
-        }
+        // 2. YAHAN JADOO HAI - Service ne Razorpay call aur DB update dono khud kar liye
+        const razorpayData = await  createorders (order_id, user_id, tracking_ref);
 
-        if (orderRows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Order not found"
-            });
-        }
-
-        const totalAmount = orderRows[0].total_amount;
-
-        const options = {
-            amount: Math.round(totalAmount * 100), 
-            currency: "INR",
-            receipt: `order_rcpt_${order_id}`,
-        };
-
-        const razorpayOrder = await razorpayInstance.orders.create(options);
-
-        await db.execute(
-            'UPDATE orders SET razorpay_order_id = ? WHERE order_id = ?',
-            [razorpayOrder.id, order_id]
-        );
-
+        console.log(`[PAYMENT] Success -- Razorpay ID: ${razorpayData.razorpay_order_id}`);
+        
+        // 3. Khushi-khushi frontend ko data bhej do
         return res.status(200).json({
             success: true,
-            razorpay_order_id: razorpayOrder.id,
-            currency: razorpayOrder.currency,
-            amount: razorpayOrder.amount
+            razorpay_order_id: razorpayData.razorpay_order_id,
+            currency: razorpayData.currency,
+            amount: razorpayData.amount
         });
 
     } catch (error) {
-        console.error("RAZORPAY ERROR DETAILS:", error);
-        return res.status(500).json({
-            success: false,
-            message: "failed to create razorpay order",
-            error: error.message
+        console.error("[PAYMENT] Razorpay Error Details:", error.message);
+        
+        // 4. Professional Error Handling
+        if (error.message === 'ORDER_NOT_FOUND') {
+            return res.status(404).json({ success: false, message: "Order not found or access denied" });
+        }
+
+        return res.status(500).json({ 
+            success: false, 
+            message: "Failed to create razorpay order", 
+            error: error.message 
         });
     }
 };
+// File: src/controllers/orderController.js
+// Upar import zaroor karna: const { cancelOrderInDB } = require('../services/orderService');
 
 const cancelOrder = async (req, res) => {
     try {
         const orderId = req.params.id;
         
-        // FIX: Tumhara token middleware ID jahan bhi save karta ho, ye automatically dhundh lega
+        // Tumhara ekdum solid fallback logic user_id nikalne ke liye
         const userId = req.userId || (req.user && req.user.userId) || (req.user && req.user.id);
 
-        console.log(`[DEBUG] Attempting to cancel Order ID: ${orderId}, by User ID: ${userId}`);
+        console.log(`[ORDER] Attempting to cancel Order ID: ${orderId}, by User ID: ${userId}`);
 
         if (!userId) {
             console.error("🔥 Error: User ID is undefined. Token is not providing user info.");
             return res.status(401).json({ success: false, message: "Authentication Error: User ID missing" });
         }
-        const [orders] = await db.execute(
-            "SELECT status FROM orders WHERE order_id = ? AND user_id = ?", 
-            [orderId, userId]
-        );
 
-        if (orders.length === 0) {
-            return res.status(404).json({ success: false, message: "Order not found or access denied" });
-        }
+        // YAHAN JADOO HAI - Service ko call kiya (validation wahi ho jayegi)
+        await ordercencel(orderId, userId);
 
-        const currentStatus = orders[0].status;
-        if (currentStatus === 'shipped' || currentStatus === 'delivered' || currentStatus === 'cancelled') {
-            return res.status(400).json({ 
-                success: false, 
-                message: `Order cannot be cancelled because it is already ${currentStatus}` 
-            });
-        }
-
-        // Update status to cancelled
-        await db.execute(
-            "UPDATE orders SET status = 'cancelled' WHERE order_id = ?", 
-            [orderId]
-        );
-
-        console.log(`✅ Order ${orderId} successfully cancelled by User ${userId}`);
+        console.log(`[ORDER] ✅ Order ${orderId} successfully cancelled by User ${userId}`);
         return res.status(200).json({ success: true, message: "Order cancelled successfully" });
 
     } catch (error) {
-        // 🔥 Ye line Render logs mein EXACT error print karegi ki code kahan fata
-        console.error("🔥 CRITICAL CRASH IN CANCEL ORDER:", error);
+        console.error("🔥 CRITICAL CRASH IN CANCEL ORDER:", error.message);
+
+        // Professional Error Handling
+        if (error.message === 'ORDER_NOT_FOUND') {
+            return res.status(404).json({ success: false, message: "Order not found or access denied" });
+        }
+
+        if (error.message.startsWith('UNCANCELLABLE_STATE')) {
+            // Error string se status nikal rahe hain (e.g., 'UNCANCELLABLE_STATE:shipped')
+            const status = error.message.split(':')[1];
+            return res.status(400).json({ 
+                success: false, 
+                message: `Order cannot be cancelled because it is already ${status}` 
+            });
+        }
+
         return res.status(500).json({ success: false, message: "Failed to cancel order" });
     }
 };

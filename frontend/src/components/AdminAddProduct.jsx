@@ -28,7 +28,7 @@ function AdminAddProduct() {
   const fetchCategories = async () => {
     console.log('[AdminAddProduct] Fetching categories...');
     try {
-      const response = await fetch(`${API_BASE_URL}/api/category/get-categories`);
+      const response = await fetch(`${API_BASE_URL}/api/categories/`);
       if (!response.ok) throw new Error(`Failed to fetch categories. Status: ${response.status}`);
       const result = await response.json();
       console.log('[AdminAddProduct] Categories fetched:', result);
@@ -153,13 +153,21 @@ function AdminAddProduct() {
       Array.from(images).forEach((img) => formData.append('image', img));
     }
 
-    try {
+try {
       const url = isEditing
         ? `${API_BASE_URL}/api/products/product/${editId}`
         : `${API_BASE_URL}/api/products/product`;
       const method = isEditing ? 'PUT' : 'POST';
+      const token = localStorage.getItem('token');
 
-      const response = await fetch(url, { method, body: formData });
+      const response = await fetch(url, { 
+        method, 
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData 
+      });
+
       if (response.ok) {
         alert(isEditing ? 'Product updated successfully!' : 'Product added successfully!');
         console.log('[AdminAddProduct] Success! Redirecting to inventory.');
@@ -174,7 +182,6 @@ function AdminAddProduct() {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="admin-wrapper">
       <div className="admin-header-stats">
@@ -212,7 +219,7 @@ function AdminAddProduct() {
               <select value={form.categoryId} onChange={handleFieldChange('categoryId')} className="admin-input" required>
                 <option value="" disabled>Select Category...</option>
                 {categories.map((cat) => (
-                  <option key={cat.category_id} value={cat.category_id}>{cat.category_name}</option>
+                  <option key={cat.category_id} value={cat.category_id}>{cat.name}</option>
                 ))}
               </select>
             </div>

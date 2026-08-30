@@ -1,5 +1,9 @@
 const db = require('../DATABASE/mysql');
-
+const {Addcategoryindb,
+    getcategorybydb,
+    Addsubcategorybydb,
+    getProductsBySubcategoryFromDB,
+    getSubcategoriesByCategoryFromDB}= require('../services/categoryservice')
 // ==========================================
 // 1. ADD CATEGORY
 // ==========================================
@@ -13,9 +17,8 @@ const Addcategory = async (req, res) => {
   }
 
   try {
-    const [result] = await db.execute('INSERT INTO categories (category_name) VALUES (?)', [category_name]);
-    console.log(`[CATEGORY] Saved -- category_id: ${result.insertId}, name: ${category_name}`);
-    return res.status(200).json({ success: true, message: 'Category saved successfully.' });
+    const result = await Addcategoryindb(category_name)
+    return res.status(200).json({ success: true, message: 'Category saved successfully.',result:result });
   } catch (error) {
     console.error(`[CATEGORY] Add error (name: ${category_name}):`, error.message);
     return res.status(500).json({ success: false, message: 'There is an issue with the database.', error: error.message });
@@ -28,12 +31,11 @@ const Addcategory = async (req, res) => {
 const getcategory = async (req, res) => {
   console.log('[CATEGORY] Fetching all categories');
   try {
-    const [rows] = await db.execute('SELECT * FROM categories');
-    console.log(`[CATEGORY] Fetch success -- ${rows.length} category(ies)`);
+   const categoriesData = await getcategorybydb();
     return res.status(200).json({
       success: true,
       message: 'All categories fetched successfully.',
-      data: rows
+     categories: categoriesData
     });
   } catch (error) {
     console.error('[CATEGORY] Fetch error:', error.message);
@@ -54,12 +56,8 @@ const Addsubcategory = async (req, res) => {
   }
 
   try {
-    const [result] = await db.execute(
-      'INSERT INTO subcategories (category_id, subcategory_name) VALUES (?, ?)',
-      [category_id, subcategory_name]
-    );
-    console.log(`[SUBCATEGORY] Added -- subcategory_id: ${result.insertId}, category_id: ${category_id}`);
-    return res.status(201).json({ success: true, message: 'Subcategory added successfully.' });
+    const result = await Addsubcategorybydb (category_id, subcategory_name)
+    return res.status(201).json({ success: true, message: 'Subcategory added successfully.',result:result });
   } catch (error) {
     console.error(`[SUBCATEGORY] Add error (category_id: ${category_id}):`, error.message);
     return res.status(500).json({ success: false, message: 'Failed to add subcategory.', error: error.message });
@@ -79,22 +77,22 @@ const getProductsBySubcategory = async (req, res) => {
   }
 
   try {
-    const [rows] = await db.execute(
-      'SELECT * FROM products WHERE subcategory_id = ?',
-      [subcategory_id]
-    );
-    console.log(`[SUBCATEGORY] Found ${rows.length} product(s) for subcategory_id: ${subcategory_id}`);
+    // Call the service layer
+    const { subcategory_name, products } = await getProductsBySubcategoryFromDB(subcategory_id);
+
+    console.log(`[SUBCATEGORY] Found ${products.length} product(s) for subcategory: ${subcategory_name}`);
+    
     return res.status(200).json({
       success: true,
-      total_found: rows.length,
-      data: rows
+      subcategory_name: subcategory_name, // Now dynamic for your frontend!
+      total_found: products.length,
+      data: products
     });
   } catch (error) {
     console.error(`[SUBCATEGORY] Fetch products error (subcategory_id: ${subcategory_id}):`, error.message);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 // ==========================================
 // 5. GET SUBCATEGORIES BY CATEGORY
 // ==========================================
@@ -103,18 +101,13 @@ const getSubcategoriesByCategory = async (req, res) => {
   console.log(`[SUBCATEGORY] Fetching subcategories -- category_id: ${category_id}`);
 
   try {
-    const [rows] = await db.execute(
-      'SELECT * FROM subcategories WHERE category_id = ?',
-      [category_id]
-    );
-    console.log(`[SUBCATEGORY] Found ${rows.length} subcategory(ies) for category_id: ${category_id}`);
+    const rows = await getSubcategoriesByCategoryFromDB(category_id);
     return res.status(200).json({ success: true, data: rows });
   } catch (error) {
     console.error(`[SUBCATEGORY] Fetch error (category_id: ${category_id}):`, error.message);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 module.exports = {
   Addcategory,
   getcategory,

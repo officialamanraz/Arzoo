@@ -57,7 +57,7 @@ async function run() {
       const filePath = path.join(UPLOADS_DIR, matchedFile);
       const fileBuffer = fs.readFileSync(filePath);
 
-      const uploadResponse = await imagekit.upload({
+      const uploadResponse = await imagekit.files.upload({
         file: fileBuffer,
         fileName: matchedFile,
         folder: '/arzoo-saree/products'

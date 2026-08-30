@@ -1,14 +1,16 @@
+// File: src/controllers/webhookController.js
 const crypto = require('crypto');
-const db = require('../DATABASE/mysql');
+const { processWebhookEventInDB } = require('../services/webhookService');
 
 const razorpayWebhook = async (req, res) => {
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers['x-razorpay-signature'];
 
+    // 1. Signature Validation
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret)
-      .update(req.body)
+      .update(req.body) // Note: webhook body must be raw for accurate crypto hashing
       .digest('hex');
 
     if (expectedSignature !== signature) {
@@ -19,55 +21,31 @@ const razorpayWebhook = async (req, res) => {
     const event = JSON.parse(req.body);
     console.log('[WEBHOOK] Event received:', event.event);
 
-    // Idempotency guard
-    const eventId = event.event + '_' + event.payload.payment.entity.id;
-    const [existing] = await db.execute(
-      'select id from webhook_events where event_id = ?',
-      [eventId]
-    );
-    if (existing.length > 0) {
-      console.log('[WEBHOOK] Already processed, skipping');
+    // 2. Delegate Database Logic to Service Layer
+    const result = await processWebhookEventInDB(event);
+
+    if (result.status === 'ignored') {
+      console.log('[WEBHOOK]', result.message);
       return res.status(200).json({ success: true });
     }
-    await db.execute('insert into webhook_events (event_id) values (?)', [eventId]);
 
-    const razorpayOrderId = event.payload.payment.entity.order_id;
-    const io = req.app.get('io'); // socket instance yaha se milega
-
-    if (event.event === 'payment.captured') {
-  await db.execute(
-   'update orders set payment_status="paid", status="processing" where razorpay_order_id = ?'
-    [razorpay_order_id]
-);
-      console.log('[WEBHOOK] Order marked paid+processing:', razorpayOrderId);
-
-      const [orderRows] = await db.execute(
-        'select * from orders where razorpay_order_id = ?',
-        [razorpayOrderId]
-      );
-
-      // 🔴 YE LINE FRONTEND KO REAL-TIME UPDATE BHEJEGI
-      io.emit('order_updated', { order: orderRows[0] });
+    // 3. Socket.io Real-Time Updates to Frontend
+    const io = req.app.get('io');
+    
+    if (result.action === 'captured') {
+      console.log('[WEBHOOK] Order marked paid+processing:', result.razorpayOrderId);
+      io.emit('order_updated', { order: result.orderData });
+    } else if (result.action === 'failed') {
+      console.log('[WEBHOOK] Order marked unpaid+cancelled:', result.razorpayOrderId);
+      io.emit('order_updated', { order: result.orderData });
     }
 
-    if (event.event === 'payment.failed') {
-      await db.execute(
-  "update orders set payment_status='unpaid', status='cancelled' where razorpay_order_id = ?"
-    [razorpay_order_id]
-);
-
-      const [orderRows] = await db.execute(
-        'select * from orders where razorpay_order_id = ?',
-        [razorpayOrderId]
-      );
-
-      io.emit('order_updated', { order: orderRows[0] });
-    }
-
-    res.status(200).json({ success: true });
+    // 4. Send Success Response to Razorpay
+    return res.status(200).json({ success: true });
+    
   } catch (err) {
-    console.error('[WEBHOOK] Error:', err);
-    res.status(500).json({ success: false });
+    console.error('[WEBHOOK] Controller Error:', err);
+    return res.status(500).json({ success: false });
   }
 };
 

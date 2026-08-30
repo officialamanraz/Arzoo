@@ -23,9 +23,9 @@ router.get("/recommendations", getRecommendedProducts);
 router.get('/search', searchproduct);
 router.get('/product/:id', getProductById);
 router.get('/all', getallproduct);      // Pagination wala // Budget Filter wala
-router.post('/product', verifyToken, upload.array('image', 10), addproducts);
+router.post('/product', verifyToken, verifyAdmin , upload.array('image', 10), addproducts);
 router.delete('/product/:id', verifyToken, deleteproduct);
-router.put('/product/:id', verifyToken, upload.array('image',10), updateproduct);
+router.put('/product/:id', verifyToken, verifyAdmin, upload.array('image',10), updateproduct);
 router.post('/product/:id/images', verifyToken, upload.array('image', 10), addNewImagesToProduct); 
 router.delete('/product/image/:image_id', verifyToken, deleteSingleImage);
 

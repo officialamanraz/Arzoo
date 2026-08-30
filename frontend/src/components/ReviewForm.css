@@ -1,23 +1,187 @@
-.review-form-wrapper { max-width: 600px; margin: 40px auto; padding: 30px; background-color: var(--bg-light); border-radius: 12px; border: 1px solid var(--border); box-sizing: border-box; }
-.review-form-title { margin-top: 0; margin-bottom: 20px; font-size: 1.4rem; color: var(--text-dark); text-align: center; }
+/* Base Wrapper - Adapts to any screen */
+.review-form-wrapper { 
+  width: 100%;
+  max-width: 600px; 
+  margin: 2rem auto; 
+  padding: 2rem; 
+  background-color: var(--bg-light, #f9fafb); 
+  border-radius: 12px; 
+  border: 1px solid var(--border, #e5e7eb); 
+  box-sizing: border-box; 
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
 
-.rating-section { margin-bottom: 25px; }
-.rating-label { margin-bottom: 12px; font-weight: bold; color: var(--text-dark); text-align: center; }
-.rating-buttons-container { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.rating-btn { padding: 10px 16px; border: 1px solid var(--border); background-color: var(--white); border-radius: 8px; cursor: pointer; color: var(--text-dark); transition: all 0.2s; text-transform: capitalize; font-size: 0.95rem; }
-.rating-btn:hover { background-color: var(--bg-light); }
-.rating-btn-active { border: 2px solid var(--primary); background-color: rgba(173, 55, 100, 0.1); font-weight: bold; color: var(--primary); }
+.loading-wrapper {
+  text-align: center;
+  color: var(--text-light, #6b7280);
+  padding: 3rem 2rem;
+}
 
-.input-group { margin-bottom: 18px; }
-.review-textarea { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 1rem; resize: vertical; box-sizing: border-box; background-color: var(--bg-light); color: var(--text-dark); transition: border-color 0.2s; }
-.review-textarea:focus { outline: none; border-color: var(--primary); }
-.char-counter { margin: 6px 0 0 0; font-size: 0.85rem; color: var(--text-light); text-align: right; }
+.review-form-title { 
+  margin-top: 0; 
+  margin-bottom: 1.5rem; 
+  font-size: 1.5rem; 
+  color: var(--text-dark, #1f2937); 
+  text-align: center; 
+}
 
-.upload-label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--text-dark); }
-.file-input { padding: 8px; border: 1px solid var(--border); border-radius: 8px; width: 100%; background-color: var(--white); color: var(--text-dark); box-sizing: border-box; cursor: pointer; }
-.file-success-msg { margin: 6px 0 0 0; font-size: 0.9rem; color: #28a745; font-weight: 500; }
+/* Rating Section */
+.rating-section { margin-bottom: 1.5rem; }
+.rating-label { 
+  margin-bottom: 0.75rem; 
+  font-weight: 600; 
+  color: var(--text-dark, #374151); 
+  text-align: center; 
+}
 
-.review-submit-btn { width: 100%; padding: 14px; background-color: var(--primary); color: #ffffff; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
-.review-submit-btn:hover { background-color: var(--primary-hover); }
+/* Flex layout that perfectly wraps on smaller screens */
+.rating-buttons-container { 
+  display: flex; 
+  gap: 0.5rem; 
+  justify-content: center; 
+  flex-wrap: wrap; 
+}
 
-@media (max-width: 480px) { .review-form-wrapper { padding: 20px; } }
+/* Buttons built for Human Fingers (Minimum 44px height for touch targets) */
+.rating-btn { 
+  flex: 1 1 auto; /* Allows buttons to grow and fill empty space */
+  min-width: 100px;
+  min-height: 44px; /* Mobile touch accessibility */
+  padding: 0.5rem 1rem; 
+  border: 1px solid var(--border, #d1d5db); 
+  background-color: var(--white, #ffffff); 
+  border-radius: 8px; 
+  cursor: pointer; 
+  color: var(--text-dark, #374151); 
+  transition: all 0.2s ease-in-out; 
+  font-size: 0.95rem; 
+  font-weight: 500;
+}
+
+.rating-btn:hover { 
+  background-color: var(--bg-hover, #f3f4f6); 
+}
+
+.rating-btn-active { 
+  border: 2px solid var(--primary, #db2777); 
+  background-color: rgba(219, 39, 119, 0.05); /* Soft primary background */
+  font-weight: 700; 
+  color: var(--primary, #db2777); 
+}
+
+/* Inputs */
+.input-group { margin-bottom: 1.2rem; }
+
+.review-textarea { 
+  width: 100%; 
+  min-height: 120px; 
+  padding: 0.75rem; 
+  border: 1px solid var(--border, #d1d5db); 
+  border-radius: 8px; 
+  font-family: inherit; 
+  font-size: 1rem; 
+  resize: vertical; /* User can only resize up/down, not sideways */
+  box-sizing: border-box; 
+  background-color: var(--white, #ffffff); 
+  color: var(--text-dark, #1f2937); 
+  transition: border-color 0.2s, box-shadow 0.2s; 
+}
+
+.review-textarea:focus { 
+  outline: none; 
+  border-color: var(--primary, #db2777); 
+  box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); /* Nice focus ring */
+}
+
+.char-counter { 
+  margin: 0.25rem 0 0 0; 
+  font-size: 0.8rem; 
+  color: var(--text-light, #6b7280); 
+  text-align: right; 
+}
+
+/* File Upload */
+.file-upload-group {
+  background-color: var(--white, #ffffff);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px dashed var(--border, #d1d5db);
+}
+
+.upload-label { 
+  display: block; 
+  margin-bottom: 0.5rem; 
+  font-weight: 600; 
+  color: var(--text-dark, #374151); 
+  font-size: 0.95rem;
+}
+
+.optional-text {
+  font-weight: normal;
+  font-size: 0.85rem;
+  color: var(--text-light, #6b7280);
+}
+
+.file-input { 
+  width: 100%; 
+  padding: 0.5rem 0;
+  color: var(--text-dark, #374151); 
+  cursor: pointer; 
+  font-size: 0.9rem;
+}
+
+.file-success-msg { 
+  margin: 0.5rem 0 0 0; 
+  font-size: 0.9rem; 
+  color: #059669; 
+  font-weight: 500; 
+}
+
+/* Submit Button */
+.review-submit-btn { 
+  width: 100%; 
+  min-height: 50px; /* Big accessible button */
+  background-color: var(--primary, #db2777); 
+  color: #ffffff; 
+  border: none; 
+  border-radius: 8px; 
+  font-size: 1.1rem; 
+  font-weight: bold; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.review-submit-btn:hover:not(:disabled) { 
+  background-color: var(--primary-hover, #be185d); 
+  transform: translateY(-1px);
+}
+
+.review-submit-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ========================================== */
+/* RESPONSIVE DESIGN (Tablets & Phones)       */
+/* ========================================== */
+
+@media (max-width: 768px) {
+  .review-form-wrapper { padding: 1.5rem; }
+  .rating-btn { flex: 1 1 45%; } /* 2 buttons per row on tablets */
+}
+
+@media (max-width: 480px) {
+  .review-form-wrapper { 
+    padding: 1.25rem; 
+    border-radius: 0; /* Flat edges on mobile look better sometimes */
+    border-left: none;
+    border-right: none;
+    margin: 1rem 0;
+  }
+  .review-form-title { font-size: 1.3rem; }
+  .rating-btn { flex: 1 1 100%; } /* Stacks buttons 1-by-1 on very small screens */
+}
