@@ -1,4 +1,4 @@
-const { processCheckoutInDB } = require('../services/checkoutService'); // Ensure correct path
+const { processCheckoutInDB } = require('../services/checkoutservice'); // Ensure correct path
 const { triggerInvoiceEmail } = require('../controllers/Email');
 const processCheckout = async (req, res) => {
     const user_id = req.user.id;
