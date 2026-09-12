@@ -3,8 +3,9 @@ const {
   getcartbydb,
   addtocartindb,
   ItemNotFoundError,
-  updateCartQuantityInDB
-} = require('../services/cartservice'); // Ensure the file name casing matches your actual file exactly
+  updateCartQuantityInDB,
+  clearCartService
+} = require('../services/cartservice'); 
 
 // ==========================================
 // 1. ADD TO CART (UPSERT: update quantity if it exists, otherwise insert)
@@ -29,7 +30,6 @@ const AddToCart = async (req, res) => {
       result: result
     });
   } catch (error) {
-    // FIX: Changed user_id to userId to match the variable declaration
     console.error(`[CART] Add-to-cart error (user_id: ${userId}):`, error.message);
     return res.status(500).json({ success: false, message: 'Server error while updating cart.', error: error.message });
   }
@@ -60,7 +60,6 @@ const RemoveFromCart = async (req, res) => {
   console.log(`[CART] Remove item — user_id: ${user_id}, cart_id: ${cart_id}`);
 
   try {
-    // FIX: Removed the trailing comma
     await RemoveFromCartindb(cart_id, user_id);
     return res.status(200).json({ success: true, message: 'Item removed from cart.' });
   } catch (error) {
@@ -73,20 +72,23 @@ const RemoveFromCart = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error while removing item.', error: error.message });
   }
 };
-// Ensure you import updateCartQuantityInDB and ItemNotFoundError at the top of the file
 
+// ==========================================
+// 4. UPDATE CART QUANTITY
+// ==========================================
 // ==========================================
 // 4. UPDATE CART QUANTITY
 // ==========================================
 const updateCartItemQuantity = async (req, res) => {
     const user_id = req.user.id;
-    const { cart_id } = req.params; // Expecting cart_id in the URL (e.g., /cart/:cart_id)
-    const { quantity } = req.body;  // Expecting the new quantity in the JSON body
+    
+    // 🚨 FIX: ab cart_id aur quantity dono req.body se aayenge
+    const { cart_id, quantity } = req.body;  
 
     console.log(`[CART] Update quantity -- user_id: ${user_id}, cart_id: ${cart_id}, qty: ${quantity}`);
 
-    if (quantity === undefined || quantity === null) {
-        return res.status(400).json({ success: false, message: 'Quantity is required.' });
+    if (!cart_id || quantity === undefined || quantity === null) {
+        return res.status(400).json({ success: false, message: 'Cart ID and Quantity are required.' });
     }
 
     try {
@@ -106,5 +108,35 @@ const updateCartItemQuantity = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error while updating cart.', error: error.message });
     }
 };
+// ==========================================
+// 5. CLEAR FULL CART (Remove All)
+// ==========================================
+const clearCart = async (req, res) => {
+    try {
+        const user_id = req.user.id;
+        
+        // Backend se saare items delete karega
+        await clearCartService(user_id);
+        
+        // Nayi (khali) list wapas mangwayega (Yahan getCartService ki jagah getcartbydb use kiya hai)
+        const updatedCart = await getcartbydb(user_id); 
 
-module.exports = { AddToCart, getCart, RemoveFromCart,updateCartItemQuantity};
+        // Frontend ko { success: true, data: [] } bhejega
+        return res.status(200).json({
+            success: true,
+            message: 'Cart cleared successfully',
+            data: updatedCart 
+        });
+    } catch (error) {
+        console.error('[CART CONTROLLER] Error clearing cart:', error.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+module.exports = { 
+  AddToCart, 
+  getCart, 
+  RemoveFromCart, 
+  updateCartItemQuantity, 
+  clearCart
+};

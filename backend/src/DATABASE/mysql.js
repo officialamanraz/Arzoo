@@ -173,6 +173,7 @@ const setupDatabaseTables = async (pool) => {
     `CREATE TABLE IF NOT EXISTS product_images (
       image_id INT AUTO_INCREMENT PRIMARY KEY,
       product_id INT NOT NULL,
+      is_primary BOOLEAN DEFAULT 0,
       image_url VARCHAR(255) NOT NULL,
       FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
     )`,

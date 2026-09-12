@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+
+// 🚨 FIX 1: Imported pure Vanilla Lenis instead of the broken React wrapper
+import Lenis from 'lenis';
+import 'lenis/dist/lenis.css'; // Automatically applies required smooth scroll CSS
+
 import "./App.css";
 import "./theme.css";
 
 // Components
+import OrderDetail from './components/OrderDetail';
 import AdminSwitcher from './components/AdminSwitcher';
 import Checkout from './components/checkoutpage';
 import AdminInventory from "./components/AdminInventory";
@@ -28,6 +34,12 @@ import About from './components/About';
 import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 import Profile from './components/Profile';
+
+// 🤝 NEW: Dealer Management & Portal Components
+import AdminDealers from "./components/AdminDealers";
+import AdminDealerDetail from "./components/AdminDealerDetail";
+import AdminAddDealer from "./components/AdminAddDealer";
+
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function App() {
@@ -52,20 +64,47 @@ function App() {
     return savedTheme === "dark";
   });
 
+  // 🚀 Component Lifecycle Log
+  useEffect(() => {
+    console.log("[APP] 🚀 Root App component successfully mounted with Dealer & Admin routes.");
+  }, []);
+
+  // 🚨 FIX 2: Vanilla Lenis Implementation (Zero React Conflicts!)
+  useEffect(() => {
+    console.log("[APP] 🌀 Initializing Vanilla Lenis Smooth Scroll...");
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      console.log("[APP] 🌀 Destroying Lenis instance on unmount.");
+      lenis.destroy();
+    };
+  }, []);
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const trackingRef = urlParams.get('ref');
 
     if (trackingRef) {
       sessionStorage.setItem('tracking_ref', trackingRef);
-      console.log("Tracking ID saved:", trackingRef);
+      console.log("[APP] 📌 Tracking ID saved:", trackingRef);
       const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
   }, []);
 
   useEffect(() => {
-    console.log(`[APP] Dark mode toggled -- isDark: ${isDark}`);
+    console.log(`[APP] 🌓 Dark mode toggled -- isDark: ${isDark}`);
     const root = document.documentElement;
 
     if (isDark) {
@@ -81,29 +120,24 @@ function App() {
     let isMounted = true;
 
     const fetchCurrencyData = async () => {
-      console.log(`[APP] Fetching currency rates from ${API_BASE_URL}/api/Currency/Rate-change`);
+      console.log(`[APP] 💱 Fetching currency rates from ${API_BASE_URL}/api/Currency/Rate-change`);
       try {
         const response = await fetch(`${API_BASE_URL}/api/Currency/Rate-change`);
         if (!response.ok) throw new Error("Failed to fetch currency rates.");
         const data = await response.json();
 
-        // 🚨 ADD THIS FIX: Manually inject INR if the API forgot it!
         if (!data['INR']) {
-          // If your database prices are already in INR, the rate is just 1
           data['INR'] = { rate: 1 }; 
-          
-          // NOTE: If your database prices are actually in USD, 
-          // change the 1 to the current exchange rate (e.g., 84.5)
         }
 
         if (isMounted) {
           setRates(data);
           setRatesError(null);
-          console.log(`[APP] Currency rates loaded -- ${Object.keys(data).length} currencies`);
+          console.log(`[APP] ✅ Currency rates loaded -- ${Object.keys(data).length} currencies`);
         }
       } catch (err) {
         if (isMounted) {
-          console.error("[APP] Currency fetch error:", err);
+          console.error("[APP] ❌ Currency fetch error:", err);
           setRatesError("Could not load currency rates. Showing prices in INR.");
         }
       }
@@ -116,7 +150,7 @@ function App() {
     };
   }, []);
 
-  // Main Product Fetching Logic// Main Product Fetching Logic (NOW WITH DYNAMIC API TRANSLATION)
+  // Main Product Fetching Logic
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -142,38 +176,34 @@ function App() {
       fetchMode = "price-range";
     }
 
-    console.log(`[APP] Fetching products -- mode: ${fetchMode}, page: ${currentPage}, url: ${url}`);
+    console.log(`[APP] 🛍️ Fetching products -- mode: ${fetchMode}, page: ${currentPage}, url: ${url}`);
 
     fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error(`Backend API not found (status ${res.status}).`);
         return res.json();
       })
-      .then(async (result) => { // 🚨 MADE THIS ASYNC SO WE CAN TRANSLATE BEFORE SHOWING
+      .then(async (result) => {
         if (!isMounted) return;
 
         let finalData = result.data || result.products || result || [];
 
-        // 🚨 THE MAGIC TRANSLATION STEP
-        // If the user selected a language other than English, translate the product names dynamically!
         if (language !== 'en' && finalData.length > 0) {
           try {
-            console.log(`[APP] Translating ${finalData.length} products to ${language}...`);
+            console.log(`[APP] 🌐 Translating ${finalData.length} products to ${language}...`);
             finalData = await Promise.all(finalData.map(async (item) => {
               const originalName = item.name || item.title;
               const translatedName = await translateText(originalName, language);
               return { ...item, name: translatedName, title: translatedName };
             }));
           } catch (err) {
-            console.error("[APP] Translation API failed for this batch:", err);
-            // It will fallback to English if the translation fails
+            console.error("[APP] ⚠️ Translation API failed for this batch:", err);
           }
         }
 
         if (isMounted) {
           setSarees(finalData);
 
-          // Pagination logic
           if (result.totalPages) {
             setTotalPages(result.totalPages);
           } else if (result.total) {
@@ -187,11 +217,12 @@ function App() {
           }
 
           setLoading(false);
+          console.log(`[APP] ✅ Successfully loaded ${finalData.length} products.`);
         }
       })
       .catch((err) => {
         if (isMounted) {
-          console.error(`[APP] Error fetching sarees -- mode: ${fetchMode}:`, err);
+          console.error(`[APP] ❌ Error fetching sarees -- mode: ${fetchMode}:`, err);
           setError("Failed to load products. Please check the backend connection.");
           setLoading(false);
         }
@@ -200,9 +231,10 @@ function App() {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, searchKeyword, selectedCategory, selectedSubcategory, minprice, maxprice, language]); // 🚨 ADDED "language" HERE
+  }, [currentPage, searchKeyword, selectedCategory, selectedSubcategory, minprice, maxprice, language]);
 
   const handleSearch = (keyword) => {
+    console.log(`[APP] 🔍 Search triggered for keyword: "${keyword}"`);
     setSearchKeyword(keyword);
     setSelectedCategory("");
     setSelectedSubcategory("");
@@ -212,6 +244,7 @@ function App() {
   };
 
   const handleCategorySelect = (categoryId, categoryName = "") => {
+    console.log(`[APP] 📂 Category selected: ID ${categoryId} (${categoryName})`);
     setSelectedCategory(categoryId);
     setSelectedSubcategory(""); 
     setSelectedCategoryName(categoryName);
@@ -220,7 +253,8 @@ function App() {
     setCurrentPage(1);
   };
 
-  const handleSubcategorySelect = (subcategoryId,subcategoryName) => {
+  const handleSubcategorySelect = (subcategoryId, subcategoryName) => {
+    console.log(`[APP] 📂 Subcategory selected: ID ${subcategoryId} (${subcategoryName})`);
     setSelectedSubcategory(subcategoryId);
     setSelectedSubcategoryName(subcategoryName);
     setSearchKeyword("");
@@ -250,6 +284,9 @@ function App() {
       <AdminSwitcher />
 
       <Routes>
+        {/* =========================================
+           PUBLIC / CUSTOMER ROUTES
+           ========================================= */}
         <Route
           path="/"
           element={
@@ -270,38 +307,44 @@ function App() {
           }
         />
 
-        <Route path="/orders" element={<UserOrders />} />
-        <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+        <Route path="/product/:id" element={<ProductDetail sarees={sarees} currency={currency} rates={rates} language={language} />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+
+        {/* =========================================
+           AUTHENTICATION & USER PROFILE ROUTES
+           ========================================= */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/my-orders" element={<ProtectedRoute><UserOrders /></ProtectedRoute>} />
+        <Route path="/add-address" element={<ProtectedRoute><AddressForm /></ProtectedRoute>} />
+        <Route path="/order-summary" element={<ProtectedRoute><OrderSummary /></ProtectedRoute>} />
+        <Route path="/payment" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+        <Route path="/track-order/:orderId" element={<OrderTracking />} />
+
+        {/* =========================================
+           ADMIN PANEL ROUTES
+           ========================================= */}
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         <Route path="/admin/inventory" element={<AdminRoute><AdminInventory /></AdminRoute>} />
         <Route path="/admin/add-product" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
-        <Route path="/profile" element={<Profile />} />
-        <Route
-          path="/product/:id"
-          element={
-            <ProductDetail
-              sarees={sarees}
-              currency={currency}
-              rates={rates}
-              language={language}
-            />
-          }
-        />
-
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/my-orders" element={<ProtectedRoute><UserOrders /></ProtectedRoute>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/add-address" element={<ProtectedRoute><AddressForm /></ProtectedRoute>} />
+        <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
         <Route path="/admin/banners" element={<AdminRoute><AdminBanners /></AdminRoute>} />
-        <Route path="/order-summary" element={<ProtectedRoute><OrderSummary /></ProtectedRoute>} />
-        <Route path="/payment" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-        <Route path="/track-order/:orderId" element={<OrderTracking />} />
-        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+        <Route path="/admin/orders/:id" element={<OrderDetail />} />
+<Route path="/admin/dealer/edit/:id" element={<AdminRoute><AdminAddDealer /></AdminRoute>} />
+        {/* 🤝 NEW ADMIN DEALER MANAGEMENT ROUTES */}
+<Route path="/admin/dealers" element={<AdminRoute><AdminDealers /></AdminRoute>} />
+<Route path="/admin/dealer/:id" element={<AdminRoute><AdminDealerDetail /></AdminRoute>} />
+<Route path="/admin/add-dealer" element={<AdminRoute><AdminAddDealer /></AdminRoute>} /> {/* 👈 NAYA ROUTE */}
+        {/* =========================================
+           DEALER PORTAL ROUTES
+           ========================================= */}
+        {/* Protected view for individual dealers to inspect earnings and masked payouts */}
       </Routes>
     </>
   );

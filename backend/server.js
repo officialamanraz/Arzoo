@@ -1,3 +1,4 @@
+require('dotenv').config(); // Yeh sabse pehle hona chahiye
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -8,6 +9,7 @@ const { Server } = require('socket.io');
 // Security Packages
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+
 // NOTE: xss-clean and hpp removed -- both are unmaintained and directly
 // reassign req.query, which Express 5 made a read-only getter. Using them
 // crashes every request with "Cannot set property query...".
@@ -29,6 +31,14 @@ const io = new Server(server, {
     methods: ['GET', 'POST']
   }
 });
+app.use(express.json({
+    verify: (req, res, buf) => {
+        // Agar URL mein 'webhook' word hai, toh raw buffer ko req.rawBody mein save kar lo
+        if (req.originalUrl.includes('/webhook')) {
+            req.rawBody = buf;
+        }
+    }
+}));
 
 app.set('io', io);
 
@@ -42,7 +52,17 @@ io.on('connection', (socket) => {
 if (!process.env.FRONTEND_URL) {
   console.error('⚠️ [SERVER WARNING] Missing FRONTEND_URL. Defaulting to wildcard CORS.');
 }
-
+// server.js mein add karein
+// SAFE GLOBAL TRACKER (Replace old one with this)
+app.use((req, res, next) => {
+    console.log(`[NETWORK] ${req.method} request made to: ${req.url}`);
+    
+    // 🚨 FIX: Pehle check karo ki req.body exist karta bhi hai ya nahi!
+    if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+        console.log(`[PAYLOAD] Data received:`, req.body);
+    }
+    next(); 
+});
 // ==========================================
 // 2. SECURITY & GLOBAL MIDDLEWARES (The Shield)
 // ==========================================
@@ -70,12 +90,27 @@ app.use(globalLimiter);
 // Layer 4: Razorpay Webhook -- needs the RAW body for signature verification,
 // so it's registered as its own standalone route with express.raw(),
 // BEFORE the global express.json() parser below touches it.
+app.use((req, res, next) => {
+    console.log(`[SERVER] 📥 Incoming [${req.method}] request to: ${req.url}`);
+    next();
+});
 app.post(
   '/api/payment/webhook',
   express.raw({ type: 'application/json' }),
   razorpayWebhook
 );
 
+app.use((req, res, next) => {
+    req.setTimeout(20000, () => {
+        if (!res.headersSent) {
+            res.status(504).json({ 
+                success: false, 
+                message: 'Gateway Timeout: The server took too long to process your request.' 
+            });
+        }
+    });
+    next();
+});
 // Layer 5: Body Parser with Payload Limit & Data Sanitization
 // File: backend/server.js
 // 4K aur badi files ko bina error accept karne ke liye limit 50mb kar di
@@ -114,9 +149,13 @@ const emailRouter = require('./src/router/Email');
 const bannersRouter = require('./src/router/banner');
 const translationRouter = require('./src/router/translate');
 const whatsappRoutes = require('./src/router/whatsapp');
-const dealerRoutes = require('./src/router/dealer');
 const likeRoutes = require('./src/router/like');
 const commentRoutes = require('./src/router/comments')
+const dealerRoutes = require('./src/router/dealer');
+
+// 3. MOUNT DEALER ROUTES (Yahan express app se attach kiya)
+console.log(`[SERVER] 🔌 Registering and mounting Dealer Routes at endpoint prefix: /api/dealers...`);
+
 // Health Check
 app.get('/test', (req, res) => {
   console.log('[SERVER] GET /test -- Health check hit');

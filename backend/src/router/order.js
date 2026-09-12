@@ -1,28 +1,101 @@
+// File: src/routes/orderRoutes.js
 const express = require('express');
 const router = express.Router();
 
+// ==========================================
+// 📥 CONTROLLER IMPORTS
+// ==========================================
 const { processCheckout } = require('../controllers/checkout');
-const { getOrderTracking } = require('../controllers/tracking'); // Removed updateOrderStatus from here
-const { getadminorder, getmyorders, updateOrderStatus,orderCreate,cancelOrder } = require('../controllers/order'); // ADDED IT HERE!
+const { getOrderTracking } = require('../controllers/tracking'); 
 const { getCart } = require('../controllers/cart');
 const { verifyToken, verifyAdmin } = require('../middleware/authmiddleware');
 
-// Customer places a COD order
-router.post('/checkout', verifyToken, processCheckout);
+const { 
+    getadminorder, 
+    getmyorders, 
+    updateOrderStatus,
+    orderCreate,
+    cancelOrder,
+    getSingleOrderAdmin 
+} = require('../controllers/order'); 
 
-router.get('/cart', verifyToken, getCart);
-router.get('/my-orders', verifyToken, getmyorders);
+// ==========================================
+// 🔍 ROUTER-LEVEL LOGGING MIDDLEWARE
+// ==========================================
+router.use((req, res, next) => {
+    console.log(`[ORDER_ROUTES] 🛣️ API Traffic Hit: [${req.method}] ${req.originalUrl}`);
+    next();
+});
 
-// Customer/anyone-with-link tracks an order by its payment_id 
-router.get('/tracking/:orderId', verifyToken, getOrderTracking);
+console.log('[ORDER_ROUTES] 🚀 Order, Checkout & Admin Routes Initialized Successfully!');
 
-// Admin: view all orders
-router.get('/admin/all', verifyToken, verifyAdmin, getadminorder);
+// ==========================================
+// 🛒 CUSTOMER ROUTES (Requires Login: verifyToken)
+// ==========================================
 
-// Admin: update status + add tracking milestone
-router.patch('/admin/status', verifyToken, verifyAdmin, updateOrderStatus);
-router.post('/create-order', verifyToken, orderCreate);
-router.put('/:id/cancel', verifyToken,cancelOrder);
-// Status update route (Admin Only)
-router.put('/:id/status', verifyToken, verifyAdmin,updateOrderStatus);
+// 1. Customer places a COD/Online order
+router.post('/checkout', verifyToken, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 🛍️ Route Triggered: POST /checkout by User`);
+    processCheckout(req, res, next);
+});
+
+// 2. Fetch User Cart
+router.get('/cart', verifyToken, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 🛒 Route Triggered: GET /cart by User`);
+    getCart(req, res, next);
+});
+
+// 3. Fetch My Orders (User Side)
+router.get('/my-orders', verifyToken, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 📦 Route Triggered: GET /my-orders by User`);
+    getmyorders(req, res, next);
+});
+
+// 4. Create Razorpay Order
+router.post('/create-order', verifyToken, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 💳 Route Triggered: POST /create-order by User`);
+    orderCreate(req, res, next);
+});
+
+// 5. Cancel Order by User
+router.put('/:id/cancel', verifyToken, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 🚫 Route Triggered: PUT /${req.params.id}/cancel by User`);
+    cancelOrder(req, res, next);
+});
+
+// 6. Track an order by its ID
+router.get('/tracking/:orderId', verifyToken, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 🚚 Route Triggered: GET /tracking/${req.params.orderId}`);
+    getOrderTracking(req, res, next);
+});
+
+
+// ==========================================
+// 👑 ADMIN ROUTES (Requires: verifyToken + verifyAdmin)
+// ==========================================
+
+// 1. Admin: View all orders (List)
+router.get('/admin/all', verifyToken, verifyAdmin, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 👑 Admin Route Triggered: GET /admin/all`);
+    getadminorder(req, res, next);
+});
+
+// 2. Admin: View SINGLE order deep details (Financial Breakdown)
+router.get('/admin/order/:id', verifyToken, verifyAdmin, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 👑 Admin Route Triggered: GET /admin/order/${req.params.id}`);
+    getSingleOrderAdmin(req, res, next);
+});
+
+// 3. Admin: Update status (using body data)
+router.patch('/admin/status', verifyToken, verifyAdmin, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 👑 Admin Route Triggered: PATCH /admin/status`);
+    updateOrderStatus(req, res, next);
+});
+
+// 4. Admin: Alternative Status update route (using params ID)
+router.put('/:id/status', verifyToken, verifyAdmin, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 👑 Admin Route Triggered: PUT /${req.params.id}/status`);
+    updateOrderStatus(req, res, next);
+});
+
 module.exports = router;

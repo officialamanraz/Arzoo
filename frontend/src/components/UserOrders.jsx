@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '../getImageUrl';
-import './UserOrders.css'; // Extracted CSS
+import './UserOrders.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-// Site identity comes from env config, not hardcoded here.
 const SITE_NAME = import.meta.env.VITE_SITE_NAME || '';
 const STORE_NAME = import.meta.env.VITE_STORE_NAME || SITE_NAME || 'Store Name';
 const STORE_TAGLINE = import.meta.env.VITE_STORE_TAGLINE || '';
@@ -30,7 +29,6 @@ function UserOrders() {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      console.log('[UserOrders] Fetching user orders...');
       setLoading(true);
       setError('');
       const token = localStorage.getItem('token');
@@ -42,16 +40,13 @@ function UserOrders() {
         });
 
         const res = await response.json();
-        console.log('[UserOrders] Server response:', res);
-        
         if (res.success) {
           setOrders(res.data || []);
         } else {
-          console.warn('[UserOrders] Failed to load orders:', res.message);
           setError(res.message || 'Could not load your orders.');
         }
       } catch (err) {
-        console.error("[UserOrders] Network Error fetching orders:", err);
+        console.error("Network Error fetching orders:", err);
         setError('Network error while loading your orders.');
       } finally {
         setLoading(false);
@@ -60,6 +55,7 @@ function UserOrders() {
 
     fetchOrders();
   }, []);
+
   const handleCancelOrder = async (orderId) => {
     if (!window.confirm("Are you sure you want to cancel this order?")) return;
 
@@ -73,7 +69,6 @@ function UserOrders() {
 
       if (data.success) {
         alert("Order cancelled successfully!");
-        // UI ko turant update karne ke liye state update kar do
         setOrders(orders.map(o => o.order_id === orderId ? { ...o, status: 'cancelled' } : o));
       } else {
         alert(data.message);
@@ -82,7 +77,7 @@ function UserOrders() {
       console.error("Error cancelling order:", error);
       alert("Something went wrong");
     }
-};
+  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -98,12 +93,8 @@ function UserOrders() {
   };
 
   const buildInvoiceHtml = (order) => {
-    console.log('[UserOrders] Building invoice HTML for order:', order.order_id);
     const items = order.items || [];
-
-    const itemsSubtotal = items.reduce(
-      (sum, item) => sum + Number(item.unit_price) * item.quantity, 0
-    );
+    const itemsSubtotal = items.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0);
 
     const itemRows = items.length > 0
       ? items.map(item => {
@@ -128,8 +119,6 @@ function UserOrders() {
       : '';
 
     const invoiceNumber = order.invoice_number || order.payment_id;
-
-    // Only show a GSTIN row if one is actually set
     const gstinRowHtml = (SELLER_GSTIN && SELLER_GSTIN !== 'N/A') ? `GSTIN: ${SELLER_GSTIN}<br>` : '';
 
     return `
@@ -175,12 +164,9 @@ function UserOrders() {
         .info-block { flex: 1; min-width: 220px; }
         .info-block h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 8px; }
         .info-block p { font-size: 13px; color: #333; line-height: 1.7; }
-        .info-block p span.field-label { color: #888; }
         .signature-block { padding: 20px 40px 0; display: flex; justify-content: flex-end; text-align: center; font-size: 12px; color: #666; }
         .signature-block .sig-line { border-top: 1px solid #999; width: 180px; padding-top: 6px; }
         .invoice-footer { text-align: center; padding: 24px 40px 32px; font-size: 11.5px; color: #999; line-height: 1.7; }
-        .invoice-footer strong { color: #666; }
-        .eoe-note { text-align: right; padding: 0 40px; font-size: 11px; color: #aaa; }
         @media print { body { background: #fff; padding: 0; } .invoice { box-shadow: none; border-radius: 0; } }
       </style>
       </head>
@@ -192,8 +178,7 @@ function UserOrders() {
               <div class="store-tagline">${STORE_TAGLINE}</div>
               <div class="store-meta">
                 ${gstinRowHtml}
-                ${SELLER_ADDRESS_1}<br>
-                ${SELLER_ADDRESS_2}
+                ${SELLER_ADDRESS_1}<br>${SELLER_ADDRESS_2}
               </div>
             </div>
             <div class="invoice-meta">
@@ -205,18 +190,14 @@ function UserOrders() {
               </div>
             </div>
           </div>
-
           <div class="order-meta-strip">
             <span>Order ID: <strong>${order.payment_id}</strong></span>
-            ${order.tracking_ref ? `<span>tracking Ref: <strong>${order.tracking_ref}</strong></span>` : ''}
           </div>
-
           <div class="parties-section">
             <div class="party-block">
               <h4>Billing Address</h4>
               <p class="name">${order.customer_name || 'Customer'}</p>
-              <p>${order.shipping_address || 'Address not available'}</p>
-              <br>
+              <p>${order.shipping_address || 'Address not available'}</p><br>
               <p>Email: ${order.customer_email || 'Not available'}</p>
             </div>
             <div class="party-block">
@@ -225,7 +206,6 @@ function UserOrders() {
               <p>${order.shipping_address || 'Address not available'}</p>
             </div>
           </div>
-
           <div class="items-section">
             <table class="items-table">
               <thead>
@@ -237,52 +217,33 @@ function UserOrders() {
                   <th class="align-right">Amount</th>
                 </tr>
               </thead>
-              <tbody>
-                ${itemRows}
-              </tbody>
+              <tbody>${itemRows}</tbody>
             </table>
           </div>
-
           <div class="totals-section">
             <div class="totals-box">
-              <div class="totals-row">
-                <span>Subtotal</span>
-                <span>₹${itemsSubtotal.toFixed(2)}</span>
-              </div>
-              <div class="totals-row">
-                <span>Discount</span>
-                <span>−₹0.00</span>
-              </div>
-              <div class="totals-row grand-total">
-                <span>Grand Total</span>
-                <span>₹${Number(order.total_amount).toFixed(2)}</span>
-              </div>
+              <div class="totals-row"><span>Subtotal</span><span>₹${itemsSubtotal.toFixed(2)}</span></div>
+              <div class="totals-row"><span>Discount</span><span>−₹0.00</span></div>
+              <div class="totals-row grand-total"><span>Grand Total</span><span>₹${Number(order.total_amount).toFixed(2)}</span></div>
             </div>
           </div>
-
           <div class="info-strip">
             <div class="info-block">
               <h4>Payment Details</h4>
-              <p><span class="field-label">Method:</span> ${order.payment_method ? order.payment_method.toUpperCase() : 'Not available'}</p>
-              <p><span class="field-label">Status:</span> ${order.payment_status ? order.payment_status.toUpperCase() : 'Not available'}</p>
+              <p>Method: ${order.payment_method ? order.payment_method.toUpperCase() : 'Not available'}</p>
+              <p>Status: ${order.payment_status ? order.payment_status.toUpperCase() : 'Not available'}</p>
             </div>
             <div class="info-block">
               <h4>Order Details</h4>
-              <p><span class="field-label">Current Status:</span> ${order.status ? order.status.toUpperCase() : 'Not available'}</p>
-              ${order.estimated_delivery ? `<p><span class="field-label">Estimated Delivery:</span> ${formatDateOnly(order.estimated_delivery)}</p>` : ''}
+              <p>Current Status: ${order.status ? order.status.toUpperCase() : 'Not available'}</p>
+              ${order.estimated_delivery ? `<p>Estimated Delivery: ${formatDateOnly(order.estimated_delivery)}</p>` : ''}
             </div>
           </div>
-
           <div class="signature-block">
             <div class="sig-line">Authorized Signatory<br>${STORE_NAME}</div>
           </div>
-
-          <div class="eoe-note">E. &amp; O.E.</div>
-
           <div class="invoice-footer">
-            This is a computer-generated document and does not require a physical signature.<br>
-            ${supportLine}
-            Return/Exchange available within 7 days of delivery.<br><br>
+            This is a computer-generated document.<br>${supportLine}
             Thank you for shopping with ${STORE_NAME}!
           </div>
         </div>
@@ -292,11 +253,9 @@ function UserOrders() {
   };
 
   const handleDownloadInvoice = (order) => {
-    console.log('[UserOrders] Opening invoice for print window.');
     const printWindow = window.open('', '_blank');
     printWindow.document.write(buildInvoiceHtml(order));
     printWindow.document.close();
-
     printWindow.onload = () => {
       printWindow.focus();
       printWindow.print();
@@ -308,118 +267,132 @@ function UserOrders() {
   }
 
   return (
-    <div className="orders-page">
-      <div className="orders-page-inner">
-        <h1 className="orders-page-title">My Orders</h1>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '100px 20px 60px', textAlign: 'left' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'left' }}>
+        <h1 style={{ marginBottom: '30px', color: '#0f172a', fontSize: '2rem', fontWeight: 800, textAlign: 'left' }}>My Orders</h1>
 
-        {error && <div className="orders-error-banner">{error}</div>}
+        {error && <div style={{ background: '#fdecea', color: '#c0392b', padding: '14px 18px', borderRadius: '10px', marginBottom: '20px', textAlign: 'left' }}>{error}</div>}
 
         {orders.length === 0 && !error ? (
-          <div className="orders-empty-card">
+          <div style={{ background: '#fff', padding: '50px', textAlign: 'center', borderRadius: '20px' }}>
             <h3>No Orders Yet</h3>
             <p>You haven't placed any orders yet.</p>
-            <Link to="/" className="orders-empty-link">Start Shopping</Link>
+            <Link to="/" style={{ color: '#A8325E', fontWeight: 600 }}>Start Shopping</Link>
           </div>
         ) : (
           orders.map((order) => {
             const meta = STATUS_META[order.status] || { label: order.status, className: '', icon: '' };
             return (
-              <div key={order.order_id} className="order-card">
-
-                <div className="order-card-header">
-                  <div>
-                    <h3 className="order-id">Order #{order.order_id}</h3>
-                    <p className="order-date">Placed on {formatDate(order.ordered_at)}</p>
+              <div key={order.order_id} style={{ background: '#fff', padding: '30px', marginBottom: '30px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', textAlign: 'left' }}>
+                
+                {/* Order Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '10px', textAlign: 'left' }}>
+                  <div style={{ textAlign: 'left' }}>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', textAlign: 'left' }}>Order #{order.order_id}</h3>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', textAlign: 'left' }}>Placed on {formatDate(order.ordered_at)}</p>
                   </div>
-                  <span className={`order-status-badge ${meta.className}`}>
+                  <span style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: 700, fontSize: '0.85em', textAlign: 'left' }}>
                     {meta.icon} {meta.label}
                   </span>
                 </div>
 
-                {/* Payment + Delivery info strip */}
-               {/* Payment + Delivery info strip */}
-                <div className="order-extra-info">
-                  <p>
-                    <span className="field-label">Payment:</span>{' '}
-                    {order.payment_method ? order.payment_method.toUpperCase() : 'N/A'}
-                    {' '}({order.payment_status ? order.payment_status.toUpperCase() : 'N/A'})
-                  </p>
-                  
-                  {/* 👇 Naya Tracking Ref / Dealer ID block 👇 */}
-                  {order.tracking_ref && (
-                    <p>
-                      <span className="field-label">trackingId:</span>{' '}
-                      <strong style={{ color: '#A8325E' }}>{order.tracking_ref}</strong>
-                    </p>
-                  )}
-
-                  {order.estimated_delivery && (
-                    <p>
-                      <span className="field-label">Estimated Delivery:</span>{' '}
-                      {formatDateOnly(order.estimated_delivery)}
-                    </p>
-                  )}
-                </div>
-                <div className="order-items-block">
-                  {order.items && order.items.length > 0 ? (
-                    order.items.map((item, idx) => (
-                      <div key={idx} className="order-item-row">
+                {/* Items Container */}
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '30px', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '15px', textAlign: 'left' }}>
+                      
+                      {/* Left Column: Large Image + Action Buttons Below It */}
+                      <div style={{ width: '300px', flexShrink: 0, textAlign: 'left' }}>
                         <img
-                          // FIX: Changed from `banner.image_url` to `item.image_url || item.image`
                           src={getImageUrl(item.image_url || item.image)} 
                           alt={item.name}
-                          className="order-item-thumb"
+                          style={{
+                            width: '100%',
+                            height: '300px',
+                            borderRadius: '12px',
+                            objectFit: 'cover',
+                            border: '1px solid #cbd5e1',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                            background: '#fff',
+                            display: 'block',
+                            marginBottom: '15px'
+                          }}
                           onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
                         />
-                        <div className="order-item-info">
-                          <p className="order-item-name">{item.name}</p>
-                          <p className="order-item-meta">
-                            Qty: {item.quantity} × ₹{Number(item.unit_price).toLocaleString('en-IN')}
-                          </p>
+
+                        {/* Buttons directly below the image */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
+                          {(order.status === 'pending' || order.status === 'processing') && (
+                            <button 
+                              onClick={() => handleCancelOrder(order.order_id)} 
+                              style={{
+                                padding: '10px 16px', background: 'transparent', color: '#dc3545',
+                                border: '1px solid #dc3545', borderRadius: '8px', cursor: 'pointer',
+                                fontWeight: 'bold', fontSize: '0.9em', textAlign: 'center', width: '100%'
+                              }}
+                            >
+                              Cancel Order
+                            </button>
+                          )}
+                          <Link 
+                            to={`/track-order/${order.payment_id}`} 
+                            style={{
+                              display: 'block', padding: '10px 16px', backgroundColor: '#A8325E',
+                              color: '#fff', borderRadius: '8px', textDecoration: 'none',
+                              fontWeight: 700, fontSize: '0.9em', textAlign: 'center'
+                            }}
+                          >
+                            Track Order
+                          </Link>
+                          <button 
+                            onClick={() => handleDownloadInvoice(order)} 
+                            style={{
+                              padding: '10px 16px', backgroundColor: '#fff', color: '#0f172a',
+                              border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer',
+                              fontWeight: 700, fontSize: '0.9em', textAlign: 'center', width: '100%'
+                            }}
+                          >
+                            Invoice
+                          </button>
                         </div>
-                        <p className="order-item-total">
-                          ₹{(item.quantity * item.unit_price).toLocaleString('en-IN')}
-                        </p>
                       </div>
-                    ))
-                  ) : (
-                    <p className="order-items-empty">No items in this order</p>
-                  )}
-                </div>
 
-                {/* Merged clean Order Card Footer */}
-                <div className="order-card-footer">
-                  <div className="order-footer-actions">
-                    {/* Agar status pending ya processing hai, tabhi Cancel button dikhega */}
-{(order.status === 'pending' || order.status === 'processing') && (
-    <button 
-        onClick={() => handleCancelOrder(order.order_id)} 
-        style={{ padding: '10px 20px', background: 'transparent', color: '#dc3545', border: '1px solid #dc3545', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-    >
-        Cancel Order
-    </button>
-)}
-                    <Link to={`/track-order/${order.payment_id}`} className="track-order-btn">
-                      Track Order
-                    </Link>
-                    <button onClick={() => handleDownloadInvoice(order)} className="invoice-btn">
-                      Invoice
-                    </button>
-                  </div>
+                      {/* Right Column: Left/Top-Aligned Text & Order Info */}
+                      <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left', alignItems: 'flex-start' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 700, color: '#0f172a', lineHeight: '1.3', textAlign: 'left' }}>
+                          {item.name}
+                        </h2>
 
-                  <div className="order-total-block">
-                    {order.subtotal && (
-                      <p className="order-subtotal-line">
-                        Subtotal: ₹{Number(order.subtotal).toLocaleString('en-IN')}
-                      </p>
-                    )}
-                    <p className="order-total-label">Total Amount</p>
-                    <h3 className="order-total-value">
-                      ₹{Number(order.total_amount).toLocaleString('en-IN')}
-                    </h3>
-                  </div>
-                </div>
-                
+                        {/* Single Amount Display with Quantity right below it */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left', alignItems: 'flex-start' }}>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#A8325E', textAlign: 'left' }}>
+                            ₹{Number(order.total_amount).toLocaleString('en-IN')}
+                          </span>
+                          <span style={{ fontSize: '0.95rem', color: '#64748b', fontWeight: '500', textAlign: 'left' }}>
+                            Quantity: {item.quantity}
+                          </span>
+                        </div>
+
+                        {/* Payment & Delivery strip */}
+                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', textAlign: 'left' }}>
+                          <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155', textAlign: 'left' }}>
+                            <strong>Payment:</strong> {order.payment_method ? order.payment_method.toUpperCase() : 'N/A'} ({order.payment_status ? order.payment_status.toUpperCase() : 'N/A'})
+                          </p>
+                          {order.estimated_delivery && (
+                            <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155', textAlign: 'left' }}>
+                              <strong>Estimated Delivery:</strong> {formatDateOnly(order.estimated_delivery)}
+                            </p>
+                          )}
+                        </div>
+
+                      </div>
+
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ color: '#64748b', textAlign: 'center', padding: '20px' }}>No items in this order</p>
+                )}
+
               </div>
             );
           })

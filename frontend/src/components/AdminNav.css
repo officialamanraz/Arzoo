@@ -1,7 +1,88 @@
-.admin-nav { display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
-.admin-nav-link { padding: 10px 20px; background-color: var(--bg-light); color: var(--text-dark); border: 1px solid var(--border); border-radius: 8px; font-weight: bold; text-decoration: none; transition: all 0.2s ease; white-space: nowrap; }
-.admin-nav-link:hover { background-color: var(--border); }
-.admin-nav-link.active { background-color: var(--primary); color: var(--white); border-color: var(--primary); }
-.admin-nav-link.active:hover { background-color: var(--primary-hover); }
+/* =========================================
+   Admin Navigation Styles
+   ========================================= */
 
-@media (max-width: 640px) { .admin-nav { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; gap: 8px; } .admin-nav::-webkit-scrollbar { height: 4px; } .admin-nav-link { padding: 9px 16px; font-size: 14px; flex-shrink: 0; } }
+.admin-nav-wrapper {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-nav-link {
+  padding: 10px 18px;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.admin-nav-link:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #111;
+}
+
+.admin-nav-link.active {
+  background-color: var(--primary, #A8325E);
+  color: #fff;
+  border-color: var(--primary, #A8325E);
+  box-shadow: 0 4px 12px rgba(168, 50, 94, 0.25);
+}
+
+.admin-nav-link.active:hover {
+  background-color: var(--primary-hover, #922850);
+  border-color: var(--primary-hover, #922850);
+}
+
+/* =========================================
+   Mobile Responsiveness (Horizontal Scroll)
+   ========================================= */
+
+@media (max-width: 768px) {
+  .admin-nav-wrapper {
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .admin-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+    gap: 8px;
+    scrollbar-width: thin; /* Firefox */
+  }
+
+  /* Custom scrollbar for webkit browsers (Chrome, Safari, Edge) */
+  .admin-nav::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .admin-nav::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+
+  .admin-nav::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  .admin-nav-link {
+    padding: 8px 14px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+}

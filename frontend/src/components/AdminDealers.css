@@ -1,0 +1,145 @@
+/* =========================================
+   Admin Dealers List Styles (Fully Responsive)
+   ========================================= */
+
+.admin-dealer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dealers-top-bar {
+  margin-bottom: 24px;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dealers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.dealer-card-item {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.dealer-card-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-color: var(--primary, #A8325E);
+}
+
+.dealer-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dealer-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #111;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70%; 
+}
+
+/* Status Badges Styling */
+.dealer-status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.dealer-status-badge.active { background: #dcfce7; color: #15803d; }
+.dealer-status-badge.pending { background: #fff3cd; color: #856404; }
+.dealer-status-badge.suspended { background: #fee2e2; color: #b91c1c; }
+
+.dealer-card-email, 
+.dealer-card-phone {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.dealer-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 13px;
+  color: #444;
+}
+
+.view-details-link {
+  color: var(--primary, #A8325E);
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.dealer-card-item:hover .view-details-link {
+  text-decoration: underline;
+}
+
+.no-dealers-box {
+  text-align: center;
+  padding: 50px 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #777;
+  font-size: 15px;
+}
+
+/* =========================================
+   Responsive Adjustments (Media Queries)
+   ========================================= */
+
+@media (max-width: 768px) {
+  .dealers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+  }
+  
+  .dealer-card-item {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-dealer-container {
+    padding: 12px;
+  }
+
+  .dealers-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dealer-card-header h3 {
+    font-size: 16px;
+  }
+
+  .dealer-card-email, 
+  .dealer-card-phone {
+    font-size: 12px;
+  }
+}

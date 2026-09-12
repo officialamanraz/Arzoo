@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { uiTranslations } from '../languages';
-import { getImageUrl } from '../getImageUrl';
 import HeroBanner from './HeroBanner';
 import './Home.css';
 
@@ -89,36 +88,52 @@ function Home({
           <>
             <div className="product-grid">
               {displayedSarees.map((saree) => {
-                const imageName = saree.image_url || saree.thumbnail || saree.image;
-                const imagePath = getImageUrl(imageName);
+                const finalImageUrl = saree.image_url || saree.thumbnail || '/saare_1.jpeg';
                 const sareeId = saree.product_id || saree.id;
 
                 return (
                   <Link to={`/product/${sareeId}`} className="product-card" key={sareeId}>
-                    <img
-                      src={getImageUrl(imagePath)}
-                      alt={saree.name || saree.title}
-                      className="product-img"
-                      onError={(e) => { 
-                        e.target.src = "/saare_1.jpeg"; 
-                      }}
-                    />
+                    
+                    <div className="product-image-container">
+                      <img
+                        src={finalImageUrl}
+                        alt={saree.name || saree.title}
+                        className="product-img"
+                        onError={(e) => { 
+                          e.target.src = "/saare_1.jpeg"; 
+                        }}
+                      />
+                      {/* 🏷️ Bada aur clear Flipkart Style Discount Badge */}
+                      {saree.discount_percentage > 0 && (
+                        <span className="flipkart-discount-badge">
+                          ↓{saree.discount_percentage}%
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 📝 Name aur Price ek ke neeche ek (One by One) */}
                     <div className="product-info">
                       <p className="product-name" title={saree.name || saree.title}>
                         {saree.name || saree.title}
                       </p>
+                      
                       <div className="price-row">
                         <span className="price-tag">
                           {currency} {saree.price ? getConvertedPrice(saree.price).toLocaleString('en-US') : '0'}
                         </span>
+                        {saree.mrp && saree.mrp > saree.price && (
+                          <span className="original-mrp">
+                            {currency} {getConvertedPrice(saree.mrp).toLocaleString('en-US')}
+                          </span>
+                        )}
                       </div>
                     </div>
+                    
                   </Link>
                 );
               })}
             </div>
 
-            {/* 🚨 FIX: Restored your exact original fallback! Forces display if 12 items exist */}
             {(actualTotalPages > 1 || (sarees && sarees.length === ITEMS_PER_PAGE)) && (
               <div className="pagination-container">
                 <button

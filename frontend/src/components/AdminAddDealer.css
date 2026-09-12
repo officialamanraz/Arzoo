@@ -1,0 +1,191 @@
+/* =========================================
+   Admin Add / Edit Dealer Form Styles
+   ========================================= */
+
+.admin-add-dealer-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+.form-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.form-description {
+  color: #555;
+  margin-bottom: 24px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.section-heading {
+  font-size: 16px;
+  color: #111;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.input-group input,
+.input-group select {
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+  color: #111;
+}
+
+.input-group input[type="file"] {
+  padding: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: var(--primary, #A8325E);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(168, 50, 94, 0.1);
+}
+
+.input-group small {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+/* Dealer Image Preview Styling */
+.dealer-preview-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-top: 10px;
+  border: 2px solid var(--primary, #A8325E);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* Feedback Messages */
+.message-box {
+  padding: 14px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.message-box.success {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.message-box.error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn-cancel {
+  padding: 12px 24px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: #f1f5f9;
+  color: #111;
+}
+
+.btn-submit {
+  padding: 12px 24px;
+  background: var(--primary, #A8325E);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-submit:hover {
+  background: #8b284c;
+  box-shadow: 0 4px 10px rgba(168, 50, 94, 0.2);
+}
+
+.btn-submit:disabled,
+.btn-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   Responsive Adjustments (Media Queries)
+   ========================================= */
+
+@media (max-width: 768px) {
+  .admin-add-dealer-container {
+    padding: 12px;
+  }
+
+  .form-card {
+    padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fina; /* Fallback */
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .btn-submit, .btn-cancel {
+    width: 100%;
+  }
+}

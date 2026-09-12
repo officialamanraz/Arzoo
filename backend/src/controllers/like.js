@@ -1,68 +1,53 @@
-const db = require('../DATABASE/mysql'); // Apna DB path check kar lena
+// 🚨 Apni service file ka sahi path yahan daal dena 
+// (Maan lo aapne use 'services' folder me 'likeService.js' naam se save kiya hai)
+const { toggleLikeService, getLikeStatusService } = require('../services/Likes.service'); 
 
 // ==========================================
-// 1. TOGGLE LIKE FUNCTION (Like / Unlike)
+// 1. TOGGLE LIKE FUNCTION (Controller)
 // ==========================================
 const toggleLike = async (req, res) => {
     try {
         const { product_id } = req.params;
         const user_id = req.user.user_id || req.user.id;
 
-        // Check if already liked
-        const [existingLike] = await db.execute(
-            'SELECT * FROM likes WHERE product_id = ? AND user_id = ?',
-            [product_id, user_id]
-        );
+        // DB ka saara kaam ab Service karegi
+        const result = await toggleLikeService(product_id, user_id);
 
-        if (existingLike.length > 0) {
-            // Already liked -> Remove it (Unlike)
-            await db.execute('DELETE FROM likes WHERE product_id = ? AND user_id = ?', [product_id, user_id]);
-            return res.status(200).json({ success: true, message: 'Unliked', isLiked: false });
-        } else {
-            // Not liked -> Add it (Like)
-            await db.execute('INSERT INTO likes (product_id, user_id) VALUES (?, ?)', [product_id, user_id]);
-            return res.status(200).json({ success: true, message: 'Liked', isLiked: true });
-        }
+        return res.status(200).json({ 
+            success: true, 
+            message: result.liked ? 'Liked' : 'Unliked', 
+            isLiked: result.liked,
+            totalLikes: result.totalLikes 
+        });
     } catch (error) {
-        console.error('[LIKE] Error toggling like:', error.message);
+        console.error('[LIKE CONTROLLER] Error toggling like:', error.message);
         return res.status(500).json({ success: false, message: 'Server error' });
     }
-}; // 👈 Function 1 properly closed here
+};
 
 // ==========================================
-// 2. GET LIKE STATUS FUNCTION
+// 2. GET LIKE STATUS FUNCTION (Controller)
 // ==========================================
 const getLikeStatus = async (req, res) => {
     try {
         const { product_id } = req.params;
-        let isLiked = false;
         
-        if (req.user) {
-            const user_id = req.user.user_id || req.user.id;
-            const [existingLike] = await db.execute(
-                'SELECT * FROM likes WHERE product_id = ? AND user_id = ?',
-                [product_id, user_id]
-            );
-            isLiked = existingLike.length > 0;
-        }
+        // Agar user login nahi hai, toh user_id ko 0 bhejenge taaki query fail na ho
+        const user_id = req.user ? (req.user.user_id || req.user.id) : 0;
 
-        // Get total likes count for this product
-        const [countResult] = await db.execute(
-            'SELECT COUNT(*) as totalLikes FROM likes WHERE product_id = ?',
-            [product_id]
-        );
+        // DB ka saara kaam ab Service karegi
+        const result = await getLikeStatusService(product_id, user_id);
 
         return res.status(200).json({ 
             success: true, 
-            isLiked, 
-            totalLikes: countResult[0].totalLikes 
+            isLiked: result.liked, 
+            totalLikes: result.totalLikes 
         });
     } catch (error) {
-        console.error('[LIKE] Error fetching status:', error.message);
+        console.error('[LIKE CONTROLLER] Error fetching status:', error.message);
         return res.status(500).json({ success: false, message: 'Server error' });
     }
-}; // 👈 Function 2 properly closed here
+};
 
-
-// 🚨 CORRECT EXPORT: Sabse niche, sare brackets ke bahar!
+// 🚨 CORRECT EXPORT
 module.exports = { toggleLike, getLikeStatus };

@@ -1,83 +1,109 @@
-const { productsearch,
+const { 
+    productsearch,
     productdelete,
     allproductget,
     productrecomendution,
     getproduct,
     getbyidproduct,
     addProductToDB,
-   updateProductInDB,
-   addimageindb,
-   deleteimageindb  } = require('../services/productservice');
-const imagekit = require('../../config/imagekit');
+    updateProductInDB,
+    addimageindb,
+    deleteimageindb 
+} = require('../services/productservice');
+
+const imagekit = require('../../config/imagekit'); 
 const NodeCache = require("node-cache");
-const myCache = new NodeCache({ stdTTL: 600 });
+
+// File: src/controllers/productcontroller.js (Top par)
+const myCache = require('../../config/cache');
+// (Aur purani line `const myCache = new NodeCache(...)` ko hata dena)
+
+// ==========================================
+// 🛡️ IMAGEKIT TIMEOUT WRAPPER (MAX 15 SECONDS)
+// ==========================================
+const uploadToImageKit = async (fileBuffer, fileName, folderPath) => {
+    console.log(`[IMAGEKIT] Starting upload for file: ${fileName} to folder: ${folderPath}`);
+    const base64String = fileBuffer.toString("base64");
+
+    const uploadPromise = imagekit.files.upload({
+        file: base64String, 
+        fileName: fileName,
+        folder: folderPath,
+    });
+
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('IMAGEKIT_TIMEOUT')), 15000); 
+    });
+
+    try {
+        const result = await Promise.race([uploadPromise, timeoutPromise]);
+        console.log(`[IMAGEKIT] ✅ Upload success: ${result.url}`);
+        return result;
+    } catch (err) {
+        console.error(`[IMAGEKIT] ❌ Upload failed for ${fileName}:`, err.message);
+        throw err;
+    }
+};
+
+// ==========================================
+// 1. GET ALL PRODUCTS (Basic)
+// ==========================================
 const product = async (req, res) => {
-  console.log('[PRODUCT] Fetching all products (basic)');
+  console.log('[PRODUCT_CONTROLLER] 📡 Fetching all products (basic)');
   try {
-    const result = await getproduct ();
-    console.log(`[PRODUCT] Fetch success -- ${result.length} product(s)`);
-    return res.status(200).json({
-      success: true,
-      message: 'Data fetched successfully',
-      data: result,
-    });
+    const result = await getproduct();
+    console.log(`[PRODUCT_CONTROLLER] ✅ Fetch success -- ${result.length} product(s)`);
+    return res.status(200).json({ success: true, message: 'Data fetched successfully', data: result });
   } catch (err) {
-    console.error('[PRODUCT] Error fetching basic products:', err.message);
-    return res.status(500).json({
-      success: false,
-      message: 'Error fetching products',
-      error: err.message,
-    });
+    console.error('[PRODUCT_CONTROLLER] ❌ Error fetching basic products:', err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
+    return res.status(500).json({ success: false, message: 'Error fetching products', error: err.message });
   }
 };
+
+// ==========================================
+// 2. GET PRODUCT BY ID
+// ==========================================
 const getProductById = async (req, res) => {
   const productId = req.params.id;
-  console.log(`[PRODUCT] Fetching by id: ${productId}`);
+  console.log(`[PRODUCT_CONTROLLER] 📡 Fetching product by ID: ${productId}`);
 
   try {
-    // 1. CACHE LOGIC: Check memory first
     const cacheKey = `product_${productId}`;
     if (myCache.has(cacheKey)) {
-      console.log(`[PRODUCT] Success (Served from CACHE) -- product_id: ${productId}`);
-      return res.status(200).json(myCache.get(cacheKey));
+        console.log(`[PRODUCT_CONTROLLER] ⚡ Success (Served from CACHE) -- product_id: ${productId}`);
+        return res.status(200).json(myCache.get(cacheKey));
     }
 
-    // 2. YAHAN JADOO HAI - Service se ready-made product mangwaya
-    const product = await getbyidproduct(productId);
-
-    // Agar service ne null diya, matlab product nahi mila
-    if (!product) {
-      console.warn(`[PRODUCT] Not found -- product_id: ${productId}`);
-      return res.status(404).json({ success: false, message: 'Product not found' });
+    const foundProduct = await getbyidproduct(productId);
+    if (!foundProduct) {
+        console.warn(`[PRODUCT_CONTROLLER] ⚠️ Product not found -- product_id: ${productId}`);
+        return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    // 3. Final response object
-    const responseData = { success: true, data: product };
-
-    // 4. Save to CACHE for future requests
+    const responseData = { success: true, data: foundProduct };
     myCache.set(cacheKey, responseData);
-
-    console.log(`[PRODUCT] Fetch success (Fetched from DB) -- product_id: ${productId}`);
-    return res.status(200).json(responseData);
     
+    console.log(`[PRODUCT_CONTROLLER] ✅ Fetch success (Fetched from DB) -- product_id: ${productId}`);
+    return res.status(200).json(responseData);
   } catch (err) {
-    console.error(`[PRODUCT] Error fetching product by id (${productId}):`, err.message);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Database error fetching product details', 
-      error: err.message 
-    });
+    console.error(`[PRODUCT_CONTROLLER] ❌ Error fetching product by ID (${productId}):`, err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
+    return res.status(500).json({ success: false, message: 'Database error fetching product details', error: err.message });
   }
 };
+
+// ==========================================
 // 3. ADD PRODUCT
 // ==========================================
 const addproducts = async (req, res) => {
+    console.log('[PRODUCT_CONTROLLER] 📡 Add product request received.');
     try {
         const data = req.body;
-        console.log('[PRODUCT] Add product -- name:', data.name, 'category_id:', data.category_id);
+        console.log('[PRODUCT_CONTROLLER] Parsed body:', { name: data.name, category_id: data.category_id, price: data.price });
 
-        // 1. Basic Validations
         if (!data.category_id || !data.name || !data.price) {
+            console.warn('[PRODUCT_CONTROLLER] ⚠️ Add product failed: Missing required fields');
             return res.status(400).json({ success: false, message: 'Category ID, Name, and Price are required' });
         }
         if (Number(data.price) <= 0) return res.status(400).json({ success: false, message: 'Invalid price' });
@@ -86,136 +112,165 @@ const addproducts = async (req, res) => {
         let mainImage = null;
         let extraImagesUrls = [];
 
-        // 2. Upload Images to ImageKit (Pehle images network par jayengi)
         if (req.files && req.files.length > 0) {
-            // Main image (index 0)
-            const uploadedMain = await imagekit.files.upload({
-                file: req.files[0].buffer,
-                fileName: `${Date.now()}-${req.files[0].originalname}`,
-                folder: '/arzoo-saree/products',
-            });
+            console.log(`[PRODUCT_CONTROLLER] Starting image upload. Total files attached: ${req.files.length}`);
+            
+            const uploadedMain = await uploadToImageKit(
+                req.files[0].buffer,
+                `${Date.now()}-${req.files[0].originalname}`,
+                '/arzoo-saree/products'
+            );
             mainImage = uploadedMain.url;
 
-            // Extra images (index 1 se aage)
             if (req.files.length > 1) {
                 const extraFiles = req.files.slice(1);
+                console.log(`[PRODUCT_CONTROLLER] Uploading ${extraFiles.length} extra images...`);
                 const uploadedExtras = await Promise.all(
-                    extraFiles.map(file => imagekit.files.upload({
-                        file: file.buffer,
-                        fileName: `${Date.now()}-${file.originalname}`,
-                        folder: '/arzoo-saree/products',
-                    }))
+                    extraFiles.map(file => uploadToImageKit(
+                        file.buffer,
+                        `${Date.now()}-${file.originalname}`,
+                        '/arzoo-saree/products'
+                    ))
                 );
-                // Sirf URLs nikal kar array bana liya
                 extraImagesUrls = uploadedExtras.map(uploaded => uploaded.url); 
             }
+        } else {
+            console.log('[PRODUCT_CONTROLLER] ℹ️ No files uploaded with this request.');
         }
 
-        // 3. Prepare data for Service
         const productData = {
-            ...data, // req.body ka bacha hua saara data isme aa jayega
+            ...data,
             is_active: data.is_active ?? 1,
             mainImage,
             extraImagesUrls
         };
 
-        // 4. YAHAN JADOO HAI - Service ko saara data de diya
         const newProductId = await addProductToDB(productData);
-
-        console.log(`[PRODUCT] Added -- product_id: ${newProductId}, name: ${data.name}`);
+        console.log(`[PRODUCT_CONTROLLER] ✅ Product successfully added with ID: ${newProductId}`);
+        
         return res.status(201).json({ success: true, message: 'Product successfully added.', product_id: newProductId });
 
     } catch (err) {
-        console.error(`[PRODUCT] Add Error:`, err.message);
-
-        // 5. Professional Error Handling (Service ne jo bataya, us hisaab se status bhejo)
-        if (err.message === 'CATEGORY_NOT_FOUND') {
-            return res.status(404).json({ success: false, message: 'Category does not exist' });
+        console.error(`[PRODUCT_CONTROLLER] ❌ Add Product Error:`, err.message);
+        console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
+        
+        if (err.message === 'IMAGEKIT_TIMEOUT') {
+            return res.status(504).json({ success: false, message: 'Image upload took too long. Please try smaller images.' });
         }
-        if (err.message === 'DUPLICATE_PRODUCT') {
-            return res.status(409).json({ success: false, message: 'Product already exists' });
-        }
-
+        if (err.message === 'CATEGORY_NOT_FOUND') return res.status(404).json({ success: false, message: 'Category does not exist' });
+        if (err.message === 'DUPLICATE_PRODUCT') return res.status(409).json({ success: false, message: 'Product already exists' });
+        
         return res.status(500).json({ success: false, message: 'Database error', error: err.message });
     }
 };
+
 // ==========================================
 // 4. SEARCH PRODUCT
 // ==========================================
 const searchproduct = async (req, res) => {
- const {keyword,minprice,maxprice} = req.query;
-console.log(`[PRODUCTS] serach -- keyword:${keyword}, minprice:${minprice},maxprice:${maxprice}`);
-if(!keyword){
-  console.log('[PORDUCTS] search failde missing key word')
-  return res.status(400).json({
-    success:false,
-    message:"serach keyword is required"
-  })
-}
-try{
-  const result = await productsearch(keyword,minprice,maxprice);
-  console.log(`[PRODUCTS] search successfull -- ${result.length} result for "${keyword}"`);
-  return res.status(200).json({
-    success:true,
-    total_found:result.length,
-    data:result
-  });
-}catch(err){
-  console.error(`[PRODUCT] Search error (keyword: ${keyword}):`, err.message);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Database search error.', 
-      error: err.message 
-    });
-}
+  const { keyword, minprice, maxprice } = req.query;
+  console.log(`[PRODUCT_CONTROLLER] 📡 Search request -- keyword:${keyword}, min:${minprice}, max:${maxprice}`);
+
+  if (!keyword) {
+      console.warn('[PRODUCT_CONTROLLER] ⚠️ Search failed: Missing keyword');
+      return res.status(400).json({ success: false, message: "Search keyword is required" });
+  }
+  
+  try {
+    const result = await productsearch(keyword, minprice, maxprice);
+    console.log(`[PRODUCT_CONTROLLER] ✅ Search successful -- found ${result.length} result(s)`);
+    return res.status(200).json({ success: true, total_found: result.length, data: result });
+  } catch (err) {
+    console.error(`[PRODUCT_CONTROLLER] ❌ Search error:`, err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
+    return res.status(500).json({ success: false, message: 'Database search error.', error: err.message });
+  }
 };
 
 // ==========================================
-// 5. UPDATE PRODUCT
+// 5. UPDATE PRODUCT (FIXED TO HANDLE NEW IMAGES)
 // ==========================================
-// File: src/controllers/productController.js
-// Upar 'updateProductInDB' ko import zaroor kar lena
-
 const updateproduct = async (req, res) => {
   const product_id = req.params.id;
-  console.log(`[PRODUCT] Update -- product_id: ${product_id}`);
+  console.log(`[PRODUCT_CONTROLLER] 📡 Update request received for product ID: ${product_id}`);
 
   try {
-    // YAHAN JADOO HAI - ID aur req.body ka pura data service ko de diya
-    await updateProductInDB(product_id, req.body);
+    let mainImage = null;
+    let extraImagesUrls = [];
 
-    console.log(`[PRODUCT] Update success -- product_id: ${product_id}`);
-    return res.status(200).json({ success: true, message: 'Product details updated successfully' });
+    // 🚨 NAYA FIX: Agar Edit form mein nayi images aayi hain, toh unhe ImageKit par upload karo!
+    if (req.files && req.files.length > 0) {
+        console.log(`[PRODUCT_CONTROLLER] Processing ${req.files.length} uploaded file(s) for update...`);
+        
+        // Agar pehli file ko main image banana hai (ya optional hai)
+        const uploadedMain = await uploadToImageKit(
+            req.files[0].buffer,
+            `${Date.now()}-${req.files[0].originalname}`,
+            '/arzoo-saree/products'
+        );
+        mainImage = uploadedMain.url;
+
+        // Baaki extra images
+        if (req.files.length > 1) {
+            const extraFiles = req.files.slice(1);
+            const uploadedExtras = await Promise.all(
+                extraFiles.map(file => uploadToImageKit(
+                    file.buffer,
+                    `${Date.now()}-${file.originalname}`,
+                    '/arzoo-saree/products'
+                ))
+            );
+            extraImagesUrls = uploadedExtras.map(uploaded => uploaded.url);
+        }
+    }
+
+    // Update data object ready karo
+    const updateData = {
+        ...req.body,
+        mainImage,
+        extraImagesUrls
+    };
+
+    await updateProductInDB(product_id, updateData);
+
+    // ⚡ Clear Cache so updated details show immediately
+    myCache.del(`product_${product_id}`);
+    console.log(`[PRODUCT_CONTROLLER] ⚡ Cache cleared for product ID: ${product_id}`);
+
+    console.log(`[PRODUCT_CONTROLLER] ✅ Update success -- product_id: ${product_id}`);
+    return res.status(200).json({ success: true, message: 'Product details and images updated successfully' });
 
   } catch (err) {
-    console.error(`[PRODUCT] Update error (product_id: ${product_id}):`, err.message);
-
-    // Professional Error Handling
-    if (err.message === 'PRODUCT_NOT_FOUND') {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
+    console.error(`[PRODUCT_CONTROLLER] ❌ Update error (product_id: ${product_id}):`, err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
+    
+    if (err.message === 'PRODUCT_NOT_FOUND') return res.status(404).json({ success: false, message: 'Product not found' });
+    if (err.message === 'IMAGEKIT_TIMEOUT') return res.status(504).json({ success: false, message: 'Image upload timeout.' });
 
     return res.status(500).json({ success: false, message: 'Failed to update product details', error: err.message });
   }
 };
+
 // ==========================================
 // 6. DELETE PRODUCT
 // ==========================================
 const deleteproduct = async (req, res) => {
   const product_id = req.params.id;
-  console.log(`[PRODUCT] Delete -- product_id: ${product_id}`);
+  console.log(`[PRODUCT_CONTROLLER] 📡 Delete request for product ID: ${product_id}`);
 
   try {
     const result = await productdelete(product_id);
     if (result.affectedRows === 0) {
-      console.warn(`[PRODUCT] Delete failed -- product_id ${product_id} not found`);
-      return res.status(404).json({ success: false, message: 'Product not found' });
+        console.warn(`[PRODUCT_CONTROLLER] ⚠️ Delete failed -- product ID ${product_id} not found`);
+        return res.status(404).json({ success: false, message: 'Product not found' });
     }
-
-    console.log(`[PRODUCT] Delete success -- product_id: ${product_id}`);
+    
+    myCache.del(`product_${product_id}`);
+    console.log(`[PRODUCT_CONTROLLER] ✅ Delete success -- product_id: ${product_id}`);
     return res.status(200).json({ success: true, message: 'Product and associated images successfully deleted.' });
   } catch (err) {
-    console.error(`[PRODUCT] Delete error (product_id: ${product_id}):`, err.message);
+    console.error(`[PRODUCT_CONTROLLER] ❌ Delete error (product_id: ${product_id}):`, err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
     return res.status(500).json({ success: false, message: 'Error deleting product', error: err.message });
   }
 };
@@ -224,28 +279,21 @@ const deleteproduct = async (req, res) => {
 // 7. GET ALL PRODUCTS (Paginated)
 // ==========================================
 const getallproduct = async (req, res) => {
-  console.log('[PRODUCT] Fetching paginated products -- query:', req.query);
+  console.log('[PRODUCT_CONTROLLER] 📡 Fetching paginated products -- query:', req.query);
   try {
-    // 1. Controller ka kaam: Request se data nikalna aur set karna
-    const DEFAULT_PAGE = 1;
-    const DEFAULT_LIMIT = 12;
-    const page = Math.max(1, parseInt(req.query.page) || DEFAULT_PAGE);
-    const limit = Math.max(1, parseInt(req.query.limit) || DEFAULT_LIMIT);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 12);
     const offset = (page - 1) * limit;
-
     const minPrice = req.query.min ? Number(req.query.min) : null;
     const maxPrice = req.query.max ? Number(req.query.max) : null;
+    
     const results = await allproductget(minPrice, maxPrice, limit, offset);
-    console.log(`[PRODUCT] Paginated fetch success -- page: ${page}, limit: ${limit}, returned: ${results.length}`);
+    console.log(`[PRODUCT_CONTROLLER] ✅ Paginated fetch success -- page: ${page}, returned: ${results.length}`);
     return res.status(200).json({ success: true, data: results });
   } catch (err) {
-    console.error('[PRODUCT] Error fetching paginated products:', err.message);
-
-    return res.status(500).json({ 
-      success: false, 
-      message: "Server Error fetching product list", 
-      error: err.sqlMessage || err.message || String(err) 
-    });
+    console.error('[PRODUCT_CONTROLLER] ❌ Error fetching paginated products:', err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
+    return res.status(500).json({ success: false, message: "Server Error fetching product list", error: err.message });
   }
 };
 
@@ -254,58 +302,58 @@ const getallproduct = async (req, res) => {
 // ==========================================
 const addNewImagesToProduct = async (req, res) => {
   const product_id = req.params.id;
-  console.log(`[PRODUCT] Add new images -- product_id: ${product_id}, files: ${req.files ? req.files.length : 0}`);
+  console.log(`[PRODUCT_CONTROLLER] 📡 Adding new images to product ID: ${product_id}, Files count: ${req.files ? req.files.length : 0}`);
 
   if (!req.files || req.files.length === 0) {
-    console.warn(`[PRODUCT] Add images failed -- no files (product_id: ${product_id})`);
+    console.warn(`[PRODUCT_CONTROLLER] ⚠️ Add images failed: No files provided.`);
     return res.status(400).json({ success: false, message: 'At least one image file is required to upload.' });
   }
 
   try {
-    // 1. Upload all files to ImageKit (Now safely inside try-catch)
     const uploadedImages = await Promise.all(
-      req.files.map(file =>
-        // Note: Check if you use imagekit.upload or imagekit.files.upload in your SDK setup
-        imagekit.files.upload({
-          file: file.buffer,
-          fileName: `${Date.now()}-${file.originalname}`,
-          folder: '/arzoo-saree/products',
-        })
-      )
+      req.files.map(file => uploadToImageKit(
+          file.buffer,
+          `${Date.now()}-${file.originalname}`,
+          '/arzoo-saree/products'
+      ))
     );
 
-    // 2. Extract just the URLs or FilePaths from the ImageKit response
-    // (ImageKit returns an object for each file, we need the 'url' or 'filePath')
-    const imageUrls = uploadedImages.map(img => img.filePath); // Ya agar aap full link save karte ho toh img.url use karo
-
-    // 3. 🚨 FIX: Pass the uploaded image paths to your database function!
+    const imageUrls = uploadedImages.map(img => img.url);
     const result = await addimageindb(product_id, imageUrls);
     
-    console.log(`[PRODUCT] ${result.affectedRows} image(s) added -- product_id: ${product_id}`);
-    return res.status(201).json({ success: true, message: `${result.affectedRows} new images successfully added to product.` });
-    
+    myCache.del(`product_${product_id}`);
+    console.log(`[PRODUCT_CONTROLLER] ✅ ${result.affectedRows} image(s) successfully added to product ID: ${product_id}`);
+    return res.status(201).json({ success: true, message: `${result.affectedRows} new image(s) successfully added.` });
   } catch (err) {
-    console.error(`[PRODUCT] Error adding new images (product_id: ${product_id}):`, err.message);
+    console.error(`[PRODUCT_CONTROLLER] ❌ Error adding new images:`, err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
+    
+    if (err.message === 'IMAGEKIT_TIMEOUT') {
+        return res.status(504).json({ success: false, message: 'Image upload took too long.' });
+    }
     return res.status(500).json({ success: false, message: 'Error saving new images', error: err.message });
   }
 };
+
 // ==========================================
 // 9. DELETE SINGLE EXTRA IMAGE
 // ==========================================
 const deleteSingleImage = async (req, res) => {
   const image_id = req.params.image_id;
-  console.log(`[PRODUCT] Delete single image -- image_id: ${image_id}`);
-  try {
-   const result = await deleteimageindb (image_id)
-    if (result.affectedRows === 0) {
-      console.warn(`[PRODUCT] Delete image failed -- image_id ${image_id} not found`);
-      return res.status(404).json({ success: false, message: 'Image record not found' });
-    }
+  console.log(`[PRODUCT_CONTROLLER] 📡 Deleting single image ID: ${image_id}`);
 
-    console.log(`[PRODUCT] Image deleted -- image_id: ${image_id}`);
+  try {
+    const result = await deleteimageindb(image_id);
+    if (result.affectedRows === 0) {
+        console.warn(`[PRODUCT_CONTROLLER] ⚠️ Image record not found for ID: ${image_id}`);
+        return res.status(404).json({ success: false, message: 'Image record not found' });
+    }
+    
+    console.log(`[PRODUCT_CONTROLLER] ✅ Image permanently deleted -- image_id: ${image_id}`);
     return res.status(200).json({ success: true, message: 'Image permanently deleted.' });
   } catch (err) {
-    console.error(`[PRODUCT] Error deleting image (image_id: ${image_id}):`, err.message);
+    console.error(`[PRODUCT_CONTROLLER] ❌ Error deleting image:`, err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
     return res.status(500).json({ success: false, message: 'Error processing image deletion', error: err.message });
   }
 };
@@ -315,26 +363,24 @@ const deleteSingleImage = async (req, res) => {
 // ==========================================
 const getRecommendedProducts = async (req, res) => {
   const { product_id, category_id, subcategory_id } = req.query;
-  console.log(`[PRODUCT] Recommendations -- product_id: ${product_id}, category_id: ${category_id}, subcategory_id: ${subcategory_id}`);
-  
+  console.log(`[PRODUCT_CONTROLLER] 📡 Fetching recommendations for product_id: ${product_id}`);
+
   if (!product_id || !category_id) {
-    console.warn('[PRODUCT] Recommendations failed -- missing product_id or category_id');
-    return res.status(400).json({ success: false, message: "product_id and category_id are required" });
+      console.warn('[PRODUCT_CONTROLLER] ⚠️ Recommendations failed: missing parameters');
+      return res.status(400).json({ success: false, message: "product_id and category_id are required" });
   }
 
   try {
-    // Service ko call kiya aur data 'results' variable mein liya
     const results = await productrecomendution(product_id, category_id, subcategory_id);
-      
-    // Bas ek single response bhejna hai, kyunki data pehle se hi filtered hai
-    console.log(`[PRODUCT] Recommendations success -- ${results.length} result(s)`);
+    console.log(`[PRODUCT_CONTROLLER] ✅ Recommendations success -- ${results.length} result(s)`);
     return res.status(200).json({ success: true, data: results || [] });
-    
   } catch (err) {
-    console.error(`[PRODUCT] Recommendations error (product_id: ${product_id}):`, err.message);
+    console.error(`[PRODUCT_CONTROLLER] ❌ Recommendations error:`, err.message);
+    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 module.exports = {
   product,
   getProductById,

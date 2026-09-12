@@ -58,7 +58,6 @@ function AdminOrders() {
       socket.off('order_updated');
     };
   }, []);
-  
 
   useEffect(() => {
     if (filterStatus === 'all') {
@@ -162,6 +161,7 @@ function AdminOrders() {
       </div>
     );
   }
+  
 return (
     <div className="admin-orders-page">
       <div className="orders-container">
@@ -216,6 +216,7 @@ return (
                 <div
                   key={order.order_id}
                   className={`order-card ${liveUpdateFlash === order.order_id ? 'order-card-flash' : ''}`}
+                  onClick={() => navigate(`/admin/orders/${order.order_id}`)}
                 >
                   {/* 1. Header: Customer Name & Order No */}
                   <div className="order-header-new">

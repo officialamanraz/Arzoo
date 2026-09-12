@@ -1,114 +1,112 @@
-const {adminorder,
+// File: src/controllers/orderController.js
+const { 
+    adminorder,
     updatestatusinDB,
     getmyorderfromdb,
     createorders,
-    ordercencel
-} = require('../services/orderservice');
+    ordercencel,
+    getDetailedOrderById  
+} = require('../services/orderservice'); 
+
 // ==========================================
-// ADMIN: Get all orders with their items
+// 1. ADMIN: Get all orders with items
 // ==========================================
 const getadminorder = async (req, res) => {
-    console.log('[ORDER] Admin fetching all orders');
+    console.log('[ORDER_CONTROLLER] 📡 Admin requested all orders list.');
     try {
-        const {orders,items} = await adminorder();
+        const { orders, items } = await adminorder();
+        
         const finalOrdersWithItems = orders.map((order) => ({
             ...order,
             items: items.filter((item) => item.order_id === order.order_id)
         }));
-        console.log(`[ORDER] Admin fetch success -- ${finalOrdersWithItems.length} order(s)`);
+        
+        console.log(`[ORDER_CONTROLLER] ✅ Successfully compiled ${finalOrdersWithItems.length} orders for Admin.`);
         return res.status(200).json({ success: true, data: finalOrdersWithItems });
     } catch (error) {
-        console.error('[ORDER] Admin fetch error:', error.message);
+        console.error('[ORDER_CONTROLLER] ❌ Error in getadminorder:', error.message);
         return res.status(500).json({ success: false, message: 'Error fetching orders', error: error.message });
     }
 };
 
 // ==========================================
-// ADMIN: Update order status
+// 2. ADMIN: Update order status
 // ==========================================
 const updateOrderStatus = async (req, res) => {
+    const orderId = req.params.id;
+    const { status } = req.body;
+    
+    console.log(`[ORDER_CONTROLLER] 📡 Admin request received to change Order ID: ${orderId} status to '${status}'`);
+    
     try {
-        const orderId = req.params.id;
-        const { status } = req.body;
-
-        // 1. Validation BEFORE touching the database (Ekdum safe)
         const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
         if (!validStatuses.includes(status)) {
-            console.warn(`[ORDER] Invalid status update attempt: ${status}`);
+            console.warn(`[ORDER_CONTROLLER] ⚠️ Invalid status value rejected: ${status}`);
             return res.status(400).json({ success: false, message: "Invalid status value" });
         }
 
-        // 2. Sab theek hai, ab Service ko call karo
         await updatestatusinDB(orderId, status);
 
-        console.log(`[ORDER] Status updated -- order_id: ${orderId}, new_status: ${status}`);
+        console.log(`[ORDER_CONTROLLER] ✅ Status successfully updated in DB for Order ID: ${orderId}`);
         return res.status(200).json({ success: true, message: `Order status updated to ${status}` });
 
     } catch (error) {
-        console.error("Update Status Error:", error.message);
+        console.error("[ORDER_CONTROLLER] ❌ Error in updateOrderStatus:", error.message);
         
-        // 3. Service ka error handle kiya
         if (error.message === 'ORDER_NOT_FOUND') {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
-        
         return res.status(500).json({ success: false, message: "Failed to update order status" });
     }
 };
 
 // ==========================================
-// CUSTOMER: Get my orders with items (now includes product image)
+// 3. CUSTOMER: Get my orders with items
 // ==========================================
-// File: src/controllers/orderController.js
-
 const getmyorders = async (req, res) => {
-    const user_id = req.user.id; // Yeh auth middleware se aayega
-    console.log(`[ORDER] Fetching orders -- user_id: ${user_id}`);
+    const user_id = req.user.id; 
+    console.log(`[ORDER_CONTROLLER] 📡 Customer requested their orders -- User ID: ${user_id}`);
 
     try {
-        // 1. Service se sahi naam ke saath data manga
         const { orders, items } = await getmyorderfromdb(user_id);
 
-        // 2. Agar khali orders aaye hain (Naya user), toh aage badhne ki zaroorat nahi
         if (orders.length === 0) {
+            console.log(`[ORDER_CONTROLLER] ℹ️ Zero orders found for User ID: ${user_id}`);
             return res.status(200).json({ success: true, message: 'No orders found', data: [] });
         }
 
-        // 3. Tumhara awesome Map/Filter logic
         const finalOrdersWithItems = orders.map((order) => ({
             ...order,
             items: items.filter((item) => item.order_id === order.order_id)
         }));
 
-        console.log(`[ORDER] Fetch success -- user_id: ${user_id}, ${finalOrdersWithItems.length} order(s)`);
+        console.log(`[ORDER_CONTROLLER] ✅ Successfully fetched ${finalOrdersWithItems.length} orders for User ID: ${user_id}`);
         return res.status(200).json({ success: true, data: finalOrdersWithItems });
 
     } catch (error) {
-        console.error(`[ORDER] Fetch error (user_id: ${user_id}):`, error.message);
+        console.error(`[ORDER_CONTROLLER] ❌ Error in getmyorders for User ID ${user_id}:`, error.message);
         return res.status(500).json({ success: false, message: 'Error fetching orders', error: error.message });
     }
 };
-// File: src/controllers/orderController.js
-// Upar import zaroor karna: const { createRazorpayOrderInDB } = require('../services/orderService');
 
+// ==========================================
+// 4. CUSTOMER: Create Razorpay Order
+// ==========================================
 const orderCreate = async (req, res) => {
-    try {
-        const { order_id, tracking_ref } = req.body;
-        const user_id = req.user.id; // Yeh auth middleware se aayega
-        
-        console.log(`[PAYMENT] Creating Razorpay order -- order_id: ${order_id}, user_id: ${user_id}`);
+    const { order_id, tracking_ref } = req.body;
+    const user_id = req.user.id; 
+    
+    console.log(`[ORDER_CONTROLLER] 📡 Request to initialize Razorpay payment -- Internal Order ID: ${order_id}, User ID: ${user_id}`);
 
-        // 1. Basic Validation (Controller ka main kaam)
+    try {
         if (!order_id) {
+            console.warn("[ORDER_CONTROLLER] ⚠️ Bad Request: order_id is missing.");
             return res.status(400).json({ success: false, message: "order_id is required" });
         }
 
-        // 2. YAHAN JADOO HAI - Service ne Razorpay call aur DB update dono khud kar liye
-        const razorpayData = await  createorders (order_id, user_id, tracking_ref);
+        const razorpayData = await createorders(order_id, user_id, tracking_ref);
 
-        console.log(`[PAYMENT] Success -- Razorpay ID: ${razorpayData.razorpay_order_id}`);
-        
-        // 3. Khushi-khushi frontend ko data bhej do
+        console.log(`[ORDER_CONTROLLER] ✅ Razorpay payment object generated -- Razorpay ID: ${razorpayData.razorpay_order_id}`);
         return res.status(200).json({
             success: true,
             razorpay_order_id: razorpayData.razorpay_order_id,
@@ -117,62 +115,81 @@ const orderCreate = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("[PAYMENT] Razorpay Error Details:", error.message);
+        console.error("[ORDER_CONTROLLER] ❌ Error in orderCreate:", error.message);
         
-        // 4. Professional Error Handling
         if (error.message === 'ORDER_NOT_FOUND') {
             return res.status(404).json({ success: false, message: "Order not found or access denied" });
         }
-
-        return res.status(500).json({ 
-            success: false, 
-            message: "Failed to create razorpay order", 
-            error: error.message 
-        });
+        return res.status(500).json({ success: false, message: "Failed to create razorpay order", error: error.message });
     }
 };
-// File: src/controllers/orderController.js
-// Upar import zaroor karna: const { cancelOrderInDB } = require('../services/orderService');
 
+// ==========================================
+// 5. CUSTOMER: Cancel Order
+// ==========================================
 const cancelOrder = async (req, res) => {
+    const orderId = req.params.id;
+    const userId = req.userId || (req.user && req.user.userId) || (req.user && req.user.id);
+
+    console.log(`[ORDER_CONTROLLER] 📡 Customer requested cancellation for Order ID: ${orderId} | User ID: ${userId}`);
+
     try {
-        const orderId = req.params.id;
-        
-        // Tumhara ekdum solid fallback logic user_id nikalne ke liye
-        const userId = req.userId || (req.user && req.user.userId) || (req.user && req.user.id);
-
-        console.log(`[ORDER] Attempting to cancel Order ID: ${orderId}, by User ID: ${userId}`);
-
         if (!userId) {
-            console.error("🔥 Error: User ID is undefined. Token is not providing user info.");
+            console.error("[ORDER_CONTROLLER] ❌ Auth Error: User ID could not be extracted from token.");
             return res.status(401).json({ success: false, message: "Authentication Error: User ID missing" });
         }
 
-        // YAHAN JADOO HAI - Service ko call kiya (validation wahi ho jayegi)
         await ordercencel(orderId, userId);
 
-        console.log(`[ORDER] ✅ Order ${orderId} successfully cancelled by User ${userId}`);
+        console.log(`[ORDER_CONTROLLER] ✅ Order ID ${orderId} successfully cancelled.`);
         return res.status(200).json({ success: true, message: "Order cancelled successfully" });
 
     } catch (error) {
-        console.error("🔥 CRITICAL CRASH IN CANCEL ORDER:", error.message);
+        console.error("[ORDER_CONTROLLER] ❌ Error in cancelOrder:", error.message);
 
-        // Professional Error Handling
         if (error.message === 'ORDER_NOT_FOUND') {
             return res.status(404).json({ success: false, message: "Order not found or access denied" });
         }
 
         if (error.message.startsWith('UNCANCELLABLE_STATE')) {
-            // Error string se status nikal rahe hain (e.g., 'UNCANCELLABLE_STATE:shipped')
             const status = error.message.split(':')[1];
-            return res.status(400).json({ 
-                success: false, 
-                message: `Order cannot be cancelled because it is already ${status}` 
-            });
+            console.warn(`[ORDER_CONTROLLER] ⚠️ Cancellation blocked. Current order state is already: ${status}`);
+            return res.status(400).json({ success: false, message: `Order cannot be cancelled because it is already ${status}` });
         }
 
         return res.status(500).json({ success: false, message: "Failed to cancel order" });
     }
 };
-// Export all three functions in one clean statement
-module.exports = { getadminorder, updateOrderStatus, getmyorders, orderCreate,cancelOrder  };
+
+// ==========================================
+// 6. ADMIN: Get SINGLE Order Deep Details
+// ==========================================
+const getSingleOrderAdmin = async (req, res) => {
+    const orderId = req.params.id;
+    console.log(`[ORDER_CONTROLLER] 📡 Admin requested financial deep-dive for Order ID: ${orderId}`);
+
+    try {
+        const orderDetails = await getDetailedOrderById(orderId);
+
+        if (!orderDetails) {
+            console.warn(`[ORDER_CONTROLLER] ⚠️ Order not found for ID: ${orderId}`);
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        console.log(`[ORDER_CONTROLLER] ✅ Deep details and financials compiled successfully for Order ID: ${orderId}`);
+        return res.status(200).json({ success: true, data: orderDetails });
+
+    } catch (error) {
+        console.error(`[ORDER_CONTROLLER] ❌ Error in getSingleOrderAdmin:`, error.message);
+        return res.status(500).json({ success: false, message: 'Server error while fetching order details', error: error.message });
+    }
+};
+
+module.exports = { 
+    getadminorder, 
+    updateOrderStatus, 
+    getmyorders, 
+    orderCreate, 
+    cancelOrder,
+    getSingleOrderAdmin 
+};

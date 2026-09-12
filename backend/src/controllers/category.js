@@ -1,4 +1,4 @@
-const db = require('../DATABASE/mysql');
+
 const {Addcategoryindb,
     getcategorybydb,
     Addsubcategorybydb,
