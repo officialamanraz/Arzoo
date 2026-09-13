@@ -178,13 +178,22 @@ const updateProfile = async (userId, updateData, profile_image) => {
     if (name) { updateFields.push('name = ?'); updateValues.push(name); }
     if (email) { updateFields.push('email = ?'); updateValues.push(email); }
     if (username) { updateFields.push('username = ?'); updateValues.push(username); }
-    if (phone) { updateFields.push('phone = ?'); updateValues.push(phone); } // Ensure 'phone' column exists in your DB
+    if (phone) { updateFields.push('phone = ?'); updateValues.push(phone); } 
     if (profile_image) { updateFields.push('profile_image = ?'); updateValues.push(profile_image); }
     if (hashedPassword) { updateFields.push('password = ?'); updateValues.push(hashedPassword); }
 
+    // Agar koi bhi field update ke liye nahi aayi, toh current user data fetch karke return kar do
     if (updateFields.length === 0) {
-        console.log(`[Profile Update] ABORTED: No valid fields provided to update.`);
-        return false;
+        console.log(`[Profile Update] No changes requested. Fetching current user details...`);
+        const [user] = await db.execute(
+            'SELECT user_id, name, email, username, phone, profile_image, role FROM users WHERE user_id = ?', 
+            [userId]
+        );
+        if (user.length === 0) throw new Error('User not found.');
+        return {
+            ...user[0],
+            profile_image: getFullImageUrl(user[0].profile_image) 
+        };
     }
 
     // Append userId for the WHERE clause
@@ -198,53 +207,22 @@ const updateProfile = async (userId, updateData, profile_image) => {
 
     console.log(`[Profile Update] Executing DB Query. Updating columns: [${updateFields.map(f => f.split(' =')[0]).join(', ')}]`);
 
+    // 5. Execute Update
     const [result] = await db.execute(updateQuery, updateValues);
-
     console.log(`[Profile Update] SUCCESS: Updated ${result.affectedRows} row(s) for User ID: ${userId}\n`);
 
-    return result.affectedRows > 0;
-};
-
-    // 3. Dynamic Update Query Builder
-    const fields = [];
-    const values = [];
-
-    if (name) { fields.push('name = ?'); values.push(name); }
-    if (email) { fields.push('email = ?'); values.push(email); }
-    if (username) { fields.push('username = ?'); values.push(username); }
-    
-    // 🚨 UPDATE: Saving directly to 'profile_image' column
-    // if (profile_image) { fields.push('image_url = ?'); values.push(profile_image); } // OLD CODE COMMENTED
-    if (profile_image) { fields.push('profile_image = ?'); values.push(profile_image); }
-
-    if (fields.length === 0) {
-        // const [user] = await db.execute('SELECT user_id, name, email, username, image_url AS profile_image, role FROM users WHERE user_id = ?', [userId]); // OLD CODE
-        const [user] = await db.execute(
-            'SELECT user_id, name, email, username, profile_image, role FROM users WHERE user_id = ?', 
-            [userId]
-        );
-        return {
-            ...user[0],
-            profile_image: getFullImageUrl(user[0].profile_image) 
-        };
-    }
-
-    const updateQuery = `UPDATE users SET ${fields.join(', ')} WHERE user_id = ?`;
-    values.push(userId);
-
-    // 4. Execute Update
-    await db.execute(updateQuery, values);
-
-    // 5. Fetch and return the updated user data
-    // const [updatedUser] = await db.execute('SELECT user_id, name, email, username, image_url AS profile_image, role FROM users WHERE user_id = ?', [userId]); // OLD CODE
+    // 6. Fetch and return the updated user data with full image URL
     const [updatedUser] = await db.execute(
-        'SELECT user_id, name, email, username, profile_image, role FROM users WHERE user_id = ?', 
+        'SELECT user_id, name, email, username, phone, profile_image, role FROM users WHERE user_id = ?', 
         [userId]
     );
-    
+
+    if (updatedUser.length === 0) throw new Error('User not found after update.');
+
     return {
         ...updatedUser[0],
         profile_image: getFullImageUrl(updatedUser[0].profile_image)
     };
+};
 
 module.exports = { registerUserService, DuplicateEmailError, forgotpassword, resetpassword, loginuser, updateProfile };
