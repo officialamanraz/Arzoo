@@ -1,6 +1,6 @@
 const db = require('../DATABASE/mysql');
 const imagekit = require('../../config/imagekit'); 
-// 🚨 FIX 1: GLOBAL CACHE - Server isko yaad rakhega, baar-baar DB se nahi mangega
+
 let cachedRatingOptions = null; 
 
 const getReviewsByProductbydb = async (product_id) => {
@@ -20,17 +20,14 @@ const getReviewsByProductbydb = async (product_id) => {
       GROUP BY rating_type
     `;
 
-    // 🚨 FIX 2: PARALLEL EXECUTION - Dono queries ek sath chalengi (Time bachega)
     const reviewsPromise = db.execute(reviewsQuery, [product_id]);
     const statsPromise = db.execute(statsQuery, [product_id]);
 
     let dynamicOptions = [];
 
-    // 🚨 FIX 3: CACHE CHECK - Agar pehle se yaad hai, toh seedha use karo
     if (cachedRatingOptions) {
         dynamicOptions = cachedRatingOptions;
     } else {
-        // Agar yaad nahi hai, tabhi ek baar database se poochho
         const reviewOptionQuery = `
           SELECT COLUMN_TYPE 
           FROM INFORMATION_SCHEMA.COLUMNS 
@@ -44,21 +41,18 @@ const getReviewsByProductbydb = async (product_id) => {
             const columnType = schemaResult[0].COLUMN_TYPE; 
             const matches = columnType.match(/'([^']+)'/g);
             if (matches) {
-                // Save it to memory for all future users!
                 cachedRatingOptions = matches.map(option => option.replace(/'/g, ''));
                 dynamicOptions = cachedRatingOptions;
             }
         } else {
-            dynamicOptions = ['skip', 'timepass', 'go_for_it', 'perfection']; // Fallback
+            dynamicOptions = ['skip', 'timepass', 'go_for_it', 'perfection']; 
         }
     }
 
-    // Dono parallel queries ka result aane ka wait karo
     const [[reviews], [stats]] = await Promise.all([reviewsPromise, statsPromise]);
 
     const reviewStats = {};
     
-    // Stats Object Ready karna
     dynamicOptions.forEach((optId) => {
         reviewStats[optId] = 0;
     });
@@ -68,24 +62,22 @@ const getReviewsByProductbydb = async (product_id) => {
 
     const totalReviews = Object.values(reviewStats).reduce((sum, value) => sum + value, 0);
 
-    // 🚨 Naya Addition: Frontend ko available options bhi bhej do taaki form turant render ho
     return { reviews, reviewStats, totalReviews, availableOptions: dynamicOptions };
 };
 
-// ... baaki addReviewindb wala function waise hi rahega jaisa pehle tha ...
 const addReviewindb = async (product_id, rating_type, comment, user_id, fileBase64) => {
     
-    // 1. Purchase Check
+    // 1. Purchase Check (Verified Buyer Status)
     const verifyPurchaseQuery = `
       SELECT 1 FROM orders o
       JOIN orderitems oi ON o.order_id = oi.order_id
       WHERE o.user_id = ? AND oi.product_id = ?
       LIMIT 1
     `;
-    const [result] = await db.execute(verifyPurchaseQuery, [user_id, product_id]);
-    const is_verified_buyer = result.length > 0 ? 1 : 0;
+    const [purchaseResult] = await db.execute(verifyPurchaseQuery, [user_id, product_id]);
+    const is_verified_buyer = purchaseResult.length > 0 ? 1 : 0;
 
-    // 2. Block Logic BEFORE uploading anything
+    // 2. Block Image Upload for Non-Verified Buyers
     if (!is_verified_buyer && fileBase64) {
         console.warn("[REVIEW] Blocked -- non-verified buyer tried to upload image");
         return {
@@ -94,36 +86,63 @@ const addReviewindb = async (product_id, rating_type, comment, user_id, fileBase
         };
     }
 
-    // 3. 🚨 IMAGEKIT UPLOAD LOGIC 
+    // 3. Check if user has ALREADY reviewed this product
+    const checkExistingQuery = `
+        SELECT review_id, image_url FROM reviews WHERE user_id = ? AND product_id = ?
+    `;
+    const [existingReviews] = await db.execute(checkExistingQuery, [user_id, product_id]);
+
+    // 4. IMAGEKIT UPLOAD LOGIC 
     let finalImageUrl = null;
     
     if (fileBase64) {
         const uploadResponse = await imagekit.files.upload({
             file: fileBase64,
             fileName: `review_${product_id}_${user_id}_${Date.now()}`,
-            // Harcode hatane ke liye .env se folder lenge, default "/arzoo-saree/reviews" rakhenge
             folder: process.env.IMAGEKIT_REVIEW_FOLDER || "/arzoo-saree/reviews" 
         });
-        finalImageUrl = uploadResponse.url; // Use .url to save in database
+        finalImageUrl = uploadResponse.url; 
     }
 
-    // 4. Insert into Database
-    const insertReviewQuery = `
-      INSERT INTO reviews (product_id, user_id, rating_type, comment, image_url, is_verified_buyer)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    
-    const values = [product_id, user_id, rating_type, comment, finalImageUrl, is_verified_buyer];
-    const [insertResult] = await db.execute(insertReviewQuery, values);
+    let review_id;
 
-    return {
-        success: true,
-        review_id: insertResult.insertId
-    };
+    if (existingReviews.length > 0) {
+        // 🔄 UPDATE EXISTING REVIEW (User already reviewed, so update rating/comment/image instead of inserting a duplicate)
+        const currentReview = existingReviews[0];
+        const imageUrlToSave = finalImageUrl !== null ? finalImageUrl : currentReview.image_url; // Agar nayi image nahi di toh purani retain karo
+
+        const updateQuery = `
+            UPDATE reviews 
+            SET rating_type = ?, comment = ?, image_url = ?, is_verified_buyer = ?
+            WHERE review_id = ?
+        `;
+        await db.execute(updateQuery, [rating_type, comment, imageUrlToSave, is_verified_buyer, currentReview.review_id]);
+        review_id = currentReview.review_id;
+
+        return {
+            success: true,
+            message: "Review updated successfully!",
+            review_id
+        };
+    } else {
+        // ➕ INSERT NEW REVIEW (First time review)
+        const insertReviewQuery = `
+          INSERT INTO reviews (product_id, user_id, rating_type, comment, image_url, is_verified_buyer)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        const values = [product_id, user_id, rating_type, comment, finalImageUrl, is_verified_buyer];
+        const [insertResult] = await db.execute(insertReviewQuery, values);
+        review_id = insertResult.insertId;
+
+        return {
+            success: true,
+            message: "Review added successfully!",
+            review_id
+        };
+    }
 };
-// reviewservice.js me yeh add karo
+
 const deleteReviewInDb = async (review_id, userId, userRole) => {
-    // Check karo review kiska hai
     const [reviews] = await db.execute('SELECT user_id FROM reviews WHERE review_id = ?', [review_id]);
     if (reviews.length === 0) {
         return { success: false, message: "Review not found." };
@@ -131,7 +150,6 @@ const deleteReviewInDb = async (review_id, userId, userRole) => {
 
     const reviewOwnerId = reviews[0].user_id;
 
-    // Agar user owner nahi hai aur admin bhi nahi hai, toh block kar do
     if (reviewOwnerId !== userId && userRole !== 'admin') {
         return { success: false, message: "Unauthorized to delete this review." };
     }
@@ -140,4 +158,4 @@ const deleteReviewInDb = async (review_id, userId, userRole) => {
     return { success: true };
 };
 
-module.exports = { getReviewsByProductbydb, addReviewindb,deleteReviewInDb };
+module.exports = { getReviewsByProductbydb, addReviewindb, deleteReviewInDb };
