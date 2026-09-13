@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import './ReviewForm.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -9,11 +9,42 @@ const formatLabel = (str) => {
   return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
 
-const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
+const ReviewForm = ({ productId, onReviewAdded }) => {
   const [rating, setRating] = useState("");
   const [comment, setComment] = useState("");
   const [image, setImage] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // 🚨 Added loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [dbOptions, setDbOptions] = useState([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+
+  // Fetch the dynamic options directly from the product's review API
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        // Hitting the endpoint that uses your `getReviewsByProductbydb` service
+        const response = await fetch(`${API_BASE_URL}/api/reviews/${productId}`);
+        const data = await response.json();
+
+        // Check if the backend returned availableOptions
+        if (data.success && data.availableOptions && data.availableOptions.length > 0) {
+          setDbOptions(data.availableOptions);
+        } else {
+          // Fallback just in case
+          setDbOptions(["skip", "timepass", "go_for_it", "perfection"]);
+        }
+      } catch (error) {
+        console.error("[ReviewForm] Options fetch error:", error);
+        setDbOptions(["skip", "timepass", "go_for_it", "perfection"]);
+      } finally {
+        setIsLoadingOptions(false);
+      }
+    };
+
+    if (productId) {
+      fetchOptions();
+    }
+  }, [productId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,7 +64,7 @@ const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE_URL}/api/reviews/add`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` }, // Token is critical for user_id
+        headers: { Authorization: `Bearer ${token}` }, 
         body: formData,
       });
 
@@ -45,7 +76,8 @@ const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
         setComment("");
         setImage(null);
         // Reset file input visually
-        document.getElementById('review-image-upload').value = '';
+        const fileInput = document.getElementById('review-image-upload');
+        if (fileInput) fileInput.value = '';
         if (onReviewAdded) onReviewAdded(); // Refresh parent component
       } else {
         alert(data.message || "Failed to add review.");
@@ -58,11 +90,10 @@ const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
     }
   };
 
-  // 🚨 Dynamic Check: Wait for backend options to load
-  if (!availableOptions || availableOptions.length === 0) {
+  if (isLoadingOptions) {
     return (
       <div className="review-form-wrapper loading-wrapper">
-        <p>Loading review options...</p>
+        <p>Loading review options from database...</p>
       </div>
     );
   }
@@ -76,7 +107,7 @@ const ReviewForm = ({ productId, onReviewAdded, availableOptions = [] }) => {
         <div className="rating-section">
           <p className="rating-label">How would you rate this product?</p>
           <div className="rating-buttons-container">
-            {availableOptions.map((optionId) => (
+            {dbOptions.map((optionId) => (
               <button
                 key={optionId}
                 type="button"

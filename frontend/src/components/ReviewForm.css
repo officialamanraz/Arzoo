@@ -9,10 +9,11 @@
   border: 1px solid var(--border, #e5e7eb); 
   box-sizing: border-box; 
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  text-align: left !important;
 }
 
 .loading-wrapper {
-  text-align: center;
+  text-align: left !important;
   color: var(--text-light, #6b7280);
   padding: 3rem 2rem;
 }
@@ -22,7 +23,7 @@
   margin-bottom: 1.5rem; 
   font-size: 1.5rem; 
   color: var(--text-dark, #1f2937); 
-  text-align: center; 
+  text-align: left !important; 
 }
 
 /* Rating Section */
@@ -31,22 +32,22 @@
   margin-bottom: 0.75rem; 
   font-weight: 600; 
   color: var(--text-dark, #374151); 
-  text-align: center; 
+  text-align: left !important; 
 }
 
 /* Flex layout that perfectly wraps on smaller screens */
 .rating-buttons-container { 
   display: flex; 
   gap: 0.5rem; 
-  justify-content: center; 
+  justify-content: flex-start !important; /* Forced Left Alignment */
   flex-wrap: wrap; 
 }
 
 /* Buttons built for Human Fingers (Minimum 44px height for touch targets) */
 .rating-btn { 
-  flex: 1 1 auto; /* Allows buttons to grow and fill empty space */
+  flex: 1 1 auto; 
   min-width: 100px;
-  min-height: 44px; /* Mobile touch accessibility */
+  min-height: 44px; 
   padding: 0.5rem 1rem; 
   border: 1px solid var(--border, #d1d5db); 
   background-color: var(--white, #ffffff); 
@@ -56,6 +57,7 @@
   transition: all 0.2s ease-in-out; 
   font-size: 0.95rem; 
   font-weight: 500;
+  text-align: center;
 }
 
 .rating-btn:hover { 
@@ -64,7 +66,7 @@
 
 .rating-btn-active { 
   border: 2px solid var(--primary, #db2777); 
-  background-color: rgba(219, 39, 119, 0.05); /* Soft primary background */
+  background-color: rgba(219, 39, 119, 0.05); 
   font-weight: 700; 
   color: var(--primary, #db2777); 
 }
@@ -80,24 +82,25 @@
   border-radius: 8px; 
   font-family: inherit; 
   font-size: 1rem; 
-  resize: vertical; /* User can only resize up/down, not sideways */
+  resize: vertical; 
   box-sizing: border-box; 
   background-color: var(--white, #ffffff); 
   color: var(--text-dark, #1f2937); 
   transition: border-color 0.2s, box-shadow 0.2s; 
+  text-align: left !important;
 }
 
 .review-textarea:focus { 
   outline: none; 
   border-color: var(--primary, #db2777); 
-  box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); /* Nice focus ring */
+  box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1); 
 }
 
 .char-counter { 
   margin: 0.25rem 0 0 0; 
   font-size: 0.8rem; 
   color: var(--text-light, #6b7280); 
-  text-align: right; 
+  text-align: left !important; /* Forced Left Alignment */
 }
 
 /* File Upload */
@@ -106,6 +109,7 @@
   padding: 1rem;
   border-radius: 8px;
   border: 1px dashed var(--border, #d1d5db);
+  text-align: left !important;
 }
 
 .upload-label { 
@@ -114,6 +118,7 @@
   font-weight: 600; 
   color: var(--text-dark, #374151); 
   font-size: 0.95rem;
+  text-align: left !important;
 }
 
 .optional-text {
@@ -135,12 +140,13 @@
   font-size: 0.9rem; 
   color: #059669; 
   font-weight: 500; 
+  text-align: left !important;
 }
 
 /* Submit Button */
 .review-submit-btn { 
   width: 100%; 
-  min-height: 50px; /* Big accessible button */
+  min-height: 50px; 
   background-color: var(--primary, #db2777); 
   color: #ffffff; 
   border: none; 
@@ -171,17 +177,70 @@
 
 @media (max-width: 768px) {
   .review-form-wrapper { padding: 1.5rem; }
-  .rating-btn { flex: 1 1 45%; } /* 2 buttons per row on tablets */
+  .rating-btn { flex: 1 1 45%; } 
 }
 
 @media (max-width: 480px) {
   .review-form-wrapper { 
     padding: 1.25rem; 
-    border-radius: 0; /* Flat edges on mobile look better sometimes */
+    border-radius: 0; 
     border-left: none;
     border-right: none;
     margin: 1rem 0;
   }
   .review-form-title { font-size: 1.3rem; }
-  .rating-btn { flex: 1 1 100%; } /* Stacks buttons 1-by-1 on very small screens */
+  .rating-btn { flex: 1 1 100%; } 
+}
+
+/* ========================================== */
+/* DARK MODE ADAPTATION                       */
+/* ========================================== */
+
+body.dark .review-form-wrapper,
+html.dark .review-form-wrapper,
+[data-theme='dark'] .review-form-wrapper {
+  background-color: #1c1c1e !important;
+  border-color: #333336 !important;
+}
+
+body.dark .review-form-title,
+body.dark .rating-label,
+body.dark .upload-label {
+  color: #f8fafc !important;
+}
+
+body.dark .rating-btn {
+  background-color: #27272a !important;
+  border-color: #3f3f46 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark .rating-btn:hover {
+  background-color: #3f3f46 !important;
+}
+
+body.dark .rating-btn-active {
+  border-color: var(--primary, #db2777) !important;
+  background-color: rgba(219, 39, 119, 0.15) !important;
+  color: #fbcfe8 !important;
+}
+
+body.dark .review-textarea {
+  background-color: #121212 !important;
+  border-color: #3f3f46 !important;
+  color: #f8fafc !important;
+}
+
+body.dark .file-upload-group {
+  background-color: #121212 !important;
+  border-color: #3f3f46 !important;
+}
+
+body.dark .file-input {
+  color: #cbd5e1 !important;
+}
+
+body.dark .char-counter,
+body.dark .optional-text {
+  color: #94a3b8 !important;
 }
