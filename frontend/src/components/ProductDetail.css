@@ -7,12 +7,14 @@
   background-color: var(--bg-light);
   min-height: 100vh;
   padding-bottom: 80px;
+  /* 🛠️ FIX: Added top padding to prevent the title from hiding under the navbar */
+  padding-top: 120px; 
 }
 
 .main-container {
   max-width: 96%; 
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 0 1rem 2rem 1rem;
 }
 
 .details-container {
@@ -20,7 +22,7 @@
   grid-template-columns: 1fr 1fr;
   align-items: start;
   gap: 4rem; 
-  background: var(--white);
+  background: var(--card-bg, var(--white));
   padding: 2.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
@@ -35,10 +37,8 @@
   display: flex;
   flex-direction: column;
   position: sticky;
-  top: 20px;
+  top: 120px; /* Adjusted to respect the new navbar clearance */
   min-width: 0;
-  
-  /* 🛠️ FIX: Gallery ko left align kiya */
   align-items: flex-start; 
   text-align: left;
 }
@@ -85,7 +85,6 @@
   opacity: 1;
 }
 
-
 /* =========================================================
    SOLD OUT
 ========================================================= */
@@ -114,8 +113,6 @@
   overflow-x: auto;
   padding-bottom: 5px;
   margin-bottom: 15px;
-  
-  /* 🛠️ FIX: Center se hata kar left align kiya */
   justify-content: flex-start; 
   width: 100%;
 }
@@ -145,8 +142,6 @@
   gap: 30px;
   padding: 10px 0;
   margin-bottom: 10px;
-  
-  /* 🛠️ FIX: Center se hata kar left align kiya */
   justify-content: flex-start !important; 
   width: 100%;
 }
@@ -239,7 +234,7 @@
   flex: 1;
   border: 1px solid var(--border, #ccc);
   outline: none;
-  background: var(--white, #fff);
+  background: var(--card-bg, #fff);
   color: var(--text-dark, #222);
   font-size: 0.9rem;
   padding: 8px 12px;
@@ -277,39 +272,39 @@
   margin: 0;
   font-size: 2.2rem; 
   color: var(--text-dark);
-  line-height: 1.2;
-  text-align: left;
+  line-height: 1.25;
+  text-align: left !important;
 }
 
 .price-container {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
   margin-top: 0;
 }
 
 .product-price {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   color: var(--text-dark);
   margin: 0;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .mrp-price {
   font-size: 1.1rem;
-  color: #888;
+  color: var(--text-light, #888);
   text-decoration: line-through; 
   font-weight: 500;
 }
 
 .discount-badge {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: bold;
+  background-color: #dcfce7;
+  color: #15803d;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .badges-row {
@@ -327,20 +322,22 @@
   font-weight: bold;
 }
 
-.in-stock { background: rgba(46, 125, 50, 0.15); color: #2e7d32; }
-.out-of-stock { background: rgba(198, 40, 40, 0.15); color: #c62828; }
+.in-stock { background: #e0f2fe; color: #0369a1; }
+.out-of-stock { background: #fee2e2; color: #b91c1c; }
 
 .policy-note {
-  background-color: #fff3f3;
-  color: #d32f2f;
-  border-left: 4px solid #d32f2f;
-  padding: 10px 15px;
-  border-radius: 0 4px 4px 0;
+  background-color: #fff5f5;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  padding: 12px 16px;
+  border-radius: 6px;
   font-size: 0.9rem;
-  line-height: 1.4;
+  line-height: 1.5;
   width: 100%;
-  margin: 5px 0;
-  text-align: left;
+  margin: 5px 0 15px 0;
+  text-align: left !important;
+  box-sizing: border-box;
 }
 
 
@@ -360,7 +357,7 @@
 .quantity-controls {
   display: flex;
   align-items: center;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-color, #ccc);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -376,7 +373,7 @@
 
 .qty-btn:hover:not(:disabled) { background: #e5e7eb; }
 .qty-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.qty-display { padding: 0 16px; font-weight: bold; font-size: 1.1rem; min-width: 20px; text-align: center; }
+.qty-display { padding: 0 16px; font-weight: bold; font-size: 1.1rem; min-width: 20px; text-align: center; color: var(--text-dark); }
 
 
 /* =========================================================
@@ -402,7 +399,7 @@
 
 .add-to-cart-btn {
   background: var(--text-dark, #222);
-  color: #ffffff;
+  color: var(--card-bg, #ffffff);
 }
 .add-to-cart-btn:hover:not(:disabled) { opacity: 0.9; }
 
@@ -430,19 +427,19 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  background: #f8f9fa;
-  border: 1px solid var(--border, #eee);
+  background: var(--card-bg, #f8f9fa);
+  border: 1px solid var(--border-color, #eee);
   padding: 12px 18px;
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-dark);
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .description-toggle-btn:hover {
-  background: #f0f0f0;
-  color: var(--primary, #c28e38);
+  background: var(--bg-light, #f0f0f0);
 }
 
 .description-content {
@@ -474,6 +471,7 @@
 .finer-details-title {
   text-align: left;
   margin-bottom: 1rem;
+  color: var(--text-dark);
 }
 
 .finer-details-list {
@@ -487,13 +485,14 @@
 
 .finer-details-list li {
   display: grid;
-  grid-template-columns: 180px 1fr; /* Fixed width for label so value stays close */
+  grid-template-columns: 180px 1fr;
   gap: 15px;
   align-items: start;
   text-align: left;
+  color: var(--text-sub, #444);
 }
 
-.finer-label { font-weight: 600; text-align: left; }
+.finer-label { font-weight: 600; text-align: left; color: var(--text-dark); }
 .finer-value { word-break: break-word; text-align: left; }
 
 
@@ -532,13 +531,14 @@
 ========================================================= */
 
 @media (max-width: 768px) {
-  .main-container { max-width: 100%; padding: 1rem; }
+  .product-detail-page { padding-top: 90px; }
+  .main-container { max-width: 100%; padding: 0 1rem 1rem 1rem; }
   .details-container { grid-template-columns: 1fr; gap: 2rem; padding: 1.5rem; }
   .gallery-section { position: static; align-items: center; }
   .thumbnail-row { justify-content: center; }
   .social-action-bar { justify-content: center !important; }
   .product-title { font-size: 1.6rem; }
-  .product-price { font-size: 1.3rem; }
+  .product-price { font-size: 1.5rem; }
   .lightbox-overlay { padding: 10px; }
   .lightbox-image { max-width: 96vw; max-height: 90vh; }
   .lightbox-close-btn { top: 15px; right: 15px; width: 40px; height: 40px; font-size: 1.7rem; }
@@ -560,14 +560,22 @@
    DYNAMIC DARK MODE FIX
 ========================================================= */
 
+/* 🛠️ FIX: Made dark mode overrides much stronger using !important where needed */
 .dark-mode .inline-comment-item, body.dark .inline-comment-item { color: #f1f1f1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 .dark-mode .inline-comment-item strong, body.dark .inline-comment-item strong { color: #ffcc00; }
-.dark-mode .inline-comment-input, body.dark .inline-comment-input { background-color: #1e1e1e; color: #ffffff; border: 1px solid #444; }
+.dark-mode .inline-comment-input, body.dark .inline-comment-input { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #444 !important; }
 .dark-mode .social-action-count, body.dark .social-action-count { color: #d1d5db; }
 .dark-mode .add-to-cart-btn, body.dark .add-to-cart-btn { background-color: #f3f4f6; color: #121212; font-weight: 600; }
 .dark-mode .add-to-cart-btn:hover:not(:disabled), body.dark .add-to-cart-btn:hover:not(:disabled) { background-color: #e5e7eb; }
-.dark-mode .mrp-price, body.dark .mrp-price { color: #aaa; }
-.dark-mode .discount-badge, body.dark .discount-badge { background-color: rgba(46, 125, 50, 0.3); color: #81c784; }
-.dark-mode .policy-note, body.dark .policy-note { background-color: rgba(211, 47, 47, 0.1); color: #ef9a9a; border-left: 4px solid #ef9a9a; }
-.dark-mode .description-toggle-btn, body.dark .description-toggle-btn { background-color: #1e1e1e; color: #f1f1f1; border: 1px solid #444; }
-.dark-mode .description-toggle-btn:hover { background-color: #2a2a2a; }
+.dark-mode .mrp-price, body.dark .mrp-price { color: #94a3b8; }
+.dark-mode .discount-badge, body.dark .discount-badge { background-color: rgba(34, 197, 94, 0.2) !important; color: #4ade80 !important; }
+.dark-mode .description-toggle-btn, body.dark .description-toggle-btn { background-color: #1e1e1e !important; color: #f8fafc !important; border: 1px solid #333336 !important; }
+.dark-mode .description-toggle-btn:hover { background-color: #27272a !important; }
+
+/* 🛠️ FIX: Fixed the white box on the Note Alert in Dark Mode */
+.dark-mode .policy-note, body.dark .policy-note, [data-theme='dark'] .policy-note { 
+  background-color: rgba(220, 53, 69, 0.1) !important; 
+  color: #fca5a5 !important; 
+  border: 1px solid rgba(220, 53, 69, 0.3) !important;
+  border-left: 4px solid #ef4444 !important; 
+}
