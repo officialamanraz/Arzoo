@@ -249,7 +249,6 @@ function ProductDetail({ currency, rates, language }) {
               <div className="image-zoom-hint">Click to view</div>
             </div>
 
-            {/* 🆕 THUMBNAILS UPAR AA GAYE (Main image ke theek neeche) */}
             {sliderImages.length > 1 && (
               <div className="thumbnail-row">
                 {sliderImages.map((img, idx) => (
@@ -261,7 +260,6 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             )}
 
-            {/* 🆕 SOCIAL ICONS NEECHE CHALE GAYE */}
             <div className="social-action-bar" style={{ display: 'flex', gap: '30px', marginTop: '15px', marginBottom: '15px', justifyContent: 'center' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
                 <button type="button" className={`social-btn ${isLiked ? 'liked' : ''}`} onClick={handleToggleLike} aria-label={isLiked ? "Unlike product" : "Like product"}>
@@ -319,7 +317,7 @@ function ProductDetail({ currency, rates, language }) {
               {saree.mrp && saree.mrp > saree.price && (
                 <>
                   <span className="mrp-price">MRP {getConvertedPrice(saree.mrp)}</span>
-                  {saree.discount_percentage && (
+                  {saree.discount_percentage !== undefined && (
                     <span className="discount-badge">{saree.discount_percentage}% OFF</span>
                   )}
                 </>

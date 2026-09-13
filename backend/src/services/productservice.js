@@ -5,7 +5,12 @@ const productsearch = async(keyword, minprice, maxprice) => {
     console.log(`[PRODUCT_SERVICE] Searching products with keyword: "${keyword}", min: ${minprice}, max: ${maxprice}`);
     try {
         const searchvalue = '%' + keyword + '%';
-        let sqlquery = 'SELECT * FROM products WHERE (name LIKE ? OR description LIKE ?)';
+        let sqlquery = `
+            SELECT *, 
+            IF(mrp > price, ROUND(((mrp - price) / mrp) * 100), 0) AS calculated_discount 
+            FROM products 
+            WHERE (name LIKE ? OR description LIKE ?)
+        `;
         let queryvalue = [searchvalue, searchvalue];
 
         if(minprice){
@@ -22,6 +27,7 @@ const productsearch = async(keyword, minprice, maxprice) => {
         
         return result.map(product => ({
             ...product,
+            discount_percentage: product.calculated_discount, // Override with real-time math
             image_url: getFullImageUrl(product.image_url)
         }));
     } catch (err) {
@@ -53,7 +59,11 @@ const productdelete = async(product_id) => {
 const allproductget = async(minPrice, maxPrice, limit, offset) => {
     console.log(`[PRODUCT_SERVICE] Fetching all products. Limit: ${limit}, Offset: ${offset}, Min: ${minPrice}, Max: ${maxPrice}`);
     try {
-        let query = `SELECT * FROM products`;
+        let query = `
+            SELECT *, 
+            IF(mrp > price, ROUND(((mrp - price) / mrp) * 100), 0) AS calculated_discount 
+            FROM products
+        `;
         let queryParams = [];
         
         if (minPrice !== null && maxPrice !== null && !isNaN(minPrice) && !isNaN(maxPrice)) {
@@ -68,6 +78,7 @@ const allproductget = async(minPrice, maxPrice, limit, offset) => {
         
         return results.map(product => ({
             ...product,
+            discount_percentage: product.calculated_discount,
             image_url: getFullImageUrl(product.image_url)
         }));
     } catch (err) {
@@ -87,7 +98,8 @@ const productrecomendution = async(product_id, category_id, subcategory_id) => {
             const currentPrice = priceResult[0]?.price || 0;
     
             const query = `
-                SELECT product_id, name, price, image_url, subcategory_id
+                SELECT product_id, name, price, mrp, image_url, subcategory_id,
+                IF(mrp > price, ROUND(((mrp - price) / mrp) * 100), 0) AS calculated_discount
                 FROM products 
                 WHERE subcategory_id = ? AND product_id != ? AND stock_qty > 0
                 ORDER BY RAND(), ABS(price - ?) ASC
@@ -99,11 +111,13 @@ const productrecomendution = async(product_id, category_id, subcategory_id) => {
             
             return results.map(product => ({
                 ...product,
+                discount_percentage: product.calculated_discount,
                 image_url: getFullImageUrl(product.image_url)
             }));
         } else {
             const query = `
-                SELECT product_id, name, price, image_url, subcategory_id
+                SELECT product_id, name, price, mrp, image_url, subcategory_id,
+                IF(mrp > price, ROUND(((mrp - price) / mrp) * 100), 0) AS calculated_discount
                 FROM products 
                 WHERE category_id = ? AND product_id != ? AND stock_qty > 0
                 ORDER BY RAND()
@@ -115,6 +129,7 @@ const productrecomendution = async(product_id, category_id, subcategory_id) => {
             
             return results.map(product => ({
                 ...product,
+                discount_percentage: product.calculated_discount,
                 image_url: getFullImageUrl(product.image_url)
             }));
         }
@@ -128,10 +143,17 @@ const productrecomendution = async(product_id, category_id, subcategory_id) => {
 const getproduct = async() => {
     console.log(`[PRODUCT_SERVICE] Fetching all raw products list...`);
     try {
-        const query = 'SELECT * FROM products';
+        const query = `
+            SELECT *, 
+            IF(mrp > price, ROUND(((mrp - price) / mrp) * 100), 0) AS calculated_discount 
+            FROM products
+        `;
         const [result] = await db.execute(query);
         console.log(`[PRODUCT_SERVICE] ✅ Total raw products fetched: ${result.length}`);
-        return result;
+        return result.map(product => ({
+            ...product,
+            discount_percentage: product.calculated_discount
+        }));
     } catch (err) {
         console.error('[PRODUCT_SERVICE] ❌ Error in getproduct:', err.message);
         console.error('[PRODUCT_SERVICE] Stack:', err.stack);
@@ -142,7 +164,12 @@ const getproduct = async() => {
 const getbyidproduct = async (productId) => {
     console.log(`[PRODUCT_SERVICE] Fetching product details for ID: ${productId}`);
     try {
-        const productQuery = `SELECT * FROM products WHERE product_id = ?`;
+        const productQuery = `
+            SELECT *, 
+            IF(mrp > price, ROUND(((mrp - price) / mrp) * 100), 0) AS calculated_discount 
+            FROM products 
+            WHERE product_id = ?
+        `;
         const [productResults] = await db.execute(productQuery, [productId]);
 
         if (productResults.length === 0) {
@@ -150,6 +177,9 @@ const getbyidproduct = async (productId) => {
             return null; 
         }
         const product = productResults[0];
+        
+        // Enforce server-side computed discount calculation override
+        product.discount_percentage = product.calculated_discount;
 
         const imagesQuery = `SELECT image_url FROM product_images WHERE product_id = ?`;
         const [imageResults] = await db.execute(imagesQuery, [productId]);
@@ -183,8 +213,13 @@ const addProductToDB = async (productData) => {
             name, price, description, base_color, category_id, stock_qty, is_active = 1, mainImage,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id
+            extraImagesUrls, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id
         } = productData;
+
+        const parsedPrice = Number(price) || 0;
+        const parsedMrp = Number(mrp) || 0;
+        // Automatically compute precise server-side discount percentage
+        const computedDiscount = (parsedMrp > parsedPrice) ? Math.round(((parsedMrp - parsedPrice) / parsedMrp) * 100) : 0;
 
         const categoryQuery = 'SELECT category_id FROM categories WHERE category_id = ?';
         const [categoryResult] = await db.execute(categoryQuery, [category_id]);
@@ -202,7 +237,6 @@ const addProductToDB = async (productData) => {
             throw new Error('DUPLICATE_PRODUCT');
         }
 
-        // 30 Columns exactly matched with 30 Question marks (?)
         const insertProductQuery = `
           INSERT INTO products (
             name, price, description, base_color, category_id, stock_qty, is_active, image_url,
@@ -212,10 +246,9 @@ const addProductToDB = async (productData) => {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        // 30 Values exactly matched with above columns
         const values = [
           name, 
-          Number(price) || 0, 
+          parsedPrice, 
           description || null, 
           base_color || null, 
           Number(category_id) || 0, 
@@ -238,12 +271,12 @@ const addProductToDB = async (productData) => {
           blouse_length || null, 
           producer || null, 
           maker || null,
-          mrp ? Number(mrp) : null,
-          discount_percentage ? Number(discount_percentage) : 0,
+          parsedMrp ? parsedMrp : null,
+          computedDiscount, // Server-computed accurate percentage
           dealer_base_price ? Number(dealer_base_price) : null,
           packaging_cost ? Number(packaging_cost) : null,
-          is_returnable !== undefined ? Number(is_returnable) : 1, // Default to 1 (true)
-          dealer_id || null // Handle empty string as NULL (No Dealer)
+          is_returnable !== undefined ? Number(is_returnable) : 1, 
+          dealer_id || null 
         ];
 
         const [result] = await db.execute(insertProductQuery, values);
@@ -282,10 +315,13 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color, primary_color, other_color, border_type, pattern, 
             craft, weave, zari_type, blouse, border_motifs, origin, 
             fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mainImage, mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id
+            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id
         } = updateData;
 
-        // Syntax fixed: Commas and ? added properly
+        const parsedPrice = Number(price) || 0;
+        const parsedMrp = Number(mrp) || 0;
+        const computedDiscount = (parsedMrp > parsedPrice) ? Math.round(((parsedMrp - parsedPrice) / parsedMrp) * 100) : 0;
+
         let updateQuery = `
           UPDATE products SET 
             category_id=?, name=?, description=?, price=?, stock_qty=?, is_active=?,
@@ -296,12 +332,12 @@ const updateProductInDB = async (product_id, updateData) => {
         `;
         
         const values = [
-            Number(category_id), name, description || null, Number(price), Number(stock_qty), Number(is_active),
+            Number(category_id), name, description || null, parsedPrice, Number(stock_qty), Number(is_active),
             base_color || null, primary_color || null, other_color || null, border_type || null, pattern || null,
             craft || null, weave || null, zari_type || null, blouse || null, border_motifs || null, origin || null,
             fabric || null, khats || null, weight || null, blouse_length || null, producer || null, maker || null,
-            mrp ? Number(mrp) : null,
-            discount_percentage ? Number(discount_percentage) : 0,
+            parsedMrp ? parsedMrp : null,
+            computedDiscount, // Computed dynamically on update
             dealer_base_price ? Number(dealer_base_price) : null,
             packaging_cost ? Number(packaging_cost) : null,
             is_returnable !== undefined ? Number(is_returnable) : 1,
@@ -335,6 +371,7 @@ const updateProductInDB = async (product_id, updateData) => {
         throw err;
     }
 };
+
 const addimageindb = async(product_id, uploadedImages) => {
     console.log(`[PRODUCT_SERVICE] Adding ${uploadedImages.length} images via addimageindb for product ID: ${product_id}`);
     try {
