@@ -29,14 +29,17 @@ function CartPage({ currency, rates }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       const res = await response.json();
-      if (res.success) setCartItems(res.data || res.cart || []);
+      if (res.success) {
+        const data = res.data || res.cart || [];
+        console.log("BACKEND SE KYA AAYA:", data); // 👈 Yeh line add karke browser console check karein
+        setCartItems(data);
+      }
     } catch (err) {
       console.error('[CartPage] Error fetching cart:', err);
     } finally {
       setLoading(false);
     }
-  };
-
+};
   const handleUpdateQuantity = async (cartId, newQuantity) => {
     if (newQuantity <= 0) return handleRemoveItem(cartId);
     try {
