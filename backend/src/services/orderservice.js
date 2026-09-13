@@ -66,8 +66,21 @@ const updatestatusinDB = async (orderId, status) => {
 const getmyorderfromdb = async (user_id) => {
     console.log(`[ORDER_SERVICE] 🗄️ Fetching orders for User ID: ${user_id}`);
     try {
+        // 1. FETCH ORDERS WITH ADDRESS DETAILS
         const [ordersData] = await db.execute(
-            'SELECT * FROM orders WHERE user_id = ? ORDER BY ordered_at DESC',
+            `SELECT o.*, 
+                    a.full_name AS delivery_name,
+                    a.phone AS delivery_phone,
+                    a.house_no,
+                    a.road_area,
+                    a.landmark,
+                    a.city,
+                    a.state,
+                    a.pincode
+             FROM orders o
+             LEFT JOIN addresses a ON o.address_id = a.address_id
+             WHERE o.user_id = ? 
+             ORDER BY o.ordered_at DESC`,
             [user_id]
         );
         
@@ -76,8 +89,9 @@ const getmyorderfromdb = async (user_id) => {
             return { orders: [], items: [] };        
         }
         
+        // 2. FETCH ORDER ITEMS WITH MRP & PRODUCT DETAILS
         const [itemsData] = await db.execute(
-            `SELECT oi.*, p.name, p.image_url
+            `SELECT oi.*, p.name, p.image_url, p.mrp
              FROM orderitems oi
              INNER JOIN products p ON oi.product_id = p.product_id
              INNER JOIN orders o ON oi.order_id = o.order_id

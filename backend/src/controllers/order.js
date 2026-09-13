@@ -75,6 +75,9 @@ const getmyorders = async (req, res) => {
             return res.status(200).json({ success: true, message: 'No orders found', data: [] });
         }
 
+        // 🔍 DEBUG LOG: Check karein terminal me MRP print ho raha hai ya nahi
+        console.log("[DEBUG_MRP] Pehla item DB se:", items[0]?.mrp, items[0]);
+
         const finalOrdersWithItems = orders.map((order) => ({
             ...order,
             items: items.filter((item) => item.order_id === order.order_id)
@@ -88,7 +91,6 @@ const getmyorders = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Error fetching orders', error: error.message });
     }
 };
-
 // ==========================================
 // 4. CUSTOMER: Create Razorpay Order
 // ==========================================

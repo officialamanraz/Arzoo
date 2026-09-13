@@ -196,13 +196,13 @@ function UserOrders() {
           <div class="parties-section">
             <div class="party-block">
               <h4>Billing Address</h4>
-              <p class="name">${order.customer_name || 'Customer'}</p>
+              <p class="name">${order.delivery_name || order.customer_name || 'Customer'}</p>
               <p>${order.shipping_address || 'Address not available'}</p><br>
               <p>Email: ${order.customer_email || 'Not available'}</p>
             </div>
             <div class="party-block">
               <h4>Shipping Address</h4>
-              <p class="name">${order.customer_name || 'Customer'}</p>
+              <p class="name">${order.delivery_name || order.customer_name || 'Customer'}</p>
               <p>${order.shipping_address || 'Address not available'}</p>
             </div>
           </div>
@@ -298,97 +298,142 @@ function UserOrders() {
 
                 {/* Items Container */}
                 {order.items && order.items.length > 0 ? (
-                  order.items.map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: '30px', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '15px', textAlign: 'left' }}>
-                      
-                      {/* Left Column: Large Image + Action Buttons Below It */}
-                      <div style={{ width: '300px', flexShrink: 0, textAlign: 'left' }}>
-                        <img
-                          src={getImageUrl(item.image_url || item.image)} 
-                          alt={item.name}
-                          style={{
-                            width: '100%',
-                            height: '300px',
-                            borderRadius: '12px',
-                            objectFit: 'cover',
-                            border: '1px solid #cbd5e1',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                            background: '#fff',
-                            display: 'block',
-                            marginBottom: '15px'
-                          }}
-                          onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
-                        />
+                  order.items.map((item, idx) => {
+                    const unitPrice = Number(item.unit_price || 0);
+                    const itemMrp = Number(item.mrp || 0);
+                    const hasDiscount = itemMrp > unitPrice;
+                    const discountPercent = hasDiscount ? Math.round(((itemMrp - unitPrice) / itemMrp) * 100) : 0;
+                    const totalMrp = (itemMrp > 0 ? itemMrp : unitPrice) * item.quantity;
 
-                        {/* Buttons directly below the image */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
-                          {(order.status === 'pending' || order.status === 'processing') && (
-                            <button 
-                              onClick={() => handleCancelOrder(order.order_id)} 
+                    return (
+                      <div key={idx} style={{ display: 'flex', gap: '30px', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '15px', textAlign: 'left' }}>
+                        
+                        {/* Left Column: Large Image + Action Buttons Below It */}
+                        <div style={{ width: '300px', flexShrink: 0, textAlign: 'left' }}>
+                          <img
+                            src={getImageUrl(item.image_url || item.image)} 
+                            alt={item.name}
+                            style={{
+                              width: '100%',
+                              height: '300px',
+                              borderRadius: '12px',
+                              objectFit: 'cover',
+                              border: '1px solid #cbd5e1',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                              background: '#fff',
+                              display: 'block',
+                              marginBottom: '15px'
+                            }}
+                            onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
+                          />
+
+                          {/* Buttons directly below the image */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
+                            {(order.status === 'pending' || order.status === 'processing') && (
+                              <button 
+                                onClick={() => handleCancelOrder(order.order_id)} 
+                                style={{
+                                  padding: '10px 16px', background: 'transparent', color: '#dc3545',
+                                  border: '1px solid #dc3545', borderRadius: '8px', cursor: 'pointer',
+                                  fontWeight: 'bold', fontSize: '0.9em', textAlign: 'center', width: '100%'
+                                }}
+                              >
+                                Cancel Order
+                              </button>
+                            )}
+                            <Link 
+                              to={`/track-order/${order.payment_id}`} 
                               style={{
-                                padding: '10px 16px', background: 'transparent', color: '#dc3545',
-                                border: '1px solid #dc3545', borderRadius: '8px', cursor: 'pointer',
-                                fontWeight: 'bold', fontSize: '0.9em', textAlign: 'center', width: '100%'
+                                display: 'block', padding: '10px 16px', backgroundColor: '#A8325E',
+                                color: '#fff', borderRadius: '8px', textDecoration: 'none',
+                                fontWeight: 700, fontSize: '0.9em', textAlign: 'center'
                               }}
                             >
-                              Cancel Order
+                              Track Order
+                            </Link>
+                            <button 
+                              onClick={() => handleDownloadInvoice(order)} 
+                              style={{
+                                padding: '10px 16px', backgroundColor: '#fff', color: '#0f172a',
+                                border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer',
+                                fontWeight: 700, fontSize: '0.9em', textAlign: 'center', width: '100%'
+                              }}
+                            >
+                              Invoice
                             </button>
-                          )}
-                          <Link 
-                            to={`/track-order/${order.payment_id}`} 
-                            style={{
-                              display: 'block', padding: '10px 16px', backgroundColor: '#A8325E',
-                              color: '#fff', borderRadius: '8px', textDecoration: 'none',
-                              fontWeight: 700, fontSize: '0.9em', textAlign: 'center'
-                            }}
-                          >
-                            Track Order
-                          </Link>
-                          <button 
-                            onClick={() => handleDownloadInvoice(order)} 
-                            style={{
-                              padding: '10px 16px', backgroundColor: '#fff', color: '#0f172a',
-                              border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer',
-                              fontWeight: 700, fontSize: '0.9em', textAlign: 'center', width: '100%'
-                            }}
-                          >
-                            Invoice
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Right Column: Left/Top-Aligned Text & Order Info */}
-                      <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left', alignItems: 'flex-start' }}>
-                        <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 700, color: '#0f172a', lineHeight: '1.3', textAlign: 'left' }}>
-                          {item.name}
-                        </h2>
-
-                        {/* Single Amount Display with Quantity right below it */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left', alignItems: 'flex-start' }}>
-                          <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#A8325E', textAlign: 'left' }}>
-                            ₹{Number(order.total_amount).toLocaleString('en-IN')}
-                          </span>
-                          <span style={{ fontSize: '0.95rem', color: '#64748b', fontWeight: '500', textAlign: 'left' }}>
-                            Quantity: {item.quantity}
-                          </span>
+                          </div>
                         </div>
 
-                        {/* Payment & Delivery strip */}
-                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', textAlign: 'left' }}>
-                          <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155', textAlign: 'left' }}>
-                            <strong>Payment:</strong> {order.payment_method ? order.payment_method.toUpperCase() : 'N/A'} ({order.payment_status ? order.payment_status.toUpperCase() : 'N/A'})
-                          </p>
-                          {order.estimated_delivery && (
+                        {/* Right Column: Left/Top-Aligned Text & Order Info */}
+                        <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left', alignItems: 'flex-start' }}>
+                          <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 700, color: '#0f172a', lineHeight: '1.3', textAlign: 'left' }}>
+                            {item.name}
+                          </h2>
+
+                         {/* Pricing Display with Discount, MRP and Quantity */}
+<div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left', alignItems: 'flex-start' }}>
+  <div className="order-item-price-row" style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', textAlign: 'left' }}>
+    <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#A8325E', textAlign: 'left' }}>
+      ₹{Number(order.total_amount || (item.unit_price * item.quantity)).toLocaleString('en-IN')}
+    </span>
+
+    {/* Fallback check: agar item.mrp available hai aur price se bada hai */}
+    {(Number(item.mrp) > Number(item.unit_price || order.total_amount)) && (
+      <>
+        <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 500 }}>
+          ₹{(Number(item.mrp) * (item.quantity || 1)).toLocaleString('en-IN')}
+        </span>
+        <span className="order-discount-badge" style={{ fontSize: '0.85rem', fontWeight: 700, color: '#15803d', background: '#dcfce7', padding: '3px 8px', borderRadius: '6px' }}>
+          {Math.round(((Number(item.mrp) - Number(item.unit_price || order.total_amount)) / Number(item.mrp)) * 100)}% OFF
+        </span>
+      </>
+    )}
+  </div>
+
+  <span style={{ fontSize: '0.95rem', color: '#64748b', fontWeight: '500', textAlign: 'left' }}>
+    Quantity: {item.quantity || 1}
+  </span>
+</div>
+
+                          {/* Payment & Delivery strip */}
+                          <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', textAlign: 'left' }}>
                             <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155', textAlign: 'left' }}>
-                              <strong>Estimated Delivery:</strong> {formatDateOnly(order.estimated_delivery)}
+                              <strong>Payment:</strong> {order.payment_method ? order.payment_method.toUpperCase() : 'N/A'} ({order.payment_status ? order.payment_status.toUpperCase() : 'N/A'})
                             </p>
+                            {order.estimated_delivery && (
+                              <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155', textAlign: 'left' }}>
+                                <strong>Estimated Delivery:</strong> {formatDateOnly(order.estimated_delivery)}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Delivery Address Card */}
+                          {(order.shipping_address || order.city) && (
+                            <div className="order-delivery-address-card" style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', width: '100%', textAlign: 'left' }}>
+                              <p style={{ margin: '0 0 6px 0', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', textAlign: 'left' }}>
+                                📍 Delivery Address:
+                              </p>
+                              <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: 1.5, textAlign: 'left' }}>
+                                {order.delivery_name && <strong style={{ color: '#1e293b' }}>{order.delivery_name}<br /></strong>}
+                                {order.shipping_address ? (
+                                  order.shipping_address
+                                ) : (
+                                  `${order.house_no || ''}, ${order.road_area || ''}${order.landmark ? ', ' + order.landmark : ''}, ${order.city || ''}, ${order.state || ''} - ${order.pincode || ''}`
+                                )}
+                              </p>
+                              {order.delivery_phone && (
+                                <p style={{ margin: '6px 0 0 0', fontSize: '0.85rem', color: '#64748b', textAlign: 'left' }}>
+                                  📞 Contact: {order.delivery_phone}
+                                </p>
+                              )}
+                            </div>
                           )}
+
                         </div>
 
                       </div>
-
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <p style={{ color: '#64748b', textAlign: 'center', padding: '20px' }}>No items in this order</p>
                 )}
