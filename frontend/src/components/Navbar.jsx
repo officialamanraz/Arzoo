@@ -23,10 +23,9 @@ function Navbar({
 
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const role = localStorage.getItem('role'); // Added to check for admin
+  const role = localStorage.getItem('role'); 
   const navigate = useNavigate();
 
-  // Fetch top-level categories once, on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -42,8 +41,6 @@ function Navbar({
     fetchCategories();
   }, []);
 
-  // Fetch subcategories whenever the selected category changes.
-  // Clears the subcategory list immediately if no category is selected.
   useEffect(() => {
     if (!selectedCategoryId) {
       setSubcategories([]);
@@ -182,7 +179,7 @@ function Navbar({
         {/* RIGHT SIDE */}
         <div className="nav-right">
           <select
-            className="lang-select"
+            className="lang-select desktop-utility"
             onChange={(e) => setLanguage && setLanguage(e.target.value)}
             value={language || 'en'}
             title="Select Language"
@@ -192,7 +189,7 @@ function Navbar({
             ))}
           </select>
 
-          <div className="currency-dropdown-container">
+          <div className="currency-dropdown-container desktop-utility">
             <div className="currency-toggle" onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}>
               <strong>{currency}</strong>
               <span className="caret-icon">{isCurrencyOpen ? '▲' : '▼'}</span>
@@ -212,7 +209,6 @@ function Navbar({
                     <p className="currency-error">{ratesError}</p>
                   ) : rates && Object.keys(rates).length > 0 ? (
                     <>
-                      {/* 🚨 FIX: Hardcoded INR always at the top */}
                       {"INR".toLowerCase().includes(searchQuery.toLowerCase()) && (
                         <div
                           className="currency-item"
@@ -227,9 +223,8 @@ function Navbar({
                         </div>
                       )}
 
-                      {/* Your existing API currencies */}
                       {Object.entries(rates)
-                        .filter(([code]) => code.toLowerCase().includes(searchQuery.toLowerCase()) && code !== "INR") // Added code !== "INR" to prevent duplicates
+                        .filter(([code]) => code.toLowerCase().includes(searchQuery.toLowerCase()) && code !== "INR")
                         .map(([code, data]) => (
                           <div
                             key={code}
@@ -253,7 +248,7 @@ function Navbar({
             )}
           </div>
 
-          <Link to="/cart" aria-label="Go to cart" className="cart-link">
+          <Link to="/cart" aria-label="Go to cart" className="cart-link desktop-utility">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="9" cy="21" r="1"></circle>
               <circle cx="20" cy="21" r="1"></circle>
@@ -262,11 +257,33 @@ function Navbar({
             <span className="cart-text">Cart</span>
           </Link>
 
-          <button className="theme-toggle" onClick={toggleDark}>
+          <button className="theme-toggle" onClick={toggleDark} aria-label="Toggle Theme">
             {isDark ? '☀️' : '🌙'}
           </button>
         </div>
       </nav>
+
+      {/* =========================================================
+         MOBILE BOTTOM NAVIGATION BAR (Visible on screens < 768px)
+         ========================================================= */}
+      <div className={`mobile-bottom-nav ${isDark ? 'dark-theme' : ''}`}>
+        <Link to="/" className="mobile-nav-item">
+          <span className="mobile-nav-icon">🏠</span>
+          <span className="mobile-nav-label">Home</span>
+        </Link>
+        <Link to="/products" className="mobile-nav-item">
+          <span className="mobile-nav-icon">🛍️</span>
+          <span className="mobile-nav-label">Products</span>
+        </Link>
+        <Link to="/cart" className="mobile-nav-item">
+          <span className="mobile-nav-icon">🛒</span>
+          <span className="mobile-nav-label">Cart</span>
+        </Link>
+        <Link to={token ? "/profile" : "/login"} className="mobile-nav-item">
+          <span className="mobile-nav-icon">👤</span>
+          <span className="mobile-nav-label">Account</span>
+        </Link>
+      </div>
 
       {/* SIDEBAR DRAWER */}
       <div className={`side-overlay ${open ? 'active' : ''}`} onClick={closeSidebar} />
@@ -285,7 +302,6 @@ function Navbar({
             <div className="user-details">
               {token ? (
                 <>
-                  {/* Updated to show username if available, then name, then 'User' */}
                   <h3>Welcome, {user.username || user.name || 'User'}</h3>
                   <button onClick={handleLogout} className="signout-btn">Sign Out</button>
                 </>
@@ -304,8 +320,6 @@ function Navbar({
           <div className="sidebar-section">
             <h4>Your Account</h4>
             <div className="sidebar-links">
-              
-              {/* Admin Panel is now conditionally rendered ONLY for admins */}
               {role === 'admin' && (
                 <Link to="/admin" onClick={closeSidebar} className="sidebar-link">
                   <span className="link-icon">⚙️</span> Admin Panel
@@ -314,7 +328,6 @@ function Navbar({
               
               {token ? (
                 <>
-                  {/* New Update Profile Link */}
                   <Link to="/profile" onClick={closeSidebar} className="sidebar-link">
                     <span className="link-icon">👤</span> Update Profile
                   </Link>
@@ -343,7 +356,6 @@ function Navbar({
               ))}
             </select>
 
-            {/* Subcategory dropdown only appears once a category is selected */}
             {selectedCategoryId && (
               <select
                 className="premium-select subcategory-select"

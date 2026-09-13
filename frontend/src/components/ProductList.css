@@ -183,3 +183,103 @@
     height: 250px;
   }
 }
+/* =========================================================
+   VARIANT NAVIGATION CHIPS (For Color/Pattern Changes)
+   ========================================================= */
+.product-variants-section {
+  width: 100%;
+  margin: 12px 0;
+  text-align: left;
+}
+
+.variant-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light, #666);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.variant-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.variant-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border, #ccc);
+  background: var(--card-bg, #fff);
+  color: var(--text-dark, #333);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.variant-chip:hover {
+  border-color: var(--primary, #c28e38);
+}
+
+.variant-chip.active {
+  background: var(--primary, #c28e38);
+  color: #fff;
+  border-color: var(--primary, #c28e38);
+  font-weight: 600;
+}
+
+/* =========================================================
+   REVIEWS HEADER & RECOMMENDED SLIDER WRAPPER
+   ========================================================= */
+.reviews-section-divider {
+  margin: 40px 0 20px 0;
+  border-bottom: 2px solid var(--border, #eee);
+  padding-bottom: 10px;
+  text-align: left;
+}
+
+.reviews-section-divider h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-dark, #111);
+  margin: 0;
+}
+
+.recommended-section-wrapper {
+  margin-top: 50px;
+  width: 100%;
+}
+/* =========================================================
+   DARK MODE: PRODUCT LIST / APP STYLE
+   ========================================================= */
+body.dark .product-list-header {
+  color: #f8fafc !important;
+}
+
+body.dark .product-card-simple {
+  background: #1c1c1e !important;
+  border-color: #333336 !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+body.dark .product-card-img {
+  background-color: #27272a !important; /* Dark placeholder color */
+}
+
+body.dark .product-card-title {
+  color: #f8fafc !important;
+}
+
+body.dark .product-card-desc {
+  color: #94a3b8 !important;
+}
+
+body.dark .product-card-price {
+  color: #fbbf24 !important; /* Brighter price color for dark mode */
+}
+
+body.dark .product-card-btn {
+  background-color: var(--primary, #d97706) !important;
+  color: #ffffff !important;
+}

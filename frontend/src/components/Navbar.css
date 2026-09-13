@@ -187,6 +187,8 @@
   border-bottom: 1px solid var(--border);
   outline: none;
   font-size: 13px;
+  background: var(--white);
+  color: var(--text-dark);
 }
 
 .currency-list {
@@ -200,7 +202,7 @@
   gap: 10px;
   padding: 10px 15px;
   cursor: pointer;
-  border-bottom: 1px solid #f1f1f1;
+  border-bottom: 1px solid var(--border);
   transition: background 0.2s;
 }
 
@@ -254,6 +256,11 @@
   background: var(--bg-light);
 }
 
+/* ================== MOBILE BOTTOM NAV BAR ================== */
+.mobile-bottom-nav {
+  display: none; /* hidden on desktop & tablet */
+}
+
 /* ================== SIDEBAR ================== */
 .side-overlay {
   position: fixed;
@@ -271,8 +278,6 @@
   visibility: visible;
 }
 
-/* Sidebar width reduced from 270px -> 240px, and capped at 85vw so it
-   never overflows on very small phone screens */
 .side-sidebar {
   position: fixed;
   top: 0;
@@ -286,7 +291,6 @@
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  /* prevents the sidebar itself from ever scrolling sideways */
   overflow-x: hidden;
 }
 
@@ -307,7 +311,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 0; /* allows child text to truncate instead of overflowing */
+  min-width: 0;
 }
 
 .user-avatar {
@@ -379,19 +383,13 @@
   opacity: 1;
 }
 
-/* Sidebar body content -- vertical scroll only, no horizontal overflow */
 .side-sidebar-content {
   overflow-y: auto;
   overflow-x: hidden;
   flex-grow: 1;
   padding: 18px 0;
-}
-
-/* Custom, neutral-colored scrollbar -- replaces whatever browser/theme
-   default was rendering as red, and keeps it subtle instead of a thick bar */
-.side-sidebar-content {
-  scrollbar-width: thin; /* Firefox */
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 .side-sidebar-content::-webkit-scrollbar {
@@ -426,7 +424,6 @@
   gap: 10px;
 }
 
-/* 🚨 CHANGED TO FLEXBOX SO ICON AND TEXT ALIGN PERFECTLY SIDE BY SIDE 🚨 */
 .sidebar-link {
   text-decoration: none;
   color: var(--text-dark);
@@ -442,7 +439,6 @@
   color: var(--primary);
 }
 
-/* Support class for the icons */
 .link-icon {
   font-size: 16px;
 }
@@ -454,11 +450,10 @@
 
 .side-divider {
   height: 1px;
-  background: #f0f0f0;
+  background: var(--border);
   margin: 18px 0;
 }
 
-/* Sidebar Selects & Inputs */
 .premium-select {
   width: 100%;
   padding: 11px;
@@ -527,35 +522,92 @@
   }
 }
 
-/* Mobile phones (under 768px) */
+/* Mobile phones (under 768px) -- strictly isolated */
 @media (max-width: 768px) {
+  /* Hide utility dropdowns from top header on mobile to match Flipkart design */
+  .desktop-utility {
+    display: none !important;
+  }
+
   .navbar {
-    flex-wrap: wrap;
-    padding: 12px 5%;
+    padding: 10px 15px;
+    gap: 10px;
   }
 
-  .nav-center {
-    order: 3;
-    max-width: 100%;
-    width: 100%;
-    margin-top: 12px;
-  }
-
-  .cart-text {
-    display: none;
+  /* Top bar elements: Brand/Menu on left, Dark Mode Toggle on right */
+  .nav-left {
+    gap: 12px;
   }
 
   .nav-logo {
     font-size: 18px;
   }
 
-  .lang-select, .currency-toggle {
-    padding: 6px 8px;
-    font-size: 12px;
+  /* Search bar spans full width neatly right below top branding */
+  .nav-center {
+    order: 3;
+    max-width: 100%;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .search-input {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .search-btn {
+    padding: 0 15px;
+    font-size: 13px;
+  }
+
+  /* Remove top banner gaps and keep flow tight */
+  .main-container, .home-container, .product-detail-page {
+    padding-top: 5px !important;
+  }
+
+  /* Fixed Flipkart-style bottom navigation bar on mobile */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    z-index: 1050;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-dark);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .mobile-nav-icon {
+    font-size: 20px;
+    margin-bottom: 2px;
+  }
+
+  .mobile-nav-label {
+    color: var(--text-dark);
+  }
+
+  /* Add padding at the bottom of the page content so the bottom nav doesn't cover elements */
+  body {
+    padding-bottom: 60px;
   }
 }
 
-/* Small phones (under 400px) -- sidebar takes most of the screen width */
+/* Small phones */
 @media (max-width: 400px) {
   .side-sidebar {
     width: 85vw;
@@ -564,23 +616,40 @@
 }
 
 /* ==========================================
-   DARK MODE OVERRIDES
+   DARK MODE OVERRIDES & VISIBILITY FIXES
    ========================================== */
 .navbar.dark-theme,
-.side-sidebar.dark-theme {
+.side-sidebar.dark-theme,
+.mobile-bottom-nav.dark-theme {
   --glass-bg: rgba(18, 18, 18, 0.95);
-  --white: #242424;
-  --bg-light: #2d2d2d;
-  --text-dark: #f1f1f1;
-  --text-light: #aaaaaa;
-  --border: #3d3d3d;
+  --white: #1c1c1e;
+  --bg-light: #27272a;
+  --text-dark: #f8fafc;
+  --text-light: #cbd5e1;
+  --border: #333336;
   --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.5);
 
-  /* neutral gray scrollbar in dark mode instead of a stray red one */
   --scrollbar-track: rgba(255, 255, 255, 0.05);
   --scrollbar-thumb: rgba(255, 255, 255, 0.25);
 }
 
 .navbar.dark-theme .nav-logo {
   color: #ff5252;
+}
+
+/* Global dark mode text & price visibility bug fixes */
+body.dark, html.dark, [data-theme='dark'], .dark {
+  color: #f8fafc !important;
+}
+
+body.dark .product-price, 
+body.dark .current-price, 
+body.dark .cart-current-price,
+body.dark h1, body.dark h2, body.dark h3, body.dark h4 {
+  color: #f8fafc !important;
+}
+
+body.dark .mrp-price, 
+body.dark .original-mrp {
+  color: #94a3b8 !important;
 }

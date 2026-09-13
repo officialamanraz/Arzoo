@@ -868,3 +868,71 @@
   .dealer-filter-controls input,
   .dealer-filter-controls select { width: 100%; }
 }
+/* =========================================================
+   DARK MODE: ADMIN DEALER DETAILS & INVENTORY
+   ========================================================= */
+body.dark .dealer-profile-card,
+body.dark .stat-card,
+body.dark .dealer-prod-card {
+  background: #1c1c1e !important;
+  border-color: #333336 !important;
+}
+
+body.dark .dealer-name,
+body.dark .section-title,
+body.dark .dealer-prod-title,
+body.dark .text-dark {
+  color: #f8fafc !important;
+}
+
+body.dark .dealer-meta,
+body.dark .stat-label,
+body.dark .prod-category,
+body.dark .p-row {
+  color: #94a3b8 !important;
+}
+
+body.dark .dealer-meta code,
+body.dark .dealer-commission-tag {
+  background: #27272a !important;
+  color: #cbd5e1 !important;
+  border-color: #3f3f46 !important;
+}
+
+body.dark .dealer-search-input,
+body.dark .dealer-select-box {
+  background: #27272a !important;
+  color: #f8fafc !important;
+  border-color: #3f3f46 !important;
+}
+
+body.dark .dealer-prod-img-wrapper {
+  background: #121212 !important;
+}
+
+body.dark .dealer-prod-body {
+  background: #1c1c1e !important;
+}
+
+body.dark .prod-financial-breakdown {
+  background: #27272a !important;
+  border-color: #3f3f46 !important;
+}
+
+body.dark .p-row.admin-margin {
+  border-top-color: #3f3f46 !important;
+}
+
+body.dark .stat-card-green {
+  background: rgba(22, 163, 74, 0.1) !important;
+  border-color: rgba(22, 163, 74, 0.2) !important;
+}
+
+body.dark .stat-val.dark {
+  color: #f8fafc !important;
+}
+
+body.dark .dealer-no-products {
+  background: #1c1c1e !important;
+  border-color: #333336 !important;
+}

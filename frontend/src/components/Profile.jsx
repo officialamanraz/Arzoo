@@ -7,10 +7,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({});
+  const [editSection, setEditSection] = useState(null); // 'name', 'email', 'phone', 'password', null
+  
   const [formData, setFormData] = useState({
     name: '',
-    username: '',
     email: '',
+    phone: '',
+    currentPassword: '',
+    newPassword: '',
     profile_image: ''
   });
   
@@ -29,8 +33,10 @@ const Profile = () => {
     setUser(storedUser);
     setFormData({
       name: storedUser.name || '',
-      username: storedUser.username || '',
       email: storedUser.email || '',
+      phone: storedUser.phone || '',
+      currentPassword: '',
+      newPassword: '',
       profile_image: storedUser.profile_image || ''
     });
   }, [navigate]);
@@ -39,176 +45,257 @@ const Profile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 1. Image select hone par sirf UI mein preview dikhane ke liye
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0]; 
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, profile_image: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+    if (!file) return;
 
-  // 2. Form submit hone par Text + File dono ek sath backend ko bhejna
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, profile_image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+
+    // Auto-upload image
     setIsLoading(true);
-    setMessage('');
-    setIsError(false);
-
     try {
       const token = localStorage.getItem('token');
-      
-      // JSON ki jagah FormData banayenge (Kyunki file bhejni hai)
       const dataToSend = new FormData();
-      dataToSend.append('name', formData.name);
-      dataToSend.append('email', formData.email);
-      dataToSend.append('username', formData.username);
-
-      // Agar user ne nayi photo select ki hai, toh use FormData mein add karein
-      const fileInput = document.getElementById('imageUpload');
-      if (fileInput && fileInput.files[0]) {
-        dataToSend.append('image', fileInput.files[0]); 
-      }
-
-      // 🚨 DHYAN DEIN: URL ko check kar lein. Agar aapka auth router '/api/auth' par set hai toh yeh sahi hai.
-      // Agar wo '/api/users' par set hai, toh isko `${API_BASE_URL}/api/users/profile` kar dijiyega.
+      dataToSend.append('image', file);
+      
       const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // YAHAN 'Content-Type' NAHI LIKHNA HAI! Browser FormData ke liye ise khud handle karta hai.
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: dataToSend
       });
-
       const data = await response.json();
-
       if (response.ok && data.success) {
-        setMessage('Profile updated successfully!');
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
-        
-        setTimeout(() => window.location.reload(), 1500); 
-      } else {
-        setIsError(true);
-        setMessage(data.message || 'Failed to update profile.');
+        showMessage('Profile photo updated successfully!', false);
       }
     } catch (error) {
-      setIsError(true);
-      setMessage('Network error. Please try again.');
+      showMessage('Failed to upload image.', true);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const showMessage = (msg, error = false) => {
+    setMessage(msg);
+    setIsError(error);
+    setTimeout(() => setMessage(''), 3000);
+  };
+
+  // General Update for Name, Email, Phone
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const dataToSend = new FormData();
+      dataToSend.append('name', formData.name);
+      dataToSend.append('email', formData.email);
+      dataToSend.append('phone', formData.phone);
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: dataToSend
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showMessage('Profile updated successfully!', false);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
+        setEditSection(null);
+      } else {
+        showMessage(data.message || 'Failed to update profile.', true);
+      }
+    } catch (error) {
+      showMessage('Network error. Please try again.', true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Dedicated Update for Password
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Backend should have a route like PUT /api/auth/update-password
+      const response = await fetch(`${API_BASE_URL}/api/auth/update-password`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showMessage('Password changed successfully!', false);
+        setEditSection(null);
+        setFormData({ ...formData, currentPassword: '', newPassword: '' });
+      } else {
+        showMessage(data.message || 'Failed to change password.', true);
+      }
+    } catch (error) {
+      showMessage('Network error. Please try again.', true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/login');
+    window.location.reload();
+  };
+
   return (
     <div className="profile-page-container">
+      {/* SIDEBAR (Stays identical for Desktop, stacks on Mobile) */}
       <div className="profile-sidebar">
         <div className="profile-sidebar-header">
           <div className="profile-avatar">
-            {user.profile_image ? (
-               <img src={user.profile_image} alt="User Avatar" />
+            {formData.profile_image ? (
+               <img src={formData.profile_image} alt="User Avatar" />
             ) : (
                <span className="avatar-placeholder">👤</span>
             )}
+            {/* Hidden Input for Image Upload */}
+            <input type="file" id="imageUpload" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+            <label htmlFor="imageUpload" className="avatar-edit-badge">📷</label>
           </div>
-          <h3>{user.username || user.name || 'User'}</h3>
+          <h3>{user.name || 'User'}</h3>
           <p>{user.email}</p>
         </div>
         
         <ul className="profile-menu">
-          <li className="active">Account Settings</li>
+          <li className="active">Login & Security</li>
           <li onClick={() => navigate('/my-orders')}>My Orders</li>
-          <li onClick={() => {
-            localStorage.clear();
-            navigate('/login');
-            window.location.reload();
-          }} className="logout-btn">Log Out</li>
+          <li onClick={handleLogout} className="logout-btn">Log Out</li>
         </ul>
       </div>
 
+      {/* CONTENT AREA (Amazon-style Login & Security) */}
       <div className="profile-content">
-        <h2>Account Settings</h2>
-        <p className="profile-subtext">Update your personal information and username.</p>
-
+        <h2>Login & Security</h2>
+        
         {message && (
           <div className={`status-message ${isError ? 'error' : 'success'}`}>
             {message}
           </div>
         )}
 
-        <form className="profile-form" onSubmit={handleSubmit}>
+        <div className="security-list">
           
-          <div className="form-group">
-            <label>Full Name</label>
-            <input 
-              type="text" 
-              name="name" 
-              value={formData.name} 
-              onChange={handleChange} 
-              placeholder="Enter your full name"
-            />
+          {/* NAME ROW */}
+          <div className="security-row">
+            {editSection === 'name' ? (
+              <form className="security-edit-form" onSubmit={handleUpdateProfile}>
+                <label>Name</label>
+                <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+                <div className="form-actions">
+                  <button type="submit" className="save-btn" disabled={isLoading}>{isLoading ? 'Saving...' : 'Save changes'}</button>
+                  <button type="button" className="cancel-btn" onClick={() => setEditSection(null)}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div className="security-info">
+                  <span className="security-label">Name:</span>
+                  <span className="security-value">{user.name || 'Not set'}</span>
+                </div>
+                <button className="security-edit-btn" onClick={() => setEditSection('name')}>Edit</button>
+              </>
+            )}
           </div>
 
-          <div className="form-group">
-            <label>Username</label>
-            <input 
-              type="text" 
-              name="username" 
-              value={formData.username} 
-              onChange={handleChange} 
-              placeholder="e.g. aman_raza"
-            />
-            <small>This will be visible on your reviews and profile.</small>
+          {/* EMAIL ROW */}
+          <div className="security-row">
+            {editSection === 'email' ? (
+              <form className="security-edit-form" onSubmit={handleUpdateProfile}>
+                <label>Email Address</label>
+                <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+                <div className="form-actions">
+                  <button type="submit" className="save-btn" disabled={isLoading}>{isLoading ? 'Saving...' : 'Save changes'}</button>
+                  <button type="button" className="cancel-btn" onClick={() => setEditSection(null)}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div className="security-info">
+                  <span className="security-label">E-mail:</span>
+                  <span className="security-value">{user.email || 'Not set'}</span>
+                </div>
+                <button className="security-edit-btn" onClick={() => setEditSection('email')}>Edit</button>
+              </>
+            )}
           </div>
 
-          <div className="form-group">
-            <label>Email Address</label>
-            <input 
-              type="email" 
-              name="email" 
-              value={formData.email} 
-              onChange={handleChange} 
-              placeholder="Enter your email"
-            />
+          {/* PHONE ROW */}
+          <div className="security-row">
+            {editSection === 'phone' ? (
+              <form className="security-edit-form" onSubmit={handleUpdateProfile}>
+                <label>Primary mobile number</label>
+                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="e.g. 9876543210" required />
+                <div className="form-actions">
+                  <button type="submit" className="save-btn" disabled={isLoading}>{isLoading ? 'Saving...' : 'Save changes'}</button>
+                  <button type="button" className="cancel-btn" onClick={() => setEditSection(null)}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div className="security-info">
+                  <span className="security-label">Primary mobile number:</span>
+                  {user.phone ? (
+                    <span className="security-value">{user.phone}</span>
+                  ) : (
+                    <span className="security-warning">⚠️ For stronger account security, add your mobile number.</span>
+                  )}
+                </div>
+                <button className="security-edit-btn" onClick={() => setEditSection('phone')}>
+                  {user.phone ? 'Edit' : 'Add'}
+                </button>
+              </>
+            )}
           </div>
 
-          <div className="form-group">
-            <label>Profile Photo</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              
-              {formData.profile_image && (
-                <img 
-                  src={formData.profile_image} 
-                  alt="Preview" 
-                  style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }} 
-                />
-              )}
-
-              <input 
-                type="file" 
-                id="imageUpload" 
-                accept="image/*" 
-                onChange={handleImageChange} 
-                style={{ display: 'none' }} 
-              />
-
-              <label 
-                htmlFor="imageUpload" 
-                style={{ cursor: 'pointer', padding: '10px 15px', background: '#f8f9fa', border: '1px solid #ccc', borderRadius: '6px', fontSize: '13px', fontWeight: '600' }}
-              >
-                📷 Select File & Upload
-              </label>
-            </div>
+          {/* PASSWORD ROW */}
+          <div className="security-row">
+            {editSection === 'password' ? (
+              <form className="security-edit-form" onSubmit={handleUpdatePassword}>
+                <label>Current Password</label>
+                <input type="password" name="currentPassword" value={formData.currentPassword} onChange={handleChange} required />
+                <label>New Password</label>
+                <input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} required />
+                <div className="form-actions">
+                  <button type="submit" className="save-btn" disabled={isLoading}>{isLoading ? 'Saving...' : 'Save changes'}</button>
+                  <button type="button" className="cancel-btn" onClick={() => { setEditSection(null); setFormData({...formData, currentPassword: '', newPassword: ''}); }}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div className="security-info">
+                  <span className="security-label">Password:</span>
+                  <span className="security-value">********</span>
+                </div>
+                <button className="security-edit-btn" onClick={() => setEditSection('password')}>Edit</button>
+              </>
+            )}
           </div>
 
-          <button type="submit" className="save-btn" disabled={isLoading}>
-            {isLoading ? 'Processing...' : 'Save Changes'}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );

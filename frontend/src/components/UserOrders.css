@@ -420,3 +420,109 @@ html.dark .order-discount-badge,
   background-color: rgba(34, 197, 94, 0.2);
   color: #4ade80;
 }
+/* =========================================================
+   MOBILE OPTIMIZATION FOR MY ORDERS (Laptop Style Miniaturized)
+   ========================================================= */
+@media (max-width: 768px) {
+  .orders-page {
+    padding: 20px 10px !important;
+  }
+
+  .order-card {
+    padding: 16px !important;
+  }
+
+  /* 1. Force Side-by-Side Layout Exactly Like Laptop */
+  .order-item-detail-layout {
+    flex-wrap: nowrap !important; /* Prevents columns from stacking */
+    gap: 12px !important;
+    align-items: flex-start !important;
+  }
+
+  /* 2. Left Column (Thumbnail Image & Buttons) */
+  .order-item-left-col {
+    width: 105px !important; /* Chota size taaki mobile par fit ho */
+    flex-shrink: 0 !important;
+  }
+
+  .order-item-img-zoom-box {
+    height: 125px !important;
+    margin-bottom: 8px !important;
+    border-radius: 8px !important;
+  }
+
+  .zoom-hover-indicator {
+    display: none !important; /* Touch screens par zoom hint ki zaroorat nahi */
+  }
+
+  /* Shrink action buttons to fit strictly under the image */
+  .order-item-actions-stack {
+    gap: 6px !important;
+  }
+
+  .order-action-cancel, 
+  .order-action-track, 
+  .order-action-invoice {
+    padding: 6px 4px !important;
+    font-size: 0.72rem !important; /* Smaller text */
+    border-radius: 6px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* 3. Right Column (Product Info, Price & Address) */
+  .order-item-right-col {
+    min-width: 0 !important; /* Text ko bahar overflow hone se rokega */
+    gap: 8px !important;
+  }
+
+  .order-product-name {
+    font-size: 1.05rem !important;
+    line-height: 1.3 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .order-price-main {
+    font-size: 1.15rem !important;
+  }
+
+  .order-mrp-strikethrough {
+    font-size: 0.85rem !important;
+  }
+
+  .order-discount-badge {
+    font-size: 0.7rem !important;
+    padding: 2px 6px !important;
+  }
+
+  .order-item-qty {
+    font-size: 0.85rem !important;
+    display: block !important;
+    margin-top: 4px !important;
+  }
+
+  /* Shrink info strips & addresses */
+  .order-info-substrip, 
+  .order-delivery-address-card {
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .order-info-substrip p,
+  .order-delivery-address-card .address-body {
+    font-size: 0.8rem !important;
+  }
+
+  .order-delivery-address-card .address-header {
+    font-size: 0.85rem !important;
+  }
+
+  .order-delivery-address-card .address-contact {
+    font-size: 0.75rem !important;
+  }
+}

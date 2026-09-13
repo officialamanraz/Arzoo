@@ -112,15 +112,21 @@ const loginuser = async(email, password) =>{
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 const updateProfile = async (userId, updateData, profile_image) => {
-    const { name, email, username } = updateData;
+    // Destructure all possible fields, including phone and passwords
+    const { name, email, username, phone, currentPassword, newPassword } = updateData;
+
+    console.log(`\n[Profile Update] Initiated for User ID: ${userId}`);
+    console.log(`[Profile Update] Received Data -> Name: ${!!name}, Email: ${!!email}, Username: ${!!username}, Phone: ${!!phone}, Image: ${!!profile_image}, PasswordChange: ${!!newPassword}`);
 
     // 1. Username Validation
     if (username && !USERNAME_REGEX.test(username)) {
+        console.log(`[Profile Update] FAILED: Invalid username format provided.`);
         throw new Error('Invalid username. Use only letters, numbers, and underscores (3-30 characters).');
     }
 
     // 2. Uniqueness Check 
     if (email || username) {
+        console.log(`[Profile Update] Checking uniqueness for email/username...`);
         const checkQuery = `
             SELECT email, username FROM users 
             WHERE (email = ? OR username = ?) AND user_id != ?
@@ -129,10 +135,75 @@ const updateProfile = async (userId, updateData, profile_image) => {
         
         if (existing.length > 0) {
             const conflict = existing[0];
-            if (conflict.email === email) throw new Error('This email is already in use.');
-            if (conflict.username === username) throw new Error('This username is already taken.');
+            if (conflict.email === email) {
+                console.log(`[Profile Update] FAILED: Email already in use.`);
+                throw new Error('This email is already in use.');
+            }
+            if (conflict.username === username) {
+                console.log(`[Profile Update] FAILED: Username already taken.`);
+                throw new Error('This username is already taken.');
+            }
         }
     }
+
+    // 3. Password Verification & Hashing
+    let hashedPassword = null;
+    if (newPassword) {
+        console.log(`[Profile Update] Password update requested. Verifying current password...`);
+        if (!currentPassword) {
+            throw new Error('Current password is required to set a new password.');
+        }
+
+        // Fetch user's current password hash
+        const [users] = await db.execute('SELECT password FROM users WHERE user_id = ?', [userId]);
+        if (users.length === 0) throw new Error('User not found.');
+
+        // Compare with current password
+        const isMatch = await bcrypt.compare(currentPassword, users[0].password);
+        if (!isMatch) {
+            console.log(`[Profile Update] FAILED: Incorrect current password provided.`);
+            throw new Error('Incorrect current password.');
+        }
+
+        // Hash the new password
+        const salt = await bcrypt.genSalt(10);
+        hashedPassword = await bcrypt.hash(newPassword, salt);
+        console.log(`[Profile Update] Current password verified and new password hashed successfully.`);
+    }
+
+    // 4. Dynamic Query Builder (Only update provided columns)
+    const updateFields = [];
+    const updateValues = [];
+
+    if (name) { updateFields.push('name = ?'); updateValues.push(name); }
+    if (email) { updateFields.push('email = ?'); updateValues.push(email); }
+    if (username) { updateFields.push('username = ?'); updateValues.push(username); }
+    if (phone) { updateFields.push('phone = ?'); updateValues.push(phone); } // Ensure 'phone' column exists in your DB
+    if (profile_image) { updateFields.push('profile_image = ?'); updateValues.push(profile_image); }
+    if (hashedPassword) { updateFields.push('password = ?'); updateValues.push(hashedPassword); }
+
+    if (updateFields.length === 0) {
+        console.log(`[Profile Update] ABORTED: No valid fields provided to update.`);
+        return false;
+    }
+
+    // Append userId for the WHERE clause
+    updateValues.push(userId);
+
+    const updateQuery = `
+        UPDATE users 
+        SET ${updateFields.join(', ')} 
+        WHERE user_id = ?
+    `;
+
+    console.log(`[Profile Update] Executing DB Query. Updating columns: [${updateFields.map(f => f.split(' =')[0]).join(', ')}]`);
+
+    const [result] = await db.execute(updateQuery, updateValues);
+
+    console.log(`[Profile Update] SUCCESS: Updated ${result.affectedRows} row(s) for User ID: ${userId}\n`);
+
+    return result.affectedRows > 0;
+};
 
     // 3. Dynamic Update Query Builder
     const fields = [];
@@ -175,6 +246,5 @@ const updateProfile = async (userId, updateData, profile_image) => {
         ...updatedUser[0],
         profile_image: getFullImageUrl(updatedUser[0].profile_image)
     };
-};
 
 module.exports = { registerUserService, DuplicateEmailError, forgotpassword, resetpassword, loginuser, updateProfile };

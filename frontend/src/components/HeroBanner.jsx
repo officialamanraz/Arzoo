@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
-import './HeroBanner.css'; // Extracted CSS
+import { getImageUrl } from '../getImageUrl'; 
+import './HeroBanner.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -65,20 +65,19 @@ function HeroBanner() {
   }
 
   const banner = banners[current];
-const imageUrl = getImageUrl(banner.image_url);
 
   return (
-<div className="banner hero-banner">
-  <img
-    src={getImageUrl(banner.image_url)}
-    alt={banner.title || 'Banner'}
-    className="hero-banner-img"
-    onError={(e) => {
-      console.error('[HeroBanner] Image failed to load:', banner.image_url);
-      e.target.onerror = null;
-      e.target.src = '/saare_1.jpeg';
-    }}
-  />
+    <div className="banner hero-banner">
+      <img
+        src={getImageUrl(banner.image_url)}
+        alt={banner.title || 'Banner'}
+        className="hero-banner-img"
+        onError={(e) => {
+          console.error('[HeroBanner] Image failed to load:', banner.image_url);
+          e.target.onerror = null;
+          e.target.src = '/saare_1.jpeg';
+        }}
+      />
 
       {(banner.title || banner.subtitle || banner.button_link) && (
         <div className="hero-banner-content">

@@ -325,3 +325,172 @@ body.dark, html.dark, [data-theme='dark'], .dark {
 body.dark .cart-discount-percent, body.dark .bill-green-text, body.dark .bill-savings-msg { color: #4ade80; }
 body.dark .cart-action-btn:hover { background: #2c2c2e; color: #f8fafc; }
 body.dark .cart-buy-now-btn { color: #fbcfe8 !important; }
+/* =========================================================
+   MOBILE-ONLY CART PAGE OPTIMIZATION (Screens < 600px)
+   ========================================================= */
+@media (max-width: 600px) {
+  .cart-page-container {
+    padding: 8px !important;
+    background-color: var(--bg-main, #121212) !important;
+  }
+
+  .cart-layout {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* Cart Section Header */
+  .cart-section-header {
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+  }
+
+  .cart-section-header h2 {
+    font-size: 1rem !important;
+  }
+
+  /* Individual Cart Item Card */
+  .cart-item-card {
+    border-radius: 8px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .cart-item-data-row {
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+
+  /* Visual Column (Image & Quantity Controls) */
+  .cart-item-visual-col {
+    width: 85px !important;
+  }
+
+  .cart-item-img {
+    width: 85px !important;
+    height: 85px !important;
+    border-radius: 6px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .cart-qty-controls {
+    width: 100% !important;
+    justify-content: space-between !important;
+    height: 28px !important;
+  }
+
+  .cart-qty-controls button {
+    width: 26px !important;
+    height: 28px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .qty-display {
+    width: 30px !important;
+    height: 28px !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Info Column */
+  .cart-item-info-col {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
+
+  .cart-product-title {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    margin-bottom: 4px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .cart-seller-info {
+    font-size: 11px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Price Block on Mobile */
+  .cart-price-block {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 6px !important;
+  }
+
+  .cart-discount-percent {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+  }
+
+  .cart-original-mrp {
+    font-size: 12px !important;
+  }
+
+  .cart-final-price {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+  }
+
+  .cart-delivery-date {
+    font-size: 11px !important;
+    color: var(--text-light, #94a3b8) !important;
+  }
+
+  /* Bottom Action Row (Remove / Buy Now) */
+  .cart-item-action-row {
+    border-top: 1px solid var(--border-color, #333336) !important;
+  }
+
+  .cart-action-btn {
+    padding: 10px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+  }
+
+  /* Right Column: Price Details Bill Section on Mobile */
+  .cart-bill-section {
+    width: 100% !important;
+    border-radius: 8px !important;
+    margin-bottom: 70px !important; /* Space for mobile bottom nav */
+  }
+
+  .bill-header {
+    padding: 12px 16px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .bill-body {
+    padding: 0 16px !important;
+  }
+
+  .bill-row {
+    margin: 12px 0 !important;
+    font-size: 13px !important;
+  }
+
+  .bill-total-row {
+    padding: 12px 0 !important;
+    font-size: 15px !important;
+  }
+
+  .bill-savings-msg {
+    padding: 10px 0 !important;
+    font-size: 12px !important;
+  }
+
+  .bill-trust-badge {
+    padding: 0 16px 14px 16px !important;
+    font-size: 11px !important;
+  }
+
+  .btn-place-order {
+    padding: 14px !important;
+    font-size: 1rem !important;
+    border-radius: 0 0 8px 8px !important;
+  }
+}
