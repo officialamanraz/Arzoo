@@ -28,29 +28,48 @@ const addtocartindb = async(userId, product_id, quantity) => {
     return { action: 'inserted', cart_id: insertResult.insertId };
 };
 
-const getcartbydb = async(user_id) => {
-     const [rows] = await db.execute(
-      `SELECT c.cart_id, c.user_id, c.product_id, c.quantity,
-              p.name, p.price, p.stock_qty, p.image_url
-       FROM cart c
-       INNER JOIN products p ON c.product_id = p.product_id
-       WHERE c.user_id = ?`,
-      [user_id]
+const getcartbydb = async (user_id) => {
+    // 1. ADDED p.mrp IN THE SELECT QUERY
+    const [rows] = await db.execute(
+        `SELECT c.cart_id, c.user_id, c.product_id, c.quantity,
+                p.name, p.price, p.mrp, p.stock_qty, p.image_url
+         FROM cart c
+         INNER JOIN products p ON c.product_id = p.product_id
+         WHERE c.user_id = ?`,
+        [user_id]
     );
-    const formatted = rows.map((item) => ({
-      cart_id: item.cart_id,
-      product_id: item.product_id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      stock_qty: item.stock_qty,
-      image_url: getFullImageUrl(item.image_url),
-      item_total: item.price * item.quantity,
-      in_stock: item.stock_qty >= item.quantity
-    }));
 
-   console.log(`[CART] Returned ${formatted.length} item(s) for user_id: ${user_id}`);
-   
+    const formatted = rows.map((item) => {
+        // Price aur MRP ko numbers mein convert kar liya taaki calculation sahi ho
+        const price = Number(item.price || 0);
+        const mrp = Number(item.mrp || 0);
+
+        // 2. CALCULATE DISCOUNT
+        const hasDiscount = mrp > price;
+        const discountPercent = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
+
+        // 3. CALCULATE ESTIMATED DELIVERY (e.g., 5 Days from today)
+        const deliveryDate = new Date();
+        deliveryDate.setDate(deliveryDate.getDate() + 5); 
+
+        return {
+            cart_id: item.cart_id,
+            product_id: item.product_id,
+            name: item.name,
+            price: price,
+            mrp: mrp,                              // 🆕 Added MRP
+            discount_percentage: discountPercent,  // 🆕 Added Discount %
+            estimated_delivery: deliveryDate,      // 🆕 Added Estimated Delivery
+            quantity: item.quantity,
+            stock_qty: item.stock_qty,
+            image_url: getFullImageUrl(item.image_url),
+            item_total: price * item.quantity,
+            in_stock: item.stock_qty >= item.quantity
+        };
+    });
+
+    console.log(`[CART] Returned ${formatted.length} item(s) for user_id: ${user_id}`);
+    
     return formatted;
 };
 
