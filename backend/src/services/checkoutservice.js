@@ -83,7 +83,7 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
             console.log(`[CHECKOUT] 🛒 Fetching cart items for User ID: ${user_id}`);
             const [rows] = await connection.execute(
                 `SELECT c.product_id, c.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code, p.dealer_base_price, p.packaging_cost
-                 FROM Cart c
+                 FROM cart c
                  INNER JOIN products p ON c.product_id = p.product_id
                  WHERE c.user_id = ?`,
                 [user_id]
@@ -178,7 +178,7 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
 
         if (!isBuyNow) {
             console.log(`[CHECKOUT] 🗑️ Clearing cart for User ID: ${user_id}...`);
-            await connection.execute('DELETE FROM Cart WHERE user_id = ?', [user_id]);
+            await connection.execute('DELETE FROM cart WHERE user_id = ?', [user_id]);
         }
 
         // 10. COMMIT TRANSACTION PERMANENTLY
