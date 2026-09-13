@@ -20,6 +20,7 @@ function AdminOrderDetail() {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeImageIndices, setActiveImageIndices] = useState({});
 
   useEffect(() => {
     fetchOrderDetails();
@@ -93,31 +94,34 @@ function AdminOrderDetail() {
 
   const currentStatusConfig = statusConfig[order.status] || statusConfig.pending;
 
-  // 🧮 CALCULATE TOTALS FOR FINANCIAL SUMMARY
   let totalMrp = 0;
   let totalBasePrice = 0;
 
   order.items?.forEach(item => {
-    const qty = item.quantity || 1;
-    totalMrp += (Number(item.mrp) || Number(item.unit_price) || 0) * qty;
-    totalBasePrice += (Number(item.dealer_base_price) || 0) * qty;
+    const qty = Number(item.quantity) || 1;
+    const itemMrp = Number(item.mrp) || Number(item.unit_price) || 0;
+    const itemBase = Number(item.dealer_base_price) || 0;
+    totalMrp += itemMrp * qty;
+    totalBasePrice += itemBase * qty;
   });
 
   const totalSellingPrice = Number(order.financial_summary?.total_order_value) || 0;
   const totalDiscountAmt = totalMrp > totalSellingPrice ? (totalMrp - totalSellingPrice) : 0;
+  const totalDealerPayout = Number(order.financial_summary?.total_dealer_payout) || 0;
+  const netAdminProfit = Number(order.financial_summary?.net_admin_profit) || (totalSellingPrice - totalDealerPayout);
 
   return (
     <div className="order-detail-page">
       <div className="order-detail-container">
         
-        {/* 1. HEADER SECTION */}
+        {/* HEADER SECTION */}
         <div className="od-header">
           <div className="od-header-left">
             <button className="od-back-btn" onClick={() => navigate('/admin/orders')}>
               ← Back to Orders
             </button>
             <div className="od-title-row">
-              <h1>Order #{order.order_id}</h1>
+              <h1 className="od-main-heading">Order #{order.order_id}</h1>
               <span 
                 className="od-status-badge"
                 style={{ backgroundColor: currentStatusConfig.bg, color: currentStatusConfig.text }}
@@ -130,56 +134,85 @@ function AdminOrderDetail() {
           
           <div className="od-header-right">
              <select
-                value={order.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="od-status-dropdown"
-              >
-                {statusOrder.map((s) => (
-                  <option key={s} value={s}>{statusConfig[s].label}</option>
-                ))}
-              </select>
+               value={order.status}
+               onChange={(e) => handleStatusChange(e.target.value)}
+               className="od-status-dropdown"
+             >
+               {statusOrder.map((s) => (
+                 <option key={s} value={s}>{statusConfig[s].label}</option>
+               ))}
+             </select>
           </div>
         </div>
 
-        {/* 2. MAIN CONTENT GRID */}
+        {/* MAIN CONTENT GRID */}
         <div className="od-grid">
           
-          {/* LEFT COLUMN: Items & Tracking */}
+          {/* LEFT COLUMN */}
           <div className="od-main-content">
             
-            {/* Products List */}
             <div className="od-card">
-              <h2 className="od-card-title">📦 Ordered Products ({order.items?.length})</h2>
+              <h2 className="od-card-title">📦 Ordered Products ({order.items?.length || 0})</h2>
               <div className="od-items-list">
-                {order.items?.map((item, idx) => (
-                  <div key={idx} className="od-item-row">
-                    <img 
-                      src={getImageUrl(item.image_url)} 
-                      alt={item.product_name} 
-                      className="od-item-img" 
-                    />
-                    <div className="od-item-info">
-                      <h3>{item.product_name}</h3>
-                      <p className="od-item-cat">{item.category_info?.category} - {item.category_info?.subcategory}</p>
+                {order.items?.map((item, idx) => {
+                  const itemImages = item.images && Array.isArray(item.images) && item.images.length > 0 
+                    ? item.images 
+                    : [item.image_url || "/saare_1.jpeg"];
+                  
+                  const activeIdx = activeImageIndices[idx] || 0;
+                  const currentImg = itemImages[activeIdx] || "/saare_1.jpeg";
+
+                  return (
+                    <div key={idx} className="od-item-row">
                       
-                      <div className="od-item-price-qty">
-                        <span>Qty: <strong>{item.quantity}</strong></span>
-                        <span>Selling Price: <strong>₹{Number(item.unit_price || item.price).toLocaleString('en-IN')}</strong>/pc</span>
-                        <span className="od-item-total">Total: ₹{Number(item.financials?.total_item_price).toLocaleString('en-IN')}</span>
+                      <div className="od-item-gallery-wrapper">
+                        <div className="od-main-img-box">
+                          <img 
+                            src={getImageUrl(currentImg)} 
+                            alt={item.product_name} 
+                            className="od-item-main-img" 
+                            onError={(e) => { e.currentTarget.src = '/saare_1.jpeg'; }}
+                          />
+                        </div>
+                        {itemImages.length > 1 && (
+                          <div className="od-thumbnail-row">
+                            {itemImages.map((img, imgIdx) => (
+                              <img
+                                key={imgIdx}
+                                src={getImageUrl(img)}
+                                alt={`Thumb ${imgIdx + 1}`}
+                                className={`od-thumbnail ${activeIdx === imgIdx ? 'active-thumb' : ''}`}
+                                onClick={() => setActiveImageIndices({ ...activeImageIndices, [idx]: imgIdx })}
+                                onError={(e) => { e.currentTarget.src = '/saare_1.jpeg'; }}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Dealer Data inside Item */}
-                      <div className="od-dealer-tag" style={{ marginTop: '10px' }}>
-                        <span>🤝 Sourced from: <strong>{item.dealer_info?.name}</strong></span>
-                        {item.dealer_info?.phone !== 'N/A' && <span>📞 {item.dealer_info?.phone}</span>}
+                      <div className="od-item-info">
+                        <h3 className="od-product-name">{item.product_name}</h3>
+                        <p className="od-item-cat">
+                          {item.category_info?.category || 'General'} {item.category_info?.subcategory ? `- ${item.category_info.subcategory}` : ''}
+                        </p>
+                        
+                        <div className="od-item-price-qty">
+                          <span>Qty: <strong>{item.quantity}</strong></span>
+                          <span>Selling Price: <strong>₹{Number(item.unit_price || item.price || 0).toLocaleString('en-IN')}</strong>/pc</span>
+                          <span className="od-item-total">Total: ₹{Number(item.financials?.total_item_price || (item.unit_price * item.quantity)).toLocaleString('en-IN')}</span>
+                        </div>
+
+                        <div className="od-dealer-tag">
+                          <span>🤝 Sourced from: <strong>{item.dealer_info?.name || 'Direct / Warehouse'}</strong></span>
+                          {item.dealer_info?.phone && item.dealer_info?.phone !== 'N/A' && <span>📞 {item.dealer_info.phone}</span>}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            {/* Tracking History */}
             {order.tracking_history && order.tracking_history.length > 0 && (
               <div className="od-card">
                 <h2 className="od-card-title">🚚 Tracking History</h2>
@@ -199,25 +232,23 @@ function AdminOrderDetail() {
             )}
           </div>
 
-          {/* RIGHT COLUMN: Sidebar Info */}
+          {/* RIGHT SIDEBAR */}
           <div className="od-sidebar">
             
-            {/* Customer & Address */}
             <div className="od-card">
               <h2 className="od-card-title">👤 Customer & Shipping</h2>
               <div className="od-info-block">
-                <p><strong>Name:</strong> {order.shipping_address?.name}</p>
-                <p><strong>Phone:</strong> {order.shipping_address?.phone}</p>
+                <p><strong>Name:</strong> {order.shipping_address?.name || 'N/A'}</p>
+                <p><strong>Phone:</strong> {order.shipping_address?.phone || 'N/A'}</p>
                 <p><strong>Email:</strong> {order.fetched_user_email || order.email || 'N/A'}</p>
               </div>
               <hr className="od-divider" />
               <div className="od-info-block">
-                <p><strong>Address:</strong></p>
-                <p className="od-address-text">{order.shipping_address?.full_address}</p>
+                <p><strong>Delivery Address:</strong></p>
+                <p className="od-address-text">{order.shipping_address?.full_address || 'No address provided'}</p>
               </div>
             </div>
 
-            {/* Payment Details */}
             <div className="od-card">
               <h2 className="od-card-title">💳 Payment Details</h2>
               <div className="od-info-block">
@@ -230,7 +261,7 @@ function AdminOrderDetail() {
                   )}
                 </p>
                 {order.razorpay_order_id && (
-                  <p><strong>Order ID:</strong> {order.razorpay_order_id}</p>
+                  <p><strong>Razorpay ID:</strong> {order.razorpay_order_id}</p>
                 )}
                 {order.payment_id && (
                   <p><strong>Transaction ID:</strong> {order.payment_id}</p>
@@ -238,18 +269,17 @@ function AdminOrderDetail() {
               </div>
             </div>
 
-            {/* FINANCIALS & PROFIT BREAKDOWN */}
             <div className="od-card od-profit-card">
               <h2 className="od-card-title">💰 Financial Summary</h2>
               <div className="od-financial-list">
                 
-                <div className="od-fin-row" style={{ color: '#64748b' }}>
+                <div className="od-fin-row od-fin-muted">
                   <span>Total MRP:</span>
                   <span>₹{totalMrp.toLocaleString('en-IN')}</span>
                 </div>
                 
-                <div className="od-fin-row" style={{ color: '#16a34a' }}>
-                  <span>Discount:</span>
+                <div className="od-fin-row od-fin-discount">
+                  <span>Total Discount:</span>
                   <span>- ₹{totalDiscountAmt.toLocaleString('en-IN')}</span>
                 </div>
 
@@ -260,21 +290,21 @@ function AdminOrderDetail() {
                 
                 <hr className="od-divider" />
 
-                <div className="od-fin-row" style={{ color: '#ef4444' }}>
+                <div className="od-fin-row od-fin-base">
                   <span>Total Dealer Base Price:</span>
                   <span>₹{totalBasePrice.toLocaleString('en-IN')}</span>
                 </div>
 
                 <div className="od-fin-row od-dealer-payout">
                   <span>Total Dealer Payout:</span>
-                  <span>₹{Number(order.financial_summary?.total_dealer_payout).toLocaleString('en-IN')}</span>
+                  <span>₹{totalDealerPayout.toLocaleString('en-IN')}</span>
                 </div>
                 
                 <hr className="od-divider" />
 
                 <div className="od-fin-row od-admin-profit">
-                  <span>My Profit (Admin):</span>
-                  <span>+ ₹{Number(order.financial_summary?.net_admin_profit).toLocaleString('en-IN')}</span>
+                  <span>Net Admin Profit:</span>
+                  <span>+ ₹{netAdminProfit.toLocaleString('en-IN')}</span>
                 </div>
 
               </div>

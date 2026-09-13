@@ -1,13 +1,15 @@
-/* =========================================
-   Admin Order Detail Page Styles
-   ========================================= */
+/* =========================================================
+   Admin Order Detail Page Styles (Light & Dark Mode Support)
+   ========================================================= */
 
 .order-detail-page {
   min-height: 100vh;
-  background-color: var(--bg-light, #f4f6f8);
+  background-color: var(--bg-main, var(--bg-light, #f4f6f8));
   padding: 30px 20px;
   font-family: inherit;
   box-sizing: border-box;
+  text-align: left !important;
+  transition: background-color 0.25s ease;
 }
 
 .order-detail-container {
@@ -28,7 +30,7 @@
 .od-back-btn {
   background: none;
   border: none;
-  color: #555;
+  color: var(--text-sub, #555);
   font-weight: 600;
   cursor: pointer;
   padding: 0 0 10px 0;
@@ -48,10 +50,10 @@
   flex-wrap: wrap;
 }
 
-.od-title-row h1 {
+.od-main-heading {
   margin: 0;
   font-size: 26px;
-  color: #111;
+  color: var(--text-dark, #111);
 }
 
 .od-status-badge {
@@ -63,19 +65,20 @@
 
 .od-date {
   margin: 6px 0 0 0;
-  color: #666;
+  color: var(--text-light, #666);
   font-size: 14px;
 }
 
 .od-status-dropdown {
   padding: 10px 16px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color, #ccc);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   outline: none;
-  background: #fff;
+  background: var(--card-bg, #fff);
+  color: var(--text-dark, #111);
   transition: border-color 0.2s ease;
 }
 
@@ -83,7 +86,7 @@
   border-color: var(--primary, #A8325E);
 }
 
-/* Grid Layout (Main Content + Sidebar) */
+/* Grid Layout */
 .od-grid {
   display: grid;
   grid-template-columns: 1fr 380px;
@@ -99,35 +102,38 @@
 
 /* Common Card Styling */
 .od-card {
-  background: #fff;
+  background: var(--card-bg, #fff);
   border-radius: 12px;
   padding: 22px;
   margin-bottom: 24px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color, #eee);
   box-sizing: border-box;
+  text-align: left !important;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .od-card-title {
   margin: 0 0 16px 0;
   font-size: 17px;
-  color: #222;
-  border-bottom: 1px solid #eee;
+  color: var(--text-dark, #222);
+  border-bottom: 1px solid var(--border-color, #eee);
   padding-bottom: 12px;
+  text-align: left !important;
 }
 
-/* Ordered Products List */
+/* Ordered Products & Gallery */
 .od-items-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .od-item-row {
   display: flex;
-  gap: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f1f1f1;
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color, #f1f1f1);
   align-items: flex-start;
 }
 
@@ -136,37 +142,79 @@
   padding-bottom: 0;
 }
 
-.od-item-img {
-  width: 75px;
-  height: 75px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #eee;
+.od-item-gallery-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 90px;
   flex-shrink: 0;
+}
+
+.od-main-img-box {
+  width: 90px;
+  height: 90px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  overflow: hidden;
+  background: var(--bg-light, #f8fafc);
+}
+
+.od-item-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.od-thumbnail-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 90px;
+  padding-bottom: 2px;
+}
+
+.od-thumbnail {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid var(--border-color, #cbd5e1);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.od-thumbnail:hover, .od-thumbnail.active-thumb {
+  opacity: 1;
+  border-color: var(--primary, #A8325E);
+  transform: scale(1.05);
 }
 
 .od-item-info {
   flex: 1;
+  text-align: left !important;
 }
 
-.od-item-info h3 {
+.od-product-name {
   margin: 0 0 4px 0;
-  font-size: 15px;
-  color: #111;
+  font-size: 16px;
+  color: var(--text-dark, #111);
+  font-weight: 600;
 }
 
 .od-item-cat {
   margin: 0 0 8px 0;
-  font-size: 12px;
-  color: #777;
+  font-size: 13px;
+  color: var(--text-light, #64748b);
 }
 
 .od-item-price-qty {
   display: flex;
   gap: 16px;
   font-size: 14px;
-  color: #444;
-  margin-bottom: 8px;
+  color: var(--text-sub, #444);
+  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 
@@ -178,31 +226,33 @@
 .od-dealer-tag {
   display: inline-flex;
   gap: 10px;
-  background: #f0fdf4;
-  color: #166534;
+  background: var(--dealer-bg, #f0fdf4);
+  color: var(--dealer-text, #166534);
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 12px;
-  border: 1px solid #bbf7d0;
+  border: 1px solid var(--dealer-border, #bbf7d0);
   flex-wrap: wrap;
+  margin-top: 4px;
 }
 
 /* Sidebar Info Blocks */
 .od-info-block p {
   margin: 8px 0;
   font-size: 14px;
-  color: #333;
+  color: var(--text-sub, #333);
   line-height: 1.5;
+  text-align: left !important;
 }
 
 .od-address-text {
-  color: #555 !important;
+  color: var(--text-sub, #555) !important;
   line-height: 1.6 !important;
 }
 
 .od-divider {
   border: 0;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-color, #eee);
   margin: 16px 0;
 }
 
@@ -224,8 +274,8 @@
 
 /* Financial Summary Breakdown Card */
 .od-profit-card {
-  background: #fafafa;
-  border-color: #e5e7eb;
+  background: var(--card-bg-alt, #fafafa);
+  border-color: var(--border-color, #e5e7eb);
 }
 
 .od-financial-list {
@@ -239,13 +289,17 @@
   justify-content: space-between;
   font-size: 15px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-sub, #333);
 }
+
+.od-fin-muted { color: var(--text-light, #64748b) !important; }
+.od-fin-discount { color: #16a34a !important; }
+.od-fin-base { color: #ef4444 !important; }
 
 .od-total-val {
   font-size: 18px;
   font-weight: bold;
-  color: #111;
+  color: var(--text-dark, #111);
 }
 
 .od-admin-profit {
@@ -259,11 +313,12 @@
   font-weight: 600;
 }
 
-/* Timeline (Tracking History) */
+/* Timeline */
 .od-timeline {
-  border-left: 2px solid #e5e7eb;
+  border-left: 2px solid var(--border-color, #e5e7eb);
   padding-left: 16px;
   margin-left: 8px;
+  text-align: left !important;
 }
 
 .od-timeline-item {
@@ -279,24 +334,24 @@
   height: 10px;
   background: var(--primary, #A8325E);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px #fff;
+  box-shadow: 0 0 0 3px var(--card-bg, #fff);
 }
 
 .od-timeline-content strong {
   display: block;
   font-size: 14px;
-  color: #111;
+  color: var(--text-dark, #111);
 }
 
 .od-timeline-content p {
   margin: 4px 0;
   font-size: 13px;
-  color: #555;
+  color: var(--text-sub, #555);
 }
 
 .od-time {
   font-size: 12px;
-  color: #999;
+  color: var(--text-light, #999);
 }
 
 /* Loading Fullscreen Spinner */
@@ -306,11 +361,12 @@
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: #f4f6f8;
+  background: var(--bg-main, #f4f6f8);
+  color: var(--text-dark, #111);
 }
 
 .spinner {
-  border: 4px solid #f3f3f3;
+  border: 4px solid var(--border-color, #f3f3f3);
   border-top: 4px solid var(--primary, #A8325E);
   border-radius: 50%;
   width: 40px;
@@ -324,66 +380,59 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Responsive Adjustments for Mobile Phones */
+/* =========================================
+   NATIVE DARK MODE OVERRIDES
+========================================= */
+body.dark, html.dark, [data-theme='dark'], .dark {
+  --bg-main: #121212;
+  --card-bg: #1c1c1e;
+  --card-bg-alt: #18181a;
+  --border-color: #333336;
+  --text-dark: #f8fafc;
+  --text-sub: #cbd5e1;
+  --text-light: #94a3b8;
+  --dealer-bg: rgba(34, 197, 94, 0.15);
+  --dealer-text: #4ade80;
+  --dealer-border: rgba(34, 197, 94, 0.3);
+}
+
+/* Responsive Rules */
 @media (max-width: 600px) {
   .order-detail-page {
     padding: 15px 10px;
   }
-  
   .od-header {
     flex-direction: column;
     align-items: stretch;
   }
-
-  .od-header-right {
+  .od-header-right, .od-status-dropdown {
     width: 100%;
   }
-
-  .od-status-dropdown {
-    width: 100%;
-  }
-
   .od-card {
     padding: 16px;
   }
-
   .od-item-row {
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
-
+  .od-item-gallery-wrapper {
+    align-items: center;
+  }
+  .od-thumbnail-row {
+    max-width: 100%;
+    justify-content: center;
+  }
   .od-item-info {
     width: 100%;
+    text-align: center !important;
   }
-
   .od-item-price-qty {
     justify-content: center;
   }
-
   .od-dealer-tag {
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
   }
-}
-/* Deep Financials Box inside Ordered Item */
-.od-item-deep-fin {
-  background-color: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-top: 10px;
-  font-size: 0.85rem;
-  color: #334155;
-}
-
-.od-fin-row-small {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.od-fin-row-small:last-child {
-  margin-bottom: 0;
 }
