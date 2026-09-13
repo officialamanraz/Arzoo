@@ -92,6 +92,11 @@ function UserOrders() {
     });
   };
 
+  const cleanAddressText = (addrText) => {
+    if (!addrText) return '';
+    return addrText.replace(/,?\s*Phone:\s*[\d\w+-]+/gi, '').trim();
+  };
+
   const buildInvoiceHtml = (order) => {
     const items = order.items || [];
     const itemsSubtotal = items.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0);
@@ -267,31 +272,33 @@ function UserOrders() {
   }
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '100px 20px 60px', textAlign: 'left' }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'left' }}>
-        <h1 style={{ marginBottom: '30px', color: '#0f172a', fontSize: '2rem', fontWeight: 800, textAlign: 'left' }}>My Orders</h1>
+    <div className="orders-page">
+      <div className="orders-page-inner">
+        <h1 className="orders-page-title">My Orders</h1>
 
-        {error && <div style={{ background: '#fdecea', color: '#c0392b', padding: '14px 18px', borderRadius: '10px', marginBottom: '20px', textAlign: 'left' }}>{error}</div>}
+        {error && <div className="orders-error-banner">{error}</div>}
 
         {orders.length === 0 && !error ? (
-          <div style={{ background: '#fff', padding: '50px', textAlign: 'center', borderRadius: '20px' }}>
+          <div className="orders-empty-card">
             <h3>No Orders Yet</h3>
             <p>You haven't placed any orders yet.</p>
-            <Link to="/" style={{ color: '#A8325E', fontWeight: 600 }}>Start Shopping</Link>
+            <Link to="/" className="orders-empty-link">Start Shopping</Link>
           </div>
         ) : (
           orders.map((order) => {
             const meta = STATUS_META[order.status] || { label: order.status, className: '', icon: '' };
+            const resolvedPhone = order.delivery_phone || order.phone || (order.shipping_address && order.shipping_address.match(/Phone:\s*([\d\w+-]+)/i)?.[1]);
+
             return (
-              <div key={order.order_id} style={{ background: '#fff', padding: '30px', marginBottom: '30px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', textAlign: 'left' }}>
+              <div key={order.order_id} className="order-card">
                 
                 {/* Order Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '10px', textAlign: 'left' }}>
-                  <div style={{ textAlign: 'left' }}>
-                    <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', textAlign: 'left' }}>Order #{order.order_id}</h3>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', textAlign: 'left' }}>Placed on {formatDate(order.ordered_at)}</p>
+                <div className="order-card-header">
+                  <div>
+                    <h3 className="order-id">Order #{order.order_id}</h3>
+                    <p className="order-date">Placed on {formatDate(order.ordered_at)}</p>
                   </div>
-                  <span style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: 700, fontSize: '0.85em', textAlign: 'left' }}>
+                  <span className={`order-status-badge ${meta.className}`}>
                     {meta.icon} {meta.label}
                   </span>
                 </div>
@@ -304,104 +311,93 @@ function UserOrders() {
                     const hasDiscount = itemMrp > unitPrice;
                     const discountPercent = hasDiscount ? Math.round(((itemMrp - unitPrice) / itemMrp) * 100) : 0;
                     const totalMrp = (itemMrp > 0 ? itemMrp : unitPrice) * item.quantity;
+                    const itemTotalPrice = unitPrice * item.quantity;
 
                     return (
-                      <div key={idx} style={{ display: 'flex', gap: '30px', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '15px', textAlign: 'left' }}>
+                      <div key={idx} className="order-item-detail-layout">
                         
-                        {/* Left Column: Large Image + Action Buttons Below It */}
-                        <div style={{ width: '300px', flexShrink: 0, textAlign: 'left' }}>
-                          <img
-                            src={getImageUrl(item.image_url || item.image)} 
-                            alt={item.name}
-                            style={{
-                              width: '100%',
-                              height: '300px',
-                              borderRadius: '12px',
-                              objectFit: 'cover',
-                              border: '1px solid #cbd5e1',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                              background: '#fff',
-                              display: 'block',
-                              marginBottom: '15px'
-                            }}
-                            onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
-                          />
+                        {/* Left Column: Image with Zoom Effect + Action Buttons */}
+                        <div className="order-item-left-col">
+                          <Link 
+                            to={`/product/${item.product_id}`} 
+                            className="order-item-img-zoom-box"
+                            title="Click to view product details"
+                          >
+                            <img
+                              src={getImageUrl(item.image_url || item.image)} 
+                              alt={item.name}
+                              className="order-item-main-img"
+                              onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
+                            />
+                            <div className="zoom-hover-indicator">🔍 View Product</div>
+                          </Link>
 
-                          {/* Buttons directly below the image */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
+                          <div className="order-item-actions-stack">
                             {(order.status === 'pending' || order.status === 'processing') && (
                               <button 
                                 onClick={() => handleCancelOrder(order.order_id)} 
-                                style={{
-                                  padding: '10px 16px', background: 'transparent', color: '#dc3545',
-                                  border: '1px solid #dc3545', borderRadius: '8px', cursor: 'pointer',
-                                  fontWeight: 'bold', fontSize: '0.9em', textAlign: 'center', width: '100%'
-                                }}
+                                className="order-action-cancel"
                               >
                                 Cancel Order
                               </button>
                             )}
                             <Link 
                               to={`/track-order/${order.payment_id}`} 
-                              style={{
-                                display: 'block', padding: '10px 16px', backgroundColor: '#A8325E',
-                                color: '#fff', borderRadius: '8px', textDecoration: 'none',
-                                fontWeight: 700, fontSize: '0.9em', textAlign: 'center'
-                              }}
+                              className="order-action-track"
                             >
                               Track Order
                             </Link>
                             <button 
                               onClick={() => handleDownloadInvoice(order)} 
-                              style={{
-                                padding: '10px 16px', backgroundColor: '#fff', color: '#0f172a',
-                                border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer',
-                                fontWeight: 700, fontSize: '0.9em', textAlign: 'center', width: '100%'
-                              }}
+                              className="order-action-invoice"
                             >
                               Invoice
                             </button>
                           </div>
                         </div>
 
-                        {/* Right Column: Left/Top-Aligned Text & Order Info */}
-                        <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left', alignItems: 'flex-start' }}>
-                          <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 700, color: '#0f172a', lineHeight: '1.3', textAlign: 'left' }}>
-                            {item.name}
-                          </h2>
+                        {/* Right Column */}
+                        <div className="order-item-right-col">
+                          <Link 
+                            to={`/product/${item.product_id}`} 
+                            className="order-product-name-link"
+                          >
+                            <h2 className="order-product-name">
+                              {item.name}
+                            </h2>
+                          </Link>
 
-                         {/* Pricing Display with Discount, MRP and Quantity */}
-<div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left', alignItems: 'flex-start' }}>
-  <div className="order-item-price-row" style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', textAlign: 'left' }}>
-    <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#A8325E', textAlign: 'left' }}>
-      ₹{Number(order.total_amount || (item.unit_price * item.quantity)).toLocaleString('en-IN')}
-    </span>
+                          {/* Pricing Display */}
+                          <div className="order-price-box">
+                            <div className="order-item-price-row">
+                              <span className="order-price-main">
+                                ₹{itemTotalPrice.toLocaleString('en-IN')}
+                              </span>
 
-    {/* Fallback check: agar item.mrp available hai aur price se bada hai */}
-    {(Number(item.mrp) > Number(item.unit_price || order.total_amount)) && (
-      <>
-        <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 500 }}>
-          ₹{(Number(item.mrp) * (item.quantity || 1)).toLocaleString('en-IN')}
-        </span>
-        <span className="order-discount-badge" style={{ fontSize: '0.85rem', fontWeight: 700, color: '#15803d', background: '#dcfce7', padding: '3px 8px', borderRadius: '6px' }}>
-          {Math.round(((Number(item.mrp) - Number(item.unit_price || order.total_amount)) / Number(item.mrp)) * 100)}% OFF
-        </span>
-      </>
-    )}
-  </div>
+                              {hasDiscount && (
+                                <>
+                                  <span className="order-mrp-strikethrough">
+                                    ₹{totalMrp.toLocaleString('en-IN')}
+                                  </span>
+                                  <span className="order-discount-badge">
+                                    {discountPercent}% OFF
+                                  </span>
+                                </>
+                              )}
+                            </div>
 
-  <span style={{ fontSize: '0.95rem', color: '#64748b', fontWeight: '500', textAlign: 'left' }}>
-    Quantity: {item.quantity || 1}
-  </span>
-</div>
+                            <span className="order-item-qty">
+                              Quantity: {item.quantity}
+                            </span>
+                          </div>
 
-                          {/* Payment & Delivery strip */}
-                          <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', textAlign: 'left' }}>
-                            <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155', textAlign: 'left' }}>
+                          {/* Payment strip */}
+                          <div className="order-info-substrip">
+                            <p>
                               <strong>Payment:</strong> {order.payment_method ? order.payment_method.toUpperCase() : 'N/A'} ({order.payment_status ? order.payment_status.toUpperCase() : 'N/A'})
                             </p>
                             {order.estimated_delivery && (
-                              <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155', textAlign: 'left' }}>
+                              <p>
                                 <strong>Estimated Delivery:</strong> {formatDateOnly(order.estimated_delivery)}
                               </p>
                             )}
@@ -409,21 +405,21 @@ function UserOrders() {
 
                           {/* Delivery Address Card */}
                           {(order.shipping_address || order.city) && (
-                            <div className="order-delivery-address-card" style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', width: '100%', textAlign: 'left' }}>
-                              <p style={{ margin: '0 0 6px 0', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', textAlign: 'left' }}>
+                            <div className="order-delivery-address-card">
+                              <p className="address-header">
                                 📍 Delivery Address:
                               </p>
-                              <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: 1.5, textAlign: 'left' }}>
-                                {order.delivery_name && <strong style={{ color: '#1e293b' }}>{order.delivery_name}<br /></strong>}
+                              <p className="address-body">
+                                {order.delivery_name && <strong className="address-name">{order.delivery_name}<br /></strong>}
                                 {order.shipping_address ? (
-                                  order.shipping_address
+                                  cleanAddressText(order.shipping_address)
                                 ) : (
                                   `${order.house_no || ''}, ${order.road_area || ''}${order.landmark ? ', ' + order.landmark : ''}, ${order.city || ''}, ${order.state || ''} - ${order.pincode || ''}`
                                 )}
                               </p>
-                              {order.delivery_phone && (
-                                <p style={{ margin: '6px 0 0 0', fontSize: '0.85rem', color: '#64748b', textAlign: 'left' }}>
-                                  📞 Contact: {order.delivery_phone}
+                              {resolvedPhone && (
+                                <p className="address-contact">
+                                  📞 Contact: {resolvedPhone}
                                 </p>
                               )}
                             </div>
@@ -435,7 +431,7 @@ function UserOrders() {
                     );
                   })
                 ) : (
-                  <p style={{ color: '#64748b', textAlign: 'center', padding: '20px' }}>No items in this order</p>
+                  <p className="order-items-empty">No items in this order</p>
                 )}
 
               </div>
