@@ -29,10 +29,12 @@ const addtocartindb = async(userId, product_id, quantity) => {
 };
 
 const getcartbydb = async (user_id) => {
-    // 1. ADDED p.mrp IN THE SELECT QUERY
+    // 🚨 FIX: SQL Query mein hi MRP aur Discount dono directly nikal liye
     const [rows] = await db.execute(
         `SELECT c.cart_id, c.user_id, c.product_id, c.quantity,
-                p.name, p.price, p.mrp, p.stock_qty, p.image_url
+                p.name, p.price, p.mrp, p.stock_qty, p.image_url,
+                -- Database khud har product ka discount calculate karega
+                IF(p.mrp > p.price, ROUND(((p.mrp - p.price) / p.mrp) * 100), 0) AS discount_percentage
          FROM cart c
          INNER JOIN products p ON c.product_id = p.product_id
          WHERE c.user_id = ?`,
@@ -40,15 +42,12 @@ const getcartbydb = async (user_id) => {
     );
 
     const formatted = rows.map((item) => {
-        // Price aur MRP ko numbers mein convert kar liya taaki calculation sahi ho
+        // SQL se directly exact numbers aayenge
         const price = Number(item.price || 0);
-        const mrp = Number(item.mrp || 0);
+        const mrp = Number(item.mrp || price);
+        const discountPercent = Number(item.discount_percentage || 0);
 
-        // 2. CALCULATE DISCOUNT
-        const hasDiscount = mrp > price;
-        const discountPercent = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
-
-        // 3. CALCULATE ESTIMATED DELIVERY (e.g., 5 Days from today)
+        // Calculate estimated delivery (Current date + 5 days)
         const deliveryDate = new Date();
         deliveryDate.setDate(deliveryDate.getDate() + 5); 
 
@@ -57,12 +56,12 @@ const getcartbydb = async (user_id) => {
             product_id: item.product_id,
             name: item.name,
             price: price,
-            mrp: mrp,                              // 🆕 Added MRP
-            discount_percentage: discountPercent,  // 🆕 Added Discount %
-            estimated_delivery: deliveryDate,      // 🆕 Added Estimated Delivery
+            mrp: mrp,                              // Exact MRP for this specific product
+            discount_percentage: discountPercent,  // Exact Discount for this specific product
+            estimated_delivery: deliveryDate,
             quantity: item.quantity,
             stock_qty: item.stock_qty,
-            image_url: getFullImageUrl(item.image_url),
+            image_url: getFullImageUrl(item.image_url), // Make sure getFullImageUrl is available in this file
             item_total: price * item.quantity,
             in_stock: item.stock_qty >= item.quantity
         };
