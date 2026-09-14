@@ -48,40 +48,35 @@ function Home({
     const total = actualTotalPages;
     const pages = [];
 
-    if (total <= 5) {
+    if (total <= 6) {
       for (let i = 1; i <= total; i++) {
         pages.push(i);
       }
     } else {
-      // Hamesha 1st page dikhao
-      pages.push(1);
+      pages.push(1); // Always show first page
 
-      // Left side dots
-      if (currentPage > 3) {
-        pages.push('...');
-      }
-
-      // Middle dynamic pages
       let start = Math.max(2, currentPage - 1);
       let end = Math.min(total - 1, currentPage + 1);
 
       if (currentPage <= 3) {
-        end = Math.min(total - 1, 4);
+        end = 4;
       } else if (currentPage >= total - 2) {
-        start = Math.max(2, total - 3);
+        start = total - 3;
+      }
+
+      if (start > 2) {
+        pages.push('...');
       }
 
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
 
-      // Right side dots
-      if (currentPage < total - 2) {
+      if (end < total - 1) {
         pages.push('...');
       }
 
-      // Hamesha Last page dikhao
-      pages.push(total);
+      pages.push(total); // Always show last page
     }
     return pages;
   };

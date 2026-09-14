@@ -151,33 +151,6 @@
 }
 
 /* =========================================================
-   BANNER SUBTITLE / "PRIDE OF RAJASTHAN" LABEL FIX & GAP REDUCTION
-   ========================================================= */
-.home-subtitle, 
-.banner-subtitle,
-.store-tagline-banner {
-  display: inline-block;
-  background: linear-gradient(135deg, #ad3764, #d28a2e);
-  color: #ffffff !important;
-  padding: 6px 20px;
-  border-radius: 30px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  margin: 10px auto 15px auto !important; /* Gap ko tight aur compact kar diya hai */
-  box-shadow: 0 4px 12px rgba(173, 55, 100, 0.25);
-  text-align: center;
-}
-
-/* Wrapper alignment to ensure the label centers nicely without extra spacing */
-.home-subtitle-wrapper, .subtitle-container {
-  text-align: center;
-  margin: 0;
-  padding: 0;
-}
-
-/* =========================================================
    Mobile-Only Professional Product Grid & Card Fix (< 768px)
    ========================================================= */
 @media (max-width: 768px) {
@@ -282,13 +255,14 @@ html.dark .product-name,
 .dark-theme .product-name {
   color: #f1f5f9 !important;
 }
+
 /* =========================================================
-   ATTRACTIVE HERO SUBTITLE LABEL & GAP FIX
+   ATTRACTIVE HOME ATTRACTION LABEL (Zero Gap & Premium Look)
    ========================================================= */
 .hero-subtitle-wrapper {
   text-align: center;
-  margin: -10px 0 15px 0 !important; /* Banner ke sath overlap karke gap khtam karega */
-  padding: 0;
+  margin: -12px auto 20px auto !important; /* Banner ke sath seamlessly merge karega aur gap khatam karega */
+  padding: 0 15px;
   position: relative;
   z-index: 5;
 }
@@ -297,20 +271,22 @@ html.dark .product-name,
   display: inline-block !important;
   background: linear-gradient(135deg, #ad3764, #d28a2e) !important;
   color: #ffffff !important;
-  padding: 6px 22px !important;
-  border-radius: 30px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.8px !important;
+  padding: 8px 28px !important;
+  border-radius: 50px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
   text-transform: uppercase !important;
-  box-shadow: 0 4px 12px rgba(173, 55, 100, 0.25) !important;
+  box-shadow: 0 6px 20px rgba(173, 55, 100, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   text-align: center !important;
 }
 
-/* Dark mode ke liye bhi perfect visibility */
+/* Dark Mode Support for Home Label */
 body.dark .hero-text-overlay,
 html.dark .hero-text-overlay,
 [data-theme='dark'] .hero-text-overlay {
   background: linear-gradient(135deg, #831843, #b45309) !important;
   color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
