@@ -282,3 +282,35 @@ html.dark .product-name,
 .dark-theme .product-name {
   color: #f1f5f9 !important;
 }
+/* =========================================================
+   ATTRACTIVE HERO SUBTITLE LABEL & GAP FIX
+   ========================================================= */
+.hero-subtitle-wrapper {
+  text-align: center;
+  margin: -10px 0 15px 0 !important; /* Banner ke sath overlap karke gap khtam karega */
+  padding: 0;
+  position: relative;
+  z-index: 5;
+}
+
+.hero-text-overlay {
+  display: inline-block !important;
+  background: linear-gradient(135deg, #ad3764, #d28a2e) !important;
+  color: #ffffff !important;
+  padding: 6px 22px !important;
+  border-radius: 30px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 12px rgba(173, 55, 100, 0.25) !important;
+  text-align: center !important;
+}
+
+/* Dark mode ke liye bhi perfect visibility */
+body.dark .hero-text-overlay,
+html.dark .hero-text-overlay,
+[data-theme='dark'] .hero-text-overlay {
+  background: linear-gradient(135deg, #831843, #b45309) !important;
+  color: #f8fafc !important;
+}

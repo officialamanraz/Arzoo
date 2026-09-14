@@ -45,18 +45,43 @@ function Home({
   };
 
   const getPageNumbers = () => {
-    let startPage = Math.max(1, currentPage - 1);
-    let endPage = Math.min(actualTotalPages, currentPage + 1);
-
-    if (currentPage === 1) {
-      endPage = Math.min(actualTotalPages, 3);
-    } else if (currentPage === actualTotalPages) {
-      startPage = Math.max(1, actualTotalPages - 2);
-    }
-
+    const total = actualTotalPages;
     const pages = [];
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
+
+    if (total <= 5) {
+      for (let i = 1; i <= total; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Hamesha 1st page dikhao
+      pages.push(1);
+
+      // Left side dots
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+
+      // Middle dynamic pages
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(total - 1, currentPage + 1);
+
+      if (currentPage <= 3) {
+        end = Math.min(total - 1, 4);
+      } else if (currentPage >= total - 2) {
+        start = Math.max(2, total - 3);
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      // Right side dots
+      if (currentPage < total - 2) {
+        pages.push('...');
+      }
+
+      // Hamesha Last page dikhao
+      pages.push(total);
     }
     return pages;
   };
@@ -65,9 +90,11 @@ function Home({
     <div className="home-container">
       <HeroBanner />
       
-      <div className="hero-text-overlay">
-        {t('heroText')}
-      </div>
+     <div className="hero-subtitle-wrapper">
+  <div className="hero-text-overlay">
+    {t('heroText')}
+  </div>
+</div>
 
       <section className="product-section" id="product">
         <h2 className="section-title">
