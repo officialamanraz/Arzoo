@@ -151,6 +151,33 @@
 }
 
 /* =========================================================
+   BANNER SUBTITLE / "PRIDE OF RAJASTHAN" LABEL FIX & GAP REDUCTION
+   ========================================================= */
+.home-subtitle, 
+.banner-subtitle,
+.store-tagline-banner {
+  display: inline-block;
+  background: linear-gradient(135deg, #ad3764, #d28a2e);
+  color: #ffffff !important;
+  padding: 6px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin: 10px auto 15px auto !important; /* Gap ko tight aur compact kar diya hai */
+  box-shadow: 0 4px 12px rgba(173, 55, 100, 0.25);
+  text-align: center;
+}
+
+/* Wrapper alignment to ensure the label centers nicely without extra spacing */
+.home-subtitle-wrapper, .subtitle-container {
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+/* =========================================================
    Mobile-Only Professional Product Grid & Card Fix (< 768px)
    ========================================================= */
 @media (max-width: 768px) {
