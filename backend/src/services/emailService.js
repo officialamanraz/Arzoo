@@ -35,13 +35,13 @@ const sendEmailService = ({ to, subject, html }) => {
 // ==========================================
 const sendInvoiceEmail = async (order_id) => {
     const [orderRows] = await db.execute(
-        `SELECT o.*, a.full_name, a.phone, a.city, a.state, a.pincode, a.house_no, a.road_area, a.landmark
+        `SELECT o.*, u.email as user_email, a.full_name, a.phone, a.city, a.state, a.pincode, a.house_no, a.road_area, a.landmark
          FROM orders o
          LEFT JOIN addresses a ON o.address_id = a.address_id
+         LEFT JOIN users u ON o.user_id = u.user_id
          WHERE o.order_id = ?`,
         [order_id]
     );
-
     if (orderRows.length === 0) {
         console.error(`[EMAIL] order_id ${order_id} not found -- cannot send confirmation`);
         return;

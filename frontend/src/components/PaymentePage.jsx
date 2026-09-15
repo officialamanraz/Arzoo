@@ -33,7 +33,8 @@ export default function PaymentPage() {
     try {
       const payload = { 
         addressId,
-        buyNowProduct
+        buyNowProduct,
+        customerEmail
       };
       console.log('[PaymentPage] Submitting payload to checkout API:', payload);
 

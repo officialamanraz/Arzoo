@@ -44,40 +44,36 @@ function Home({
     return t('featured');
   };
 
-  const getPageNumbers = () => {
+const getPageNumbers = () => {
     const total = actualTotalPages;
     const pages = [];
 
-    if (total <= 6) {
+    // Agar total 4 ya kam pages hain, toh normal saare dikha do
+    if (total <= 4) {
       for (let i = 1; i <= total; i++) {
         pages.push(i);
       }
-    } else {
-      pages.push(1); // Always show first page
-
-      let start = Math.max(2, currentPage - 1);
-      let end = Math.min(total - 1, currentPage + 1);
-
-      if (currentPage <= 3) {
-        end = 4;
-      } else if (currentPage >= total - 2) {
-        start = total - 3;
-      }
-
-      if (start > 2) {
-        pages.push('...');
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      if (end < total - 1) {
-        pages.push('...');
-      }
-
-      pages.push(total); // Always show last page
+      return pages;
     }
+
+    // 1. Shuruat ke pages par ho (e.g. page 1 ya 2)
+    if (currentPage <= 2) {
+      pages.push(1, 2, 3);
+    } 
+    // 2. Aakhri pages ke paas ho
+    else if (currentPage >= total - 1) {
+      pages.push(total - 2, total - 1, total);
+    } 
+    // 3. Beech mein ho (jaise screenshot mein page 3 par: 2, 3, 4)
+    else {
+      pages.push(currentPage - 1, currentPage, currentPage + 1);
+    }
+
+    // 4. Last Page button: bina kisi dots ke seedha aakhri page add karega
+    if (!pages.includes(total)) {
+      pages.push(total);
+    }
+
     return pages;
   };
 
