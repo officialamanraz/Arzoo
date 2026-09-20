@@ -54,32 +54,51 @@ function HeroBanner() {
 
   return (
     <div className="hero-banner-wrapper">
-      {/* 🌟 The entire image is the clickable link */}
+      {/* 🌟 Background image for the blur effect */}
       <div 
-        className="hero-banner-slide"
+        className="hero-banner-slide blurred-bg"
+        style={{ backgroundImage: `url(${getImageUrl(banner.image_url)})` }}
         onClick={() => navigate(banner.link || '/products')}
       >
-        <img
-          src={getImageUrl(banner.image_url)}
-          alt="Banner"
-          className="hero-banner-img"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/saare_1.jpeg';
-          }}
-        />
+        {/* 🌟 Glass effect overlay */}
+        <div className="blur-overlay">
+          <img
+            src={getImageUrl(banner.image_url)}
+            alt="Banner"
+            className="hero-banner-img"
+            onLoad={(e) => {
+              const { naturalWidth, naturalHeight } = e.target;
+              
+              // 🌟 DYNAMIC IMAGE LOGIC
+              if (naturalHeight > naturalWidth) {
+                // If image is TALL (Portrait) -> Add flip class for desktop
+                e.target.className = 'hero-banner-img portrait-flip';
+              } else if (naturalHeight === naturalWidth) {
+                // If image is SQUARE -> Just show normally (blur bg will fill edges)
+                e.target.className = 'hero-banner-img square-img';
+              } else {
+                // If image is WIDE (Landscape) -> Show normally
+                e.target.className = 'hero-banner-img landscape-img';
+              }
+            }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/saare_1.jpeg';
+            }}
+          />
+        </div>
       </div>
 
       {/* Navigation Arrows & Dots */}
       {banners.length > 1 && (
         <>
-          <button className="hero-banner-arrow left" onClick={prevSlide} aria-label="Previous">
+          <button className="hero-banner-arrow left" onClick={(e) => { e.stopPropagation(); prevSlide(); }} aria-label="Previous">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
           
-          <button className="hero-banner-arrow right" onClick={nextSlide} aria-label="Next">
+          <button className="hero-banner-arrow right" onClick={(e) => { e.stopPropagation(); nextSlide(); }} aria-label="Next">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -90,7 +109,7 @@ function HeroBanner() {
               <span
                 key={idx}
                 className={`dot ${idx === current ? 'active' : ''}`}
-                onClick={() => setCurrent(idx)}
+                onClick={(e) => { e.stopPropagation(); setCurrent(idx); }}
               />
             ))}
           </div>
