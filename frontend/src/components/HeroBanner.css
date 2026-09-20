@@ -1,193 +1,112 @@
-.banner { 
+/* =========================================
+   EDGE-TO-EDGE PURE IMAGE BANNER
+   ========================================= */
+
+.hero-banner-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 100vw; /* Full width edge-to-edge */
+  overflow: hidden;
   line-height: 0; 
-  margin: 0; 
-  padding: 0; 
+  background-color: #f8f9fa;
 }
 
-.hero-banner { 
-  position: relative; 
-  width: 100%; 
-  overflow: hidden; 
+.hero-banner-slide {
+  width: 100%;
+  cursor: pointer;
+  display: block;
 }
 
-.hero-banner-img { 
-  display: block; 
-  width: 100%; 
-  height: 65vh; 
-  min-height: 380px; 
-  max-height: 640px; 
-  object-fit: cover; 
-  object-position: center; 
-  filter: brightness(1); 
+/* 💻 DESKTOP: Wide Cinematic Rectangle */
+.hero-banner-img {
+  width: 100%;
+  height: 60vh; /* Adjust height based on viewport */
+  min-height: 400px;
+  max-height: 700px;
+  object-fit: cover; /* Ensures image fills the space without stretching */
+  object-position: center top;
+  display: block;
 }
 
-/* Image overlay remains hardcoded to ensure text is readable over photos */
-.hero-banner::after { 
-  content: ''; 
-  position: absolute; 
-  inset: 0; 
-  background: linear-gradient(90deg, rgba(20,16,20,0.92) 0%, rgba(20,16,20,0.55) 45%, rgba(20,16,20,0.05) 75%), linear-gradient(0deg, rgba(20,16,20,0.75) 0%, rgba(20,16,20,0) 35%); 
-  pointer-events: none; 
+/* =========================================
+   NAVIGATION (ARROWS & DOTS)
+   ========================================= */
+
+.hero-banner-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7); /* Subtle light circle */
+  color: #111;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-.hero-banner-content { 
-  position: absolute; 
-  left: 5%; 
-  bottom: 12%; 
-  z-index: 2; 
-  max-width: 640px; 
-  color: #fff; 
+.hero-banner-arrow:hover {
+  background: #fff;
+  transform: translateY(-50%) scale(1.05);
 }
 
-.hero-banner-content h1 { 
-  font-family: var(--font-display, 'Fraunces', serif); 
-  font-size: clamp(1.8rem, 4vw, 3rem); 
-  font-weight: 600; 
-  margin: 0 0 10px; 
-  line-height: 1.15; 
-  text-shadow: 0 2px 12px rgba(0,0,0,0.5); 
+.hero-banner-arrow.left { left: 24px; }
+.hero-banner-arrow.right { right: 24px; }
+
+.hero-banner-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 10px;
 }
 
-.hero-banner-content p { 
-  font-family: var(--font-body, 'Manrope', sans-serif); 
-  font-size: clamp(0.9rem, 1.3vw, 1.05rem); 
-  font-weight: 400; 
-  color: rgba(255,255,255,0.88); 
-  margin: 0 0 20px; 
-  line-height: 1.5; 
-  max-width: 520px; 
+.hero-banner-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
-.hero-banner-btn { 
-  display: inline-flex; 
-  align-items: center; 
-  gap: 8px; 
-  padding: 12px 28px; 
-  background: var(--primary); 
-  color: #fff; 
-  font-family: var(--font-body, 'Manrope', sans-serif); 
-  font-weight: 600; 
-  font-size: 0.95rem; 
-  letter-spacing: 0.3px; 
-  text-decoration: none; 
-  border-radius: 999px; 
-  box-shadow: 0 6px 18px rgba(173, 55, 100, 0.35); 
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; 
+.hero-banner-dots .dot.active {
+  background: #ffffff;
+  transform: scale(1.2);
 }
 
-.hero-banner-btn:hover { 
-  transform: translateY(-2px); 
-  box-shadow: 0 10px 24px rgba(173, 55, 100, 0.45); 
-  background: var(--primary-hover); 
-}
-
-.hero-banner-btn::before { 
-  content: '🛍'; 
-  font-size: 0.95rem; 
-}
-
-.hero-banner-arrow { 
-  position: absolute; 
-  top: 50%; 
-  transform: translateY(-50%); 
-  z-index: 3; 
-  width: 42px; 
-  height: 42px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  background: rgba(0,0,0,0.35); 
-  color: #fff; 
-  border: none; 
-  border-radius: 50%; 
-  cursor: pointer; 
-  backdrop-filter: blur(4px); 
-  transition: background 0.2s ease, transform 0.2s ease; 
-}
-
-.hero-banner-arrow:hover { 
-  background: var(--primary); 
-  transform: translateY(-50%) scale(1.08); 
-}
-
-.hero-banner-arrow.left { left: 18px; }
-.hero-banner-arrow.right { right: 18px; }
-
-.hero-banner-dots { 
-  position: absolute; 
-  bottom: 5%; 
-  right: 5%; 
-  z-index: 3; 
-  display: flex; 
-  gap: 8px; 
-}
-
-.hero-banner-dots .dot { 
-  width: 8px; 
-  height: 8px; 
-  border-radius: 50%; 
-  background: rgba(255,255,255,0.4); 
-  cursor: pointer; 
-  transition: all 0.25s ease; 
-}
-
-.hero-banner-dots .dot.active { 
-  width: 24px; 
-  border-radius: 4px; 
-  background: var(--primary); 
-}
-
-/* =========================================================
-   MOBILE VIEWPORT OPTIMIZATIONS (Strictly under 768px)
-   ========================================================= */
+/* =========================================
+   📱 MOBILE VIEWPORT: Tall Portrait Layout
+   ========================================= */
 @media (max-width: 768px) {
-  .hero-banner {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+  
+  /* Make the image tall and vertical for phones */
+  .hero-banner-img {
+    height: 75vh; /* Takes up 75% of phone screen height */
+    min-height: 450px;
+    object-position: center; 
   }
 
-  .hero-banner-img { 
-    height: 36vh; 
-    min-height: 220px; 
-    max-height: 320px;
-  } 
-
-  .hero-banner-content { 
-    left: 4%; 
-    right: 4%; 
-    bottom: 10%; 
-    max-width: none; 
+  /* Shrink arrows for smaller screens */
+  .hero-banner-arrow {
+    width: 36px;
+    height: 36px;
   }
 
-  .hero-banner-content h1 {
-    font-size: 1.4rem;
-    margin-bottom: 6px;
-  }
-
-  .hero-banner-content p {
-    font-size: 0.85rem;
-    margin-bottom: 12px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .hero-banner-btn {
-    padding: 8px 18px;
-    font-size: 0.85rem;
-  }
-
-  .hero-banner-arrow { 
-    width: 30px; 
-    height: 30px; 
-  }
-
-  .hero-banner-arrow.left { left: 8px; }
-  .hero-banner-arrow.right { right: 8px; }
-
-  .hero-banner-dots { 
-    bottom: 4%; 
-    right: 4%; 
+  .hero-banner-arrow.left { left: 12px; }
+  .hero-banner-arrow.right { right: 12px; }
+  
+  .hero-banner-dots {
+    bottom: 15px;
   }
 }
