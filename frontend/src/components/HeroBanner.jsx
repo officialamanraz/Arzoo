@@ -55,21 +55,19 @@ function HeroBanner() {
   }, [banners.length, nextSlide]);
 
   const handleBannerClick = (banner) => {
-    if (banner.link && banner.link.trim() !== '') {
-      navigate(banner.link);
-    }
+    if (!banner?.link) return;
+
+    const link = banner.link.trim();
+
+    if (!link) return;
+
+    navigate(link);
   };
 
-  /*
-   * While banners are loading
-   */
   if (loading) {
     return null;
   }
 
-  /*
-   * Fallback banner
-   */
   if (banners.length === 0) {
     return (
       <div className="hero-banner-wrapper">
@@ -85,26 +83,7 @@ function HeroBanner() {
   }
 
   const banner = banners[current];
-
-  /*
-   * Desktop image
-   */
-  const desktopImageUrl = getImageUrl(
-    banner.image_url
-  );
-
-  /*
-   * Mobile image
-   *
-   * If mobile_image_url exists:
-   *     use mobile image
-   *
-   * Otherwise:
-   *     use desktop image as fallback
-   */
-  const mobileImageUrl = banner.mobile_image_url
-    ? getImageUrl(banner.mobile_image_url)
-    : desktopImageUrl;
+  const imageUrl = getImageUrl(banner.image_url);
 
   return (
     <div className="hero-banner-wrapper">
@@ -112,45 +91,99 @@ function HeroBanner() {
       <div
         className="hero-banner-slide"
         onClick={() => handleBannerClick(banner)}
+        role={banner.link ? 'button' : undefined}
+        tabIndex={banner.link ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (
+            banner.link &&
+            (e.key === 'Enter' || e.key === ' ')
+          ) {
+            e.preventDefault();
+            handleBannerClick(banner);
+          }
+        }}
       >
 
-        {/* =================================
-            DESKTOP IMAGE
-        ================================= */}
+        {/* ==========================================
+            BLURRED BACKGROUND
+            Fills empty space without cropping
+            the real image.
+        ========================================== */}
 
-        <img
-          src={desktopImageUrl}
-          alt={banner.title || 'Saree banner'}
-          className="hero-banner-img hero-banner-desktop"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/saare_1.jpeg';
+        <div
+          className="hero-banner-blur-fill"
+          style={{
+            backgroundImage: `url(${imageUrl})`,
           }}
         />
 
-        {/* =================================
-            MOBILE IMAGE
-        ================================= */}
+        {/* ==========================================
+            MAIN IMAGE
+        ========================================== */}
 
         <img
-          src={mobileImageUrl}
+          src={imageUrl}
           alt={banner.title || 'Saree banner'}
-          className="hero-banner-img hero-banner-mobile"
+          className="hero-banner-img"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+
+            const { naturalWidth, naturalHeight } = img;
+
+            // Remove old orientation classes
+            img.classList.remove(
+              'portrait-flip',
+              'square-image',
+              'landscape-image'
+            );
+
+            /*
+             * PORTRAIT
+             * Example:
+             * 1000 x 1500
+             *
+             * Rotate once:
+             * 1500 x 1000
+             */
+            if (naturalHeight > naturalWidth) {
+              img.classList.add('portrait-flip');
+            }
+
+            /*
+             * SQUARE
+             * Example:
+             * 1200 x 1200
+             *
+             * Scale slightly smaller so the
+             * entire saree remains visible.
+             */
+            else if (naturalHeight === naturalWidth) {
+              img.classList.add('square-image');
+            }
+
+            /*
+             * LANDSCAPE
+             */
+            else {
+              img.classList.add('landscape-image');
+            }
+          }}
           onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = desktopImageUrl;
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = '/saare_1.jpeg';
           }}
         />
 
       </div>
 
-      {/* =================================
-          NAVIGATION
-      ================================= */}
+      {/* ==========================================
+          ARROWS + DOTS
+      ========================================== */}
 
       {banners.length > 1 && (
         <>
           <button
+            type="button"
             className="hero-banner-arrow left"
             onClick={(e) => {
               e.stopPropagation();
@@ -175,6 +208,7 @@ function HeroBanner() {
           </button>
 
           <button
+            type="button"
             className="hero-banner-arrow right"
             onClick={(e) => {
               e.stopPropagation();
@@ -214,6 +248,7 @@ function HeroBanner() {
           </div>
         </>
       )}
+
     </div>
   );
 }
