@@ -40,15 +40,17 @@ function HeroBanner() {
 
   // Every banner is a tap-target straight to its own product page.
   // Falls back to the general listing only if this banner has no link set.
+  // Updated click handler
   const handleBannerClick = (banner) => {
-    navigate(banner.link || '/products');
+    if (banner.link && banner.link.trim() !== '') {
+      navigate(banner.link); // Sirf tabhi navigate karega jab aapne link attach kiya hoga
+    }
   };
-
   if (loading) return null;
 
   if (banners.length === 0) {
     return (
-      <div className="hero-banner-wrapper" onClick={() => navigate('/products')}>
+      <div className="hero-banner-wrapper">
         <div className="hero-banner-slide">
           <img src="/saare_1.jpeg" alt="Featured" className="hero-banner-img" />
         </div>
