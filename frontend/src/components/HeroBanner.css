@@ -1,7 +1,5 @@
 /* =========================================
-   FULL-BLEED EDGE-TO-EDGE BANNER
-   No card frame, no rounded corners, no text --
-   just the image, shown completely (never cropped/zoomed).
+   FULL-BLEED EDGE-TO-EDGE BANNER (NO BLUR)
    ========================================= */
 
 .hero-banner-wrapper {
@@ -23,37 +21,52 @@
   overflow: hidden;
 }
 
-/* Blurred, scaled-up copy of the same image fills every edge behind the
-   sharp foreground image -- this is what lets a tall OR wide photo sit
-   flush edge-to-edge with no black bars, while the real image never
-   gets cropped or stretched. */
-.hero-banner-blur-fill {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  filter: blur(40px) saturate(1.15) brightness(0.7);
-  transform: scale(1.15); /* hides the blurred edge softness past the frame */
-}
+/* =========================================
+   💻 DESKTOP LOGIC (Cover + Flip)
+   ========================================= */
+@media (min-width: 769px) {
+  .hero-banner-img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 🌟 Edge-to-edge cover bina kisi blur ke */
+    object-position: center;
+    transition: transform 0.5s ease;
+  }
 
-/* The real, sharp image -- always shown in full, never cropped */
-.hero-banner-img {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  /* Lambi (Vertical) image ko flip karke screen bharna */
+  .hero-banner-img.portrait-flip {
+    transform: rotate(-90deg) scale(1.5); /* Rotation ke baad edges fill karne ke liye scale */
+    object-fit: cover;
+  }
 }
 
 /* =========================================
-   MOBILE -- same full-bleed approach, taller viewport share
+   📱 MOBILE LOGIC (Just Cover, No Flip)
    ========================================= */
 @media (max-width: 768px) {
   .hero-banner-slide {
     height: 78vh;
     min-height: 480px;
     max-height: 820px;
+  }
+
+  .hero-banner-img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 🌟 Mobile par direct edge-to-edge */
+    object-position: center;
+  }
+
+  /* Phone me image seedhi rahegi, koi rotation nahi */
+  .hero-banner-img.portrait-flip {
+    transform: none;
+    object-fit: cover;
   }
 }
 

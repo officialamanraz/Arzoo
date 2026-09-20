@@ -65,17 +65,20 @@ function HeroBanner() {
         className="hero-banner-slide"
         onClick={() => handleBannerClick(banner)}
       >
-        {/* Blurred fill behind the image -- lets any aspect ratio (wide or
-            tall) sit edge-to-edge without ever cropping or distorting the
-            actual photo, which stays fully visible via object-fit: contain. */}
-        <div
-          className="hero-banner-blur-fill"
-          style={{ backgroundImage: `url(${imageUrl})` }}
-        />
+        {/* The real, sharp image -- dynamically checks dimensions on load to apply flip class if needed */}
         <img
           src={imageUrl}
-          alt=""
+          alt="Banner"
           className="hero-banner-img"
+          onLoad={(e) => {
+            const { naturalWidth, naturalHeight } = e.target;
+            // Agar image lambi (Vertical) hai toh usme flip class add karo
+            if (naturalHeight > naturalWidth) {
+              e.target.className = 'hero-banner-img portrait-flip';
+            } else {
+              e.target.className = 'hero-banner-img';
+            }
+          }}
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = '/saare_1.jpeg';
