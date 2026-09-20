@@ -66,17 +66,6 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
-@media (max-width: 600px) {
-  .page-num-btn {
-    width: 35px;
-    height: 35px;
-    font-size: 14px;
-  }
-  .pagination-container {
-    gap: 10px;
-  }
-}
-
 /* =========================================================
    FLIPKART STYLE PRODUCT CARD & LAYOUT
    ========================================================= */
@@ -122,38 +111,94 @@
 }
 
 /* =========================================================
-   Price Alignment & Visibility Fix (Light & Dark Mode)
+   DESKTOP PRICE ALIGNMENT (Linear & Small Gap)
    ========================================================= */
 .price-row {
   display: flex !important;
+  justify-content: flex-start !important;
   align-items: baseline !important;
-  gap: 8px !important;
-  margin-top: 6px !important;
+  gap: 6px !important; /* Decreased the gap here */
+  margin-top: 8px !important;
   width: 100% !important;
-  flex-wrap: wrap !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
 }
 
 .price-tag {
-  font-size: 15px !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   color: var(--text-dark, #212121) !important;
   white-space: nowrap !important;
-  display: inline-block !important;
 }
 
 .original-mrp {
-  font-size: 12px !important;
+  font-size: 13px !important;
   font-weight: 500 !important;
-  color: var(--text-light, #878787) !important;
+  color: #666666 !important; /* Solid gray for visibility */
   text-decoration: line-through !important;
   white-space: nowrap !important;
-  display: inline-block !important;
+  opacity: 1 !important;
 }
 
 /* =========================================================
-   Mobile-Only Professional Product Grid & Card Fix (< 768px)
+   FULL-WIDTH SOLID RIBBON (No Overlap, Edge-to-Edge)
+   ========================================================= */
+.hero-subtitle-wrapper {
+  text-align: center;
+  margin: 0 0 30px 0 !important; 
+  padding: 0;
+  width: 100%;
+  display: block;
+}
+
+.hero-text-overlay {
+  display: block !important;
+  width: 100% !important; 
+  background: linear-gradient(135deg, #ad3764, #d28a2e) !important;
+  color: var(--text-dark, #111);
+  padding: 14px 20px !important;
+  border-radius: 0 !important; 
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+  border: none !important;
+  box-sizing: border-box !important;
+}
+
+.product-section, 
+#product {
+  margin-top: 0 !important; 
+  padding-top: 0 !important;
+}
+
+/* =========================================================
+   MOBILE FIXES (< 768px)
    ========================================================= */
 @media (max-width: 768px) {
+  /* Ribbon Fix */
+  .hero-subtitle-wrapper {
+    margin: 0 0 20px 0 !important;
+  }
+  .hero-text-overlay {
+    font-size: 12px !important;
+    padding: 10px 5px !important;
+    letter-spacing: 1px !important;
+    white-space: normal !important;
+  }
+
+  /* Pagination Fix */
+  .page-num-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+  .pagination-container {
+    gap: 10px;
+  }
+
+  /* Grid & Product Card Fix (Removed Black Border) */
   .product-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
@@ -164,9 +209,9 @@
   }
 
   .product-card {
-    background: var(--card-bg, #1c1c1e) !important;
-    border: 1px solid var(--border, #333336) !important;
-    border-radius: 10px !important;
+    background: #ffffff !important; /* Light mode background */
+    border: 1px solid #e5e7eb !important; /* Clean, light border */
+    border-radius: 8px !important;
     padding: 8px !important;
     display: flex !important;
     flex-direction: column !important;
@@ -174,6 +219,7 @@
     box-sizing: border-box !important;
     width: 100% !important;
     margin: 0 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
   }
 
   .product-image-container {
@@ -193,7 +239,7 @@
     font-size: 13px !important;
     font-weight: 500 !important;
     margin: 6px 0 4px 0 !important;
-    color: var(--text-dark, #f8fafc) !important;
+    color: #111827 !important;
     white-space: normal !important;
     display: -webkit-box !important;
     -webkit-line-clamp: 2 !important;
@@ -204,26 +250,22 @@
     text-align: left !important;
   }
 
+  /* Price Stacking (One by One) */
   .price-row {
-    display: flex !important;
-    align-items: baseline !important;
-    gap: 6px !important;
-    flex-wrap: nowrap !important;
-    margin-top: 4px !important;
+    flex-direction: column !important; /* Stacks prices */
+    align-items: flex-start !important;
+    gap: 4px !important;
+    margin-top: 6px !important;
   }
 
   .price-tag {
     font-size: 14px !important;
-    font-weight: bold !important;
-    color: #f8fafc !important;
-    white-space: nowrap !important;
+    line-height: 1 !important;
   }
 
   .original-mrp {
-    font-size: 11px !important;
-    text-decoration: line-through !important;
-    color: #94a3b8 !important;
-    white-space: nowrap !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
   }
 
   .flipkart-discount-badge {
@@ -233,60 +275,50 @@
 }
 
 /* =========================================================
-   Dark Mode Global Visibility Safeguards
+   DARK MODE TOGGLE FIXES (Colors & Visibility)
    ========================================================= */
+/* Fix dark mode card background and border */
+body.dark .product-card,
+html.dark .product-card,
+[data-theme='dark'] .product-card {
+  border: 1px solid #333336 !important;
+  background-color: #1c1c1e !important;
+}
+
 body.dark .price-tag,
 html.dark .price-tag,
-[data-theme='dark'] .price-tag,
-.dark-theme .price-tag {
-  color: #ffffff !important;
+[data-theme='dark'] .price-tag {
+  color: var(--text-dark, #111);
 }
 
 body.dark .original-mrp,
 html.dark .original-mrp,
-[data-theme='dark'] .original-mrp,
-.dark-theme .original-mrp {
-  color: #94a3b8 !important;
+[data-theme='dark'] .original-mrp {
+  color: #a1a1aa !important;
 }
 
 body.dark .product-name,
 html.dark .product-name,
-[data-theme='dark'] .product-name,
-.dark-theme .product-name {
+[data-theme='dark'] .product-name {
   color: #f1f5f9 !important;
 }
 
-/* =========================================================
-   ATTRACTIVE HOME ATTRACTION LABEL (Zero Gap & Premium Look)
-   ========================================================= */
-.hero-subtitle-wrapper {
-  text-align: center;
-  margin: -12px auto 20px auto !important; /* Banner ke sath seamlessly merge karega aur gap khatam karega */
-  padding: 0 15px;
-  position: relative;
-  z-index: 5;
+/* Fix "FEATURED PRODUCTS" heading in dark mode */
+body.dark h1, body.dark h2, body.dark h3, 
+body.dark .section-title, body.dark .featured-title,
+[data-theme='dark'] .section-title {
+  color: var(--text-dark, #111);
 }
 
-.hero-text-overlay {
-  display: inline-block !important;
-  background: linear-gradient(135deg, #ad3764, #d28a2e) !important;
-  color: #ffffff !important;
-  padding: 8px 28px !important;
-  border-radius: 50px !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  letter-spacing: 1px !important;
-  text-transform: uppercase !important;
-  box-shadow: 0 6px 20px rgba(173, 55, 100, 0.3) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  text-align: center !important;
-}
-
-/* Dark Mode Support for Home Label */
+/* Ribbon Dark Mode */
 body.dark .hero-text-overlay,
 html.dark .hero-text-overlay,
 [data-theme='dark'] .hero-text-overlay {
   background: linear-gradient(135deg, #831843, #b45309) !important;
   color: #f8fafc !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+/* FEATURED PRODUCTS DARK MODE FIX ONLY */
+html.dark .section-title,
+html.dark h2 {
+  color: var(--text-dark, #111);
 }

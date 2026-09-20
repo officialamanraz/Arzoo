@@ -8,7 +8,7 @@ const storage = multer.memoryStorage(); // CHANGED: diskStorage se memoryStorage
 const upload = multer({storage});
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
-router.post('/register', registerUser);
+router.post('/register', upload.single('profile_image'), registerUser);
 router.post('/login', loginUser);
 
 // 🚨 UPDATED ONLY THIS LINE: verifyToken ko upload.single se pehle rakh diya

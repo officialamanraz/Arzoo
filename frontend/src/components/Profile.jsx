@@ -21,6 +21,9 @@ const Profile = () => {
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // NEW: State for toggling password visibility
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -127,7 +130,6 @@ const Profile = () => {
     try {
       const token = localStorage.getItem('token');
       
-      // Backend should have a route like PUT /api/auth/update-password
       const response = await fetch(`${API_BASE_URL}/api/auth/update-password`, {
         method: 'PUT',
         headers: { 
@@ -163,7 +165,7 @@ const Profile = () => {
 
   return (
     <div className="profile-page-container">
-      {/* SIDEBAR (Stays identical for Desktop, stacks on Mobile) */}
+      {/* SIDEBAR */}
       <div className="profile-sidebar">
         <div className="profile-sidebar-header">
           <div className="profile-avatar">
@@ -187,7 +189,7 @@ const Profile = () => {
         </ul>
       </div>
 
-      {/* CONTENT AREA (Amazon-style Login & Security) */}
+      {/* CONTENT AREA */}
       <div className="profile-content">
         <h2>Login & Security</h2>
         
@@ -276,12 +278,36 @@ const Profile = () => {
             {editSection === 'password' ? (
               <form className="security-edit-form" onSubmit={handleUpdatePassword}>
                 <label>Current Password</label>
-                <input type="password" name="currentPassword" value={formData.currentPassword} onChange={handleChange} required />
+                <div className="password-input-wrapper">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    name="currentPassword" 
+                    value={formData.currentPassword} 
+                    onChange={handleChange} 
+                    required 
+                  />
+                  <button type="button" className="password-toggle-btn" onClick={() => setShowPassword(!showPassword)} title="Toggle Password Visibility">
+                    {showPassword ? "👁️‍🗨️" : "👁️"}
+                  </button>
+                </div>
+                
                 <label>New Password</label>
-                <input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} required />
+                <div className="password-input-wrapper">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    name="newPassword" 
+                    value={formData.newPassword} 
+                    onChange={handleChange} 
+                    required 
+                  />
+                  <button type="button" className="password-toggle-btn" onClick={() => setShowPassword(!showPassword)} title="Toggle Password Visibility">
+                    {showPassword ? "👁️‍🗨️" : "👁️"}
+                  </button>
+                </div>
+
                 <div className="form-actions">
                   <button type="submit" className="save-btn" disabled={isLoading}>{isLoading ? 'Saving...' : 'Save changes'}</button>
-                  <button type="button" className="cancel-btn" onClick={() => { setEditSection(null); setFormData({...formData, currentPassword: '', newPassword: ''}); }}>Cancel</button>
+                  <button type="button" className="cancel-btn" onClick={() => { setEditSection(null); setFormData({...formData, currentPassword: '', newPassword: ''}); setShowPassword(false); }}>Cancel</button>
                 </div>
               </form>
             ) : (

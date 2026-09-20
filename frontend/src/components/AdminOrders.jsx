@@ -31,13 +31,10 @@ function AdminOrders() {
     fetchOrders();
 
     socket.on('order_updated', (data) => {
-      console.log('[AdminOrders] Real-time order update received:', data);
       const updatedOrder = data.order;
-
       setOrders((prevOrders) => {
         const exists = prevOrders.find(o => o.order_id === updatedOrder.order_id);
         let newOrders;
-
         if (exists) {
           newOrders = prevOrders.map((o) =>
             o.order_id === updatedOrder.order_id ? { ...o, ...updatedOrder } : o
@@ -45,7 +42,6 @@ function AdminOrders() {
         } else {
           newOrders = [updatedOrder, ...prevOrders];
         }
-
         calculateStats(newOrders);
         return newOrders;
       });
@@ -68,25 +64,18 @@ function AdminOrders() {
   }, [orders, filterStatus]);
 
   const fetchOrders = async () => {
-    console.log('[AdminOrders] Fetching all orders...');
     setLoading(true);
     const token = localStorage.getItem('token');
-
     try {
       const response = await fetch(`${API_BASE_URL}/api/orders/admin/all`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
       const res = await response.json();
-      console.log('[AdminOrders] Orders fetch response:', res);
-
       if (res.success) {
         const allOrders = res.data || [];
         setOrders(allOrders);
         calculateStats(allOrders);
-      } else {
-        console.error('[AdminOrders] Orders fetch failed:', res.message);
       }
     } catch (err) {
       console.error('[AdminOrders] Error fetching orders:', err);
@@ -111,9 +100,7 @@ function AdminOrders() {
   };
 
   const handleStatusChange = async (order, newStatus) => {
-    console.log(`[AdminOrders] Updating order #${order.order_id} to status: ${newStatus}`);
     const token = localStorage.getItem('token');
-
     try {
       const response = await fetch(`${API_BASE_URL}/api/orders/admin/status`, {
         method: 'PATCH',
@@ -127,9 +114,7 @@ function AdminOrders() {
           adminNote: `Order status updated to ${newStatus}`
         })
       });
-
       const res = await response.json();
-
       if (res.success) {
         const updatedOrders = orders.map((o) =>
           o.order_id === order.order_id ? { ...o, status: newStatus } : o
@@ -162,7 +147,7 @@ function AdminOrders() {
     );
   }
   
-return (
+  return (
     <div className="admin-orders-page">
       <div className="orders-container">
 
@@ -209,7 +194,6 @@ return (
           <div className="orders-grid">
             {filteredOrders.map((order) => {
               const config = statusConfig[order.status] || statusConfig.pending;
-              // We only take the first item to prevent duplicate images
               const firstItem = order.items?.[0];
 
               return (
@@ -218,7 +202,7 @@ return (
                   className={`order-card ${liveUpdateFlash === order.order_id ? 'order-card-flash' : ''}`}
                   onClick={() => navigate(`/admin/orders/${order.order_id}`)}
                 >
-                  {/* 1. Header: Customer Name & Order No */}
+                  {/* 1. Header */}
                   <div className="order-header-new">
                     <div className="customer-profile">
                       <span className="customer-avatar">
@@ -229,7 +213,7 @@ return (
                     <span className="order-id">#{order.order_id}</span>
                   </div>
 
-                  {/* 2. Media: Single Product Image */}
+                  {/* 2. Media */}
                   <div className="order-main-image">
                     {firstItem?.image_url ? (
                       <img src={getImageUrl(firstItem.image_url)} alt={firstItem?.name} />
@@ -241,7 +225,7 @@ return (
                     )}
                   </div>
 
-                  {/* 3 & 4. Details & Pricing: Product Name and Total Price */}
+                  {/* 3 & 4. Details & Pricing */}
                   <div className="order-product-details">
                     <div className="product-name-qty">
                       <span className="product-name">{firstItem?.name || 'Unknown Product'}</span>
@@ -252,36 +236,34 @@ return (
                     </div>
                   </div>
 
-                  {/* 👇 NAYA ADD KIYA HUA BLOCK (Phone, Payment, Tracking ID) 👇 */}
-                  <div className="admin-order-extra-details" style={{ fontSize: '13px', color: '#555', marginTop: '10px', padding: '10px', background: '#f9f9f9', borderRadius: '8px' }}>
-                    <p style={{ margin: '4px 0' }}>
+                  {/* Cleaned up Contact & Payment Info Block */}
+                  <div className="admin-order-extra-details">
+                    <p>
                       <strong>📞 Phone:</strong> {order.phone || order.customer_phone || 'N/A'}
                     </p>
-                    <p style={{ margin: '4px 0' }}>
+                    <p>
                       <strong>💳 Payment:</strong> {' '}
                       {order.payment_status === 'paid' || order.payment_status === 'success' ? (
-                        <span style={{ color: 'green', fontWeight: 'bold' }}>Paid ✅ (Webhook)</span>
+                        <span className="badge-paid">Paid ✅ (Webhook)</span>
                       ) : (
-                        <span style={{ color: 'red', fontWeight: 'bold' }}>Unpaid ❌</span>
+                        <span className="badge-unpaid">Unpaid ❌</span>
                       )}
                     </p>
-                    {/* Agar Tracking ID hai, toh hi dikhayega */}
                     {order.tracking_ref && (
-                      <p style={{ margin: '4px 0' }}>
-                        <strong>🔗 Dealer Ref:</strong> <span style={{ color: '#A8325E', fontWeight: 'bold' }}>{order.tracking_ref}</span>
+                      <p>
+                        <strong>🔗 Dealer Ref:</strong> <span className="dealer-ref-text">{order.tracking_ref}</span>
                       </p>
                     )}
                   </div>
-                  {/* 👆 END NAYA BLOCK 👆 */}
 
-                  {/* 5. Footer: Order Time & Status Update */}
+                  {/* 5. Footer */}
                   <div className="order-footer-new">
                     <div className="order-time-display">
                       <span className="time-label">Ordered at</span>
-                      <span className="time-value">{formatDate(order.ordered_at)}</span>
+                      <span className="time-label time-value">{formatDate(order.ordered_at)}</span>
                     </div>
 
-                    <div className="status-update-section">
+                    <div className="status-update-section" onClick={(e) => e.stopPropagation()}>
                       <select
                         value={order.status}
                         onChange={(e) => handleStatusChange(order, e.target.value)}

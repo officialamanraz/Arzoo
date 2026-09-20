@@ -7,6 +7,7 @@
   background-color: var(--bg-light, #f4f6f8);
   min-height: 100vh;
   box-sizing: border-box;
+  transition: background-color 0.3s ease;
 }
 
 .admin-header-stats {
@@ -16,20 +17,23 @@
   margin-bottom: 24px;
 }
 
-.admin-header-stats h2 {
+/* 🌟 DYNAMIC TEXT COLOR FOR HEADERS */
+.admin-header-stats h2, .admin-header-stats h1 {
   margin: 0;
   color: var(--text-dark, #111);
 }
 
+/* 🌟 DYNAMIC FORM CONTAINER */
 .form-container {
   max-width: 1200px;
   margin: 0 auto;
-  background: var(--white, #fff);
+  background-color: var(--bg-card, #fff);
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   border: 1px solid var(--border, #eee);
   box-sizing: border-box;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .form-group {
@@ -37,13 +41,15 @@
   width: 100%;
 }
 
-.form-group label {
+/* 🌟 DYNAMIC LABEL COLOR */
+.form-group label, .admin-wrapper label {
   display: block;
   font-weight: 600;
   margin-bottom: 8px;
-  color: var(--text-dark, #333);
+  color: var(--text-dark, #111);
 }
 
+/* 🌟 DYNAMIC INPUT FIELDS */
 .admin-input, .admin-file-input, select.admin-input {
   width: 100%;
   padding: 14px;
@@ -57,22 +63,24 @@
   transition: all 0.3s ease;
 }
 
+.admin-input::placeholder, .admin-file-input::placeholder {
+  color: var(--text-light, #94a3b8);
+}
+
 .admin-input:focus, .admin-file-input:focus, select.admin-input:focus {
   outline: none;
   border-color: var(--primary, #A8325E);
-  box-shadow: 0 0 0 3px rgba(168, 50, 94, 0.1);
+  box-shadow: 0 0 0 3px rgba(168, 50, 94, 0.15);
 }
 
-/* Forces dropdown options to stay visible properly */
 select.admin-input option {
-  background-color: var(--white, #fff);
+  background-color: var(--bg-card, #fff);
   color: var(--text-dark, #111);
 }
 
 /* =========================================
-   DYNAMIC RESPONSIVE GRIDS
+   DYNAMIC RESPONSIVE GRIDS & FIELDSETS
    ========================================= */
-
 .responsive-grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -90,7 +98,7 @@ select.admin-input option {
   border-radius: 10px;
   padding: 25px;
   margin-bottom: 25px;
-  background: var(--white, #fff);
+  background-color: transparent; /* FIXED: Blends into form container */
   box-sizing: border-box;
 }
 
@@ -99,13 +107,12 @@ select.admin-input option {
   font-size: 1.1rem;
   padding: 0 15px;
   color: var(--primary, #A8325E);
-  background: var(--white, #fff);
+  background-color: var(--bg-card, #fff); /* Matches form container */
 }
 
 /* =========================================
    BUTTONS STYLING
    ========================================= */
-
 .action-buttons-container {
   margin-top: 30px;
   align-items: center;
@@ -142,7 +149,7 @@ select.admin-input option {
 
 .admin-cancel-btn {
   background-color: transparent;
-  color: var(--text-dark, #333);
+  color: var(--text-dark, #111);
   border: 2px solid var(--border, #ccc);
 }
 
@@ -151,69 +158,32 @@ select.admin-input option {
 }
 
 /* =========================================
-   RESPONSIVE MEDIA QUERIES FOR MOBILE/TABLETS
-   ========================================= */
-
-@media (max-width: 900px) {
-  .form-container {
-    padding: 20px;
-  }
-  .admin-fieldset {
-    padding: 15px;
-  }
-}
-
-@media (max-width: 600px) {
-  .admin-wrapper {
-    padding: 10px;
-  }
-  
-  .form-container {
-    padding: 15px;
-    border-radius: 8px;
-  }
-  
-  .responsive-grid-2, .responsive-grid-3 {
-    gap: 15px;
-  }
-
-  .admin-input, .admin-file-input {
-    padding: 12px;
-    font-size: 16px; /* Prevents auto-zoom on iOS mobile browsers */
-  }
-
-  .admin-fieldset {
-    padding: 15px 10px;
-  }
-}
-
-@media (max-width: 360px) {
-  .admin-header-stats h2 {
-    font-size: 1.2rem;
-  }
-  .admin-submit-btn, .admin-cancel-btn {
-    padding: 12px;
-    font-size: 1rem;
-  }
-}
-/* =========================================
    FINANCIAL & PRICING SECTION
    ========================================= */
-
 .financial-section {
-  background-color: #f8fafc;
+  background-color: var(--bg-light, #f8fafc);
   padding: 20px;
   border-radius: 8px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--border, #cbd5e1);
   margin-bottom: 25px;
+  transition: background-color 0.3s ease;
 }
 
 .financial-section .form-group {
   margin-bottom: 10px;
 }
 
+/* Media Queries */
+@media (max-width: 900px) {
+  .form-container { padding: 20px; }
+  .admin-fieldset { padding: 15px; }
+}
+
 @media (max-width: 600px) {
-  .financial-section {
-    padding: 15px;
-  }
+  .admin-wrapper { padding: 10px; }
+  .form-container { padding: 15px; border-radius: 8px; }
+  .responsive-grid-2, .responsive-grid-3 { gap: 15px; }
+  .admin-input, .admin-file-input { padding: 12px; font-size: 16px; }
+  .admin-fieldset { padding: 15px 10px; }
+  .financial-section { padding: 15px; }
 }

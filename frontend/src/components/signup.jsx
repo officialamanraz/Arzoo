@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import './Signup.css'; // Extracted CSS
+import './Signup.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function Signup() {
   const navigate = useNavigate();
 
-  // Stores states and their cities, fetched from the backend
   const [locationData, setLocationData] = useState({});
   const [loadingLocations, setLoadingLocations] = useState(true);
 
@@ -21,25 +20,22 @@ function Signup() {
     fullAddress: '',
   });
 
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Fetch states/cities list from the backend
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchLocations = async () => {
-      console.log('[Signup] Fetching locations data...');
       try {
         const res = await fetch(`${API_BASE_URL}/api/location/states-districts`, {
           signal: controller.signal,
         });
-        
-        // DEBUGGING STEP: Read the response as raw text first
         const textData = await res.text(); 
-        console.log("[Signup] Raw response from server:", textData);
-
-        // Attempt to parse the text into JSON
         const data = JSON.parse(textData);
         setLocationData(data);
       } catch (error) {
@@ -55,39 +51,64 @@ function Signup() {
     return () => controller.abort();
   }, []);
 
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   const handleStateChange = (e) => {
-    console.log(`[Signup] State changed to: ${e.target.value}`);
     setFormData({
       ...formData,
       state: e.target.value,
-      city: '', // Reset city whenever state changes
+      city: '',
     });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setIsSubmitting(true);
-    console.log("[Signup] Registering user with data:", formData);
 
     try {
+      const dataToSend = new FormData();
+      dataToSend.append('name', formData.name);
+      dataToSend.append('email', formData.email);
+      dataToSend.append('password', formData.password);
+      dataToSend.append('phone', formData.phone);
+      dataToSend.append('state', formData.state);
+      dataToSend.append('city', formData.city);
+      dataToSend.append('fullFormattedAddress', formData.fullAddress);
+      
+      if (profileImageFile) {
+        dataToSend.append('profile_image', profileImageFile);
+      }
+
       const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: dataToSend,
       });
 
       const data = await res.json();
-      console.log("[Signup] Server response:", data);
 
       if (res.ok && data.token) {
-        // Auto-login after successful signup — store the token and
-        // go straight to the home page, same as a normal login.
         localStorage.setItem('token', data.token);
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
         navigate('/');
-        window.location.reload(); // Refresh Navbar so it shows logged-in state
+        window.location.reload();
       } else {
-        console.warn("[Signup] Failed to register:", data.message);
         setErrorMessage(data.message || 'Signup failed. Please try again.');
       }
     } catch (err) {
@@ -109,45 +130,94 @@ function Signup() {
           </div>
         )}
 
+        {/* Profile Picture Upload Section */}
+        <div className="signup-avatar-container">
+          <div className="signup-avatar-preview">
+            {imagePreview ? (
+              <img src={imagePreview} alt="Avatar Preview" />
+            ) : (
+              <span className="avatar-placeholder-icon">👤</span>
+            )}
+          </div>
+          <label htmlFor="profileImageInput" className="signup-avatar-label">
+            Upload Profile Picture (Optional)
+          </label>
+          <input 
+            type="file" 
+            id="profileImageInput" 
+            accept="image/*" 
+            onChange={handleImageChange} 
+            style={{ display: 'none' }} 
+          />
+        </div>
+
         <input
           type="text"
+          name="name"
           placeholder="Full Name"
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          value={formData.name}
+          onChange={handleChange}
           required
           className="signup-input"
         />
         
         <input
           type="email"
+          name="email"
           placeholder="Email Address"
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          value={formData.email}
+          onChange={handleChange}
           required
           className="signup-input"
         />
-        
-        <input
-          type="password"
-          placeholder="Password (min. 6 characters)"
-          minLength="6"
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          required
-          className="signup-input"
-        />
+
+        <div className="password-input-wrapper">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Password (min. 6 characters)"
+            minLength="6"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            className="signup-input"
+          />
+          <button 
+            type="button" 
+            className="password-toggle-btn" 
+            onClick={() => setShowPassword(!showPassword)}
+            title={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              /* Open Eye */
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            ) : (
+              /* Eye with Slash */
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            )}
+          </button>
+        </div>
         
         <input
           type="tel"
+          name="phone"
           placeholder="Phone Number"
           pattern="[0-9]{10}"
           title="Enter a 10-digit phone number"
-          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          value={formData.phone}
+          onChange={handleChange}
           required
           className="signup-input"
           maxLength="10"
         />
 
-        {/* Smart Address Section (powered by backend location data) */}
         <div className="form-row">
-          {/* State Dropdown */}
           <select
             value={formData.state}
             onChange={handleStateChange}
@@ -163,7 +233,6 @@ function Signup() {
               ))}
           </select>
 
-          {/* City Dropdown */}
           <select
             value={formData.city}
             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -183,8 +252,10 @@ function Signup() {
         </div>
 
         <textarea
+          name="fullAddress"
           placeholder="House No, Building, Street, Area..."
-          onChange={(e) => setFormData({ ...formData, fullAddress: e.target.value })}
+          value={formData.fullAddress}
+          onChange={handleChange}
           required
           className="signup-textarea"
         />

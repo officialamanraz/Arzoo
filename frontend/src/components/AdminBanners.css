@@ -1,6 +1,6 @@
 .admin-wrapper {
   padding: 20px;
-  background-color: var(--bg-light);
+  background-color:var(--bg-light, #f4f6f8) !important;
   min-height: 100vh;
 }
 

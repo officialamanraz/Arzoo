@@ -161,6 +161,16 @@ app.get('/test', (req, res) => {
   console.log('[SERVER] GET /test -- Health check hit');
   res.status(200).send('Server is running with Pro-Security 🛡️!');
 });
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    console.error("[MULTER ERROR]:", err);
+    return res.status(400).json({ success: false, message: `Upload error: ${err.message}` });
+  } else if (err) {
+    console.error("[UNKNOWN SERVER ERROR]:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+  next();
+});
 
 // API Routes
 app.use('/api/dealer',dealerRoutes)

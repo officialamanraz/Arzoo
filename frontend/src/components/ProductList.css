@@ -281,5 +281,35 @@ body.dark .product-card-price {
 
 body.dark .product-card-btn {
   background-color: var(--primary, #d97706) !important;
-  color: #ffffff !important;
+  color: var(--text-dark, #111);
+}
+/* =========================================================
+   MRP PRICE VISIBILITY FIX (Light & Dark Mode)
+   ========================================================= */
+/* Light Mode MRP */
+.original-mrp {
+  color: #666666 !important; 
+  font-size: 13px !important;
+  text-decoration: line-through !important;
+  opacity: 1 !important;
+}
+
+/* Dark Mode MRP */
+body.dark .original-mrp,
+html.dark .original-mrp,
+[data-theme='dark'] .original-mrp {
+  color: #a1a1aa !important; 
+}
+
+/* Fix "FEATURED PRODUCTS" Heading in Dark Mode */
+body.dark h1, body.dark h2, body.dark h3, 
+body.dark .section-title, body.dark .featured-title {
+  color: var(--text-dark, #111);
+}
+
+/* Admin Button Overlap Fix */
+.admin-switcher-btn {
+  bottom: 80px !important;
+  right: 20px !important;
+  z-index: 1000 !important;
 }

@@ -44,11 +44,10 @@ function Home({
     return t('featured');
   };
 
-const getPageNumbers = () => {
+  const getPageNumbers = () => {
     const total = actualTotalPages;
     const pages = [];
 
-    // Agar total 4 ya kam pages hain, toh normal saare dikha do
     if (total <= 4) {
       for (let i = 1; i <= total; i++) {
         pages.push(i);
@@ -56,20 +55,16 @@ const getPageNumbers = () => {
       return pages;
     }
 
-    // 1. Shuruat ke pages par ho (e.g. page 1 ya 2)
     if (currentPage <= 2) {
       pages.push(1, 2, 3);
     } 
-    // 2. Aakhri pages ke paas ho
     else if (currentPage >= total - 1) {
       pages.push(total - 2, total - 1, total);
     } 
-    // 3. Beech mein ho (jaise screenshot mein page 3 par: 2, 3, 4)
     else {
       pages.push(currentPage - 1, currentPage, currentPage + 1);
     }
 
-    // 4. Last Page button: bina kisi dots ke seedha aakhri page add karega
     if (!pages.includes(total)) {
       pages.push(total);
     }
@@ -81,11 +76,11 @@ const getPageNumbers = () => {
     <div className="home-container">
       <HeroBanner />
       
-     <div className="hero-subtitle-wrapper">
-  <div className="hero-text-overlay">
-    {t('heroText')}
-  </div>
-</div>
+      <div className="hero-subtitle-wrapper">
+        <div className="hero-text-overlay">
+          {t('heroText')}
+        </div>
+      </div>
 
       <section className="product-section" id="product">
         <h2 className="section-title">
@@ -109,6 +104,12 @@ const getPageNumbers = () => {
                 const finalImageUrl = saree.image_url || saree.thumbnail || '/saare_1.jpeg';
                 const sareeId = saree.product_id || saree.id;
 
+                // Smart Discount Logic: Checks backend first, calculates via math if missing
+                let displayDiscount = saree.discount_percentage || 0;
+                if (!displayDiscount && saree.mrp && saree.price && saree.mrp > saree.price) {
+                  displayDiscount = Math.round(((saree.mrp - saree.price) / saree.mrp) * 100);
+                }
+
                 return (
                   <Link to={`/product/${sareeId}`} className="product-card" key={sareeId}>
                     
@@ -121,15 +122,14 @@ const getPageNumbers = () => {
                           e.target.src = "/saare_1.jpeg"; 
                         }}
                       />
-                      {/* 🏷️ Bada aur clear Flipkart Style Discount Badge */}
-                      {saree.discount_percentage > 0 && (
+                      {/* Uses the smart calculated discount */}
+                      {displayDiscount > 0 && (
                         <span className="flipkart-discount-badge">
-                          ↓{saree.discount_percentage}%
+                          ↓{displayDiscount}%
                         </span>
                       )}
                     </div>
 
-                    {/* 📝 Name aur Price ek ke neeche ek (One by One) */}
                     <div className="product-info">
                       <p className="product-name" title={saree.name || saree.title}>
                         {saree.name || saree.title}

@@ -5,7 +5,6 @@ import './AdminAddProduct.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-// Added mrp, discountPercentage, and dealerId to the initial state
 const emptyFormState = {
   name: '', price: '', mrp: '', discountPercentage: '0', dealerBasePrice: '', packagingCost: '', dealerId: '', 
   description: '', baseColor: '', categoryId: '', subcategoryId: '',
@@ -21,14 +20,13 @@ function AdminAddProduct() {
 
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  const [dealers, setDealers] = useState([]); // State for Dealer Dropdown
+  const [dealers, setDealers] = useState([]);
   const [form, setForm] = useState(emptyFormState);
   const [images, setImages] = useState([]);
   const [isEditing, setIsEditing] = useState(!!editingProduct);
   const [editId, setEditId] = useState(editingProduct?.product_id || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. Populate form if editing an existing product
   useEffect(() => {
     if (editingProduct) {
       console.log('[ADMIN_ADD_PRODUCT] 📝 Editing mode active. Populating form with product ID:', editingProduct.product_id);
@@ -65,7 +63,6 @@ function AdminAddProduct() {
     }
   }, [editingProduct]);
 
-  // 2. Fetch Categories & Dealers safely on mount
   useEffect(() => {
     let isMounted = true;
 
@@ -73,15 +70,12 @@ function AdminAddProduct() {
       try {
         const token = localStorage.getItem('token');
         
-        // Fetch Categories
         const catRes = await fetch(`${API_BASE_URL}/api/categories`); 
         if (catRes.ok) {
           const catResult = await catRes.json();
           if (isMounted && catResult.categories) setCategories(catResult.categories);
         }
 
-        // Fetch Dealers (Requires Admin Token)
-        // Fetch Dealers
         console.log('[ADMIN_ADD_PRODUCT] 🔄 Fetching dealers from API...');
         const dealerRes = await fetch(`${API_BASE_URL}/api/dealer/admin/all`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -92,7 +86,6 @@ function AdminAddProduct() {
           console.log('[ADMIN_ADD_PRODUCT] 📦 Dealer API Response received:', dealerResult);
           
           if (isMounted && dealerResult.success && dealerResult.dealers) {
-            // ⚡ YAHAN HAI CATCH: Backend 'dealers' array bhej raha hai, toh hum 'dealerResult.dealers' likhenge
             setDealers(dealerResult.dealers); 
           }
         }
@@ -105,7 +98,6 @@ function AdminAddProduct() {
     return () => { isMounted = false; };
   }, []);
 
-  // 3. Fetch Subcategories when categoryId changes
   useEffect(() => {
     let isMounted = true;
     const fetchSubcategories = async () => {
@@ -157,11 +149,11 @@ function AdminAddProduct() {
     const formData = new FormData();
     formData.append('name', form.name);
     formData.append('price', form.price);
-    formData.append('mrp', form.mrp); // 👈 Added
-    formData.append('discount_percentage', form.discountPercentage); // 👈 Added
+    formData.append('mrp', form.mrp); 
+    formData.append('discount_percentage', form.discountPercentage); 
     formData.append('dealer_base_price', form.dealerBasePrice); 
     formData.append('packaging_cost', form.packagingCost); 
-    formData.append('dealer_id', form.dealerId); // 👈 Added
+    formData.append('dealer_id', form.dealerId); 
     formData.append('description', form.description);
     formData.append('base_color', form.baseColor);
     formData.append('category_id', form.categoryId);
@@ -214,7 +206,9 @@ function AdminAddProduct() {
       setIsSubmitting(false);
     }
   };
-console.log("👀 FINAL DEALERS STATE:", dealers);
+
+  console.log("👀 FINAL DEALERS STATE:", dealers);
+
   return (
     <div className="admin-wrapper">
       <div className="admin-header-stats">
@@ -230,44 +224,45 @@ console.log("👀 FINAL DEALERS STATE:", dealers);
             <input type="text" value={form.name} onChange={handleFieldChange('name')} required className="admin-input" />
           </div>
 
-          {/* 🌟 FINANCIAL INPUTS SECTION (Price, MRP, Discount, Dealer Cost & Packaging) */}
-          <div className="responsive-grid-3" style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px dashed #cbd5e1', marginBottom: '20px' }}>
-            
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>MRP (₹)</label>
-              <input type="number" value={form.mrp} onChange={handleFieldChange('mrp')} className="admin-input" placeholder="e.g. 50000" />
-            </div>
+          {/* 🌟 FINANCIAL INPUTS SECTION */}
+          <div className="financial-section">
+            <div className="responsive-grid-3">
+              <div className="form-group">
+                <label>MRP (₹)</label>
+                <input type="number" value={form.mrp} onChange={handleFieldChange('mrp')} className="admin-input" placeholder="e.g. 50000" />
+              </div>
 
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Selling Price (₹)</label>
-              <input type="number" value={form.price} onChange={handleFieldChange('price')} required className="admin-input" placeholder="e.g. 34999" />
-            </div>
+              <div className="form-group">
+                <label>Selling Price (₹)</label>
+                <input type="number" value={form.price} onChange={handleFieldChange('price')} required className="admin-input" placeholder="e.g. 34999" />
+              </div>
 
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Discount (%)</label>
-              <input type="number" value={form.discountPercentage} onChange={handleFieldChange('discountPercentage')} className="admin-input" placeholder="e.g. 20" min="0" max="100" />
-            </div>
+              <div className="form-group">
+                <label>Discount (%)</label>
+                <input type="number" value={form.discountPercentage} onChange={handleFieldChange('discountPercentage')} className="admin-input" placeholder="e.g. 20" min="0" max="100" />
+              </div>
 
-            <div className="form-group" style={{ marginBottom: 0, marginTop: '15px' }}>
-              <label>Dealer</label>
-              <select value={form.dealerId} onChange={handleFieldChange('dealerId')} className="admin-input">
-                <option value="">-- Direct Sale (No Dealer) --</option>
-                {dealers.map((dealer) => (
-                  <option key={dealer.dealer_id} value={String(dealer.dealer_id)}>
-                    {dealer.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="form-group">
+                <label>Dealer</label>
+                <select value={form.dealerId} onChange={handleFieldChange('dealerId')} className="admin-input">
+                  <option value="">-- Direct Sale (No Dealer) --</option>
+                  {dealers.map((dealer) => (
+                    <option key={dealer.dealer_id} value={String(dealer.dealer_id)}>
+                      {dealer.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="form-group" style={{ marginBottom: 0, marginTop: '15px' }}>
-              <label>Dealer Base Price (₹)</label>
-              <input type="number" value={form.dealerBasePrice} onChange={handleFieldChange('dealerBasePrice')} className="admin-input" placeholder="e.g. 27000" />
-            </div>
-            
-            <div className="form-group" style={{ marginBottom: 0, marginTop: '15px' }}>
-              <label>Packaging Cost (₹)</label>
-              <input type="number" value={form.packagingCost} onChange={handleFieldChange('packagingCost')} required className="admin-input" placeholder="e.g. 500" />
+              <div className="form-group">
+                <label>Dealer Base Price (₹)</label>
+                <input type="number" value={form.dealerBasePrice} onChange={handleFieldChange('dealerBasePrice')} className="admin-input" placeholder="e.g. 27000" />
+              </div>
+              
+              <div className="form-group">
+                <label>Packaging Cost (₹)</label>
+                <input type="number" value={form.packagingCost} onChange={handleFieldChange('packagingCost')} required className="admin-input" placeholder="e.g. 500" />
+              </div>
             </div>
           </div>
 
@@ -379,7 +374,7 @@ console.log("👀 FINAL DEALERS STATE:", dealers);
                 <input type="text" value={form.weight} onChange={handleFieldChange('weight')} className="admin-input" placeholder="e.g. 600g" />
               </div>
             </div>
-            <div className="responsive-grid-2" style={{ marginTop: '20px' }}>
+            <div className="responsive-grid-2">
               <div className="form-group">
                 <label>Producer</label>
                 <input type="text" value={form.producer} onChange={handleFieldChange('producer')} className="admin-input" />
@@ -401,7 +396,7 @@ console.log("👀 FINAL DEALERS STATE:", dealers);
               accept="image/*"
               required={!isEditing}
             />
-            {isEditing && <small className="edit-note" style={{ display: 'block', marginTop: '5px', color: '#888' }}>Leave empty to keep existing images.</small>}
+            {isEditing && <small className="edit-note">Leave empty to keep existing images.</small>}
           </div>
 
           <div className="responsive-grid-2 action-buttons-container">

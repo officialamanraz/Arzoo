@@ -70,56 +70,69 @@ const generateToken = (userId, role) => {
   });
 };
 
-// ==========================================
-// 1. REGISTER USER
-// ==========================================
+
 const registerUser = async (req, res) => {
-  // 🚨 FIX: req.body se ab hum image_url ki jagah 'profile_image' nikal rahe hain
-  const { name, email, password, phone, state, city, fullAddress, profile_image } = req.body;
-  console.log(`[AUTH] Register attempt -- email: ${email}`);
- 
-  if (!name || !email || !password) {
-    console.warn('[AUTH] Register failed -- missing required fields');
-    return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
-  }
- 
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    console.warn(`[AUTH] Register failed -- password too short for ${email}`);
-    return res.status(400).json({
-      success: false,
-      message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
-    });
-  }
- 
-  const fullFormattedAddress = [fullAddress, city, state].filter(Boolean).join(', ');
- 
   try {
+    // Safety check if body is missing or malformed from multipart stream
+    if (!req.body) {
+      return res.status(400).json({ success: false, message: 'Request body is missing.' });
+    }
+
+    const { name, email, password, phone, state, city, fullAddress } = req.body;
+    console.log(`[AUTH] Register attempt -- email: ${email}`);
+   
+    if (!name || !email || !password) {
+      console.warn('[AUTH] Register failed -- missing required fields');
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
+    }
+   
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      console.warn(`[AUTH] Register failed -- password too short for ${email}`);
+      return res.status(400).json({
+        success: false,
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
+      });
+    }
+   
+    const fullFormattedAddress = [fullAddress, city, state].filter(Boolean).join(', ');
+   
+    // Upload profile image to ImageKit if provided during registration
+    let profile_image = null;
+    if (req.file) {
+      const fileBase64 = req.file.buffer.toString('base64');
+      const uploadResponse = await imagekit.files.upload({
+        file: fileBase64,
+        fileName: `profile_reg_${Date.now()}`,
+        folder: "/arzoo-saree/profile-images"
+      });
+      profile_image = uploadResponse.url;
+    }
+
     const { insertId } = await registerUserService({
       name,
       email,
       password,
       phone,
       fullFormattedAddress,
-      // 🚨 FIX: Service ko bhi hum 'profile_image' pass kar rahe hain
       profile_image
     });
- 
+   
     const token = generateToken(insertId, 'user');
     console.log(`[AUTH] Register success -- user_id: ${insertId}`);
- 
+   
     return res.status(201).json({
       success: true,
       message: 'Account created successfully!',
       token,
-      user: { id: insertId, name, role: 'user' },
+      user: { id: insertId, name, role: 'user', profile_image },
     });
- 
+
   } catch (error) {
     if (error instanceof DuplicateEmailError) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
     }
- 
-    console.error(`[AUTH] Register error for ${email}:`, error.message);
+   
+    console.error(`[AUTH] Register error:`, error.message);
     return res.status(500).json({ success: false, message: 'Server error while creating account.', error: error.message });
   }
 };

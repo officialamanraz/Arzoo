@@ -1,5 +1,39 @@
-.admin-switcher-btn { position: fixed; bottom: 30px; right: 30px; z-index: 9999; background-color: var(--primary); color: #ffffff; padding: 14px 28px; border-radius: 30px; border: none; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, background-color 0.2s ease; display: flex; align-items: center; gap: 10px; }
-.admin-switcher-btn:hover { transform: scale(1.05); background-color: var(--primary-hover); }
-.admin-switcher-btn:active { transform: scale(0.95); }
+.admin-switcher-btn {
+  /* Remove or comment these out so inline JS positioning takes full control */
+  /* bottom: 30px !important; */
+  /* right: 30px !important; */
+  /* top: auto !important; */
+  /* left: auto !important; */
 
-@media (max-width: 600px) { .admin-switcher-btn { bottom: 20px; right: 20px; padding: 12px 20px; font-size: 0.9rem; } }
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  background-color: var(--primary, #b3261e) !important;
+ color: var(--text-dark, #111); 
+  padding: 14px 28px !important;
+  border-radius: 30px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  cursor: grab !important; /* Changes cursor to a grab hand to show it's movable */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  user-select: none !important; /* Prevents text highlighting while dragging */
+}
+
+.admin-switcher-btn:active {
+  cursor: grabbing !important; /* Shows a closed fist when dragging */
+  transform: scale(0.95) !important;
+}
+
+.admin-switcher-btn:hover {
+  background-color: var(--primary-hover, #921b14) !important;
+}
+
+@media (max-width: 600px) {
+  .admin-switcher-btn {
+    padding: 12px 20px !important;
+    font-size: 0.9rem !important;
+  }
+}

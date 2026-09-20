@@ -12,12 +12,14 @@
   min-height: 550px;
 }
 
-/* Sidebar Styling */
+/* Sidebar Styling & Alignment Fix */
 .profile-sidebar {
   width: 300px;
   background: #f8f9fa;
   border-right: 1px solid #eee;
   padding: 30px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-sidebar-header {
@@ -68,18 +70,23 @@
   margin: 0 0 5px;
   font-size: 18px;
   color: #333;
+  text-align: center;
 }
 
 .profile-sidebar-header p {
   margin: 0;
   font-size: 13px;
   color: #777;
+  text-align: center;
+  word-break: break-all;
 }
 
 .profile-menu {
   list-style: none;
   padding: 20px 0 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-menu li {
@@ -88,6 +95,7 @@
   font-size: 15px;
   font-weight: 500;
   color: #555;
+  text-align: left; /* Perfectly aligned text */
   transition: all 0.2s ease;
 }
 
@@ -113,6 +121,8 @@
 .profile-content {
   flex: 1;
   padding: 40px;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-content h2 {
@@ -120,6 +130,7 @@
   font-size: 26px;
   color: #111;
   font-weight: 700;
+  text-align: left;
 }
 
 .status-message {
@@ -142,7 +153,7 @@
   border: 1px solid #ffcdd2;
 }
 
-/* Security List Styling (The Amazon Look) */
+/* Security List Styling */
 .security-list {
   border: 1px solid #d5d9d9;
   border-radius: 8px;
@@ -152,7 +163,7 @@
 .security-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center; /* Aligns edit button and text cleanly in the center */
   padding: 20px;
   border-bottom: 1px solid #d5d9d9;
 }
@@ -167,18 +178,21 @@
   gap: 4px;
   flex: 1;
   padding-right: 20px;
+  text-align: left;
 }
 
 .security-label {
   font-weight: 700;
   font-size: 14px;
   color: #0f1111;
+  text-align: left;
 }
 
 .security-value {
   font-size: 14px;
   color: #0f1111;
   word-break: break-all;
+  text-align: left;
 }
 
 .security-warning {
@@ -186,9 +200,10 @@
   color: #555;
   margin-top: 4px;
   line-height: 1.4;
+  text-align: left;
 }
 
-/* Amazon Style Edit Button */
+/* Edit Button */
 .security-edit-btn {
   background: #fff;
   border: 1px solid #d5d9d9;
@@ -201,34 +216,43 @@
   box-shadow: 0 2px 5px rgba(213,217,217,.5);
   transition: background 0.2s;
   min-width: 70px;
+  flex-shrink: 0;
 }
 
 .security-edit-btn:hover {
   background: #f7fafa;
 }
 
-/* Inline Edit Form */
+/* =========================================================
+   INLINE EDIT FORM (Tightened Gap & Perfect Alignment)
+========================================================= */
 .security-edit-form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px; /* Extremely tight gap so elements sit close together */
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
 .security-edit-form label {
   font-size: 13px;
   font-weight: 700;
   color: #111;
+  margin-bottom: 2px;
+  text-align: left;
 }
 
 .security-edit-form input {
-  padding: 10px 12px;
+  padding: 8px 12px;
   border: 1px solid #888c8c;
   border-radius: 4px;
   font-size: 14px;
   width: 100%;
   max-width: 400px;
   box-sizing: border-box;
+  margin-bottom: 0px; /* Removed extra bottom space */
 }
 
 .security-edit-form input:focus {
@@ -237,17 +261,19 @@
   box-shadow: 0 0 0 3px rgba(0,113,133,.2);
 }
 
+/* Decreased gap for Save/Cancel buttons right below inputs */
 .form-actions {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 6px !important; /* Forces minimal space */
+  padding-top: 0px;
 }
 
 .save-btn {
-  background: #ffd814; /* Amazon Yellow */
+  background: #ffd814; 
   color: #0f1111;
   border: 1px solid #fcd200;
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
@@ -262,7 +288,7 @@
 .cancel-btn {
   background: #fff;
   border: 1px solid #d5d9d9;
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 8px;
   font-size: 13px;
   color: #0f1111;
@@ -272,6 +298,43 @@
 
 .cancel-btn:hover {
   background: #f7fafa;
+}
+
+/* =========================================================
+   PASSWORD VISIBILITY TOGGLE FEATURE
+========================================================= */
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 0px;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  max-width: 100%; 
+  padding-right: 35px;
+  margin-bottom: 0;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle-btn:hover {
+  color: #111;
 }
 
 /* =========================================================
@@ -331,7 +394,148 @@
     font-size: 12px;
   }
   
-  .security-edit-form input {
+  .security-edit-form input,
+  .password-input-wrapper {
     max-width: 100%;
   }
+}
+/* =========================================================
+   DARK MODE STYLES FOR PROFILE PAGE
+   ========================================================= */
+body.dark .profile-page-container,
+html.dark .profile-page-container,
+[data-theme='dark'] .profile-page-container,
+.dark .profile-page-container {
+  background: #1c1c1e !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark .profile-sidebar,
+html.dark .profile-sidebar,
+[data-theme='dark'] .profile-sidebar,
+.dark .profile-sidebar {
+  background: #27272a !important;
+  border-right-color: #333336 !important;
+}
+
+body.dark .profile-sidebar-header,
+html.dark .profile-sidebar-header,
+[data-theme='dark'] .profile-sidebar-header,
+.dark .profile-sidebar-header {
+  border-bottom-color: #333336 !important;
+}
+
+body.dark .profile-sidebar-header h3,
+html.dark .profile-sidebar-header h3,
+[data-theme='dark'] .profile-sidebar-header h3,
+.dark .profile-sidebar-header h3 {
+  color: #f8fafc !important;
+}
+
+body.dark .profile-sidebar-header p,
+html.dark .profile-sidebar-header p,
+[data-theme='dark'] .profile-sidebar-header p,
+.dark .profile-sidebar-header p {
+  color: #cbd5e1 !important;
+}
+
+body.dark .profile-menu li,
+html.dark .profile-menu li,
+[data-theme='dark'] .profile-menu li,
+.dark .profile-menu li {
+  color: #cbd5e1 !important;
+}
+
+body.dark .profile-menu li:hover,
+html.dark .profile-menu li:hover,
+[data-theme='dark'] .profile-menu li:hover,
+.dark .profile-menu li:hover {
+  background: #333336 !important;
+  color: #ff5252 !important;
+}
+
+body.dark .profile-content h2,
+html.dark .profile-content h2,
+[data-theme='dark'] .profile-content h2,
+.dark .profile-content h2 {
+  color: #f8fafc !important;
+}
+
+body.dark .security-list,
+html.dark .security-list,
+[data-theme='dark'] .security-list,
+.dark .security-list {
+  background: #27272a !important;
+  border-color: #333336 !important;
+}
+
+body.dark .security-row,
+html.dark .security-row,
+[data-theme='dark'] .security-row,
+.dark .security-row {
+  border-bottom-color: #333336 !important;
+}
+
+body.dark .security-label,
+html.dark .security-label,
+[data-theme='dark'] .security-label,
+.dark .security-label {
+  color: #f8fafc !important;
+}
+
+body.dark .security-value,
+html.dark .security-value,
+[data-theme='dark'] .security-value,
+.dark .security-value {
+  color: #cbd5e1 !important;
+}
+
+body.dark .security-edit-btn,
+html.dark .security-edit-btn,
+[data-theme='dark'] .security-edit-btn,
+.dark .security-edit-btn {
+  background: #27272a !important;
+  border-color: #333336 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
+}
+
+body.dark .security-edit-btn:hover,
+html.dark .security-edit-btn:hover,
+[data-theme='dark'] .security-edit-btn:hover,
+.dark .security-edit-btn:hover {
+  background: #333336 !important;
+}
+
+body.dark .security-edit-form label,
+html.dark .security-edit-form label,
+[data-theme='dark'] .security-edit-form label,
+.dark .security-edit-form label {
+  color: #f8fafc !important;
+}
+
+body.dark .security-edit-form input,
+html.dark .security-edit-form input,
+[data-theme='dark'] .security-edit-form input,
+.dark .security-edit-form input {
+  background: #1c1c1e !important;
+  border-color: #333336 !important;
+  color: #f8fafc !important;
+}
+
+body.dark .cancel-btn,
+html.dark .cancel-btn,
+[data-theme='dark'] .cancel-btn,
+.dark .cancel-btn {
+  background: #27272a !important;
+  border-color: #333336 !important;
+  color: #f8fafc !important;
+}
+
+body.dark .cancel-btn:hover,
+html.dark .cancel-btn:hover,
+[data-theme='dark'] .cancel-btn:hover,
+.dark .cancel-btn:hover {
+  background: #333336 !important;
 }

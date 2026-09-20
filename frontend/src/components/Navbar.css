@@ -31,6 +31,7 @@
   box-sizing: border-box;
   gap: 15px;
   transition: all 0.3s ease;
+  flex-wrap: nowrap !important; 
 }
 
 /* LEFT SIDE */
@@ -258,7 +259,7 @@
 
 /* ================== MOBILE BOTTOM NAV BAR ================== */
 .mobile-bottom-nav {
-  display: none; /* hidden on desktop & tablet */
+  display: none; 
 }
 
 /* ================== SIDEBAR ================== */
@@ -405,9 +406,15 @@
   border-radius: 3px;
 }
 
+/* =======================================
+   AGGRESSIVE SIDEBAR OVERFLOW FIX
+   ======================================= */
 .sidebar-section {
   padding: 0 20px;
   margin-bottom: 18px;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important; 
 }
 
 .sidebar-section h4 {
@@ -454,8 +461,12 @@
   margin: 18px 0;
 }
 
-.premium-select {
-  width: 100%;
+.sidebar-section select,
+.sidebar-section input,
+.premium-select,
+.subcategory-select {
+  width: 100% !important;
+  max-width: 100% !important;
   padding: 11px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -463,9 +474,7 @@
   outline: none;
   background: var(--bg-light);
   color: var(--text-dark);
-  cursor: pointer;
-  appearance: none;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
 }
 
 .subcategory-select {
@@ -480,15 +489,18 @@
 }
 
 .price-inputs-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .price-input-group {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 0% !important; 
+  min-width: 0 !important;
 }
 
 .price-input-group label {
@@ -499,15 +511,19 @@
   text-transform: uppercase;
 }
 
-.small-select {
+.small-select,
+.price-input-group input {
+  width: 100% !important;
   padding: 9px;
   font-size: 12px;
+  box-sizing: border-box !important;
 }
 
 .price-separator {
+  flex-shrink: 0 !important;
+  margin: 15px 0 0 0 !important;
   color: var(--text-light);
   font-weight: bold;
-  margin-top: 14px;
 }
 
 /* ================== RESPONSIVENESS ================== */
@@ -522,33 +538,44 @@
   }
 }
 
-/* Mobile phones (under 768px) -- strictly isolated */
+/* Mobile phones (under 768px) */
 @media (max-width: 768px) {
-  /* Hide utility dropdowns from top header on mobile to match Flipkart design */
   .desktop-utility {
     display: none !important;
   }
 
-  .navbar {
-    padding: 10px 15px;
-    gap: 10px;
-  }
-
-  /* Top bar elements: Brand/Menu on left, Dark Mode Toggle on right */
   .nav-left {
-    gap: 12px;
+    display: flex !important;
+    align-items: center !important; 
   }
-
+  
+  .menu-btn {
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important; 
+  }
+  
   .nav-logo {
-    font-size: 18px;
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important; 
   }
 
-  /* Search bar spans full width neatly right below top branding */
   .nav-center {
+    max-width: 82% !important; 
+  }
+  
+  .search-container {
+    height: 38px !important; 
+  }
+
+  .nav-right {
     order: 3;
-    max-width: 100%;
-    width: 100%;
-    margin-top: 2px;
+    flex-shrink: 0; 
+    margin-top: 5px;
   }
 
   .search-input {
@@ -561,12 +588,10 @@
     font-size: 13px;
   }
 
-  /* Remove top banner gaps and keep flow tight */
   .main-container, .home-container, .product-detail-page {
     padding-top: 5px !important;
   }
 
-  /* Fixed Flipkart-style bottom navigation bar on mobile */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
@@ -601,7 +626,6 @@
     color: var(--text-dark);
   }
 
-  /* Add padding at the bottom of the page content so the bottom nav doesn't cover elements */
   body {
     padding-bottom: 60px;
   }
@@ -637,7 +661,6 @@
   color: #ff5252;
 }
 
-/* Global dark mode text & price visibility bug fixes */
 body.dark, html.dark, [data-theme='dark'], .dark {
   color: #f8fafc !important;
 }
