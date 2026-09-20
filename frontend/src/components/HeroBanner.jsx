@@ -76,11 +76,11 @@ function HeroBanner() {
           src={imageUrl}
           alt="Banner"
           className="hero-banner-img"
-          onLoad={(e) => {
+         onLoad={(e) => {
             const { naturalWidth, naturalHeight } = e.target;
             
-            // 🌟 Naya Logic: Sirf lambi image flip hogi. Baaki koi bhi image zoom nahi hogi.
-            if (naturalHeight > naturalWidth + 50) {
+            // Agar image vertical hai toh strict flip
+            if (naturalHeight > naturalWidth) {
               e.target.className = 'hero-banner-img portrait-flip';
             } else {
               e.target.className = 'hero-banner-img';

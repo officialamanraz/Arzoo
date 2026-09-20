@@ -66,16 +66,24 @@
     max-height: 820px;
   }
 
-  .hero-banner-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain !important;
-  }
+  /* BASE: Har image contain hogi, koi cut/zoom nahi hoga */
+.hero-banner-img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain !important; 
+  transition: transform 0.5s ease;
+}
 
+/* DESKTOP: Vertical photo sirf flip hogi, zoom bilkul nahi hogi */
+@media (min-width: 769px) {
   .hero-banner-img.portrait-flip {
-    transform: none;
-    object-fit: contain !important; 
+    transform: rotate(-90deg) !important; /* 🌟 Pura scale hata diya */
+    object-fit: contain !important; /* 🌟 Pura cover hata diya, ab full photo dikhegi */
   }
+}
 }
 
 /* =========================================
