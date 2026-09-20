@@ -65,7 +65,7 @@ function HeroBanner() {
         className="hero-banner-slide"
         onClick={() => handleBannerClick(banner)}
       >
-        {/* 🌟 Blur Background - Jo sirf square image ke sides me dikhega */}
+        {/* 🌟 Blur Background - Khali jagah cover karega bina image zoom kiye */}
         <div
           className="hero-banner-blur-fill"
           style={{ backgroundImage: `url(${imageUrl})` }}
@@ -79,15 +79,11 @@ function HeroBanner() {
           onLoad={(e) => {
             const { naturalWidth, naturalHeight } = e.target;
             
-            if (naturalHeight > naturalWidth) {
-              // Lambi image -> Flip karo aur screen bharo
+            // 🌟 Naya Logic: Sirf lambi image flip hogi. Baaki koi bhi image zoom nahi hogi.
+            if (naturalHeight > naturalWidth + 50) {
               e.target.className = 'hero-banner-img portrait-flip';
-            } else if (naturalHeight === naturalWidth) {
-              // Chakor image -> Original shape me rakho (isliye side ka blur dikhega)
-              e.target.className = 'hero-banner-img square-img';
             } else {
-              // Chodi image -> Direct screen bharo
-              e.target.className = 'hero-banner-img landscape-img';
+              e.target.className = 'hero-banner-img';
             }
           }}
           onError={(e) => {

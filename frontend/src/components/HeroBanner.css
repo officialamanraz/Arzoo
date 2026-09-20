@@ -34,14 +34,14 @@
   z-index: 0;
 }
 
-/* 🌟 BASE: Har photo by default 100% puri dikhegi (zoom nahi hogi) */
+/* 🌟 BASE: Har photo 100% puri dikhegi (!important lagana zaroori tha taaki zoom na ho) */
 .hero-banner-img {
   position: relative;
   z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* 🌟 Ye trick image ko cut hone se rokegi */
+  object-fit: contain !important; /* 🌟 Purani saari CSS zoom ko rok dega */
   transition: transform 0.5s ease;
 }
 
@@ -49,10 +49,10 @@
    💻 DESKTOP LOGIC 
    ========================================= */
 @media (min-width: 769px) {
-  /* Sirf Lambi (Vertical) photo flip hogi aur screen bharegi */
+  /* Sirf Lambi (Vertical) photo flip hogi */
   .hero-banner-img.portrait-flip {
     transform: rotate(-90deg) scale(1.5);
-    object-fit: cover;
+    object-fit: cover !important;
   }
 }
 
@@ -69,12 +69,12 @@
   .hero-banner-img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: contain !important;
   }
 
   .hero-banner-img.portrait-flip {
     transform: none;
-    object-fit: contain; 
+    object-fit: contain !important; 
   }
 }
 
