@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getImageUrl } from '../getImageUrl'; 
+import { getImageUrl } from '../getImageUrl';
 import './HeroBanner.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+const AUTO_SLIDE_INTERVAL_MS = 4000;
 
 function HeroBanner() {
   const navigate = useNavigate();
@@ -33,73 +34,73 @@ function HeroBanner() {
 
   useEffect(() => {
     if (banners.length <= 1) return;
-    const timer = setInterval(nextSlide, 4000);
+    const timer = setInterval(nextSlide, AUTO_SLIDE_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [banners.length, nextSlide]);
+
+  // Every banner is a tap-target straight to its own product page.
+  // Falls back to the general listing only if this banner has no link set.
+  const handleBannerClick = (banner) => {
+    navigate(banner.link || '/products');
+  };
 
   if (loading) return null;
 
   if (banners.length === 0) {
     return (
-      <div 
-        className="hero-banner-wrapper"
-        onClick={() => navigate('/products')}
-      >
-        <img src="/saare_1.jpeg" alt="Fallback Banner" className="hero-banner-img" />
+      <div className="hero-banner-wrapper" onClick={() => navigate('/products')}>
+        <div className="hero-banner-slide">
+          <img src="/saare_1.jpeg" alt="Featured" className="hero-banner-img" />
+        </div>
       </div>
     );
   }
 
   const banner = banners[current];
+  const imageUrl = getImageUrl(banner.image_url);
 
   return (
     <div className="hero-banner-wrapper">
-      {/* 🌟 Background image for the blur effect */}
-      <div 
-        className="hero-banner-slide blurred-bg"
-        style={{ backgroundImage: `url(${getImageUrl(banner.image_url)})` }}
-        onClick={() => navigate(banner.link || '/products')}
+      <div
+        className="hero-banner-slide"
+        onClick={() => handleBannerClick(banner)}
       >
-        {/* 🌟 Glass effect overlay */}
-        <div className="blur-overlay">
-          <img
-            src={getImageUrl(banner.image_url)}
-            alt="Banner"
-            className="hero-banner-img"
-            onLoad={(e) => {
-              const { naturalWidth, naturalHeight } = e.target;
-              
-              // 🌟 DYNAMIC IMAGE LOGIC
-              if (naturalHeight > naturalWidth) {
-                // If image is TALL (Portrait) -> Add flip class for desktop
-                e.target.className = 'hero-banner-img portrait-flip';
-              } else if (naturalHeight === naturalWidth) {
-                // If image is SQUARE -> Just show normally (blur bg will fill edges)
-                e.target.className = 'hero-banner-img square-img';
-              } else {
-                // If image is WIDE (Landscape) -> Show normally
-                e.target.className = 'hero-banner-img landscape-img';
-              }
-            }}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/saare_1.jpeg';
-            }}
-          />
-        </div>
+        {/* Blurred fill behind the image -- lets any aspect ratio (wide or
+            tall) sit edge-to-edge without ever cropping or distorting the
+            actual photo, which stays fully visible via object-fit: contain. */}
+        <div
+          className="hero-banner-blur-fill"
+          style={{ backgroundImage: `url(${imageUrl})` }}
+        />
+        <img
+          src={imageUrl}
+          alt=""
+          className="hero-banner-img"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = '/saare_1.jpeg';
+          }}
+        />
       </div>
 
-      {/* Navigation Arrows & Dots */}
       {banners.length > 1 && (
         <>
-          <button className="hero-banner-arrow left" onClick={(e) => { e.stopPropagation(); prevSlide(); }} aria-label="Previous">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <button
+            className="hero-banner-arrow left"
+            onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+            aria-label="Previous banner"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          
-          <button className="hero-banner-arrow right" onClick={(e) => { e.stopPropagation(); nextSlide(); }} aria-label="Next">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+
+          <button
+            className="hero-banner-arrow right"
+            onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+            aria-label="Next banner"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>

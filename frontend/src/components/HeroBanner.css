@@ -1,5 +1,7 @@
 /* =========================================
-   PREMIUM FLOATING GALLERY BANNER
+   FULL-BLEED EDGE-TO-EDGE BANNER
+   No card frame, no rounded corners, no text --
+   just the image, shown completely (never cropped/zoomed).
    ========================================= */
 
 .hero-banner-wrapper {
@@ -7,121 +9,70 @@
   width: 100%;
   max-width: 100vw;
   overflow: hidden;
-  line-height: 0; 
+  line-height: 0;
   background-color: #050505;
 }
 
-/* Background image for rich blur */
-.blurred-bg {
-  background-size: cover;
-  background-position: center;
+.hero-banner-slide {
+  position: relative;
   width: 100%;
+  height: 65vh;
+  min-height: 420px;
+  max-height: 680px;
   cursor: pointer;
-  display: block;
-}
-
-/* Glass effect container */
-.blur-overlay {
-  width: 100%;
-  height: 65vh; 
-  min-height: 450px;
-  max-height: 700px;
-  backdrop-filter: blur(35px) saturate(1.2); /* Richer, creamier blur */
-  background: rgba(0, 0, 0, 0.55); /* Darker contrast makes the saree pop */
-  display: flex;
-  justify-content: center;
-  align-items: center;
   overflow: hidden;
 }
 
-/* Base Image Style */
+/* Blurred, scaled-up copy of the same image fills every edge behind the
+   sharp foreground image -- this is what lets a tall OR wide photo sit
+   flush edge-to-edge with no black bars, while the real image never
+   gets cropped or stretched. */
+.hero-banner-blur-fill {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(40px) saturate(1.15) brightness(0.7);
+  transform: scale(1.15); /* hides the blurred edge softness past the frame */
+}
+
+/* The real, sharp image -- always shown in full, never cropped */
 .hero-banner-img {
+  position: relative;
+  z-index: 1;
   display: block;
-  transition: transform 0.5s ease;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* =========================================
-   💻 DESKTOP: PREMIUM FLOATING FRAME
-   ========================================= */
-@media (min-width: 769px) {
-  .hero-banner-img {
-    height: 85%; /* Leaves a beautiful gap at top and bottom */
-    width: auto;
-    max-width: 85vw; /* Keeps it from touching the left/right edges */
-    border-radius: 12px; /* 🌟 Smooth, modern luxury corners */
-    /* 🌟 Deep cinematic shadow hides awkward borders and makes it float */
-    box-shadow: 0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08); 
-  }
-
-  /* Wide images float beautifully in the center */
-  .hero-banner-img.landscape-img {
-    width: 85%;
-    object-fit: cover; 
-  }
-  
-  /* Square images get the perfect framed art look */
-  .hero-banner-img.square-img {
-    object-fit: contain; 
-  }
-
-  /* Rotated tall images fill the floating frame */
-  .hero-banner-img.portrait-flip {
-    transform: rotate(-90deg) scale(1.3); 
-    object-fit: cover;
-  }
-}
-
-/* =========================================
-   📱 MOBILE VIEWPORT (100% UNTOUCHED)
+   MOBILE -- same full-bleed approach, taller viewport share
    ========================================= */
 @media (max-width: 768px) {
-  .blur-overlay {
-    height: 75vh;
-    min-height: 450px;
-  }
-
-  .hero-banner-img {
-    width: auto;
-    max-width: 100%;
-    height: 100%;
-    border-radius: 0; /* Keep it flat on mobile */
-    box-shadow: 0 0 30px rgba(0,0,0,0.5);
-  }
-
-  .hero-banner-img.portrait-flip {
-    width: 100%;
-    transform: none; 
-    object-fit: cover; 
-  }
-
-  .hero-banner-img.square-img {
-    width: 100%;
-    object-fit: cover;
-  }
-
-  .hero-banner-img.landscape-img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
+  .hero-banner-slide {
+    height: 78vh;
+    min-height: 480px;
+    max-height: 820px;
   }
 }
 
 /* =========================================
-   NAVIGATION (ARROWS & DOTS - SLEEKER FOR DESKTOP)
+   NAVIGATION (ARROWS & DOTS)
    ========================================= */
 .hero-banner-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(20, 20, 20, 0.3); /* Transparent, glass-like arrows */
+  background: rgba(20, 20, 20, 0.35);
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   cursor: pointer;
   backdrop-filter: blur(8px);
@@ -134,24 +85,24 @@
   transform: translateY(-50%) scale(1.1);
 }
 
-.hero-banner-arrow.left { left: 3vw; }
-.hero-banner-arrow.right { right: 3vw; }
+.hero-banner-arrow.left { left: 16px; }
+.hero-banner-arrow.right { right: 16px; }
 
 .hero-banner-dots {
   position: absolute;
-  bottom: 25px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .hero-banner-dots .dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.35);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -159,12 +110,12 @@
 .hero-banner-dots .dot.active {
   background: #ffffff;
   transform: scale(1.4);
-  box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 @media (max-width: 768px) {
-  .hero-banner-arrow { width: 36px; height: 36px; }
-  .hero-banner-arrow.left { left: 12px; }
-  .hero-banner-arrow.right { right: 12px; }
-  .hero-banner-dots { bottom: 15px; }
+  .hero-banner-arrow { width: 34px; height: 34px; }
+  .hero-banner-arrow.left { left: 10px; }
+  .hero-banner-arrow.right { right: 10px; }
+  .hero-banner-dots { bottom: 14px; }
 }
