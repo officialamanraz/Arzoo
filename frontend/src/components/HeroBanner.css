@@ -24,7 +24,6 @@
   justify-content: center;
 }
 
-/* 🌟 Background Blur - Sirf tabhi dikhega jab image contain (square) hogi */
 .hero-banner-blur-fill {
   position: absolute;
   inset: 0;
@@ -35,13 +34,14 @@
   z-index: 0;
 }
 
-/* Base Image Setup */
+/* 🌟 BASE: Har photo by default 100% puri dikhegi (zoom nahi hogi) */
 .hero-banner-img {
   position: relative;
   z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: contain; /* 🌟 Ye trick image ko cut hone se rokegi */
   transition: transform 0.5s ease;
 }
 
@@ -49,18 +49,7 @@
    💻 DESKTOP LOGIC 
    ========================================= */
 @media (min-width: 769px) {
-  
-  /* Chodi (Landscape) -> Edge-to-Edge Cover (Blur hide ho jayega) */
-  .hero-banner-img.landscape-img {
-    object-fit: cover;
-  }
-
-  /* Chakor (Square) -> Original Shape me rakho (Sides me blur dikhega) */
-  .hero-banner-img.square-img {
-    object-fit: contain; 
-  }
-
-  /* Lambi (Vertical) -> Rotate karke Edge-to-Edge Cover (Blur hide ho jayega) */
+  /* Sirf Lambi (Vertical) photo flip hogi aur screen bharegi */
   .hero-banner-img.portrait-flip {
     transform: rotate(-90deg) scale(1.5);
     object-fit: cover;
@@ -68,7 +57,7 @@
 }
 
 /* =========================================
-   📱 MOBILE LOGIC (No Rotation)
+   📱 MOBILE LOGIC (No Rotation, No Zooming)
    ========================================= */
 @media (max-width: 768px) {
   .hero-banner-slide {
@@ -80,19 +69,11 @@
   .hero-banner-img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
   }
 
-  /* Phone me sab seedha rahega */
   .hero-banner-img.portrait-flip {
     transform: none;
-    object-fit: cover; /* Phone lamba hai toh lambi image fit ho jayegi */
-  }
-
-  .hero-banner-img.landscape-img {
-    object-fit: contain; /* Phone me chodi image cut na ho */
-  }
-
-  .hero-banner-img.square-img {
     object-fit: contain; 
   }
 }
