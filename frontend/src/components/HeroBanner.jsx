@@ -38,14 +38,12 @@ function HeroBanner() {
     return () => clearInterval(timer);
   }, [banners.length, nextSlide]);
 
-  // Every banner is a tap-target straight to its own product page.
-  // Falls back to the general listing only if this banner has no link set.
-  // Updated click handler
   const handleBannerClick = (banner) => {
     if (banner.link && banner.link.trim() !== '') {
-      navigate(banner.link); // Sirf tabhi navigate karega jab aapne link attach kiya hoga
+      navigate(banner.link);
     }
   };
+
   if (loading) return null;
 
   if (banners.length === 0) {
@@ -67,18 +65,29 @@ function HeroBanner() {
         className="hero-banner-slide"
         onClick={() => handleBannerClick(banner)}
       >
-        {/* The real, sharp image -- dynamically checks dimensions on load to apply flip class if needed */}
+        {/* 🌟 Blur Background - Jo sirf square image ke sides me dikhega */}
+        <div
+          className="hero-banner-blur-fill"
+          style={{ backgroundImage: `url(${imageUrl})` }}
+        />
+        
+        {/* Main Image */}
         <img
           src={imageUrl}
           alt="Banner"
           className="hero-banner-img"
           onLoad={(e) => {
             const { naturalWidth, naturalHeight } = e.target;
-            // Agar image lambi (Vertical) hai toh usme flip class add karo
+            
             if (naturalHeight > naturalWidth) {
+              // Lambi image -> Flip karo aur screen bharo
               e.target.className = 'hero-banner-img portrait-flip';
+            } else if (naturalHeight === naturalWidth) {
+              // Chakor image -> Original shape me rakho (isliye side ka blur dikhega)
+              e.target.className = 'hero-banner-img square-img';
             } else {
-              e.target.className = 'hero-banner-img';
+              // Chodi image -> Direct screen bharo
+              e.target.className = 'hero-banner-img landscape-img';
             }
           }}
           onError={(e) => {
@@ -88,23 +97,16 @@ function HeroBanner() {
         />
       </div>
 
+      {/* Arrows & Dots */}
       {banners.length > 1 && (
         <>
-          <button
-            className="hero-banner-arrow left"
-            onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-            aria-label="Previous banner"
-          >
+          <button className="hero-banner-arrow left" onClick={(e) => { e.stopPropagation(); prevSlide(); }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <button
-            className="hero-banner-arrow right"
-            onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-            aria-label="Next banner"
-          >
+          <button className="hero-banner-arrow right" onClick={(e) => { e.stopPropagation(); nextSlide(); }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
