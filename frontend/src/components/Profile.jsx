@@ -22,7 +22,6 @@ const Profile = () => {
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // NEW: State for toggling password visibility
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -48,23 +47,23 @@ const Profile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-const handleImageChange = async (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0]; 
     if (!file) return;
 
-    // Show preview immediately
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormData(prev => ({ ...prev, profile_image: reader.result }));
     };
     reader.readAsDataURL(file);
 
-    // Auto-upload image with loading state active
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
       const dataToSend = new FormData();
-      dataToSend.append('image', file);
+      
+      // 🌟 FIX 1: 'image' ki jagah 'profile_image' use kiya
+      dataToSend.append('profile_image', file); 
       
       const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: 'PUT',
@@ -82,7 +81,7 @@ const handleImageChange = async (e) => {
     } catch (error) {
       showMessage('Failed to upload image.', true);
     } finally {
-      setIsLoading(false); // Loading complete
+      setIsLoading(false); 
     }
   };
 
@@ -92,7 +91,6 @@ const handleImageChange = async (e) => {
     setTimeout(() => setMessage(''), 3000);
   };
 
-  // General Update for Name, Email, Phone
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -125,23 +123,21 @@ const handleImageChange = async (e) => {
     }
   };
 
-  // Dedicated Update for Password
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`${API_BASE_URL}/api/auth/update-password`, {
+      // 🌟 FIX 2: Backend ke hisaab se isko bhi FormData me bheja aur route '/profile' kiya
+      const dataToSend = new FormData();
+      dataToSend.append('currentPassword', formData.currentPassword);
+      dataToSend.append('newPassword', formData.newPassword);
+      
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: 'PUT',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword
-        })
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: dataToSend
       });
 
       const data = await response.json();
@@ -177,14 +173,12 @@ const handleImageChange = async (e) => {
                <span className="avatar-placeholder">👤</span>
             )}
             
-            {/* 🌟 Loading Overlay jab image upload ho rahi ho */}
             {isLoading && (
               <div className="avatar-loading-overlay">
                 <div className="spinner"></div>
               </div>
             )}
 
-            {/* Hidden Input for Image Upload */}
             <input type="file" id="imageUpload" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} disabled={isLoading} />
             <label htmlFor="imageUpload" className="avatar-edit-badge" title="Change Photo">📷</label>
           </div>
