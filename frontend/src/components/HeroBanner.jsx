@@ -8,7 +8,6 @@ const AUTO_SLIDE_INTERVAL_MS = 4000;
 
 function HeroBanner() {
   const navigate = useNavigate();
-
   const [banners, setBanners] = useState([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -21,62 +20,38 @@ function HeroBanner() {
           setBanners(result.data);
         }
       })
-      .catch((err) => {
-        console.error('[HeroBanner] Fetch error:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      .catch((err) => console.error('[HeroBanner] Fetch error:', err))
+      .finally(() => setLoading(false));
   }, []);
 
   const nextSlide = useCallback(() => {
-    setCurrent((prev) => {
-      if (banners.length === 0) return 0;
-      return (prev + 1) % banners.length;
-    });
+    setCurrent((prev) => (prev + 1) % banners.length);
   }, [banners.length]);
 
   const prevSlide = useCallback(() => {
-    setCurrent((prev) => {
-      if (banners.length === 0) return 0;
-      return (prev - 1 + banners.length) % banners.length;
-    });
+    setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
   }, [banners.length]);
 
   useEffect(() => {
     if (banners.length <= 1) return;
-
-    const timer = setInterval(
-      nextSlide,
-      AUTO_SLIDE_INTERVAL_MS
-    );
-
+    const timer = setInterval(nextSlide, AUTO_SLIDE_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [banners.length, nextSlide]);
 
+  // Clickable banner -> Navigates to product detail page link
   const handleBannerClick = (banner) => {
-    if (!banner?.link) return;
-
-    const link = banner.link.trim();
-
-    if (!link) return;
-
-    navigate(link);
+    if (banner.link && banner.link.trim() !== '') {
+      navigate(banner.link);
+    }
   };
 
-  if (loading) {
-    return null;
-  }
+  if (loading) return null;
 
   if (banners.length === 0) {
     return (
       <div className="hero-banner-wrapper">
         <div className="hero-banner-slide">
-          <img
-            src="/saare_1.jpeg"
-            alt="Featured saree"
-            className="hero-banner-img"
-          />
+          <img src="/saare_1.jpeg" alt="Featured" className="hero-banner-img" />
         </div>
       </div>
     );
@@ -87,148 +62,40 @@ function HeroBanner() {
 
   return (
     <div className="hero-banner-wrapper">
-
       <div
         className="hero-banner-slide"
         onClick={() => handleBannerClick(banner)}
-        role={banner.link ? 'button' : undefined}
-        tabIndex={banner.link ? 0 : undefined}
-        onKeyDown={(e) => {
-          if (
-            banner.link &&
-            (e.key === 'Enter' || e.key === ' ')
-          ) {
-            e.preventDefault();
-            handleBannerClick(banner);
-          }
-        }}
       >
-
-        {/* ==========================================
-            BLURRED BACKGROUND
-            Fills empty space without cropping
-            the real image.
-        ========================================== */}
-
-        <div
-          className="hero-banner-blur-fill"
-          style={{
-            backgroundImage: `url(${imageUrl})`,
-          }}
-        />
-
-        {/* ==========================================
-            MAIN IMAGE
-        ========================================== */}
-
         <img
           src={imageUrl}
-          alt={banner.title || 'Saree banner'}
+          alt="Banner"
           className="hero-banner-img"
-          onLoad={(e) => {
-            const img = e.currentTarget;
-
-            const { naturalWidth, naturalHeight } = img;
-
-            // Remove old orientation classes
-            img.classList.remove(
-              'portrait-flip',
-              'square-image',
-              'landscape-image'
-            );
-
-            /*
-             * PORTRAIT
-             * Example:
-             * 1000 x 1500
-             *
-             * Rotate once:
-             * 1500 x 1000
-             */
-            if (naturalHeight > naturalWidth) {
-              img.classList.add('portrait-flip');
-            }
-
-            /*
-             * SQUARE
-             * Example:
-             * 1200 x 1200
-             *
-             * Scale slightly smaller so the
-             * entire saree remains visible.
-             */
-            else if (naturalHeight === naturalWidth) {
-              img.classList.add('square-image');
-            }
-
-            /*
-             * LANDSCAPE
-             */
-            else {
-              img.classList.add('landscape-image');
-            }
-          }}
           onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = '/saare_1.jpeg';
+            e.target.onerror = null;
+            e.target.src = '/saare_1.jpeg';
           }}
         />
-
       </div>
-
-      {/* ==========================================
-          ARROWS + DOTS
-      ========================================== */}
 
       {banners.length > 1 && (
         <>
-          <button
-            type="button"
-            className="hero-banner-arrow left"
-            onClick={(e) => {
-              e.stopPropagation();
-              prevSlide();
-            }}
+          <button 
+            className="hero-banner-arrow left" 
+            onClick={(e) => { e.stopPropagation(); prevSlide(); }}
             aria-label="Previous banner"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M15 18L9 12L15 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <button
-            type="button"
-            className="hero-banner-arrow right"
-            onClick={(e) => {
-              e.stopPropagation();
-              nextSlide();
-            }}
+          <button 
+            className="hero-banner-arrow right" 
+            onClick={(e) => { e.stopPropagation(); nextSlide(); }}
             aria-label="Next banner"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M9 18L15 12L9 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
@@ -236,19 +103,13 @@ function HeroBanner() {
             {banners.map((_, idx) => (
               <span
                 key={idx}
-                className={`dot ${
-                  idx === current ? 'active' : ''
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrent(idx);
-                }}
+                className={`dot ${idx === current ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setCurrent(idx); }}
               />
             ))}
           </div>
         </>
       )}
-
     </div>
   );
 }
