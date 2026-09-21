@@ -1,5 +1,5 @@
 /* =========================================
-   FLIPKART-STYLE PROFESSIONAL HERO BANNER
+   PROFESSIONAL E-COMMERCE HERO BANNER
    ========================================= */
 
 .hero-banner-wrapper {
@@ -8,14 +8,14 @@
   max-width: 100vw;
   overflow: hidden;
   line-height: 0;
-  background-color: #f4f4f4;
+  background-color: #f7f7f7;
 }
 
+/* 💻 DESKTOP STRUCTURE */
 .hero-banner-slide {
   position: relative;
   width: 100%;
-  height: 420px; /* Perfect professional widescreen banner height */
-  max-height: 500px;
+  height: 480px; /* Wide desktop aspect ratio matching reference */
   cursor: pointer;
   overflow: hidden;
 }
@@ -25,18 +25,15 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Fills edge-to-edge cleanly like Flipkart banners */
+  object-fit: cover; /* Clean edge-to-edge widescreen presentation */
   object-position: center;
   display: block;
 }
 
-/* =========================================
-   MOBILE RESPONSIVE
-   ========================================= */
+/* 📱 MOBILE STRUCTURE */
 @media (max-width: 768px) {
   .hero-banner-slide {
-    height: 220px; /* Clean mobile proportion */
-    min-height: 180px;
+    height: 420px; /* Taller vertical proportion optimized for mobile screens */
   }
 }
 
@@ -48,54 +45,51 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
 .hero-banner-arrow:hover {
-  background: #ffffff;
-  transform: translateY(-50%) scale(1.1);
+  background: rgba(0, 0, 0, 0.7);
+  transform: translateY(-50%) scale(1.08);
 }
 
-.hero-banner-arrow.left { left: 16px; }
-.hero-banner-arrow.right { right: 16px; }
+.hero-banner-arrow.left { left: 14px; }
+.hero-banner-arrow.right { right: 14px; }
 
 .hero-banner-dots {
   position: absolute;
-  bottom: 12px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
   gap: 6px;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 4px 10px;
-  border-radius: 20px;
-  backdrop-filter: blur(4px);
 }
 
 .hero-banner-dots .dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.5);
   cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   transition: all 0.3s ease;
 }
 
 .hero-banner-dots .dot.active {
   background: #ffffff;
-  width: 16px;
+  width: 18px;
   border-radius: 4px;
 }
 
@@ -103,5 +97,5 @@
   .hero-banner-arrow { width: 32px; height: 32px; }
   .hero-banner-arrow.left { left: 8px; }
   .hero-banner-arrow.right { right: 8px; }
-  .hero-banner-dots { bottom: 8px; }
+  .hero-banner-dots { bottom: 10px; }
 }

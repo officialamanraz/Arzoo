@@ -38,7 +38,6 @@ function HeroBanner() {
     return () => clearInterval(timer);
   }, [banners.length, nextSlide]);
 
-  // Clickable banner -> Navigates to product detail page link
   const handleBannerClick = (banner) => {
     if (banner.link && banner.link.trim() !== '') {
       navigate(banner.link);
