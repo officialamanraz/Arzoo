@@ -39,8 +39,12 @@ function HeroBanner() {
   }, [banners.length, nextSlide]);
 
   const handleBannerClick = (banner) => {
-    if (banner.link && banner.link.trim() !== '') {
+    console.log("Banner clicked:", banner);
+    if (banner && banner.link && banner.link.trim() !== '') {
+      console.log("Navigating to:", banner.link);
       navigate(banner.link);
+    } else {
+      console.warn("Is banner ke sath koi valid product link attach nahi hai!");
     }
   };
 
@@ -56,19 +60,24 @@ function HeroBanner() {
     );
   }
 
-  const banner = banners[current];
-  const imageUrl = getImageUrl(banner.image_url);
+  const activeBanner = banners[current];
+  const imageUrl = getImageUrl(activeBanner.image_url);
 
   return (
     <div className="hero-banner-wrapper">
       <div
         className="hero-banner-slide"
-        onClick={() => handleBannerClick(banner)}
+        onClick={() => handleBannerClick(activeBanner)}
+        style={{ cursor: 'pointer' }}
       >
         <img
           src={imageUrl}
           alt="Banner"
           className="hero-banner-img"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleBannerClick(activeBanner);
+          }}
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = '/saare_1.jpeg';
