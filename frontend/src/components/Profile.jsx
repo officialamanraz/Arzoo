@@ -48,7 +48,7 @@ const Profile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleImageChange = async (e) => {
+const handleImageChange = async (e) => {
     const file = e.target.files[0]; 
     if (!file) return;
 
@@ -59,7 +59,7 @@ const Profile = () => {
     };
     reader.readAsDataURL(file);
 
-    // Auto-upload image
+    // Auto-upload image with loading state active
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -76,11 +76,13 @@ const Profile = () => {
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
         showMessage('Profile photo updated successfully!', false);
+      } else {
+        showMessage(data.message || 'Failed to upload image.', true);
       }
     } catch (error) {
       showMessage('Failed to upload image.', true);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Loading complete
     }
   };
 
@@ -170,13 +172,21 @@ const Profile = () => {
         <div className="profile-sidebar-header">
           <div className="profile-avatar">
             {formData.profile_image ? (
-               <img src={formData.profile_image} alt="User Avatar" />
+               <img src={formData.profile_image} alt="User Avatar" style={{ opacity: isLoading ? 0.6 : 1 }} />
             ) : (
                <span className="avatar-placeholder">👤</span>
             )}
+            
+            {/* 🌟 Loading Overlay jab image upload ho rahi ho */}
+            {isLoading && (
+              <div className="avatar-loading-overlay">
+                <div className="spinner"></div>
+              </div>
+            )}
+
             {/* Hidden Input for Image Upload */}
-            <input type="file" id="imageUpload" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-            <label htmlFor="imageUpload" className="avatar-edit-badge">📷</label>
+            <input type="file" id="imageUpload" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} disabled={isLoading} />
+            <label htmlFor="imageUpload" className="avatar-edit-badge" title="Change Photo">📷</label>
           </div>
           <h3>{user.name || 'User'}</h3>
           <p>{user.email}</p>
