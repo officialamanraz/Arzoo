@@ -171,6 +171,10 @@ app.use((err, req, res, next) => {
   }
   next();
 });
+// Server start hone se pehle yeh line dal do:
+db.execute("ALTER TABLE banners ADD COLUMN mobile_image_url VARCHAR(255) DEFAULT NULL AFTER image_url;")
+  .then(() => console.log("✅ Mobile image column added successfully!"))
+  .catch(err => console.log("⚠️ Note (already exists or error):", err.message));
 
 // API Routes
 app.use('/api/dealer',dealerRoutes)

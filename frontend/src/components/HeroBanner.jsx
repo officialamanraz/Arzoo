@@ -38,66 +38,53 @@ function HeroBanner() {
     return () => clearInterval(timer);
   }, [banners.length, nextSlide]);
 
-  // 🌟 CLICK TO NAVIGATE FUNCTION
   const handleBannerClick = (banner) => {
     if (banner && banner.link && banner.link.trim() !== '') {
-      navigate(banner.link); // Product detail page par bhej dega
-    } else {
-      console.warn("Please add a product link to this banner in the Admin Panel.");
+      navigate(banner.link);
     }
   };
 
   if (loading) return null;
 
   if (banners.length === 0) {
-    return (
-      <div className="hero-banner-wrapper">
-        <div className="hero-banner-slide">
-          <img src="/saare_1.jpeg" alt="Featured" className="hero-banner-img" />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const activeBanner = banners[current];
-  const imageUrl = getImageUrl(activeBanner.image_url);
+  
+  // URL fetching (ab hume mobile aur desktop dono URL nikalne hain)
+  const desktopImageUrl = getImageUrl(activeBanner.image_url);
+  // Agar database me mobile image nahi hai, toh fallback me desktop image hi dikhayega
+  const mobileImageUrl = activeBanner.mobile_image_url 
+    ? getImageUrl(activeBanner.mobile_image_url) 
+    : desktopImageUrl;
 
   return (
     <div className="hero-banner-wrapper">
       <div
         className="hero-banner-slide"
         onClick={() => handleBannerClick(activeBanner)}
-        style={{ cursor: 'pointer' }}
-        title="Click to view product"
       >
-        <img
-          src={imageUrl}
-          alt="Banner"
-          className="hero-banner-img"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/saare_1.jpeg';
-          }}
-        />
+        {/* 🌟 SMART PICTURE TAG: Automatically switches image based on screen size */}
+        <picture>
+          <source media="(max-width: 768px)" srcSet={mobileImageUrl} />
+          <img
+            src={desktopImageUrl}
+            alt="Arzoo Saree Banner"
+            className="hero-banner-img"
+          />
+        </picture>
       </div>
 
       {banners.length > 1 && (
         <>
-          <button 
-            className="hero-banner-arrow left" 
-            onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-            aria-label="Previous banner"
-          >
+          <button className="hero-banner-arrow left" onClick={(e) => { e.stopPropagation(); prevSlide(); }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <button 
-            className="hero-banner-arrow right" 
-            onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-            aria-label="Next banner"
-          >
+          <button className="hero-banner-arrow right" onClick={(e) => { e.stopPropagation(); nextSlide(); }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -105,11 +92,7 @@ function HeroBanner() {
 
           <div className="hero-banner-dots">
             {banners.map((_, idx) => (
-              <span
-                key={idx}
-                className={`dot ${idx === current ? 'active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); setCurrent(idx); }}
-              />
+              <span key={idx} className={`dot ${idx === current ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setCurrent(idx); }} />
             ))}
           </div>
         </>
