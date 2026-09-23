@@ -29,24 +29,104 @@
 }
 
 /* =========================================
-   📱 MOBILE STRUCTURE (NALLI STYLE PORTRAIT)
+   NALLI STYLE - EDGE TO EDGE BANNER
+   ========================================= */
+
+.hero-banner-wrapper {
+  position: relative;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow: hidden !important;
+  line-height: 0 !important;
+  padding: 0 !important; /* 🌟 Koi side border/space nahi rahega */
+  margin: 0 !important;
+}
+
+/* 💻 DESKTOP STRUCTURE */
+.hero-banner-slide {
+  position: relative;
+  width: 100% !important;
+  height: 480px !important; 
+  cursor: pointer !important;
+  display: block !important;
+}
+
+.hero-banner-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important; 
+  object-position: center !important;
+  display: block !important;
+}
+
+/* =========================================
+   📱 MOBILE STRUCTURE (TALL & EDGE-TO-EDGE)
    ========================================= */
 @media (max-width: 768px) {
   .hero-banner-slide {
-    width: 100%;
-    /* 🌟 MAIN FIX: Height ko screen ke hisaab se auto karke aspect-ratio set kiya */
-    height: auto;
-    aspect-ratio: 3 / 4; /* Yeh exact wahi shape hai jo Nalli mobile par use karta hai */
-    min-height: auto;
-    max-height: none;
+    width: 100vw !important;      /* 🌟 Mobile ki puri width cover karega */
+    height: 75vh !important;      /* 🌟 Nalli ki tarah lamba (tall) vertical box banayega */
+    min-height: 450px !important;
+    max-height: none !important;
   }
 
   .hero-banner-img {
-    /* Edge-to-edge feel ke liye cover zaroori hai */
-    object-fit: cover !important; 
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* 🌟 Pure lambe dabbe ko bina white space ke bharega */
+    object-position: center !important;
   }
 }
 
+/* =========================================
+   NAVIGATION ARROWS
+   ========================================= */
+.hero-banner-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  color: #111 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+.hero-banner-arrow.left { left: 10px !important; }
+.hero-banner-arrow.right { right: 10px !important; }
+
+/* =========================================
+   DOTS
+   ========================================= */
+.hero-banner-dots {
+  position: absolute !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10 !important;
+  display: flex !important;
+  gap: 8px !important;
+}
+
+.hero-banner-dots .dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  cursor: pointer !important;
+}
+
+.hero-banner-dots .dot.active {
+  background: #ffffff !important;
+  transform: scale(1.3) !important;
+}
 /* =========================================
    NAVIGATION ARROWS
    ========================================= */
