@@ -9,7 +9,8 @@ const getbannerbydb = async () => {
         );
         const formattbanner = ROWS.map(banner => ({
             ...banner,
-            image_url: getFullImageUrl(banner.image_url)
+            image_url: getFullImageUrl(banner.image_url),
+            mobile_image_url: banner.mobile_image_url ? getFullImageUrl(banner.mobile_image_url) : null
         }));
         console.log(`[BANNER_SERVICE] ✅ Formatted ${formattbanner.length} active banners.`);
         return formattbanner;
@@ -27,7 +28,8 @@ const getALLbannersAdminbydb = async () => {
         );
         const formattedBanners = ROWS.map(banner => ({
             ...banner,
-            image_url: getFullImageUrl(banner.image_url)
+            image_url: getFullImageUrl(banner.image_url),
+            mobile_image_url: banner.mobile_image_url ? getFullImageUrl(banner.mobile_image_url) : null
         }));
         console.log(`[BANNER_SERVICE] ✅ Formatted ${formattedBanners.length} banners for admin.`);
         return formattedBanners;
@@ -37,13 +39,22 @@ const getALLbannersAdminbydb = async () => {
     }
 };
 
-const createbannerindb = async (bannerdata, image_url) => {
+const createbannerindb = async (bannerdata, image_url, mobile_image_url) => {
     console.log("[BANNER_SERVICE] 🗄️ Inserting new banner into database...");
     try {
         const { title, subtitle, button_text, button_link, display_order } = bannerdata;
         const [result] = await db.execute(
-            'INSERT INTO banners (image_url, title, subtitle, button_text, button_link, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [image_url, title || null, subtitle || null, button_text || null, button_link || null, display_order || 0, 1]
+            'INSERT INTO banners (image_url, mobile_image_url, title, subtitle, button_text, button_link, display_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                image_url, 
+                mobile_image_url || null, 
+                title || null, 
+                subtitle || null, 
+                button_text || null, 
+                button_link || null, 
+                display_order || 0, 
+                1
+            ]
         ); 
         console.log(`[BANNER_SERVICE] ✅ Banner inserted successfully. Insert ID: ${result.insertId}`);
         return result.insertId;
@@ -53,7 +64,7 @@ const createbannerindb = async (bannerdata, image_url) => {
     }
 };
 
-const updatebannerindb = async (id, bannerdata, image_url) => {
+const updatebannerindb = async (id, bannerdata, image_url, mobile_image_url) => {
     console.log(`[BANNER_SERVICE] 🗄️ Updating banner ID: ${id} in database...`);
     try {
         const { title, subtitle, button_text, button_link, display_order, is_active } = bannerdata;
@@ -71,6 +82,12 @@ const updatebannerindb = async (id, bannerdata, image_url) => {
             console.log("[BANNER_SERVICE] Including new image_url in update query.");
             query += `, image_url=?`;
             params.push(image_url);
+        }
+
+        if (mobile_image_url) {
+            console.log("[BANNER_SERVICE] Including new mobile_image_url in update query.");
+            query += `, mobile_image_url=?`;
+            params.push(mobile_image_url);
         }
 
         query += ` WHERE banner_id=?`;

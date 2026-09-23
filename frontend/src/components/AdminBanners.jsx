@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+import { getImageUrl } from '../getImageUrl';
 import './AdminBanners.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -16,7 +16,8 @@ const emptyForm = {
 function AdminBanners() {
   const [banners, setBanners] = useState([]);
   const [form, setForm] = useState(emptyForm);
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(null);             // Desktop Image File
+  const [mobileImage, setMobileImage] = useState(null); // Mobile Image File
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,13 +50,14 @@ function AdminBanners() {
   const resetForm = () => {
     setForm(emptyForm);
     setImage(null);
+    setMobileImage(null);
     setIsEditing(false);
     setEditId(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('[AdminBanners] Submitting banner form...', form);
+    console.log('[AdminBanners] Submitting banner form with dual assets...', form);
     setIsSubmitting(true);
 
     const formData = new FormData();
@@ -65,7 +67,10 @@ function AdminBanners() {
     formData.append('button_link', form.button_link);
     formData.append('display_order', form.display_order);
     formData.append('is_active', form.is_active ? '1' : '0');
+
+    // Append both desktop and mobile images if selected
     if (image) formData.append('image', image);
+    if (mobileImage) formData.append('mobile_image', mobileImage);
 
     try {
       const url = isEditing
@@ -102,6 +107,7 @@ function AdminBanners() {
       is_active: !!banner.is_active
     });
     setImage(null);
+    setMobileImage(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -127,7 +133,7 @@ function AdminBanners() {
   return (
     <div className="admin-wrapper">
       <div className="admin-header-stats">
-        <h2>Banner Manager</h2>
+        <h2>Banner Manager (Desktop & Mobile)</h2>
         <div className="stat-badge">Total Banners: <strong>{banners.length}</strong></div>
       </div>
 
@@ -163,14 +169,15 @@ function AdminBanners() {
                 <label>Display Order</label>
                 <input type="number" value={form.display_order} onChange={handleChange('display_order')} className="admin-input" min="0" />
               </div>
-              <div className="form-group checkbox-group">
-                <input type="checkbox" checked={form.is_active} onChange={handleChange('is_active')} id="is_active" />
-                <label htmlFor="is_active">Active (Visible on homepage)</label>
+              <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', marginTop: '28px' }}>
+                <input type="checkbox" checked={form.is_active} onChange={handleChange('is_active')} id="is_active" style={{ marginRight: '8px', width: '18px', height: '18px' }} />
+                <label htmlFor="is_active" style={{ margin: 0, cursor: 'pointer' }}>Active (Visible on homepage)</label>
               </div>
             </div>
 
+            {/* 💻 Desktop Banner Upload */}
             <div className="form-group">
-              <label>Banner Image</label>
+              <label>🖥️ Desktop Banner Image (Landscape)</label>
               <input
                 type="file"
                 onChange={(e) => setImage(e.target.files[0])}
@@ -178,7 +185,19 @@ function AdminBanners() {
                 accept="image/*"
                 required={!isEditing}
               />
-              {isEditing && <small className="edit-note">Leave empty to keep existing image.</small>}
+              {isEditing && <small className="edit-note">Leave empty to keep existing desktop image.</small>}
+            </div>
+
+            {/* 📱 Mobile Banner Upload */}
+            <div className="form-group">
+              <label>📱 Mobile Banner Image (Portrait / Vertical - Optional)</label>
+              <input
+                type="file"
+                onChange={(e) => setMobileImage(e.target.files[0])}
+                className="admin-file-input"
+                accept="image/*"
+              />
+              <small className="edit-note">If not uploaded, desktop image will be scaled on mobile.</small>
             </div>
 
             <button type="submit" disabled={isSubmitting} className="admin-submit-btn">
@@ -197,36 +216,49 @@ function AdminBanners() {
         <div className="admin-list-glass banner-list-section">
           <h3>All Banners</h3>
           <div className="admin-table-container">
-            <table className="admin-table">
+            <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th>Image</th>
-                  <th>Title</th>
-                  <th>Order</th>
-                  <th>Active</th>
-                  <th>Actions</th>
+                  <th style={{ padding: '10px' }}>Desktop</th>
+                  <th style={{ padding: '10px' }}>Mobile</th>
+                  <th style={{ padding: '10px' }}>Title</th>
+                  <th style={{ padding: '10px' }}>Order</th>
+                  <th style={{ padding: '10px' }}>Active</th>
+                  <th style={{ padding: '10px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {banners.length === 0 ? (
-                  <tr><td colSpan="5" className="empty-state">No banners found.</td></tr>
+                  <tr><td colSpan="6" className="empty-state" style={{ textAlign: 'center', padding: '20px' }}>No banners found.</td></tr>
                 ) : (
                   banners.map((banner) => (
-                    <tr key={banner.banner_id}>
-                      <td>
+                    <tr key={banner.banner_id} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '10px' }}>
                         <img
                           src={getImageUrl(banner.image_url)}
-                          alt={banner.title || 'Banner'}
-                          className="admin-list-img"
+                          alt="Desktop"
+                          style={{ width: '80px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                           onError={(e) => e.target.src = '/saare_1.jpeg'}
                         />
                       </td>
-                      <td className="admin-list-name">{banner.title || '—'}</td>
-                      <td>{banner.display_order}</td>
-                      <td>{banner.is_active ? '✅' : '❌'}</td>
-                      <td className="admin-list-actions">
-                        <button onClick={() => handleEdit(banner)} className="action-btn edit-btn">Edit</button>
-                        <button onClick={() => handleDelete(banner.banner_id)} className="action-btn delete-btn">Delete</button>
+                      <td style={{ padding: '10px' }}>
+                        {banner.mobile_image_url ? (
+                          <img
+                            src={getImageUrl(banner.mobile_image_url)}
+                            alt="Mobile"
+                            style={{ width: '30px', height: '45px', objectFit: 'cover', borderRadius: '4px' }}
+                            onError={(e) => e.target.src = '/saare_1.jpeg'}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '11px', color: '#888' }}>Using Desktop</span>
+                        )}
+                      </td>
+                      <td className="admin-list-name" style={{ padding: '10px', fontWeight: '500' }}>{banner.title || '—'}</td>
+                      <td style={{ padding: '10px' }}>{banner.display_order}</td>
+                      <td style={{ padding: '10px' }}>{banner.is_active ? '✅' : '❌'}</td>
+                      <td className="admin-list-actions" style={{ padding: '10px' }}>
+                        <button onClick={() => handleEdit(banner)} className="action-btn edit-btn" style={{ marginRight: '6px', padding: '6px 12px', cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => handleDelete(banner.banner_id)} className="action-btn delete-btn" style={{ padding: '6px 12px', cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))

@@ -1,6 +1,6 @@
 .admin-wrapper {
   padding: 20px;
-  background-color:var(--bg-light, #f4f6f8) !important;
+  background-color: var(--bg-light, #f4f6f8) !important;
   min-height: 100vh;
 }
 
@@ -10,7 +10,29 @@
 }
 
 .admin-header-stats h2 {
-  color: var(--text-dark);
+  color: var(--text-dark, #111);
+}
+
+.stat-badge {
+  display: inline-block;
+  background: #fff;
+  padding: 6px 16px;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  margin-top: 5px;
+  font-size: 0.95rem;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .form-container {
@@ -18,11 +40,11 @@
   margin: 20px auto;
 }
 
-.admin-form-glass {
-  background: var(--white);
-  padding: 30px;
+.admin-form-glass, .admin-list-glass {
+  background: var(--white, #ffffff);
+  padding: 25px;
   border-radius: 12px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .form-group {
@@ -34,57 +56,47 @@
   display: block;
   font-weight: 600;
   margin-bottom: 8px;
-  color: var(--text-dark);
+  color: var(--text-dark, #333);
+  font-size: 0.92rem;
 }
 
 .admin-input, .admin-file-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border, #ddd);
   border-radius: 6px;
   box-sizing: border-box;
-  background-color: var(--bg-light);
-  color: var(--text-dark);
+  background-color: var(--bg-light, #f9f9f9);
+  color: var(--text-dark, #111);
+  font-size: 0.95rem;
 }
 
 .admin-input:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--primary, #007bff);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .form-group-row {
   display: flex;
-  gap: 20px;
-}
-
-.admin-fieldset {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 20px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.admin-fieldset legend {
-  padding: 0 10px;
-  font-weight: bold;
-  color: var(--primary);
+  gap: 16px;
 }
 
 .edit-note {
-  color: var(--text-light);
+  color: #666;
   display: block;
   margin-top: 5px;
+  font-size: 0.82rem;
 }
 
 .admin-submit-btn {
   width: 100%;
   padding: 14px;
-  background-color: var(--primary);
+  background-color: var(--primary, #111);
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-size: 1.1em;
+  font-size: 1em;
   font-weight: bold;
   cursor: pointer;
   margin-top: 10px;
@@ -92,30 +104,114 @@
 }
 
 .admin-submit-btn:hover {
-  background-color: var(--primary-hover);
+  background-color: #333;
 }
 
 .admin-submit-btn:disabled {
-  background-color: var(--border);
-  color: var(--text-light);
+  background-color: #ccc;
   cursor: not-allowed;
 }
 
 .admin-cancel-btn {
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   background-color: transparent;
-  color: var(--text-dark);
-  border: 1px solid var(--border);
+  color: #d9534f;
+  border: 1px solid #d9534f;
   border-radius: 8px;
-  font-size: 1em;
+  font-size: 0.95em;
   cursor: pointer;
   margin-top: 10px;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .admin-cancel-btn:hover {
-  background-color: var(--bg-light);
+  background-color: #d9534f;
+  color: #fff;
+}
+
+/* Table Styling for Dual Banners */
+.admin-table-container {
+  overflow-x: auto;
+  margin-top: 15px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.admin-table th {
+  background-color: #f8f9fa;
+  padding: 12px 10px;
+  font-weight: 600;
+  color: #444;
+  border-bottom: 2px solid #eaeaea;
+}
+
+.admin-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.admin-desktop-thumb {
+  width: 75px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.admin-mobile-thumb {
+  width: 28px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.no-mobile-tag {
+  font-size: 11px;
+  color: #888;
+  font-style: italic;
+}
+
+.admin-list-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.action-btn:hover {
+  opacity: 0.85;
+}
+
+.edit-btn {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.empty-state {
+  text-align: center;
+  color: #777;
+  padding: 30px !important;
 }
 
 /* Responsive Styles */

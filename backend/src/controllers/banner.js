@@ -61,27 +61,42 @@ const getALLbannersAdmin = async(req, res) => {
 const createbanner = async(req, res) => {
     console.log("[BANNER_CONTROLLER] 📡 Attempting to create new banner...");
     try {
-        if (!req.file) {
-            console.warn('[BANNER_CONTROLLER] ⚠️ Create failed -- image file is missing');
-            return res.status(400).json({ success: false, message: "Banner image is required" });
+        // Support both req.files (fields) and legacy req.file
+        const desktopFile = req.files?.image?.[0] || req.file;
+        const mobileFile = req.files?.mobile_image?.[0];
+
+        if (!desktopFile) {
+            console.warn('[BANNER_CONTROLLER] ⚠️ Create failed -- desktop banner image is missing');
+            return res.status(400).json({ success: false, message: "Desktop banner image is required" });
         } 
         
-        const uploaded = await uploadToImageKit(
-            req.file.buffer,
-            `${Date.now()}-${req.file.originalname}`,
+        // 1. Upload Desktop Image to ImageKit
+        const desktopUploaded = await uploadToImageKit(
+            desktopFile.buffer,
+            `desktop-${Date.now()}-${desktopFile.originalname}`,
             '/arzoo-saree/banners'
         );
-        
-        const image_url = uploaded.url; 
+        const image_url = desktopUploaded.url; 
+
+        // 2. Upload Mobile Image to ImageKit (Optional)
+        let mobile_image_url = null;
+        if (mobileFile) {
+            const mobileUploaded = await uploadToImageKit(
+                mobileFile.buffer,
+                `mobile-${Date.now()}-${mobileFile.originalname}`,
+                '/arzoo-saree/banners'
+            );
+            mobile_image_url = mobileUploaded.url;
+        }
+
         console.log("[BANNER_CONTROLLER] Saving banner data to database...");
-        
-        const insertId = await createbannerindb(req.body, image_url);
+        const insertId = await createbannerindb(req.body, image_url, mobile_image_url);
         console.log(`[BANNER_CONTROLLER] ✅ Create success -- banner_id: ${insertId}`);
         
         return res.status(201).json({
             success: true,
             banner_id: insertId,
-            message: "Banner successfully created",   
+            message: "Banner successfully created with desktop & mobile assets!",   
         });
     } catch(err) {
         console.error("[BANNER_CONTROLLER] ❌ createbanner error:", err.message);
@@ -104,20 +119,36 @@ const updatebanner = async(req, res) => {
     
     try {
         let image_url = null;
+        let mobile_image_url = null;
+
+        const desktopFile = req.files?.image?.[0] || req.file;
+        const mobileFile = req.files?.mobile_image?.[0];
        
-        if(req.file) {
-            console.log(`[BANNER_CONTROLLER] New image detected for update. Uploading to ImageKit...`);
+        if (desktopFile) {
+            console.log(`[BANNER_CONTROLLER] New desktop image detected for update. Uploading to ImageKit...`);
             const uploaded = await uploadToImageKit(
-                req.file.buffer,
-                `${Date.now()}-${req.file.originalname}`,
+                desktopFile.buffer,
+                `desktop-${Date.now()}-${desktopFile.originalname}`,
                 '/arzoo-saree/banners'
             );
             image_url = uploaded.url;
         } else {
-            console.log(`[BANNER_CONTROLLER] ℹ️ No new image uploaded. Keeping existing banner image.`);
+            console.log(`[BANNER_CONTROLLER] ℹ️ Keeping existing desktop banner image.`);
         }
 
-        await updatebannerindb(id, req.body, image_url);
+        if (mobileFile) {
+            console.log(`[BANNER_CONTROLLER] New mobile image detected for update. Uploading to ImageKit...`);
+            const uploaded = await uploadToImageKit(
+                mobileFile.buffer,
+                `mobile-${Date.now()}-${mobileFile.originalname}`,
+                '/arzoo-saree/banners'
+            );
+            mobile_image_url = uploaded.url;
+        } else {
+            console.log(`[BANNER_CONTROLLER] ℹ️ Keeping existing mobile banner image.`);
+        }
+
+        await updatebannerindb(id, req.body, image_url, mobile_image_url);
         console.log(`[BANNER_CONTROLLER] ✅ Update success -- banner_id: ${id}`);
         
         return res.status(200).json({ 
