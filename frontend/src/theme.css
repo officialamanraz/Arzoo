@@ -129,11 +129,11 @@ body.dark, .dark, #root.dark {
 }
 
 body.dark a, body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark span {
-  color: #ffffff !important;
+  color: var(--text-dark, #111);
 }
 
 body.dark .product-name, .dark .product-name {
-  color: #ffffff !important;
+  color: var(--text-dark, #111);
   text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
 }
 /* =========================================

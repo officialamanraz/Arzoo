@@ -38,13 +38,12 @@ function HeroBanner() {
     return () => clearInterval(timer);
   }, [banners.length, nextSlide]);
 
+  // 🌟 CLICK TO NAVIGATE FUNCTION
   const handleBannerClick = (banner) => {
-    console.log("Banner clicked:", banner);
     if (banner && banner.link && banner.link.trim() !== '') {
-      console.log("Navigating to:", banner.link);
-      navigate(banner.link);
+      navigate(banner.link); // Product detail page par bhej dega
     } else {
-      console.warn("Is banner ke sath koi valid product link attach nahi hai!");
+      console.warn("Please add a product link to this banner in the Admin Panel.");
     }
   };
 
@@ -69,15 +68,12 @@ function HeroBanner() {
         className="hero-banner-slide"
         onClick={() => handleBannerClick(activeBanner)}
         style={{ cursor: 'pointer' }}
+        title="Click to view product"
       >
         <img
           src={imageUrl}
           alt="Banner"
           className="hero-banner-img"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleBannerClick(activeBanner);
-          }}
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = '/saare_1.jpeg';

@@ -563,7 +563,7 @@
 /* 🛠️ FIX: Made dark mode overrides much stronger using !important where needed */
 .dark-mode .inline-comment-item, body.dark .inline-comment-item { color: #f1f1f1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 .dark-mode .inline-comment-item strong, body.dark .inline-comment-item strong { color: #ffcc00; }
-.dark-mode .inline-comment-input, body.dark .inline-comment-input { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #444 !important; }
+.dark-mode .inline-comment-input, body.dark .inline-comment-input { background-color: #1e1e1e !important;color: var(--text-dark, #111); border: 1px solid #444 !important; }
 .dark-mode .social-action-count, body.dark .social-action-count { color: #d1d5db; }
 .dark-mode .add-to-cart-btn, body.dark .add-to-cart-btn { background-color: #f3f4f6; color: #121212; font-weight: 600; }
 .dark-mode .add-to-cart-btn:hover:not(:disabled), body.dark .add-to-cart-btn:hover:not(:disabled) { background-color: #e5e7eb; }
