@@ -39,8 +39,10 @@ function HeroBanner() {
   }, [banners.length, nextSlide]);
 
   const handleBannerClick = (banner) => {
-    if (banner && banner.link && banner.link.trim() !== '') {
-      navigate(banner.link);
+    // 🌟 FIX: Database me column ka naam 'button_link' hai, isliye ab click kaam karega
+    const link = banner.button_link || banner.link; 
+    if (link && link.trim() !== '') {
+      navigate(link);
     }
   };
 
@@ -52,9 +54,8 @@ function HeroBanner() {
 
   const activeBanner = banners[current];
   
-  // URL fetching (ab hume mobile aur desktop dono URL nikalne hain)
+  // URL fetching (Desktop aur Mobile dono ke liye)
   const desktopImageUrl = getImageUrl(activeBanner.image_url);
-  // Agar database me mobile image nahi hai, toh fallback me desktop image hi dikhayega
   const mobileImageUrl = activeBanner.mobile_image_url 
     ? getImageUrl(activeBanner.mobile_image_url) 
     : desktopImageUrl;
@@ -64,14 +65,18 @@ function HeroBanner() {
       <div
         className="hero-banner-slide"
         onClick={() => handleBannerClick(activeBanner)}
+        style={{ cursor: 'pointer' }} // 🌟 Hover karne par clickable haath banega
       >
-        {/* 🌟 SMART PICTURE TAG: Automatically switches image based on screen size */}
+        {/* 🌟 SMART PICTURE TAG: Screen size ke hisaab se auto photo badlega */}
         <picture>
-          <source media="(max-width: 768px)" srcSet={mobileImageUrl} />
+          {activeBanner.mobile_image_url && (
+            <source media="(max-width: 768px)" srcSet={mobileImageUrl} />
+          )}
           <img
             src={desktopImageUrl}
-            alt="Arzoo Saree Banner"
+            alt={activeBanner.title || "Arzoo Saree Banner"}
             className="hero-banner-img"
+            style={{ width: '100%', display: 'block', objectFit: 'cover' }}
           />
         </picture>
       </div>
