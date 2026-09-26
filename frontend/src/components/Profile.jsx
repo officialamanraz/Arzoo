@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({});
-  const [editSection, setEditSection] = useState(null); // 'name', 'email', 'phone', 'password', null
+  const [editSection, setEditSection] = useState(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -21,7 +21,6 @@ const Profile = () => {
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -31,16 +30,38 @@ const Profile = () => {
       return;
     }
 
+    // 1. Pehle local storage se load karo (Fast render ke liye)
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
     setUser(storedUser);
-    setFormData({
+    setFormData(prev => ({
+      ...prev,
       name: storedUser.name || '',
       email: storedUser.email || '',
       phone: storedUser.phone || '',
-      currentPassword: '',
-      newPassword: '',
       profile_image: storedUser.profile_image || ''
-    });
+    }));
+
+    // 2. 🌟 FIX: Database se hamesha fresh data fetch karo taaki image hamesha update rahe
+    fetch(`${API_BASE_URL}/api/auth/profile`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user)); // Local storage update kar diya
+        setUser(data.user);
+        setFormData(prev => ({
+          ...prev,
+          name: data.user.name || prev.name,
+          email: data.user.email || prev.email,
+          phone: data.user.phone || prev.phone,
+          profile_image: data.user.profile_image || prev.profile_image
+        }));
+      }
+    })
+    .catch(err => console.error('[Profile] Failed to fetch fresh user data:', err));
+
   }, [navigate]);
 
   const handleChange = (e) => {
@@ -51,6 +72,7 @@ const Profile = () => {
     const file = e.target.files[0]; 
     if (!file) return;
 
+    // Preview dikhane ke liye
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormData(prev => ({ ...prev, profile_image: reader.result }));
@@ -61,8 +83,6 @@ const Profile = () => {
     try {
       const token = localStorage.getItem('token');
       const dataToSend = new FormData();
-      
-      // 🌟 FIX 1: 'image' ki jagah 'profile_image' use kiya
       dataToSend.append('profile_image', file); 
       
       const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
@@ -71,9 +91,12 @@ const Profile = () => {
         body: dataToSend
       });
       const data = await response.json();
+      
       if (response.ok && data.success) {
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
+        // 🌟 FIX: Upload hone ke baad form state mein original image URL set karna zaroori hai
+        setFormData(prev => ({ ...prev, profile_image: data.user.profile_image }));
         showMessage('Profile photo updated successfully!', false);
       } else {
         showMessage(data.message || 'Failed to upload image.', true);
@@ -128,8 +151,6 @@ const Profile = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      
-      // 🌟 FIX 2: Backend ke hisaab se isko bhi FormData me bheja aur route '/profile' kiya
       const dataToSend = new FormData();
       dataToSend.append('currentPassword', formData.currentPassword);
       dataToSend.append('newPassword', formData.newPassword);
