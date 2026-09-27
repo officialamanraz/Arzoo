@@ -261,102 +261,232 @@ function App() {
     setCurrentPage(1);
   };
 
-  return (
-    <>
-    return (
+ return (
   <>
-    {/* Yeh ek baar lagana hai, notifications apne aap screen par aayenge */}
-    <Toaster position="top-center" reverseOrder={false} /> 
+    {/* Notifications */}
+    <Toaster position="top-center" reverseOrder={false} />
 
-    <Navbar />
-    {/* Baaki aapka routing ka code */}
-  </>
-);
-      <Navbar
-        isDark={isDark}
-        toggleDark={() => setIsDark(!isDark)}
-        onSearch={handleSearch}
-        onCategorySelect={handleCategorySelect}
-        onSubcategorySelect={handleSubcategorySelect}
-        currency={currency}
-        setCurrency={setCurrency}
-        rates={rates}
-        ratesError={ratesError}
-        language={language}
-        setLanguage={setLanguage}
-        minPrice={minprice}
-        setMinPrice={setMinprice}
-        maxPrice={maxprice}
-        setMaxPrice={setMaxprice}
+    {/* ONE Navbar ONLY */}
+    <Navbar
+      isDark={isDark}
+      toggleDark={() => setIsDark(!isDark)}
+      onSearch={handleSearch}
+      onCategorySelect={handleCategorySelect}
+      onSubcategorySelect={handleSubcategorySelect}
+      currency={currency}
+      setCurrency={setCurrency}
+      rates={rates}
+      ratesError={ratesError}
+      language={language}
+      setLanguage={setLanguage}
+      minPrice={minprice}
+      setMinPrice={setMinprice}
+      maxPrice={maxprice}
+      setMaxPrice={setMaxprice}
+    />
+
+    <AdminSwitcher />
+
+    <Routes>
+      {/* =========================================
+         PUBLIC / CUSTOMER ROUTES
+         ========================================= */}
+
+      <Route
+        path="/"
+        element={
+          <Home
+            sarees={sarees}
+            loading={loading}
+            error={error}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            keyword={searchKeyword}
+            categoryName={selectedCategoryName}
+            subcategoryName={selectedSubcategoryName}
+            currency={currency}
+            rates={rates}
+            language={language}
+            totalPages={totalPages}
+          />
+        }
       />
 
-      <AdminSwitcher />
+      <Route
+        path="/product/:id"
+        element={
+          <ProductDetail
+            sarees={sarees}
+            currency={currency}
+            rates={rates}
+            language={language}
+          />
+        }
+      />
 
-      <Routes>
-        {/* =========================================
-           PUBLIC / CUSTOMER ROUTES
-           ========================================= */}
-        <Route
-          path="/"
-          element={
-            <Home
-              sarees={sarees}
-              loading={loading}
-              error={error}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              keyword={searchKeyword}
-              categoryName={selectedCategoryName}
-              subcategoryName={selectedSubcategoryName}
-              currency={currency}
-              rates={rates}
-              language={language}
-              totalPages={totalPages}
-            />
-          }
-        />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
 
-        <Route path="/product/:id" element={<ProductDetail sarees={sarees} currency={currency} rates={rates} language={language} />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
+      {/* =========================================
+         AUTHENTICATION & USER PROFILE ROUTES
+         ========================================= */}
 
-        {/* =========================================
-           AUTHENTICATION & USER PROFILE ROUTES
-           ========================================= */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/my-orders" element={<ProtectedRoute><UserOrders /></ProtectedRoute>} />
-        <Route path="/add-address" element={<ProtectedRoute><AddressForm /></ProtectedRoute>} />
-        <Route path="/order-summary" element={<ProtectedRoute><OrderSummary /></ProtectedRoute>} />
-        <Route path="/payment" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-        <Route path="/track-order/:orderId" element={<OrderTracking />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/profile" element={<Profile />} />
 
-        {/* =========================================
-           ADMIN PANEL ROUTES
-           ========================================= */}
-        <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
-        <Route path="/admin/inventory" element={<AdminRoute><AdminInventory /></AdminRoute>} />
-        <Route path="/admin/add-product" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
-        <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
-        <Route path="/admin/banners" element={<AdminRoute><AdminBanners /></AdminRoute>} />
-        <Route path="/admin/orders/:id" element={<OrderDetail />} />
-<Route path="/admin/dealer/edit/:id" element={<AdminRoute><AdminAddDealer /></AdminRoute>} />
-        {/* 🤝 NEW ADMIN DEALER MANAGEMENT ROUTES */}
-<Route path="/admin/dealers" element={<AdminRoute><AdminDealers /></AdminRoute>} />
-<Route path="/admin/dealer/:id" element={<AdminRoute><AdminDealerDetail /></AdminRoute>} />
-<Route path="/admin/add-dealer" element={<AdminRoute><AdminAddDealer /></AdminRoute>} /> {/* 👈 NAYA ROUTE */}
-        {/* =========================================
-           DEALER PORTAL ROUTES
-           ========================================= */}
-        {/* Protected view for individual dealers to inspect earnings and masked payouts */}
-      </Routes>
-    </>
-  );
+      <Route
+        path="/my-orders"
+        element={
+          <ProtectedRoute>
+            <UserOrders />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/add-address"
+        element={
+          <ProtectedRoute>
+            <AddressForm />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/order-summary"
+        element={
+          <ProtectedRoute>
+            <OrderSummary />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/payment"
+        element={
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="/track-order/:orderId" element={<OrderTracking />} />
+
+      {/* =========================================
+         ADMIN PANEL ROUTES
+         ========================================= */}
+
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminPage />
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/inventory"
+        element={
+          <AdminRoute>
+            <AdminInventory />
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/add-product"
+        element={
+          <AdminRoute>
+            <AdminAddProduct />
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/orders"
+        element={
+          <AdminRoute>
+            <AdminOrders />
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/banners"
+        element={
+          <AdminRoute>
+            <AdminBanners />
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/orders/:id"
+        element={<OrderDetail />}
+      />
+
+      <Route
+        path="/admin/dealer/edit/:id"
+        element={
+          <AdminRoute>
+            <AdminAddDealer />
+          </AdminRoute>
+        }
+      />
+
+      {/* =========================================
+         ADMIN DEALER MANAGEMENT ROUTES
+         ========================================= */}
+
+      <Route
+        path="/admin/dealers"
+        element={
+          <AdminRoute>
+            <AdminDealers />
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/dealer/:id"
+        element={
+          <AdminRoute>
+            <AdminDealerDetail />
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/add-dealer"
+        element={
+          <AdminRoute>
+            <AdminAddDealer />
+          </AdminRoute>
+        }
+      />
+
+      {/* =========================================
+         DEALER PORTAL ROUTES
+         ========================================= */}
+
+      {/* Protected view for individual dealers to inspect earnings and masked payouts */}
+
+    </Routes>
+  </>
+);
 }
-
-export default App;
+export default App

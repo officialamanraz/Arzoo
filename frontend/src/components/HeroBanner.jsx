@@ -70,7 +70,12 @@ function HeroBanner() {
                   src={desktopImageUrl}
                   alt={banner.title || "Arzoo Saree Banner"}
                   className="hero-banner-img"
-                  style={{ width: '100%', display: 'block', objectFit: 'cover' }}
+                   style={{
+    width: '100%',
+    height: 'auto',
+    display: 'block',
+    objectFit: 'contain'
+  }}
                 />
               </picture>
             </SwiperSlide>
