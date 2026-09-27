@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import toast from 'react-hot-toast';
+import { FaCamera } from 'react-icons/fa';
 import './ReviewForm.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -22,15 +24,12 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        // Hitting the endpoint that uses your `getReviewsByProductbydb` service
         const response = await fetch(`${API_BASE_URL}/api/reviews/${productId}`);
         const data = await response.json();
 
-        // Check if the backend returned availableOptions
         if (data.success && data.availableOptions && data.availableOptions.length > 0) {
           setDbOptions(data.availableOptions);
         } else {
-          // Fallback just in case
           setDbOptions(["skip", "timepass", "go_for_it", "perfection"]);
         }
       } catch (error) {
@@ -50,7 +49,8 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
     e.preventDefault();
     
     if (!rating) {
-      return alert("Please select a rating before submitting!");
+      toast.error("Please select a rating before submitting!");
+      return;
     }
 
     setIsSubmitting(true);
@@ -71,20 +71,19 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
       const data = await response.json();
 
       if (data.success) {
-        alert("Review added successfully!");
+        toast.success("Review added successfully!");
         setRating("");
         setComment("");
         setImage(null);
-        // Reset file input visually
         const fileInput = document.getElementById('review-image-upload');
         if (fileInput) fileInput.value = '';
-        if (onReviewAdded) onReviewAdded(); // Refresh parent component
+        if (onReviewAdded) onReviewAdded();
       } else {
-        alert(data.message || "Failed to add review.");
+        toast.error(data.message || "Failed to add review.");
       }
     } catch (error) {
       console.error("[ReviewForm] Network error during submission:", error);
-      alert("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -137,8 +136,8 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
 
         {/* Image Upload */}
         <div className="input-group file-upload-group">
-          <label htmlFor="review-image-upload" className="upload-label">
-            📸 Upload Image <span className="optional-text">(Optional - Verified Buyers Only)</span>
+          <label htmlFor="review-image-upload" className="upload-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <FaCamera /> Upload Image <span className="optional-text">(Optional - Verified Buyers Only)</span>
           </label>
           <input
             id="review-image-upload"

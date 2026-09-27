@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
 import './Checkout.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -8,15 +10,11 @@ const Checkout = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // 👉 Grab data passed from your Order Summary page
-const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.state || {};
+    const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.state || {};
     const [paymentMethod, setPaymentMethod] = useState('cod'); 
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const [fallbackAddressId, setFallbackAddressId] = useState(null);
-    
 
-    // 👉 Safety Net: If the previous page didn't pass the addressId, fetch the most recently saved one
     useEffect(() => {
         if (!passedAddressId) {
             const fetchLatestAddress = async () => {
@@ -27,7 +25,6 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const data = await res.json();
-                    // Your DB sorts by created_at DESC, so index 0 is always the newest address!
                     if (data.success && data.addresses.length > 0) {
                         setFallbackAddressId(data.addresses[0].address_id);
                     }
@@ -43,19 +40,18 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
         const finalAddressId = passedAddressId || fallbackAddressId;
 
         if (!finalAddressId) {
-            alert('Error: Delivery address missing. Please go back and select an address.');
+            toast.error('Delivery address missing. Please go back and select an address.');
             return;
         }
 
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('Please log in again to place your order.');
+            toast.error('Please log in again to place your order.');
             navigate('/login');
             return;
         }
 
         setLoading(true);
-        setError('');
 
         try {
             const storedTrackingRef = sessionStorage.getItem('tracking_ref') || null;
@@ -80,14 +76,14 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
             const data = await res.json();
 
             if (!data.success) {
-                setError(data.message || data.error || 'Checkout failed.');
+                toast.error(data.message || data.error || 'Checkout failed.');
                 setLoading(false);
                 return;
             }
 
             if (paymentMethod === 'cod') {
                 sessionStorage.removeItem('tracking_ref');
-                alert(`Order Placed Successfully! Order ID: ${data.orderId}`);
+                toast.success(`Order Placed Successfully! Order ID: ${data.orderId}`);
                 navigate('/');
                 setLoading(false);
             } else {
@@ -96,7 +92,7 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
 
         } catch (err) {
             console.error('[CHECKOUT] Order error:', err);
-            setError('Something went wrong while placing the order.');
+            toast.error('Something went wrong while placing the order.');
             setLoading(false);
         }
     };
@@ -104,7 +100,7 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
     const startRazorpayPayment = async (internalOrderId, displayOrderId, token) => {
         try {
             if (!window.Razorpay) {
-                alert('Razorpay SDK failed to load. Please check your internet connection.');
+                toast.error('Razorpay SDK failed to load. Please check your internet connection.');
                 setLoading(false);
                 return;
             }
@@ -121,7 +117,7 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
             const razorpayData = await razorpayRes.json();
 
             if (!razorpayData.success) {
-                alert('Failed to start payment: ' + razorpayData.message);
+                toast.error('Failed to start payment: ' + razorpayData.message);
                 setLoading(false);
                 return;
             }
@@ -153,10 +149,10 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
 
                         if (verifyData.success) {
                             sessionStorage.removeItem('tracking_ref');
-                            alert(`Payment Successful! Order ID: ${displayOrderId}`);
-                           navigate('/');
+                            toast.success(`Payment Successful! Order ID: ${displayOrderId}`);
+                            navigate('/');
                         } else {
-                            alert('Payment verification failed. Please contact support.');
+                            toast.error('Payment verification failed. Please contact support.');
                         }
                     } finally {
                         setLoading(false);
@@ -172,14 +168,14 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
 
             const rzp = new window.Razorpay(options);
             rzp.on('payment.failed', function () {
-                alert('Payment failed. Please try again.');
+                toast.error('Payment failed. Please try again.');
                 setLoading(false);
             });
             rzp.open();
 
         } catch (err) {
             console.error('[CHECKOUT] Razorpay error:', err);
-            alert('Something went wrong starting the payment.');
+            toast.error('Something went wrong starting the payment.');
             setLoading(false);
         }
     };
@@ -192,13 +188,11 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
                     <h2>Select Payment Method</h2>
                 </div>
 
-                {error && <p className="payment-error-message">{error}</p>}
-
                 <div className="checkout-step step-active">
                     <div className="step-content">
                         
                         <div className={`payment-method-card ${paymentMethod === 'cod' ? 'payment-selected' : ''}`}>
-                            <label className="payment-label">
+                            <label className="payment-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                 <input
                                     type="radio"
                                     name="paymentMethod"
@@ -207,13 +201,14 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
                                     disabled={loading}
                                     className="payment-radio"
                                 />
-                                <span className="payment-name">💵 Cash on Delivery (COD)</span>
+                                <FaMoneyBillWave color="#2f855a" size={18} />
+                                <span className="payment-name">Cash on Delivery (COD)</span>
                             </label>
                             <p className="payment-desc">Pay the delivery agent in cash when your order arrives.</p>
                         </div>
 
                         <div className={`payment-method-card ${paymentMethod === 'online' ? 'payment-selected' : ''}`}>
-                            <label className="payment-label">
+                            <label className="payment-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                 <input
                                     type="radio"
                                     name="paymentMethod"
@@ -222,7 +217,8 @@ const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.st
                                     disabled={loading}
                                     className="payment-radio"
                                 />
-                                <span className="payment-name">💳 Pay Online (Razorpay)</span>
+                                <FaCreditCard color="#3182ce" size={18} />
+                                <span className="payment-name">Pay Online (Razorpay)</span>
                             </label>
                             <p className="payment-desc">Pay securely via UPI, Cards, or Netbanking.</p>
                         </div>

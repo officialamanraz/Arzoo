@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { FaPaperPlane } from 'react-icons/fa';
 import { apiFetch } from "../api";
 import './Contact.css';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -15,8 +16,7 @@ const Contact = () => {
     e.preventDefault();
     console.log('[Contact] Submitting form...', formData);
     
-    setLoading(true);
-    setStatus('Sending your message...');
+    setLoading(s => true);
 
     try {
       const response = await apiFetch('/api/contact', {
@@ -27,14 +27,14 @@ const Contact = () => {
       console.log('[Contact] Server response:', result);
 
       if (result.success) {
-        setStatus('Your message has been sent! 🚀');
+        toast.success('Your message has been sent successfully!');
         setFormData({ name: '', email: '', message: '' });
       } else {
-        setStatus('Something went wrong: ' + result.message);
+        toast.error('Something went wrong: ' + (result.message || 'Please try again.'));
       }
     } catch (error) {
       console.error('[Contact] Error submitting form:', error);
-      setStatus('Could not connect to the server.');
+      toast.error('Could not connect to the server.');
     } finally {
       setLoading(false);
     }
@@ -88,16 +88,10 @@ const Contact = () => {
             />
           </div>
           
-          <button type="submit" disabled={loading} className="contact-submit-btn">
-            {loading ? 'Sending...' : 'Send Message'}
+          <button type="submit" disabled={loading} className="contact-submit-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <FaPaperPlane /> {loading ? 'Sending...' : 'Send Message'}
           </button>
         </form>
-        
-        {status && (
-          <div className={`status-message ${status.includes('sent') ? 'status-success' : 'status-error'}`}>
-            {status}
-          </div>
-        )}
 
       </div>
     </div>

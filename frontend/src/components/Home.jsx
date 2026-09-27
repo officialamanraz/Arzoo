@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { uiTranslations } from '../languages';
 import HeroBanner from './HeroBanner';
 import './Home.css';
@@ -104,7 +105,6 @@ function Home({
                 const finalImageUrl = saree.image_url || saree.thumbnail || '/saare_1.jpeg';
                 const sareeId = saree.product_id || saree.id;
 
-                // Smart Discount Logic: Checks backend first, calculates via math if missing
                 let displayDiscount = saree.discount_percentage || 0;
                 if (!displayDiscount && saree.mrp && saree.price && saree.mrp > saree.price) {
                   displayDiscount = Math.round(((saree.mrp - saree.price) / saree.mrp) * 100);
@@ -122,7 +122,6 @@ function Home({
                           e.target.src = "/saare_1.jpeg"; 
                         }}
                       />
-                      {/* Uses the smart calculated discount */}
                       {displayDiscount > 0 && (
                         <span className="flipkart-discount-badge">
                           ↓{displayDiscount}%
@@ -158,8 +157,9 @@ function Home({
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="pagination-btn"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  {t('previous')}
+                  <FaChevronLeft size={12} /> {t('previous')}
                 </button>
 
                 <div className="pagination-numbers">
@@ -178,8 +178,9 @@ function Home({
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === actualTotalPages && sarees.length < ITEMS_PER_PAGE}
                   className="pagination-btn"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  {t('next')}
+                  {t('next')} <FaChevronRight size={12} />
                 </button>
               </div>
             )}

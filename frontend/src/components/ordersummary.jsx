@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { uiTranslations } from '../languages'; 
-import { getImageUrl } from '../getImageUrl'; // 👈 YAHAN ADD KIYA HAI HOME PAGE WALA FUNCTION
+import { getImageUrl } from '../getImageUrl';
 import './OrderSummary.css'; 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -15,9 +16,7 @@ export default function OrderSummary({ language }) {
   const [address, setAddress] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  // Dynamic Translation Function
   const t = (key) => {
     const currentLang = language || 'en';
     return uiTranslations[currentLang]?.[key] || uiTranslations['en'][key] || key;
@@ -40,7 +39,7 @@ export default function OrderSummary({ language }) {
         if (addressData.success) {
           setAddress(addressData.address);
         } else {
-          setError(t('error')); 
+          toast.error(t('error') || 'Failed to load address');
           setLoading(false);
           return; 
         }
@@ -64,11 +63,11 @@ export default function OrderSummary({ language }) {
             }));
             setCartItems(items);
           } else {
-            setError(t('error'));
+            toast.error(t('error') || 'Failed to load cart items');
           }
         }
       } catch (err) {
-        setError('Network error.');
+        toast.error('Network error while loading checkout data.');
       } finally {
         setLoading(false);
       }
@@ -92,20 +91,16 @@ export default function OrderSummary({ language }) {
     });
   };
 
-  // 🚨 SMART IMAGE EXTRACTOR: Ab yeh Home Page wale getImageUrl() ko use karega!
   const extractImage = (item) => {
     try {
       let rawData = item.images || item.image_url || item.image || item.thumbnail;
       if (!rawData) return '/placeholder.png';
 
-      // Agar JSON string me array aaya hai, usko parse karo
       if (typeof rawData === 'string' && rawData.startsWith('[')) {
         rawData = JSON.parse(rawData);
       }
 
       let imageName = Array.isArray(rawData) ? rawData[0] : rawData;
-      
-      // Home page wale function me image bhej do
       return getImageUrl(imageName);
     } catch (e) {
       console.error("[OrderSummary] Image extraction failed for:", item.product_name);
@@ -114,7 +109,6 @@ export default function OrderSummary({ language }) {
   };
 
   if (loading) return <div className="loading-state">{t('loading')}</div>;
-  if (error) return <div className="error-state">{error}</div>;
 
   return (
     <div className="summary-page">

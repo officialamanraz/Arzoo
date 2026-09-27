@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { FaPlus, FaUpload } from 'react-icons/fa';
 import AdminNav from './AdminNav';
 import './AdminAddProduct.css';
 
@@ -194,20 +196,18 @@ function AdminAddProduct() {
       });
 
       if (response.ok) {
-        alert(isEditing ? 'Product updated successfully!' : 'Product added successfully!');
+        toast.success(isEditing ? 'Product updated successfully!' : 'Product added successfully!');
         navigate('/admin/inventory'); 
       } else {
-        alert('Action failed. Server returned an error.');
+        toast.error('Action failed. Server returned an error.');
       }
     } catch (err) {
       console.error('[ADMIN_ADD_PRODUCT] ❌ Submission exception:', err);
-      alert('Action failed. Please check the server connection.');
+      toast.error('Action failed. Please check the server connection.');
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  console.log("👀 FINAL DEALERS STATE:", dealers);
 
   return (
     <div className="admin-wrapper">
@@ -224,7 +224,7 @@ function AdminAddProduct() {
             <input type="text" value={form.name} onChange={handleFieldChange('name')} required className="admin-input" />
           </div>
 
-          {/* 🌟 FINANCIAL INPUTS SECTION */}
+          {/* FINANCIAL INPUTS SECTION */}
           <div className="financial-section">
             <div className="responsive-grid-3">
               <div className="form-group">
@@ -387,7 +387,9 @@ function AdminAddProduct() {
           </fieldset>
 
           <div className="form-group">
-            <label>Upload Product Image(s)</label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FaUpload /> Upload Product Image(s)
+            </label>
             <input
               type="file"
               multiple
@@ -400,8 +402,8 @@ function AdminAddProduct() {
           </div>
 
           <div className="responsive-grid-2 action-buttons-container">
-            <button type="submit" disabled={isSubmitting} className="admin-submit-btn">
-              {isSubmitting ? 'Processing...' : (isEditing ? 'Update Product' : 'Add Product')}
+            <button type="submit" disabled={isSubmitting} className="admin-submit-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <FaPlus /> {isSubmitting ? 'Processing...' : (isEditing ? 'Update Product' : 'Add Product')}
             </button>
             {isEditing && (
               <button type="button" onClick={resetForm} className="admin-cancel-btn">

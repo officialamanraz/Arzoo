@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-
+import { Toaster } from 'react-hot-toast';
 // 🚨 FIX 1: Imported pure Vanilla Lenis instead of the broken React wrapper
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css'; // Automatically applies required smooth scroll CSS
@@ -263,6 +263,15 @@ function App() {
 
   return (
     <>
+    return (
+  <>
+    {/* Yeh ek baar lagana hai, notifications apne aap screen par aayenge */}
+    <Toaster position="top-center" reverseOrder={false} /> 
+
+    <Navbar />
+    {/* Baaki aapka routing ka code */}
+  </>
+);
       <Navbar
         isDark={isDark}
         toggleDark={() => setIsDark(!isDark)}

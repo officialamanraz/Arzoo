@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { getImageUrl } from '../getImageUrl';
 import './CartPage.css';
 
@@ -31,15 +32,16 @@ function CartPage({ currency, rates }) {
       const res = await response.json();
       if (res.success) {
         const data = res.data || res.cart || [];
-        console.log("BACKEND SE KYA AAYA:", data); // 👈 Yeh line add karke browser console check karein
         setCartItems(data);
       }
     } catch (err) {
       console.error('[CartPage] Error fetching cart:', err);
+      toast.error('Failed to load cart items.');
     } finally {
       setLoading(false);
     }
-};
+  };
+
   const handleUpdateQuantity = async (cartId, newQuantity) => {
     if (newQuantity <= 0) return handleRemoveItem(cartId);
     try {
@@ -55,6 +57,7 @@ function CartPage({ currency, rates }) {
       }
     } catch (error) {
       console.error('[CartPage] Update Qty Error:', error);
+      toast.error('Could not update quantity.');
     }
   };
 
@@ -67,9 +70,13 @@ function CartPage({ currency, rates }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       const res = await response.json();
-      if (res.success) setCartItems((prev) => prev.filter((item) => item.cart_id !== cartId));
+      if (res.success) {
+        setCartItems((prev) => prev.filter((item) => item.cart_id !== cartId));
+        toast.success('Item removed from cart.');
+      }
     } catch (error) {
       console.error('[CartPage] Remove Error:', error);
+      toast.error('Could not remove item.');
     }
   };
 
@@ -102,7 +109,6 @@ function CartPage({ currency, rates }) {
       ) : (
         <div className="cart-layout">
           
-          {/* LEFT COLUMN: CART ITEMS DATA EXACTLY LIKE SCREENSHOT */}
           <div className="cart-items-section">
             <div className="cart-section-header">
               <h2>My Cart ({cartItems.length})</h2>
@@ -111,10 +117,8 @@ function CartPage({ currency, rates }) {
             {cartItems.map((item) => (
               <div key={item.cart_id} className="cart-item-card">
                 
-                {/* TOP HALF: Image, Qty, Details */}
                 <div className="cart-item-data-row">
                   
-                  {/* Image & Qty Column (Left) */}
                   <div className="cart-item-visual-col">
                     <Link to={`/product/${item.product_id}`}>
                       <img src={getImageUrl(item.image_url)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.src = '/saare_1.jpeg'; }} />
@@ -125,7 +129,10 @@ function CartPage({ currency, rates }) {
                       <div className="qty-display">{item.quantity}</div>
                       <button 
                         onClick={() => {
-                          if (item.quantity >= item.stock_qty) return alert(`Only ${item.stock_qty} available in stock.`);
+                          if (item.quantity >= item.stock_qty) {
+                            toast.error(`Only ${item.stock_qty} available in stock.`);
+                            return;
+                          }
                           handleUpdateQuantity(item.cart_id, Number(item.quantity) + 1);
                         }}
                         disabled={item.quantity >= item.stock_qty}
@@ -133,14 +140,12 @@ function CartPage({ currency, rates }) {
                     </div>
                   </div>
 
-                  {/* Info Column (Right) */}
                   <div className="cart-item-info-col">
                     <Link to={`/product/${item.product_id}`} className="cart-product-title-link">
                       <h4 className="cart-product-title">{item.name}</h4>
                     </Link>
                     <p className="cart-seller-info">Seller: Arzoo Saree</p>
 
-                    {/* Price structure: Discount -> MRP -> Final Price */}
                     <div className="cart-price-block">
                       {item.mrp > item.price && (
                         <span className="cart-discount-percent">↓{item.discount_percentage}%</span>
@@ -157,7 +162,6 @@ function CartPage({ currency, rates }) {
                   </div>
                 </div>
 
-                {/* BOTTOM HALF: Horizontal Action Buttons */}
                 <div className="cart-item-action-row">
                   <button className="cart-action-btn" onClick={() => handleRemoveItem(item.cart_id)}>Remove</button>
                   <button className="cart-action-btn cart-buy-now-btn" onClick={() => handleSingleBuyNow(item)}>⚡ Buy this now</button>
@@ -166,7 +170,6 @@ function CartPage({ currency, rates }) {
             ))}
           </div>
 
-          {/* RIGHT COLUMN: PRICE DETAILS BLOCK */}
           <div className="cart-bill-section">
             <h3 className="bill-header">PRICE DETAILS</h3>
             

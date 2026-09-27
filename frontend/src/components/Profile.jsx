@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { FaUserCircle, FaCamera, FaEye, FaEyeSlash } from 'react-icons/fa';
 import './Profile.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -18,8 +20,6 @@ const Profile = () => {
     profile_image: ''
   });
   
-  const [message, setMessage] = useState('');
-  const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -41,7 +41,7 @@ const Profile = () => {
       profile_image: storedUser.profile_image || ''
     }));
 
-    // 2. 🌟 FIX: Database se hamesha fresh data fetch karo taaki image hamesha update rahe
+    // 2. Database se hamesha fresh data fetch karo taaki image hamesha update rahe
     fetch(`${API_BASE_URL}/api/auth/profile`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` }
@@ -49,7 +49,7 @@ const Profile = () => {
     .then(res => res.json())
     .then(data => {
       if (data.success && data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user)); // Local storage update kar diya
+        localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
         setFormData(prev => ({
           ...prev,
@@ -95,23 +95,16 @@ const Profile = () => {
       if (response.ok && data.success) {
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
-        // 🌟 FIX: Upload hone ke baad form state mein original image URL set karna zaroori hai
         setFormData(prev => ({ ...prev, profile_image: data.user.profile_image }));
-        showMessage('Profile photo updated successfully!', false);
+        toast.success('Profile photo updated successfully!');
       } else {
-        showMessage(data.message || 'Failed to upload image.', true);
+        toast.error(data.message || 'Failed to upload image.');
       }
     } catch (error) {
-      showMessage('Failed to upload image.', true);
+      toast.error('Failed to upload image.');
     } finally {
       setIsLoading(false); 
     }
-  };
-
-  const showMessage = (msg, error = false) => {
-    setMessage(msg);
-    setIsError(error);
-    setTimeout(() => setMessage(''), 3000);
   };
 
   const handleUpdateProfile = async (e) => {
@@ -132,15 +125,15 @@ const Profile = () => {
 
       const data = await response.json();
       if (response.ok && data.success) {
-        showMessage('Profile updated successfully!', false);
+        toast.success('Profile updated successfully!');
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
         setEditSection(null);
       } else {
-        showMessage(data.message || 'Failed to update profile.', true);
+        toast.error(data.message || 'Failed to update profile.');
       }
     } catch (error) {
-      showMessage('Network error. Please try again.', true);
+      toast.error('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -163,14 +156,14 @@ const Profile = () => {
 
       const data = await response.json();
       if (response.ok && data.success) {
-        showMessage('Password changed successfully!', false);
+        toast.success('Password changed successfully!');
         setEditSection(null);
         setFormData({ ...formData, currentPassword: '', newPassword: '' });
       } else {
-        showMessage(data.message || 'Failed to change password.', true);
+        toast.error(data.message || 'Failed to change password.');
       }
     } catch (error) {
-      showMessage('Network error. Please try again.', true);
+      toast.error('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -191,7 +184,7 @@ const Profile = () => {
             {formData.profile_image ? (
                <img src={formData.profile_image} alt="User Avatar" style={{ opacity: isLoading ? 0.6 : 1 }} />
             ) : (
-               <span className="avatar-placeholder">👤</span>
+               <span className="avatar-placeholder"><FaUserCircle size={64} color="#a0aec0" /></span>
             )}
             
             {isLoading && (
@@ -201,7 +194,9 @@ const Profile = () => {
             )}
 
             <input type="file" id="imageUpload" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} disabled={isLoading} />
-            <label htmlFor="imageUpload" className="avatar-edit-badge" title="Change Photo">📷</label>
+            <label htmlFor="imageUpload" className="avatar-edit-badge" title="Change Photo">
+              <FaCamera />
+            </label>
           </div>
           <h3>{user.name || 'User'}</h3>
           <p>{user.email}</p>
@@ -217,12 +212,6 @@ const Profile = () => {
       {/* CONTENT AREA */}
       <div className="profile-content">
         <h2>Login & Security</h2>
-        
-        {message && (
-          <div className={`status-message ${isError ? 'error' : 'success'}`}>
-            {message}
-          </div>
-        )}
 
         <div className="security-list">
           
@@ -312,7 +301,7 @@ const Profile = () => {
                     required 
                   />
                   <button type="button" className="password-toggle-btn" onClick={() => setShowPassword(!showPassword)} title="Toggle Password Visibility">
-                    {showPassword ? "👁️‍🗨️" : "👁️"}
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
                 
@@ -326,7 +315,7 @@ const Profile = () => {
                     required 
                   />
                   <button type="button" className="password-toggle-btn" onClick={() => setShowPassword(!showPassword)} title="Toggle Password Visibility">
-                    {showPassword ? "👁️‍🗨️" : "👁️"}
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { getImageUrl } from '../getImageUrl';
 import './UserOrders.css';
 
@@ -68,14 +69,14 @@ function UserOrders() {
       const data = await response.json();
 
       if (data.success) {
-        alert("Order cancelled successfully!");
+        toast.success("Order cancelled successfully!");
         setOrders(orders.map(o => o.order_id === orderId ? { ...o, status: 'cancelled' } : o));
       } else {
-        alert(data.message);
+        toast.error(data.message || "Failed to cancel order.");
       }
     } catch (error) {
       console.error("Error cancelling order:", error);
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     }
   };
 
