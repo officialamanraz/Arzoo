@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css'; // Skeleton ki CSS
 import { getImageUrl } from '../getImageUrl';
 import './UserOrders.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-
 const SITE_NAME = import.meta.env.VITE_SITE_NAME || '';
 const STORE_NAME = import.meta.env.VITE_STORE_NAME || SITE_NAME || 'Store Name';
 const STORE_TAGLINE = import.meta.env.VITE_STORE_TAGLINE || '';
@@ -75,14 +76,12 @@ function UserOrders() {
         toast.error(data.message || "Failed to cancel order.");
       }
     } catch (error) {
-      console.error("Error cancelling order:", error);
       toast.error("Something went wrong");
     }
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
+    return new Date(dateString).toLocaleDateString('en-IN', {
       year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
   };
@@ -99,163 +98,20 @@ function UserOrders() {
   };
 
   const buildInvoiceHtml = (order) => {
+    /* (Keep your existing long invoice HTML building logic here, I kept it intact!) */
     const items = order.items || [];
     const itemsSubtotal = items.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0);
+    const itemRows = items.length > 0 ? items.map(item => {
+      const itemDiscount = Number(item.discount || 0);
+      const lineTotal = (item.quantity * item.unit_price) - itemDiscount;
+      return `<tr><td><div class="item-name">${item.name}</div><div class="item-variant">HSN: ${item.hsn_code || 'N/A'} | SKU: PROD-${item.product_id || 'N/A'}</div></td><td class="align-center">${item.quantity}</td><td class="align-right">₹${Number(item.unit_price).toFixed(2)}</td><td class="align-right">₹${itemDiscount.toFixed(2)}</td><td class="align-right">₹${lineTotal.toFixed(2)}</td></tr>`;
+    }).join('') : '<tr><td colspan="5" class="align-center">No items found</td></tr>';
 
-    const itemRows = items.length > 0
-      ? items.map(item => {
-          const itemDiscount = Number(item.discount || 0);
-          const lineTotal = (item.quantity * item.unit_price) - itemDiscount;
-          return `
-            <tr>
-              <td>
-                <div class="item-name">${item.name}</div>
-                <div class="item-variant">HSN: ${item.hsn_code || 'N/A'} | SKU: PROD-${item.product_id || 'N/A'}</div>
-              </td>
-              <td class="align-center">${item.quantity}</td>
-              <td class="align-right">₹${Number(item.unit_price).toFixed(2)}</td>
-              <td class="align-right">₹${itemDiscount.toFixed(2)}</td>
-              <td class="align-right">₹${lineTotal.toFixed(2)}</td>
-            </tr>`;
-        }).join('')
-      : '<tr><td colspan="5" class="align-center">No items found</td></tr>';
-
-    const supportLine = (SUPPORT_EMAIL || SUPPORT_PHONE)
-      ? `Need help? Contact us at <strong>${[SUPPORT_EMAIL, SUPPORT_PHONE].filter(Boolean).join('</strong> or <strong>')}</strong><br>`
-      : '';
-
+    const supportLine = (SUPPORT_EMAIL || SUPPORT_PHONE) ? `Need help? Contact us at <strong>${[SUPPORT_EMAIL, SUPPORT_PHONE].filter(Boolean).join('</strong> or <strong>')}</strong><br>` : '';
     const invoiceNumber = order.invoice_number || order.payment_id;
     const gstinRowHtml = (SELLER_GSTIN && SELLER_GSTIN !== 'N/A') ? `GSTIN: ${SELLER_GSTIN}<br>` : '';
 
-    return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-      <meta charset="UTF-8">
-      <title>Invoice - ${invoiceNumber}</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #eceae4; padding: 40px 20px; color: #242824; }
-        .invoice { max-width: 800px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; }
-        .invoice-header { background: linear-gradient(135deg, #ad3764, #d28a2e); color: #ffffff; padding: 32px 40px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; }
-        .seller-block .store-name { font-size: 26px; font-weight: 700; letter-spacing: 0.5px; }
-        .seller-block .store-tagline { font-size: 12px; opacity: 0.85; margin-top: 4px; }
-        .seller-block .store-meta { margin-top: 14px; font-size: 12px; line-height: 1.6; opacity: 0.9; }
-        .invoice-meta { text-align: right; }
-        .invoice-meta .invoice-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
-        .invoice-meta .invoice-number-box { display: inline-block; border: 1px dashed rgba(255,255,255,0.6); border-radius: 6px; padding: 6px 12px; margin-top: 6px; font-size: 15px; font-weight: 700; }
-        .invoice-meta .invoice-date { font-size: 12px; margin-top: 10px; opacity: 0.9; line-height: 1.6; }
-        .order-meta-strip { display: flex; gap: 30px; padding: 16px 40px; border-bottom: 1px solid #eee; background: #faf9f7; font-size: 12.5px; color: #555; flex-wrap: wrap; }
-        .order-meta-strip strong { color: #222; }
-        .parties-section { display: flex; gap: 30px; padding: 28px 40px; border-bottom: 1px solid #eee; flex-wrap: wrap; }
-        .party-block { flex: 1; min-width: 220px; }
-        .party-block h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #ad3764; margin-bottom: 10px; }
-        .party-block p { font-size: 13.5px; line-height: 1.6; color: #444; }
-        .party-block p.name { font-weight: 700; color: #222; font-size: 14.5px; }
-        .items-section { padding: 28px 40px; }
-        table.items-table { width: 100%; border-collapse: collapse; }
-        .items-table thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #ad3764; padding: 0 8px 12px; border-bottom: 2px solid #ad3764; }
-        .items-table thead th.align-center { text-align: center; }
-        .items-table thead th.align-right { text-align: right; }
-        .items-table tbody td { padding: 14px 8px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; color: #333; vertical-align: top; }
-        .items-table tbody td.align-center { text-align: center; }
-        .items-table tbody td.align-right { text-align: right; }
-        .item-name { font-weight: 600; color: #222; }
-        .item-variant { font-size: 12px; color: #888; margin-top: 2px; }
-        .totals-section { padding: 0 40px 28px; display: flex; justify-content: flex-end; }
-        .totals-box { width: 100%; max-width: 280px; }
-        .totals-row { display: flex; justify-content: space-between; font-size: 13.5px; color: #555; padding: 6px 0; }
-        .totals-row.grand-total { border-top: 2px solid #242824; margin-top: 8px; padding-top: 12px; font-size: 18px; font-weight: 700; color: #ad3764; }
-        .info-strip { display: flex; gap: 30px; padding: 24px 40px; background: #f7f6f2; border-top: 1px solid #eee; flex-wrap: wrap; }
-        .info-block { flex: 1; min-width: 220px; }
-        .info-block h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 8px; }
-        .info-block p { font-size: 13px; color: #333; line-height: 1.7; }
-        .signature-block { padding: 20px 40px 0; display: flex; justify-content: flex-end; text-align: center; font-size: 12px; color: #666; }
-        .signature-block .sig-line { border-top: 1px solid #999; width: 180px; padding-top: 6px; }
-        .invoice-footer { text-align: center; padding: 24px 40px 32px; font-size: 11.5px; color: #999; line-height: 1.7; }
-        @media print { body { background: #fff; padding: 0; } .invoice { box-shadow: none; border-radius: 0; } }
-      </style>
-      </head>
-      <body>
-        <div class="invoice">
-          <div class="invoice-header">
-            <div class="seller-block">
-              <div class="store-name">${STORE_NAME}</div>
-              <div class="store-tagline">${STORE_TAGLINE}</div>
-              <div class="store-meta">
-                ${gstinRowHtml}
-                ${SELLER_ADDRESS_1}<br>${SELLER_ADDRESS_2}
-              </div>
-            </div>
-            <div class="invoice-meta">
-              <div class="invoice-label">Bill of Supply</div>
-              <div class="invoice-number-box">${invoiceNumber}</div>
-              <div class="invoice-date">
-                Order Date: ${formatDateOnly(order.ordered_at)}<br>
-                Invoice Date: ${formatDateOnly(order.ordered_at)}
-              </div>
-            </div>
-          </div>
-          <div class="order-meta-strip">
-            <span>Order ID: <strong>${order.payment_id}</strong></span>
-          </div>
-          <div class="parties-section">
-            <div class="party-block">
-              <h4>Billing Address</h4>
-              <p class="name">${order.delivery_name || order.customer_name || 'Customer'}</p>
-              <p>${order.shipping_address || 'Address not available'}</p><br>
-              <p>Email: ${order.customer_email || 'Not available'}</p>
-            </div>
-            <div class="party-block">
-              <h4>Shipping Address</h4>
-              <p class="name">${order.delivery_name || order.customer_name || 'Customer'}</p>
-              <p>${order.shipping_address || 'Address not available'}</p>
-            </div>
-          </div>
-          <div class="items-section">
-            <table class="items-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th class="align-center">Qty</th>
-                  <th class="align-right">Price</th>
-                  <th class="align-right">Discount</th>
-                  <th class="align-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>${itemRows}</tbody>
-            </table>
-          </div>
-          <div class="totals-section">
-            <div class="totals-box">
-              <div class="totals-row"><span>Subtotal</span><span>₹${itemsSubtotal.toFixed(2)}</span></div>
-              <div class="totals-row"><span>Discount</span><span>−₹0.00</span></div>
-              <div class="totals-row grand-total"><span>Grand Total</span><span>₹${Number(order.total_amount).toFixed(2)}</span></div>
-            </div>
-          </div>
-          <div class="info-strip">
-            <div class="info-block">
-              <h4>Payment Details</h4>
-              <p>Method: ${order.payment_method ? order.payment_method.toUpperCase() : 'Not available'}</p>
-              <p>Status: ${order.payment_status ? order.payment_status.toUpperCase() : 'Not available'}</p>
-            </div>
-            <div class="info-block">
-              <h4>Order Details</h4>
-              <p>Current Status: ${order.status ? order.status.toUpperCase() : 'Not available'}</p>
-              ${order.estimated_delivery ? `<p>Estimated Delivery: ${formatDateOnly(order.estimated_delivery)}</p>` : ''}
-            </div>
-          </div>
-          <div class="signature-block">
-            <div class="sig-line">Authorized Signatory<br>${STORE_NAME}</div>
-          </div>
-          <div class="invoice-footer">
-            This is a computer-generated document.<br>${supportLine}
-            Thank you for shopping with ${STORE_NAME}!
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Invoice - ${invoiceNumber}</title><style>* { box-sizing: border-box; margin: 0; padding: 0; } body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #eceae4; padding: 40px 20px; color: #242824; } .invoice { max-width: 800px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; } .invoice-header { background: linear-gradient(135deg, #ad3764, #d28a2e); color: #ffffff; padding: 32px 40px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; } .seller-block .store-name { font-size: 26px; font-weight: 700; letter-spacing: 0.5px; } .seller-block .store-tagline { font-size: 12px; opacity: 0.85; margin-top: 4px; } .seller-block .store-meta { margin-top: 14px; font-size: 12px; line-height: 1.6; opacity: 0.9; } .invoice-meta { text-align: right; } .invoice-meta .invoice-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; } .invoice-meta .invoice-number-box { display: inline-block; border: 1px dashed rgba(255,255,255,0.6); border-radius: 6px; padding: 6px 12px; margin-top: 6px; font-size: 15px; font-weight: 700; } .invoice-meta .invoice-date { font-size: 12px; margin-top: 10px; opacity: 0.9; line-height: 1.6; } .order-meta-strip { display: flex; gap: 30px; padding: 16px 40px; border-bottom: 1px solid #eee; background: #faf9f7; font-size: 12.5px; color: #555; flex-wrap: wrap; } .order-meta-strip strong { color: #222; } .parties-section { display: flex; gap: 30px; padding: 28px 40px; border-bottom: 1px solid #eee; flex-wrap: wrap; } .party-block { flex: 1; min-width: 220px; } .party-block h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #ad3764; margin-bottom: 10px; } .party-block p { font-size: 13.5px; line-height: 1.6; color: #444; } .party-block p.name { font-weight: 700; color: #222; font-size: 14.5px; } .items-section { padding: 28px 40px; } table.items-table { width: 100%; border-collapse: collapse; } .items-table thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #ad3764; padding: 0 8px 12px; border-bottom: 2px solid #ad3764; } .items-table thead th.align-center { text-align: center; } .items-table thead th.align-right { text-align: right; } .items-table tbody td { padding: 14px 8px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; color: #333; vertical-align: top; } .items-table tbody td.align-center { text-align: center; } .items-table tbody td.align-right { text-align: right; } .item-name { font-weight: 600; color: #222; } .item-variant { font-size: 12px; color: #888; margin-top: 2px; } .totals-section { padding: 0 40px 28px; display: flex; justify-content: flex-end; } .totals-box { width: 100%; max-width: 280px; } .totals-row { display: flex; justify-content: space-between; font-size: 13.5px; color: #555; padding: 6px 0; } .totals-row.grand-total { border-top: 2px solid #242824; margin-top: 8px; padding-top: 12px; font-size: 18px; font-weight: 700; color: #ad3764; } .info-strip { display: flex; gap: 30px; padding: 24px 40px; background: #f7f6f2; border-top: 1px solid #eee; flex-wrap: wrap; } .info-block { flex: 1; min-width: 220px; } .info-block h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 8px; } .info-block p { font-size: 13px; color: #333; line-height: 1.7; } .signature-block { padding: 20px 40px 0; display: flex; justify-content: flex-end; text-align: center; font-size: 12px; color: #666; } .signature-block .sig-line { border-top: 1px solid #999; width: 180px; padding-top: 6px; } .invoice-footer { text-align: center; padding: 24px 40px 32px; font-size: 11.5px; color: #999; line-height: 1.7; } @media print { body { background: #fff; padding: 0; } .invoice { box-shadow: none; border-radius: 0; } }</style></head><body><div class="invoice"><div class="invoice-header"><div class="seller-block"><div class="store-name">${STORE_NAME}</div><div class="store-tagline">${STORE_TAGLINE}</div><div class="store-meta">${gstinRowHtml}${SELLER_ADDRESS_1}<br>${SELLER_ADDRESS_2}</div></div><div class="invoice-meta"><div class="invoice-label">Bill of Supply</div><div class="invoice-number-box">${invoiceNumber}</div><div class="invoice-date">Order Date: ${formatDateOnly(order.ordered_at)}<br>Invoice Date: ${formatDateOnly(order.ordered_at)}</div></div></div><div class="order-meta-strip"><span>Order ID: <strong>${order.payment_id}</strong></span></div><div class="parties-section"><div class="party-block"><h4>Billing Address</h4><p class="name">${order.delivery_name || order.customer_name || 'Customer'}</p><p>${order.shipping_address || 'Address not available'}</p><br><p>Email: ${order.customer_email || 'Not available'}</p></div><div class="party-block"><h4>Shipping Address</h4><p class="name">${order.delivery_name || order.customer_name || 'Customer'}</p><p>${order.shipping_address || 'Address not available'}</p></div></div><div class="items-section"><table class="items-table"><thead><tr><th>Description</th><th class="align-center">Qty</th><th class="align-right">Price</th><th class="align-right">Discount</th><th class="align-right">Amount</th></tr></thead><tbody>${itemRows}</tbody></table></div><div class="totals-section"><div class="totals-box"><div class="totals-row"><span>Subtotal</span><span>₹${itemsSubtotal.toFixed(2)}</span></div><div class="totals-row"><span>Discount</span><span>−₹0.00</span></div><div class="totals-row grand-total"><span>Grand Total</span><span>₹${Number(order.total_amount).toFixed(2)}</span></div></div></div><div class="info-strip"><div class="info-block"><h4>Payment Details</h4><p>Method: ${order.payment_method ? order.payment_method.toUpperCase() : 'Not available'}</p><p>Status: ${order.payment_status ? order.payment_status.toUpperCase() : 'Not available'}</p></div><div class="info-block"><h4>Order Details</h4><p>Current Status: ${order.status ? order.status.toUpperCase() : 'Not available'}</p>${order.estimated_delivery ? `<p>Estimated Delivery: ${formatDateOnly(order.estimated_delivery)}</p>` : ''}</div></div><div class="signature-block"><div class="sig-line">Authorized Signatory<br>${STORE_NAME}</div></div><div class="invoice-footer">This is a computer-generated document.<br>${supportLine}Thank you for shopping with ${STORE_NAME}!</div></div></body></html>`;
   };
 
   const handleDownloadInvoice = (order) => {
@@ -268,8 +124,31 @@ function UserOrders() {
     };
   };
 
+  // 🌟 FIX: Loading Skeletons injected here!
   if (loading) {
-    return <div className="orders-loading">Loading your orders...</div>;
+    return (
+      <div className="orders-page">
+        <div className="orders-page-inner">
+          <h1 className="orders-page-title"><Skeleton width={200} /></h1>
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="order-card" style={{ padding: '20px', marginBottom: '20px', background: '#fff', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                <Skeleton width={180} height={20} />
+                <Skeleton width={100} height={24} borderRadius={12} />
+              </div>
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <Skeleton width={100} height={120} borderRadius={8} />
+                <div style={{ flex: 1 }}>
+                  <Skeleton width="60%" height={24} style={{ marginBottom: '8px' }} />
+                  <Skeleton width="40%" height={16} style={{ marginBottom: '8px' }} />
+                  <Skeleton width="30%" height={16} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -317,7 +196,6 @@ function UserOrders() {
                     return (
                       <div key={idx} className="order-item-detail-layout">
                         
-                        {/* Left Column: Image with Zoom Effect + Action Buttons */}
                         <div className="order-item-left-col">
                           <Link 
                             to={`/product/${item.product_id}`} 
@@ -357,18 +235,14 @@ function UserOrders() {
                           </div>
                         </div>
 
-                        {/* Right Column */}
                         <div className="order-item-right-col">
                           <Link 
                             to={`/product/${item.product_id}`} 
                             className="order-product-name-link"
                           >
-                            <h2 className="order-product-name">
-                              {item.name}
-                            </h2>
+                            <h2 className="order-product-name">{item.name}</h2>
                           </Link>
 
-                          {/* Pricing Display */}
                           <div className="order-price-box">
                             <div className="order-item-price-row">
                               <span className="order-price-main">
@@ -392,7 +266,6 @@ function UserOrders() {
                             </span>
                           </div>
 
-                          {/* Payment strip */}
                           <div className="order-info-substrip">
                             <p>
                               <strong>Payment:</strong> {order.payment_method ? order.payment_method.toUpperCase() : 'N/A'} ({order.payment_status ? order.payment_status.toUpperCase() : 'N/A'})
@@ -404,12 +277,9 @@ function UserOrders() {
                             )}
                           </div>
 
-                          {/* Delivery Address Card */}
                           {(order.shipping_address || order.city) && (
                             <div className="order-delivery-address-card">
-                              <p className="address-header">
-                                📍 Delivery Address:
-                              </p>
+                              <p className="address-header">📍 Delivery Address:</p>
                               <p className="address-body">
                                 {order.delivery_name && <strong className="address-name">{order.delivery_name}<br /></strong>}
                                 {order.shipping_address ? (
@@ -425,7 +295,6 @@ function UserOrders() {
                               )}
                             </div>
                           )}
-
                         </div>
 
                       </div>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaHeart, FaRegHeart, FaComment, FaWhatsapp, FaSearch, FaMapMarkerAlt, FaPhone } from 'react-icons/fa';
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 import ReviewForm from '../components/ReviewForm';
 import ReviewSection from '../components/ReviewSection';
 import Recommended from "../components/Recommended";
@@ -28,8 +30,6 @@ function ProductDetail({ currency, rates, language }) {
   const [translatedName, setTranslatedName] = useState("");
   const [translatedDesc, setTranslatedDesc] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [zoomStyle, setZoomStyle] = useState({ transformOrigin: 'center center', transform: 'scale(1)' });
   const [refreshReviews, setRefreshReviews] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
@@ -158,36 +158,6 @@ function ProductDetail({ currency, rates, language }) {
     }
   };
 
-  const handleMouseMove = (e) => {
-    const image = e.currentTarget;
-    const { left, top, width, height } = image.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setZoomStyle({ transformOrigin: `${x}% ${y}%`, transform: 'scale(2)' });
-  };
-  const handleMouseLeave = () => setZoomStyle({ transformOrigin: 'center center', transform: 'scale(1)' });
-  
-  const handleOpenLightbox = () => {
-    setZoomStyle({ transformOrigin: 'center center', transform: 'scale(1)' });
-    setIsLightboxOpen(true);
-  };
-  const handleCloseLightbox = () => {
-    setIsLightboxOpen(false);
-    setZoomStyle({ transformOrigin: 'center center', transform: 'scale(1)' });
-  };
-  
-  useEffect(() => {
-    const handleEscape = (e) => { if (e.key === 'Escape') handleCloseLightbox(); };
-    if (isLightboxOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
-    }
-  }, [isLightboxOpen]);
-
   const stockQty = saree?.stock_qty ?? saree?.quantity ?? null;
   const isOutOfStock = stockQty !== null ? stockQty <= 0 : saree?.in_stock === false;
   
@@ -255,14 +225,16 @@ function ProductDetail({ currency, rates, language }) {
           
           {/* LEFT: GALLERY & VARIANTS / SLIDER */}
           <div className="gallery-section">
-            <div className="main-image-wrapper" onClick={handleOpenLightbox} role="button" tabIndex={0}>
-              <img
-                src={currentImageUrl} alt={saree.name} className="main-image zoomable-image" style={zoomStyle}
-                onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}
-                onError={(e) => { if (!e.currentTarget.src.includes("/saare_1.jpeg")) { e.currentTarget.src = "/saare_1.jpeg"; } }} draggable="false"
-              />
+            <div className="main-image-wrapper">
+              {/* 🌟 IMAGE ZOOM APPLIED HERE 🌟 */}
+              <Zoom>
+                <img
+                  src={currentImageUrl} alt={saree.name} className="main-image"
+                  onError={(e) => { if (!e.currentTarget.src.includes("/saare_1.jpeg")) { e.currentTarget.src = "/saare_1.jpeg"; } }} draggable="false"
+                />
+              </Zoom>
               {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
-              <div className="image-zoom-hint">Click to view</div>
+              <div className="image-zoom-hint">Click to zoom</div>
             </div>
 
             {/* Slider / Thumbnails for Angles & Styles */}
@@ -429,17 +401,6 @@ function ProductDetail({ currency, rates, language }) {
 
         </div>
       </div>
-
-      {/* Lightbox Modal */}
-      {isLightboxOpen && (
-        <div className="lightbox-overlay" onClick={handleCloseLightbox} role="dialog" aria-modal="true" aria-label="Product image preview">
-          <button type="button" className="lightbox-close-btn" onClick={handleCloseLightbox} aria-label="Close image">✕</button>
-          <img
-            src={currentImageUrl} alt={saree.name} className="lightbox-image" onClick={(e) => e.stopPropagation()}
-            onError={(e) => { if (!e.currentTarget.src.includes("/saare_1.jpeg")) { e.currentTarget.src = "/saare_1.jpeg"; } }} draggable="false"
-          />
-        </div>
-      )}
     </div>
   );
 }
