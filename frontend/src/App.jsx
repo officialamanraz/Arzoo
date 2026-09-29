@@ -34,6 +34,7 @@ import About from './components/About';
 import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 import Profile from './components/Profile';
+import ProductReviewsPage from './components/ReviewsPage';
 
 // 🤝 NEW: Dealer Management & Portal Components
 import AdminDealers from "./components/AdminDealers";
@@ -337,6 +338,7 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/product/:id/reviews" element={<ProductReviewsPage />} />
 
       <Route
         path="/my-orders"
