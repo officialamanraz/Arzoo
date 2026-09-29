@@ -1,0 +1,265 @@
+/* =========================================================
+   MOCTALE STYLE REVIEWS METER PAGE
+========================================================= */
+
+.rpm-page-container {
+  min-height: 100vh;
+  background-color: #0d0d0d; /* Modern dark background */
+  color: #f1f1f1;
+  padding: 30px 16px 80px 16px;
+  font-family: var(--font-body, 'Inter', sans-serif);
+}
+
+.rpm-content-box {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.rpm-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: #888888;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: color 0.2s ease;
+}
+
+.rpm-back-btn:hover {
+  color: #ffffff;
+}
+
+.rpm-product-heading {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0 0 24px 0;
+  color: #ffffff;
+}
+
+.rpm-section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 18px 0;
+}
+
+/* 🌟 GAUGE METER CARD */
+.rpm-meter-card {
+  background-color: #171717;
+  border: 1px solid #262626;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.rpm-gauge-wrapper {
+  position: relative;
+  width: 220px;
+  margin: 0 auto 16px auto;
+}
+
+.rpm-gauge-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.rpm-gauge-center-text {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rpm-gauge-percentage {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.rpm-gauge-votes {
+  font-size: 0.8rem;
+  color: #888888;
+  margin-top: 4px;
+}
+
+/* LEGEND PILLS */
+.rpm-stats-legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rpm-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  background: #202020;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.rpm-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.rpm-pill-label {
+  color: #cccccc;
+}
+
+.rpm-pill-pct {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* 🌟 WRITE A REVIEW FORM */
+.rpm-write-card {
+  background-color: #171717;
+  border: 1px solid #262626;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.rpm-opinion-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.rpm-choice-btn {
+  flex: 1;
+  min-width: 90px;
+  padding: 10px 14px;
+  border-radius: 30px;
+  border: 1.5px solid;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rpm-textarea {
+  width: 100%;
+  background: #202020;
+  border: 1px solid #333333;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.rpm-textarea:focus {
+  outline: none;
+  border-color: #555555;
+}
+
+.rpm-submit-btn {
+  background: #ffffff;
+  color: #0d0d0d;
+  font-weight: 600;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: opacity 0.2s ease;
+}
+
+.rpm-submit-btn:hover {
+  opacity: 0.9;
+}
+
+.rpm-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 🌟 REVIEWS STREAM */
+.rpm-reviews-list-card {
+  background-color: #171717;
+  border: 1px solid #262626;
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.rpm-no-reviews {
+  color: #777777;
+  font-size: 0.95rem;
+  margin: 10px 0 0 0;
+}
+
+.rpm-reviews-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rpm-review-item {
+  background: #202020;
+  border: 1px solid #2b2b2b;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.rpm-review-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.rpm-user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
+.rpm-review-badge {
+  color: #121212;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+.rpm-review-text {
+  font-size: 0.9rem;
+  color: #d1d5db;
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.rpm-review-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #888888;
+}
+
+.rpm-verified-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #06d6a0;
+  font-weight: 500;
+}
