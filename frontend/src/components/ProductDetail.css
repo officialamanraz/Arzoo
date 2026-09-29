@@ -595,10 +595,11 @@
 .fk-all-details-container {
   width: 100%;
   margin-top: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px; /* Flatter radius matching the reference */
+  border: 1px solid #f0f0f0; /* Lighter, subtle border */
+  border-radius: 4px;
   background: #ffffff;
   overflow: hidden;
+  font-family: var(--font-body, 'Inter', sans-serif); /* Forces clean sans-serif font */
 }
 
 .fk-details-toggle-btn {
@@ -606,17 +607,18 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 16px 20px;
+  padding: 16px;
   background: transparent;
   border: none;
   font-size: 1.1rem;
   font-weight: 600;
   color: #212121;
   cursor: pointer;
+  font-family: inherit;
 }
 
 .fk-details-content {
-  padding: 0 20px 20px 20px;
+  padding: 0 16px 16px 16px;
 }
 
 /* Scrollable Pill Tabs Row */
@@ -624,16 +626,16 @@
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding-bottom: 4px; 
-  margin-bottom: 20px;
+  padding-bottom: 8px; 
+  margin-bottom: 16px;
 }
 
 .fk-tabs-row::-webkit-scrollbar { display: none; }
 
 .fk-tab-btn {
-  padding: 8px 20px;
-  border-radius: 40px; /* Pure pill shape */
-  border: 1px solid #dcdcdc;
+  padding: 8px 16px;
+  border-radius: 40px; 
+  border: 1px solid #e0e0e0;
   background: #ffffff;
   color: #212121;
   font-size: 0.9rem;
@@ -641,6 +643,7 @@
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s ease, color 0.2s ease;
+  font-family: inherit;
 }
 
 .fk-tab-btn.active {
@@ -658,26 +661,29 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Fixed Heading Font */
 .fk-group-title {
+  font-family: var(--font-body, 'Inter', sans-serif) !important;
   font-size: 1rem;
   font-weight: 600;
   color: #212121;
   margin: 0 0 12px 0;
 }
 
-/* Grid with Horizontal Dividers */
+/* Grid matching Screenshot */
 .fk-grid-2-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 20px; /* Only column gap, rows handled by padding/border */
+  column-gap: 24px; 
 }
 
+/* Fixed Dividers and Spacing */
 .fk-grid-item {
   display: flex;
   flex-direction: column;
-  gap: 4px; /* Very tight gap between label and value */
-  padding: 12px 0; /* Spacing above and below text */
-  border-bottom: 1px solid #f0f0f0; /* Faint horizontal line separator */
+  gap: 4px; /* Tight gap between label and value */
+  padding: 12px 0; /* Padding for the row */
+  border-bottom: 1px solid #f0f0f0; /* Faint horizontal divider */
 }
 
 .fk-grid-item.fk-full-width {
@@ -686,8 +692,9 @@
 
 .fk-label {
   font-size: 0.85rem;
-  color: #878787; /* Specific grey color from the reference */
+  color: #878787; 
   font-weight: 400;
+  font-family: inherit;
 }
 
 .fk-value {
@@ -695,6 +702,7 @@
   color: #212121;
   word-wrap: break-word;
   line-height: 1.4;
+  font-family: inherit;
 }
 
 /* Dark Mode Overrides */
