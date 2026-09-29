@@ -8,7 +8,7 @@
   min-height: 100vh;
   padding-bottom: 80px;
   /* 🛠️ FIX: Added top padding to prevent the title from hiding under the navbar */
-  padding-top: 120px; 
+  padding-top: 50px; 
 }
 
 .main-container {
@@ -531,12 +531,21 @@
 ========================================================= */
 
 @media (max-width: 768px) {
-  .product-detail-page { padding-top: 90px; }
+  .product-detail-page { padding-top: 20px; } /* 👈 Mobile ka top gap bhi minimize kar diya */
   .main-container { max-width: 100%; padding: 0 1rem 1rem 1rem; }
   .details-container { grid-template-columns: 1fr; gap: 2rem; padding: 1.5rem; }
-  .gallery-section { position: static; align-items: center; }
-  .thumbnail-row { justify-content: center; }
-  .social-action-bar { justify-content: center !important; }
+  
+  .gallery-section { 
+    position: static; 
+    align-items: flex-start !important; /* 👈 Gallery items ko left align kiya */
+  } 
+  
+  .thumbnail-row { justify-content: flex-start; } 
+  
+  .social-action-bar { 
+    justify-content: flex-start !important; /* 👈 Mobile par icons ko left side align kar diya */
+  } 
+
   .product-title { font-size: 1.6rem; }
   .product-price { font-size: 1.5rem; }
   .lightbox-overlay { padding: 10px; }
