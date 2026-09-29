@@ -313,3 +313,320 @@ body.dark .section-title, body.dark .featured-title {
   right: 20px !important;
   z-index: 1000 !important;
 }
+/* =========================================================
+   1. AMAZON-STYLE IN-PLACE HOVER ZOOM
+========================================================= */
+.amazon-zoom-box {
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.amazon-zoom-img {
+  transition: transform 0.15s ease-out;
+  will-change: transform, transform-origin;
+  display: block;
+  width: 100%;
+}
+
+/* =========================================================
+   2. FLIPKART STYLE CONTAINER & ALL DETAILS TOGGLE
+========================================================= */
+.fk-all-details-container {
+  width: 100%;
+  margin-top: 15px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  background: #ffffff;
+  overflow: hidden;
+  font-family: var(--font-body, 'Inter', sans-serif);
+}
+
+.fk-details-toggle-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 16px 20px;
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #212121;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fk-details-content {
+  padding: 0 20px 20px 20px;
+}
+
+.fk-tabs-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.fk-tabs-row::-webkit-scrollbar { display: none; }
+
+.fk-tab-btn {
+  padding: 8px 18px;
+  border-radius: 40px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  color: #212121;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.fk-tab-btn.active {
+  background: #212121;
+  color: #ffffff;
+  border-color: #212121;
+}
+
+.fk-group-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212121;
+  margin: 0 0 12px 0;
+  font-family: inherit;
+}
+
+.fk-grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 24px;
+}
+
+.fk-grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.fk-grid-item.fk-full-width {
+  grid-column: 1 / -1;
+}
+
+.fk-label {
+  font-size: 0.85rem;
+  color: #878787;
+  font-family: inherit;
+}
+
+.fk-value {
+  font-size: 0.95rem;
+  color: #212121;
+  word-wrap: break-word;
+  line-height: 1.4;
+  font-family: inherit;
+}
+
+/* =========================================================
+   3. RATINGS & REVIEWS TOGGLE CONTENT
+========================================================= */
+.fk-reviews-content {
+  padding: 0 16px 16px 16px;
+  text-align: left;
+}
+
+.fk-rev-summary-sub {
+  font-size: 0.85rem;
+  color: #878787;
+  margin-bottom: 12px;
+}
+
+/* Buyer Photos Row */
+.fk-buyer-photos-section {
+  margin-bottom: 14px;
+}
+
+.fk-buyer-photos-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.fk-buyer-photos-row::-webkit-scrollbar { display: none; }
+
+.fk-buyer-thumb-img {
+  width: 68px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+/* Aspect Pills Row */
+.fk-aspect-pills-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.fk-aspect-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f1f3f6;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #212121;
+}
+
+.fk-pill-val {
+  font-weight: 700;
+}
+
+/* Compact Side-by-Side Review Cards */
+.fk-compact-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.fk-compact-review-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 95px;
+  box-sizing: border-box;
+}
+
+.fk-card-badge-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.fk-card-opinion-tag {
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.fk-card-short-comment {
+  font-size: 0.85rem;
+  color: #212121;
+  line-height: 1.35;
+  margin: 0 0 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fk-card-author-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #878787;
+  margin-top: auto;
+}
+
+.fk-card-author-name {
+  font-weight: 500;
+  color: #555555;
+}
+
+.fk-card-verified-tag {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #388e3c;
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+
+.fk-no-reviews-note {
+  color: #878787;
+  font-size: 0.88rem;
+  margin: 10px 0;
+}
+
+/* Show All Reviews Link */
+.fk-show-all-reviews-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  color: #2874f0;
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+  background: transparent;
+}
+
+.fk-show-all-reviews-link:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   4. FLIPKART STYLE MOBILE RECOMMENDATIONS (Horizontal Swipe)
+========================================================= */
+@media (max-width: 768px) {
+  .fk-compact-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recommended-section-wrapper {
+    padding: 0 10px;
+  }
+
+  .recommended-section-wrapper .recommended-grid,
+  .recommended-section-wrapper .products-grid,
+  .recommended-section-wrapper .product-grid,
+  .recommended-section-wrapper > div:nth-child(2) {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding: 10px 4px 16px 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .recommended-section-wrapper .recommended-grid::-webkit-scrollbar,
+  .recommended-section-wrapper .products-grid::-webkit-scrollbar,
+  .recommended-section-wrapper .product-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .recommended-section-wrapper .product-card,
+  .recommended-section-wrapper .saree-card {
+    flex: 0 0 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+    scroll-snap-align: start;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+}

@@ -54,15 +54,64 @@ function ProductDetail({ currency, rates, language }) {
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  
+  const [isZoomHovered, setIsZoomHovered] = useState(false);
+  const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
+  const handleImageMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomCoords({ x, y });
+  };
   const [showReviewsToggle, setShowReviewsToggle] = useState(false);
-  
+  const [reviewStats, setReviewStats] = useState({});
+  const [totalReviewsCount, setTotalReviewsCount] = useState(0);
+  const [previewReviews, setPreviewReviews] = useState([]);
+ 
   // 🌟 New States for Flipkart Style Details Section
   const [showAllDetails, setShowAllDetails] = useState(false); // Toggle Open/Close
   const [activeDetailTab, setActiveDetailTab] = useState('specifications'); // Pill Tabs
 
   const token = localStorage.getItem('token');
+useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/reviews/${id}`);
+        const data = await res.json();
+        if (data?.success) {
+          setReviewStats(data.stats || {});
+          setTotalReviewsCount(data.totalReviews || (data.reviews ? data.reviews.length : 0));
+          setPreviewReviews(data.reviews || []);
+        }
+      } catch (err) {
+        console.error("Error fetching review stats:", err);
+      }
+    };
+    if (id) fetchStats();
+  }, [id, refreshReviews]);
 
+  // Dynamic Helpers for Reviews Toggle
+  const formatLabel = (str) => {
+    if (!str) return "Rating";
+    return str.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  };
+
+  const getColorForOption = (key) => {
+    const map = {
+      skip: "#ef4444",
+      timepass: "#f59e0b",
+      go_for_it: "#3b82f6",
+      perfection: "#22c55e",
+    };
+    return map[key?.toLowerCase()] || "#3b82f6";
+  };
+
+  const resolveImage = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  const customerImages = previewReviews.filter((r) => r.image_url).map((r) => r.image_url);
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -241,17 +290,31 @@ return (
       <div className="main-container">
         <div className="details-container">
           
-          {/* LEFT: GALLERY & VARIANTS / SLIDER */}
+          {/* LEFT: GALLERY & AMAZON HOVER ZOOM */}
           <div className="gallery-section">
-            <div className="main-image-wrapper">
-              <Zoom>
-                <img
-                  src={currentImageUrl} alt={saree.name} className="main-image"
-                  onError={(e) => { if (!e.currentTarget.src.includes("/saare_1.jpeg")) { e.currentTarget.src = "/saare_1.jpeg"; } }} draggable="false"
-                />
-              </Zoom>
+            <div 
+              className="main-image-wrapper amazon-zoom-box"
+              onMouseEnter={() => setIsZoomHovered(true)}
+              onMouseLeave={() => setIsZoomHovered(false)}
+              onMouseMove={handleImageMouseMove}
+            >
+              <img
+                src={currentImageUrl} 
+                alt={saree.name} 
+                className="main-image amazon-zoom-img"
+                style={isZoomHovered ? {
+                  transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
+                  transform: 'scale(2.2)',
+                  cursor: 'crosshair'
+                } : {
+                  transform: 'scale(1)',
+                  transformOrigin: 'center center'
+                }}
+                onError={(e) => { if (!e.currentTarget.src.includes("/saare_1.jpeg")) { e.currentTarget.src = "/saare_1.jpeg"; } }} 
+                draggable="false"
+              />
               {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
-              <div className="image-zoom-hint">Click to zoom</div>
+              <div className="image-zoom-hint">{isZoomHovered ? "Zoomed" : "Hover to zoom"}</div>
             </div>
 
             {/* Slider / Thumbnails */}
@@ -324,7 +387,7 @@ return (
             )}
           </div>
 
-          {/* RIGHT: PRODUCT INFO, PRICE, BADGES & BUTTONS */}
+          {/* RIGHT: INFO, PRICE, CONTROLS */}
           <div className="info-box">
             <h1 className="product-title">{isTranslating ? "Translating..." : translatedName}</h1>
             
@@ -359,7 +422,6 @@ return (
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="action-buttons-row">
               <button onClick={() => handleAddToCart(saree.product_id)} disabled={isAdding || isOutOfStock} className="add-to-cart-btn">
                 {isOutOfStock ? "Sold Out" : isAdding ? "Adding..." : "Add to Cart"}
@@ -369,9 +431,10 @@ return (
               </button>
             </div>
 
-            {/* 🌟 FLIPKART STYLE 'ALL DETAILS' SECTION (Closed by default) 🌟 */}
+            {/* 🌟 FLIPKART STYLE 'ALL DETAILS' SECTION */}
             <div className="fk-all-details-container">
               <button 
+                type="button"
                 className="fk-details-toggle-btn" 
                 onClick={() => setShowAllDetails(!showAllDetails)}
               >
@@ -381,27 +444,25 @@ return (
 
               {showAllDetails && (
                 <div className="fk-details-content">
-                  
-                  {/* Pills / Tabs Row */}
                   <div className="fk-tabs-row">
                     <button 
+                      type="button"
                       className={`fk-tab-btn ${activeDetailTab === 'specifications' ? 'active' : ''}`}
                       onClick={() => setActiveDetailTab('specifications')}
                     >Specifications</button>
                     <button 
+                      type="button"
                       className={`fk-tab-btn ${activeDetailTab === 'description' ? 'active' : ''}`}
                       onClick={() => setActiveDetailTab('description')}
                     >Description</button>
                     <button 
+                      type="button"
                       className={`fk-tab-btn ${activeDetailTab === 'manufacturer' ? 'active' : ''}`}
                       onClick={() => setActiveDetailTab('manufacturer')}
                     >Manufacturer info</button>
                   </div>
 
-                  {/* Tab Panes */}
                   <div className="fk-tab-pane">
-                    
-                    {/* 1. Specifications Tab */}
                     {activeDetailTab === 'specifications' && (
                       <div className="fk-spec-group">
                         <h4 className="fk-group-title">General</h4>
@@ -416,7 +477,6 @@ return (
                       </div>
                     )}
 
-                    {/* 2. Description Tab */}
                     {activeDetailTab === 'description' && (
                       <div className="fk-spec-group">
                         <p className="product-desc" style={{ color: 'var(--text-dark)' }}>
@@ -425,7 +485,6 @@ return (
                       </div>
                     )}
 
-                    {/* 3. Manufacturer Info Tab */}
                     {activeDetailTab === 'manufacturer' && (
                       <div className="fk-spec-group">
                         <div className="fk-grid-2-col">
@@ -438,73 +497,103 @@ return (
                         </div>
                       </div>
                     )}
-
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 🌟 FLIPKART STYLE CUSTOMER REVIEWS TOGGLE (Closed by default, No fake ratings) 🌟 */}
+            {/* 🌟 FLIPKART STYLE 'RATINGS AND REVIEWS' TOGGLE */}
             <div className="fk-all-details-container" style={{ marginTop: '15px' }}>
               <button 
+                type="button"
                 className="fk-details-toggle-btn" 
                 onClick={() => setShowReviewsToggle(!showReviewsToggle)}
               >
-                Customer Reviews
+                Ratings and reviews
                 <span className="toggle-icon">{showReviewsToggle ? '▲' : '▼'}</span>
               </button>
 
               {showReviewsToggle && (
-                <div className="fk-details-content" style={{ padding: '0 20px 20px 20px' }}>
+                <div className="fk-details-content fk-reviews-content">
                   
-                  {/* Compact List of up to 2 Recent Reviews */}
-                  {comments && comments.length > 0 ? (
-                    <div style={{ paddingTop: '10px' }}>
-                      {comments.slice(0, 2).map((c, idx) => (
-                        <div key={c.comment_id || idx} style={{ marginBottom: '16px', paddingBottom: idx === 0 ? '16px' : '0', borderBottom: idx === 0 ? '1px solid #f0f0f0' : 'none' }}>
-                          
-                          {c.title && (
-                            <div style={{ fontWeight: '600', fontSize: '0.95rem', color: '#212121', marginBottom: '8px' }}>
-                              {c.title}
-                            </div>
-                          )}
-                          
-                          <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#212121', lineHeight: '1.4' }}>
-                            {c.comment_text}
-                          </p>
-                          
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem', color: '#878787' }}>
-                            <span>{c.user_name}</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <FaCheckCircle color="#878787" size={10} /> Verified Buyer
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                  {/* Total Reviews Header */}
+                  <div className="fk-rev-summary-sub">
+                    based on {totalReviewsCount} ratings by Verified Buyers
+                  </div>
+
+                  {/* 1. Customer Uploaded Photos Preview Row */}
+                  {customerImages.length > 0 && (
+                    <div className="fk-buyer-photos-section">
+                      <div className="fk-buyer-photos-row">
+                        {customerImages.slice(0, 5).map((imgUrl, idx) => (
+                          <img 
+                            key={idx} 
+                            src={resolveImage(imgUrl)} 
+                            alt="Buyer review photo" 
+                            className="fk-buyer-thumb-img" 
+                            loading="lazy"
+                          />
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <p style={{ color: '#878787', fontSize: '0.9rem', paddingTop: '10px', margin: '0' }}>No reviews yet.</p>
                   )}
 
-                  {/* Show All Reviews CTA Button */}
+                  {/* 2. Aspect Pills (Skip, Timepass, Go For It, Perfection) */}
+                  <div className="fk-aspect-pills-row">
+                    {Object.keys(reviewStats || {}).map((key) => {
+                      const votes = reviewStats[key] || 0;
+                      const pct = totalReviewsCount > 0 ? Math.round((votes / totalReviewsCount) * 100) : 0;
+                      const color = getColorForOption(key);
+                      return (
+                        <div key={key} className="fk-aspect-pill">
+                          <span className="fk-pill-label">{formatLabel(key)}</span>
+                          <span className="fk-pill-val" style={{ color }}>{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 3. Small Side-by-Side Review Cards */}
+                  {previewReviews.length > 0 ? (
+                    <div className="fk-compact-cards-grid">
+                      {previewReviews.slice(0, 2).map((rev, idx) => {
+                        const color = getColorForOption(rev.rating_type);
+                        return (
+                          <div key={rev.review_id || idx} className="fk-compact-review-card">
+                            <div className="fk-card-badge-row">
+                              <span className="fk-card-opinion-tag" style={{ backgroundColor: color }}>
+                                {formatLabel(rev.rating_type)}
+                              </span>
+                            </div>
+
+                            <p className="fk-card-short-comment">
+                              {rev.comment?.length > 75 ? `${rev.comment.slice(0, 75)}...` : rev.comment}
+                            </p>
+
+                            <div className="fk-card-author-footer">
+                              <span className="fk-card-author-name">{rev.user_name || 'Customer'}</span>
+                              {(rev.is_verified_buyer === 1 || rev.is_verified_buyer === true) && (
+                                <span className="fk-card-verified-tag">
+                                  <FaCheckCircle size={10} color="#388e3c" /> Verified Buyer
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="fk-no-reviews-note">No customer reviews yet.</p>
+                  )}
+
+                  {/* 4. Show All Reviews Link */}
                   <Link 
                     to={`/product/${saree.product_id}/reviews`} 
-                    style={{ 
-                      display: 'block', 
-                      width: '100%', 
-                      padding: '14px 0 0 0', 
-                      textAlign: 'center', 
-                      color: '#2874f0', 
-                      fontWeight: '600', 
-                      fontSize: '0.95rem',
-                      borderTop: '1px solid #f0f0f0', 
-                      marginTop: '16px',
-                      textDecoration: 'none',
-                      background: '#fff'
-                    }}
+                    className="fk-show-all-reviews-link"
                   >
-                    Show all reviews <span style={{ marginLeft: '4px', fontSize: '1rem' }}>›</span>
+                    Show all reviews <span style={{ fontSize: '1rem', marginLeft: '4px' }}>›</span>
                   </Link>
+
                 </div>
               )}
             </div>
@@ -513,11 +602,15 @@ return (
         </div>
       </div>
 
-      {/* RECOMMENDED SECTION (KEPT INTACT) */}
+      {/* RECOMMENDED SECTION (Mobile Friendly Swiper) */}
       <div className="full-width-review-section">
-        <div className="review-inner-container" style={{ paddingTop: '1rem' }}>
+        <div className="review-inner-container">
           <div className="recommended-section-wrapper">
-            <Recommended currentProductId={saree.product_id} categoryId={saree.category_id} subcategoryId={saree.subcategory_id} />
+            <Recommended 
+              currentProductId={saree.product_id} 
+              categoryId={saree.category_id} 
+              subcategoryId={saree.subcategory_id} 
+            />
           </div>
         </div>
       </div>
