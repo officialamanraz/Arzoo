@@ -1,74 +1,83 @@
 /* =========================================================
-   MOCTALE STYLE REVIEWS METER PAGE
+   PAGE LAYOUT & CONTAINER
 ========================================================= */
-
-.rpm-page-container {
+.all-reviews-page {
   min-height: 100vh;
-  background-color: #0d0d0d; /* Modern dark background */
-  color: #f1f1f1;
+  background-color: #f8fafc;
   padding: 30px 16px 80px 16px;
   font-family: var(--font-body, 'Inter', sans-serif);
 }
 
-.rpm-content-box {
-  max-width: 680px;
+.all-reviews-wrapper {
+  max-width: 720px;
   margin: 0 auto;
 }
 
-.rpm-back-btn {
+.back-link-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   background: transparent;
   border: none;
-  color: #888888;
+  color: #64748b;
   font-size: 0.95rem;
+  font-weight: 500;
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   transition: color 0.2s ease;
 }
 
-.rpm-back-btn:hover {
-  color: #ffffff;
+.back-link-btn:hover {
+  color: #0f172a;
 }
 
-.rpm-product-heading {
+.reviews-product-name {
   font-size: 1.4rem;
-  font-weight: 600;
-  margin: 0 0 24px 0;
-  color: #ffffff;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 20px 0;
 }
 
-.rpm-section-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0 0 18px 0;
+.page-loader {
+  padding: 60px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: #64748b;
 }
 
-/* 🌟 GAUGE METER CARD */
-.rpm-meter-card {
-  background-color: #171717;
-  border: 1px solid #262626;
-  border-radius: 14px;
+/* =========================================================
+   1. MOCTALE METER STYLES
+========================================================= */
+.meter-card-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
   text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
-.rpm-gauge-wrapper {
+.meter-heading {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.semi-gauge-box {
   position: relative;
-  width: 220px;
+  width: 230px;
   margin: 0 auto 16px auto;
 }
 
-.rpm-gauge-svg {
+.semi-gauge-svg {
   width: 100%;
   height: auto;
   display: block;
 }
 
-.rpm-gauge-center-text {
+.semi-gauge-text {
   position: absolute;
   bottom: 8px;
   left: 50%;
@@ -78,188 +87,318 @@
   align-items: center;
 }
 
-.rpm-gauge-percentage {
+.gauge-pct {
   font-size: 2.2rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #0f172a;
   line-height: 1;
 }
 
-.rpm-gauge-votes {
-  font-size: 0.8rem;
-  color: #888888;
+.gauge-sub {
+  font-size: 0.85rem;
+  color: #64748b;
   margin-top: 4px;
 }
 
-/* LEGEND PILLS */
-.rpm-stats-legend {
+.meter-pills-row {
   display: flex;
   justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
 }
 
-.rpm-stat-pill {
+.meter-dot-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.9rem;
-  background: #202020;
-  padding: 6px 14px;
+  font-size: 0.85rem;
+  background: #f1f5f9;
+  padding: 6px 12px;
   border-radius: 20px;
 }
 
-.rpm-pill-dot {
+.meter-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
 
-.rpm-pill-label {
-  color: #cccccc;
+.meter-dot-label {
+  color: #475569;
 }
 
-.rpm-pill-pct {
+.meter-dot-val {
   font-weight: 600;
-  color: #ffffff;
+  color: #0f172a;
 }
 
-/* 🌟 WRITE A REVIEW FORM */
-.rpm-write-card {
-  background-color: #171717;
-  border: 1px solid #262626;
-  border-radius: 14px;
+/* =========================================================
+   2. WRITE A REVIEW SECTION
+========================================================= */
+.write-review-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   padding: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
-.rpm-opinion-selector {
+.write-review-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.choice-buttons-group {
   display: flex;
   gap: 10px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
-.rpm-choice-btn {
+.opinion-pill-btn {
   flex: 1;
   min-width: 90px;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border-radius: 30px;
   border: 1.5px solid;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.rpm-textarea {
+.review-input-textarea {
   width: 100%;
-  background: #202020;
-  border: 1px solid #333333;
-  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
   padding: 12px 14px;
-  color: #ffffff;
+  color: #0f172a;
   font-size: 0.95rem;
   font-family: inherit;
   resize: vertical;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   box-sizing: border-box;
 }
 
-.rpm-textarea:focus {
+.review-input-textarea:focus {
   outline: none;
-  border-color: #555555;
+  border-color: #3b82f6;
+  background: #ffffff;
 }
 
-.rpm-submit-btn {
-  background: #ffffff;
-  color: #0d0d0d;
+.review-file-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.file-upload-label {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #334155;
+  font-weight: 500;
+}
+
+.file-upload-label:hover {
+  background: #e2e8f0;
+}
+
+.selected-filename {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.submit-opinion-btn {
+  background: #0f172a;
+  color: #ffffff;
   font-weight: 600;
   border: none;
-  padding: 10px 22px;
-  border-radius: 8px;
+  padding: 10px 24px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.95rem;
-  transition: opacity 0.2s ease;
+  transition: background 0.2s ease;
 }
 
-.rpm-submit-btn:hover {
-  opacity: 0.9;
+.submit-opinion-btn:hover {
+  background: #1e293b;
 }
 
-.rpm-submit-btn:disabled {
-  opacity: 0.4;
+.submit-opinion-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* 🌟 REVIEWS STREAM */
-.rpm-reviews-list-card {
-  background-color: #171717;
-  border: 1px solid #262626;
-  border-radius: 14px;
-  padding: 24px;
+/* =========================================================
+   3. AAPKI EXACT MERGED REVIEWS SECTION CSS
+========================================================= */
+.review-section-container { 
+  margin-top: 2rem; 
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-.rpm-no-reviews {
-  color: #777777;
-  font-size: 0.95rem;
-  margin: 10px 0 0 0;
+.review-section-title { 
+  font-size: 1.3rem; 
+  font-weight: bold; 
+  margin-bottom: 0.4rem; 
+  color: #0f172a; 
 }
 
-.rpm-reviews-stream {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.total-reviews-text { 
+  margin-bottom: 1.5rem; 
+  color: #64748b; 
+  font-size: 0.95rem; 
 }
 
-.rpm-review-item {
-  background: #202020;
-  border: 1px solid #2b2b2b;
-  border-radius: 10px;
-  padding: 16px;
+/* Dynamic Color Palette */
+.color-red { background-color: #ef4444; color: #ffffff; }
+.color-yellow { background-color: #f59e0b; color: #ffffff; }
+.color-blue { background-color: #3b82f6; color: #ffffff; }
+.color-green { background-color: #22c55e; color: #ffffff; }
+.color-purple { background-color: #8b5cf6; color: #ffffff; }
+.color-teal { background-color: #14b8a6; color: #ffffff; }
+.color-orange { background-color: #f97316; color: #ffffff; }
+.color-pink { background-color: #ec4899; color: #ffffff; }
+.color-gray { background-color: #6b7280; color: #ffffff; }
+
+/* Reviews List */
+.reviews-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1.2rem; 
 }
 
-.rpm-review-top {
-  display: flex;
-  justify-content: space-between;
+.no-reviews-text { color: #64748b; font-style: italic; }
+
+/* Review Card */
+.review-card { 
+  border: 1px solid #e2e8f0; 
+  padding: 1.2rem; 
+  border-radius: 8px; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04); 
+  background-color: #ffffff;
+  word-wrap: break-word;
+}
+
+.review-header { 
+  display: flex; 
+  align-items: flex-start; 
+  justify-content: space-between; 
+  margin-bottom: 0.75rem; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+}
+
+.reviewer-info { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.75rem; 
+  flex-wrap: wrap; 
+}
+
+.reviewer-name { font-size: 1.05rem; color: #0f172a; }
+
+.verified-badge { 
+  background-color: rgba(6, 95, 70, 0.12); 
+  color: #065f46; 
+  font-size: 0.75rem; 
+  padding: 0.25rem 0.6rem; 
+  border-radius: 999px; 
+  font-weight: 600; 
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 10px;
 }
 
-.rpm-user-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #ffffff;
+.review-date { color: #64748b; font-size: 0.85rem; }
+
+.review-body-left {
+  text-align: left;
+  margin-top: 0.5rem;
 }
 
-.rpm-review-badge {
-  color: #121212;
-  font-weight: 700;
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 12px;
-  text-transform: capitalize;
+.rating-badge { 
+  display: inline-block; 
+  padding: 0.25rem 0.75rem; 
+  border-radius: 999px; 
+  font-size: 0.75rem; 
+  font-weight: bold; 
+  margin-bottom: 0.5rem; 
+  text-transform: capitalize; 
 }
 
-.rpm-review-text {
-  font-size: 0.9rem;
-  color: #d1d5db;
-  line-height: 1.5;
-  margin: 0 0 12px 0;
+.review-comment { 
+  color: #334155; 
+  margin-bottom: 0.75rem; 
+  line-height: 1.5; 
+  text-align: left; 
 }
 
-.rpm-review-footer {
+.review-image-wrapper {
+  margin-top: 0.5rem;
+}
+
+.review-image { 
+  width: 100%;
+  max-width: 150px; 
+  height: 150px; 
+  object-fit: cover; 
+  border-radius: 6px; 
+  border: 1px solid #e2e8f0; 
+}
+
+.review-footer-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
-  color: #888888;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.5rem;
 }
 
-.rpm-verified-tag {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #06d6a0;
-  font-weight: 500;
+.delete-review-btn {
+  background: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-review-btn:hover {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .review-header {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .choice-buttons-group {
+    flex-direction: column;
+  }
+  .reviewer-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .review-image {
+    max-width: 120px;
+    height: 120px;
+  }
 }
