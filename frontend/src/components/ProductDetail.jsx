@@ -55,8 +55,10 @@ function ProductDetail({ currency, rates, language }) {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showComments, setShowComments] = useState(false);
   
+  const [showReviewsToggle, setShowReviewsToggle] = useState(false);
+  
   // 🌟 New States for Flipkart Style Details Section
-  const [showAllDetails, setShowAllDetails] = useState(true); // Toggle Open/Close
+  const [showAllDetails, setShowAllDetails] = useState(false); // Toggle Open/Close
   const [activeDetailTab, setActiveDetailTab] = useState('specifications'); // Pill Tabs
 
   const token = localStorage.getItem('token');
@@ -234,8 +236,7 @@ function ProductDetail({ currency, rates, language }) {
 
   const sliderImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 ? saree.images : [saree?.image_url || "/saare_1.jpeg"];
   const currentImageUrl = sliderImages[activeImageIdx] || "/saare_1.jpeg";
-
-  return (
+return (
     <div className="product-detail-page">
       <div className="main-container">
         <div className="details-container">
@@ -368,7 +369,7 @@ function ProductDetail({ currency, rates, language }) {
               </button>
             </div>
 
-            {/* 🌟 FLIPKART STYLE 'ALL DETAILS' SECTION 🌟 */}
+            {/* 🌟 FLIPKART STYLE 'ALL DETAILS' SECTION (Closed by default) 🌟 */}
             <div className="fk-all-details-container">
               <button 
                 className="fk-details-toggle-btn" 
@@ -437,80 +438,82 @@ function ProductDetail({ currency, rates, language }) {
                         </div>
                       </div>
                     )}
+
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 🌟 NEW: FLIPKART STYLE COMPACT RATINGS & REVIEWS WIDGET 🌟 */}
-            <div className="fk-all-details-container" style={{ marginTop: '15px', padding: '0', fontFamily: "var(--font-body, 'Inter', sans-serif)" }}>
-              <div style={{ padding: '16px 20px' }}>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: '600', margin: '0 0 16px 0', color: '#212121' }}>Ratings and reviews</h2>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                  <span style={{ fontSize: '1.8rem', fontWeight: '500', color: '#212121', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {saree.average_rating || '4.5'} <span style={{ fontSize: '1.3rem', color: '#388e3c' }}>★</span>
-                  </span>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ color: '#878787', fontSize: '0.85rem' }}>based on {comments.length} ratings</span>
-                  </div>
-                </div>
-
-                {/* Compact List of up to 2 Recent Reviews */}
-                {comments && comments.length > 0 ? (
-                  <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}>
-                    {comments.slice(0, 2).map((c, idx) => (
-                      <div key={c.comment_id || idx} style={{ marginBottom: '16px', paddingBottom: idx === 0 ? '16px' : '0', borderBottom: idx === 0 ? '1px solid #f0f0f0' : 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <span style={{ background: '#388e3c', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            {c.rating || 5} ★
-                          </span>
-                          <span style={{ fontWeight: '500', fontSize: '0.95rem', color: '#212121' }}>
-                            {c.title || 'Nice Product'}
-                          </span>
-                        </div>
-                        <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#212121', lineHeight: '1.4' }}>
-                          {c.comment_text}
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem', color: '#878787' }}>
-                          <span>{c.user_name}</span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <FaCheckCircle color="#878787" size={10} /> Verified Buyer
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p style={{ color: '#878787', fontSize: '0.9rem', borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}>No reviews yet.</p>
-                )}
-              </div>
-
-              {/* Show All Reviews CTA Button */}
-              <Link 
-                to={`/product/${saree.product_id}/reviews`} 
-                style={{ 
-                  display: 'block', 
-                  width: '100%', 
-                  padding: '14px', 
-                  textAlign: 'center', 
-                  color: '#2874f0', 
-                  fontWeight: '600', 
-                  fontSize: '0.95rem',
-                  borderTop: '1px solid #f0f0f0', 
-                  textDecoration: 'none',
-                  background: '#fff'
-                }}
+            {/* 🌟 FLIPKART STYLE CUSTOMER REVIEWS TOGGLE (Closed by default, No fake ratings) 🌟 */}
+            <div className="fk-all-details-container" style={{ marginTop: '15px' }}>
+              <button 
+                className="fk-details-toggle-btn" 
+                onClick={() => setShowReviewsToggle(!showReviewsToggle)}
               >
-                Show all reviews <span style={{ marginLeft: '4px', fontSize: '1rem' }}>›</span>
-              </Link>
+                Customer Reviews
+                <span className="toggle-icon">{showReviewsToggle ? '▲' : '▼'}</span>
+              </button>
+
+              {showReviewsToggle && (
+                <div className="fk-details-content" style={{ padding: '0 20px 20px 20px' }}>
+                  
+                  {/* Compact List of up to 2 Recent Reviews */}
+                  {comments && comments.length > 0 ? (
+                    <div style={{ paddingTop: '10px' }}>
+                      {comments.slice(0, 2).map((c, idx) => (
+                        <div key={c.comment_id || idx} style={{ marginBottom: '16px', paddingBottom: idx === 0 ? '16px' : '0', borderBottom: idx === 0 ? '1px solid #f0f0f0' : 'none' }}>
+                          
+                          {c.title && (
+                            <div style={{ fontWeight: '600', fontSize: '0.95rem', color: '#212121', marginBottom: '8px' }}>
+                              {c.title}
+                            </div>
+                          )}
+                          
+                          <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#212121', lineHeight: '1.4' }}>
+                            {c.comment_text}
+                          </p>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem', color: '#878787' }}>
+                            <span>{c.user_name}</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FaCheckCircle color="#878787" size={10} /> Verified Buyer
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ color: '#878787', fontSize: '0.9rem', paddingTop: '10px', margin: '0' }}>No reviews yet.</p>
+                  )}
+
+                  {/* Show All Reviews CTA Button */}
+                  <Link 
+                    to={`/product/${saree.product_id}/reviews`} 
+                    style={{ 
+                      display: 'block', 
+                      width: '100%', 
+                      padding: '14px 0 0 0', 
+                      textAlign: 'center', 
+                      color: '#2874f0', 
+                      fontWeight: '600', 
+                      fontSize: '0.95rem',
+                      borderTop: '1px solid #f0f0f0', 
+                      marginTop: '16px',
+                      textDecoration: 'none',
+                      background: '#fff'
+                    }}
+                  >
+                    Show all reviews <span style={{ marginLeft: '4px', fontSize: '1rem' }}>›</span>
+                  </Link>
+                </div>
+              )}
             </div>
 
           </div>
         </div>
       </div>
 
-      {/* RECOMMENDED SECTION (KEPT INTACT, FULL WIDTH REVIEWS REMOVED) */}
+      {/* RECOMMENDED SECTION (KEPT INTACT) */}
       <div className="full-width-review-section">
         <div className="review-inner-container" style={{ paddingTop: '1rem' }}>
           <div className="recommended-section-wrapper">
