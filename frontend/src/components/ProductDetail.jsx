@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaHeart, FaRegHeart, FaComment, FaWhatsapp, FaSearch, FaMapMarkerAlt, FaPhone } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaComment, FaWhatsapp } from 'react-icons/fa';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
 import ReviewForm from '../components/ReviewForm';
@@ -11,13 +11,30 @@ import './ProductDetail.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-const DETAIL_FIELD_LABELS = {
-  primary_color: 'Primary Color', other_color: 'Other Colors', border_type: 'Border Type',
-  pattern: 'Pattern', craft: 'Craft', weave: 'Weave', zari_type: 'Zari Type',
-  blouse: 'Blouse', blouse_length: 'Blouse Length', border_motifs: 'Border Motifs',
-  fabric: 'Fabric/Material', khats: 'Khats', weight: 'Product Weight',
-  origin: 'Origin', producer: 'Producer', maker: 'Maker'
-};
+// 🌟 Field Definitions for Tabs
+const SPEC_FIELDS = [
+  { key: 'fabric', label: 'Fabric/Material' },
+  { key: 'primary_color', label: 'Primary Color' },
+  { key: 'other_color', label: 'Other Colors' },
+  { key: 'pattern', label: 'Pattern' },
+  { key: 'craft', label: 'Craft' },
+  { key: 'weave', label: 'Weave' },
+  { key: 'zari_type', label: 'Zari Type' },
+  { key: 'border_type', label: 'Border Type' },
+  { key: 'border_motifs', label: 'Border Motifs' },
+  { key: 'blouse', label: 'Blouse' },
+  { key: 'blouse_length', label: 'Blouse Length' },
+  { key: 'khats', label: 'Khats' },
+  { key: 'weight', label: 'Weight' }
+];
+
+const MFG_FIELDS = [
+  { key: 'origin', label: 'Country of Origin' },
+  { key: 'producer', label: 'Producer' },
+  { key: 'maker', label: 'Maker' },
+  { key: 'producer_address', label: 'Name and address of the Manufacturer', fullWidth: true },
+  { key: 'packer_address', label: 'Name and address of the Packer', fullWidth: true }
+];
 
 function ProductDetail({ currency, rates, language }) {
   const { id } = useParams();
@@ -37,8 +54,11 @@ function ProductDetail({ currency, rates, language }) {
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [showDescription, setShowDescription] = useState(false);
   
+  // 🌟 New States for Flipkart Style Details Section
+  const [showAllDetails, setShowAllDetails] = useState(true); // Toggle Open/Close
+  const [activeDetailTab, setActiveDetailTab] = useState('specifications'); // Pill Tabs
+
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -214,9 +234,6 @@ function ProductDetail({ currency, rates, language }) {
 
   const sliderImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 ? saree.images : [saree?.image_url || "/saare_1.jpeg"];
   const currentImageUrl = sliderImages[activeImageIdx] || "/saare_1.jpeg";
-  const finerDetails = Object.entries(DETAIL_FIELD_LABELS)
-    .filter(([field]) => saree[field] !== null && saree[field] !== undefined && saree[field] !== '' && saree[field] !== 'null')
-    .map(([field, label]) => ({ label, value: saree[field] }));
 
   return (
     <div className="product-detail-page">
@@ -226,7 +243,6 @@ function ProductDetail({ currency, rates, language }) {
           {/* LEFT: GALLERY & VARIANTS / SLIDER */}
           <div className="gallery-section">
             <div className="main-image-wrapper">
-              {/* 🌟 IMAGE ZOOM APPLIED HERE 🌟 */}
               <Zoom>
                 <img
                   src={currentImageUrl} alt={saree.name} className="main-image"
@@ -237,7 +253,7 @@ function ProductDetail({ currency, rates, language }) {
               <div className="image-zoom-hint">Click to zoom</div>
             </div>
 
-            {/* Slider / Thumbnails for Angles & Styles */}
+            {/* Slider / Thumbnails */}
             {sliderImages.length > 1 && (
               <div className="thumbnail-row">
                 {sliderImages.map((img, idx) => (
@@ -352,31 +368,81 @@ function ProductDetail({ currency, rates, language }) {
               </button>
             </div>
 
-            {/* Collapsible Product Description */}
-            {translatedDesc && (
-              <div className="description-dropdown-container">
-                <button className="description-toggle-btn" onClick={() => setShowDescription(!showDescription)}>
-                  Product Description {showDescription ? '▲' : '▼'}
-                </button>
-                {showDescription && (
-                  <div className="description-content">
-                    <p className="product-desc">{isTranslating ? "Translating details..." : translatedDesc}</p>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* 🌟 FLIPKART STYLE 'ALL DETAILS' SECTION 🌟 */}
+            <div className="fk-all-details-container">
+              <button 
+                className="fk-details-toggle-btn" 
+                onClick={() => setShowAllDetails(!showAllDetails)}
+              >
+                All details
+                <span className="toggle-icon">{showAllDetails ? '▲' : '▼'}</span>
+              </button>
 
-            {/* Finer Specifications Details */}
-            {finerDetails.length > 0 && (
-              <div className="finer-details">
-                <h3 className="finer-details-title">The Finer Details</h3>
-                <ul className="finer-details-list">
-                  {finerDetails.map((row, index) => (
-                    <li key={index}><span className="finer-label">{row.label}:</span><span className="finer-value">{row.value}</span></li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              {showAllDetails && (
+                <div className="fk-details-content">
+                  
+                  {/* Pills / Tabs Row */}
+                  <div className="fk-tabs-row">
+                    <button 
+                      className={`fk-tab-btn ${activeDetailTab === 'specifications' ? 'active' : ''}`}
+                      onClick={() => setActiveDetailTab('specifications')}
+                    >Specifications</button>
+                    <button 
+                      className={`fk-tab-btn ${activeDetailTab === 'description' ? 'active' : ''}`}
+                      onClick={() => setActiveDetailTab('description')}
+                    >Description</button>
+                    <button 
+                      className={`fk-tab-btn ${activeDetailTab === 'manufacturer' ? 'active' : ''}`}
+                      onClick={() => setActiveDetailTab('manufacturer')}
+                    >Manufacturer info</button>
+                  </div>
+
+                  {/* Tab Panes */}
+                  <div className="fk-tab-pane">
+                    
+                    {/* 1. Specifications Tab */}
+                    {activeDetailTab === 'specifications' && (
+                      <div className="fk-spec-group">
+                        <h4 className="fk-group-title">General</h4>
+                        <div className="fk-grid-2-col">
+                          {SPEC_FIELDS.filter(f => saree[f.key] && saree[f.key] !== 'null').map((f, i) => (
+                            <div key={i} className="fk-grid-item">
+                              <span className="fk-label">{f.label}</span>
+                              <span className="fk-value">{saree[f.key]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 2. Description Tab */}
+                    {activeDetailTab === 'description' && (
+                      <div className="fk-spec-group">
+                        <p className="product-desc" style={{ color: 'var(--text-dark)' }}>
+                          {isTranslating ? "Translating details..." : (translatedDesc || "No description available.")}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 3. Manufacturer Info Tab */}
+                    {activeDetailTab === 'manufacturer' && (
+                      <div className="fk-spec-group">
+                        <div className="fk-grid-2-col">
+                          {MFG_FIELDS.filter(f => saree[f.key] && saree[f.key] !== 'null').map((f, i) => (
+                            <div key={i} className={`fk-grid-item ${f.fullWidth ? 'fk-full-width' : ''}`}>
+                              <span className="fk-label">{f.label}</span>
+                              <span className="fk-value">{saree[f.key]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </div>

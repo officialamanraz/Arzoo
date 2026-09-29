@@ -213,7 +213,7 @@ const addProductToDB = async (productData) => {
             name, price, description, base_color, category_id, stock_qty, is_active = 1, mainImage,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id
+            extraImagesUrls, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address
         } = productData;
 
         const parsedPrice = Number(price) || 0;
@@ -242,8 +242,8 @@ const addProductToDB = async (productData) => {
             name, price, description, base_color, category_id, stock_qty, is_active, image_url,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
-            mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const values = [
@@ -276,7 +276,9 @@ const addProductToDB = async (productData) => {
           dealer_base_price ? Number(dealer_base_price) : null,
           packaging_cost ? Number(packaging_cost) : null,
           is_returnable !== undefined ? Number(is_returnable) : 1, 
-          dealer_id || null 
+          dealer_id || null,
+          producer_address || null,
+          packer_address || null
         ];
 
         const [result] = await db.execute(insertProductQuery, values);
@@ -315,7 +317,7 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color, primary_color, other_color, border_type, pattern, 
             craft, weave, zari_type, blouse, border_motifs, origin, 
             fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id
+            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address
         } = updateData;
 
         const parsedPrice = Number(price) || 0;
@@ -328,7 +330,7 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color=?, primary_color=?, other_color=?, border_type=?, pattern=?, 
             craft=?, weave=?, zari_type=?, blouse=?, border_motifs=?, origin=?, 
             fabric=?, khats=?, weight=?, blouse_length=?, producer=?, maker=?,
-            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?
+            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?,producer_address=?,packer_address=?
         `;
         
         const values = [
@@ -341,7 +343,9 @@ const updateProductInDB = async (product_id, updateData) => {
             dealer_base_price ? Number(dealer_base_price) : null,
             packaging_cost ? Number(packaging_cost) : null,
             is_returnable !== undefined ? Number(is_returnable) : 1,
-            dealer_id || null
+            dealer_id || null,
+            producer_address ||null,
+            packer_address || null
         ];
 
         if (mainImage) {

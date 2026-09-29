@@ -8,7 +8,7 @@
   min-height: 100vh;
   padding-bottom: 80px;
   /* 🛠️ FIX: Added top padding to prevent the title from hiding under the navbar */
-  padding-top: 50px; 
+  padding-top: 30px; 
 }
 
 .main-container {
@@ -588,3 +588,123 @@
   border: 1px solid rgba(220, 53, 69, 0.3) !important;
   border-left: 4px solid #ef4444 !important; 
 }
+/* =========================================================
+   FLIPKART STYLE 'ALL DETAILS' SECTION (NEW)
+========================================================= */
+
+.fk-all-details-container {
+  width: 100%;
+  margin-top: 15px;
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  background: var(--card-bg, #ffffff);
+  overflow: hidden;
+}
+
+.fk-details-toggle-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-dark, #212121);
+  cursor: pointer;
+}
+
+.fk-details-content {
+  padding: 0 16px 16px 16px;
+}
+
+/* Scrollable Pill Tabs Row */
+.fk-tabs-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+}
+
+/* Hide scrollbar for neatness */
+.fk-tabs-row::-webkit-scrollbar { display: none; }
+
+.fk-tab-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #dcdcdc);
+  background: transparent;
+  color: var(--text-dark, #212121);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+/* Active Tab matches Flipkart (Dark Background) */
+.fk-tab-btn.active {
+  background: var(--text-dark, #212121);
+  color: var(--bg-light, #ffffff);
+  border-color: var(--text-dark, #212121);
+}
+
+/* Content Pane inside Tab */
+.fk-tab-pane {
+  animation: fadeInTab 0.3s ease;
+}
+
+@keyframes fadeInTab {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fk-group-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-dark, #212121);
+  margin: 0 0 16px 0;
+}
+
+/* 2-Column Grid matching Screenshot */
+.fk-grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 16px;
+}
+
+.fk-grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Addresses need full width */
+.fk-grid-item.fk-full-width {
+  grid-column: 1 / -1;
+}
+
+/* The Label (Grey Text) */
+.fk-label {
+  font-size: 0.85rem;
+  color: var(--text-light, #878787);
+}
+
+/* The Value (Black Text) */
+.fk-value {
+  font-size: 0.95rem;
+  color: var(--text-dark, #212121);
+  word-wrap: break-word;
+}
+
+/* Dark Mode Overrides for Flipkart Details */
+.dark-mode .fk-all-details-container, body.dark .fk-all-details-container { border-color: #333; background: #1e1e1e; }
+.dark-mode .fk-details-toggle-btn, body.dark .fk-details-toggle-btn { color: #f1f1f1; }
+.dark-mode .fk-tab-btn, body.dark .fk-tab-btn { border-color: #444; color: #ddd; }
+.dark-mode .fk-tab-btn.active, body.dark .fk-tab-btn.active { background: #e0e0e0; color: #121212; border-color: #e0e0e0; }
+.dark-mode .fk-label, body.dark .fk-label { color: #9ca3af; }
+.dark-mode .fk-value, body.dark .fk-value { color: #f3f4f6; }
+.dark-mode .fk-group-title, body.dark .fk-group-title { color: #f9fafb; }

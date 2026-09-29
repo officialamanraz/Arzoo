@@ -12,7 +12,7 @@ const emptyFormState = {
   description: '', baseColor: '', categoryId: '', subcategoryId: '',
   stockQty: '10', primaryColor: '', otherColor: '', borderType: '', pattern: '', craft: '',
   weave: '', zariType: '', blouse: '', borderMotifs: '', origin: '', fabric: '', khats: '',
-  weight: '', blouseLength: '', producer: '', maker: ''
+  weight: '', blouseLength: '', producer: '', maker: '',producer_address:'',packer_address:''
 };
 
 function AdminAddProduct() {
@@ -60,7 +60,9 @@ function AdminAddProduct() {
         weight: editingProduct.weight || '',
         blouseLength: editingProduct.blouse_length || '',
         producer: editingProduct.producer || '',
-        maker: editingProduct.maker || ''
+        maker: editingProduct.maker || '',
+        producer_address:editingProduct.producer_address || '',
+        packer_address:editingProduct.packer_address
       });
     }
   }, [editingProduct]);
@@ -177,6 +179,8 @@ function AdminAddProduct() {
     formData.append('blouse_length', form.blouseLength);
     formData.append('producer', form.producer);
     formData.append('maker', form.maker);
+    formData.append('producer_address',form.producer_address);
+    formData.append('packer_address',form.packer_address);
 
     if (images && images.length > 0) {
       Array.from(images).forEach((img) => formData.append('image', img));
@@ -382,6 +386,16 @@ function AdminAddProduct() {
               <div className="form-group">
                 <label>Maker</label>
                 <input type="text" value={form.maker} onChange={handleFieldChange('maker')} className="admin-input" />
+              </div>
+            </div>
+            <div className="responsive-grid-2">
+              <div className="form-group">
+                <label>producer_address</label>
+                <input type="text" value={form.producer_address} onChange={handleFieldChange('producer_address')} className="admin-input" />
+              </div>
+              <div className="form-group">
+                <label>packer_address</label>
+                <input type="text" value={form.packer_address} onChange={handleFieldChange('packer_address')} className="admin-input" />
               </div>
             </div>
           </fieldset>
