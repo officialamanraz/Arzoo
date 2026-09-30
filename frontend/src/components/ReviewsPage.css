@@ -1,303 +1,275 @@
 /* =========================================================
-   PAGE CONTAINER & LAYOUT (NO FORCED CENTERING)
+   DEDICATED ALL REVIEWS PAGE (FLIPKART STYLE)
 ========================================================= */
-.all-reviews-page {
+.fk-all-rev-page {
+  background-color: #f1f3f6;
   min-height: 100vh;
-  background-color: #f8fafc;
-  padding: 30px 16px 80px 16px;
+  padding: 20px 16px;
   font-family: var(--font-body, 'Inter', sans-serif);
 }
 
-.all-reviews-wrapper {
-  max-width: 720px;
+.fk-all-rev-wrapper {
+  max-width: 800px;
   margin: 0 auto;
-  text-align: left; /* Strict Left Alignment */
-}
-
-.back-link-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: none;
-  color: #64748b;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  margin-bottom: 16px;
-  padding: 0;
-  transition: color 0.2s ease;
-}
-
-.back-link-btn:hover {
-  color: #0f172a;
-}
-
-.reviews-page-heading {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 20px 0;
-  text-align: left;
-}
-
-.reviews-page-loader {
-  padding: 60px;
-  text-align: center;
-  font-size: 1.1rem;
-  color: #64748b;
-}
-
-/* =========================================================
-   1. DYNAMIC METER
-========================================================= */
-.dynamic-meter-box {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  border-radius: 4px;
   padding: 24px;
+}
+
+.fk-all-rev-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
 }
 
-.meter-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 16px 0;
-  text-align: left;
+.fk-all-rev-title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #212121;
+  margin: 0;
 }
 
-.gauge-circle-container {
-  position: relative;
-  width: 230px;
-  margin: 0 auto 16px auto;
-}
-
-.gauge-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.gauge-value-block {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.gauge-pct-text {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1;
-}
-
-.gauge-total-votes {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-top: 4px;
-}
-
-.dynamic-legend-row {
-  display: flex;
-  justify-content: flex-start; /* Left aligned chips */
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.legend-chip {
+/* 1. METER CONTAINER */
+.fk-meter-container {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  background: #f1f5f9;
-  padding: 6px 12px;
-  border-radius: 20px;
+  gap: 40px;
+  margin-bottom: 30px;
 }
 
-.legend-chip-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.fk-meter-left {
+  text-align: center;
 }
 
-.legend-chip-label {
-  color: #475569;
+.fk-big-score {
+  font-size: 2.8rem;
+  font-weight: 500;
+  color: #212121;
+  line-height: 1.1;
 }
 
-.legend-chip-pct {
-  font-weight: 600;
-  color: #0f172a;
-}
-
-/* =========================================================
-   2. DYNAMIC REVIEW CARDS (Natural Auto Height & Left Align)
-========================================================= */
-.reviews-stream-section {
-  width: 100%;
-  margin-top: 1rem;
-}
-
-.stream-section-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 4px 0;
-  text-align: left;
-}
-
-.stream-total-subtext {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin: 0 0 16px 0;
-  text-align: left;
-}
-
-.reviews-cards-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-}
-
-.no-reviews-note {
-  color: #64748b;
-  font-style: italic;
-  text-align: left;
-}
-
-/* Card expands naturally with its content */
-.review-card-item {
-  width: 100%;
-  height: auto; /* Dynamic height */
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px 18px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-  box-sizing: border-box;
-  text-align: left; /* All inner content left-aligned */
-}
-
-.review-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.reviewer-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.reviewer-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.verified-buyer-badge {
-  background-color: rgba(6, 95, 70, 0.12);
-  color: #065f46;
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-weight: 600;
-}
-
-.review-post-date {
-  color: #64748b;
-  font-size: 0.8rem;
-}
-
-.review-card-body {
-  text-align: left;
-}
-
-.review-opinion-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #ffffff;
+.fk-big-score-sub {
+  font-size: 0.95rem;
+  color: #388e3c;
+  font-weight: 500;
   margin-bottom: 8px;
 }
 
-.review-text-content {
-  font-size: 0.92rem;
-  color: #334155;
-  line-height: 1.5;
-  margin: 0 0 10px 0;
-  word-break: break-word;
-  white-space: pre-wrap; /* Preserves author formatting */
+.fk-total-ratings-count {
+  font-size: 0.85rem;
+  color: #878787;
 }
 
-/* "See More / Show Less" Toggle */
-.see-more-toggle-btn {
-  background: transparent;
-  border: none;
-  color: #2563eb;
-  font-weight: 600;
+.fk-meter-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fk-meter-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fk-bar-label {
+  width: 75px;
+  font-size: 0.85rem;
+  color: #212121;
+  text-align: right;
+  font-weight: 500;
+}
+
+.fk-bar-track {
+  flex: 1;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fk-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.fk-bar-count {
+  font-size: 0.8rem;
+  color: #878787;
+  width: 30px;
+}
+
+/* 2. PHOTOS GALLERY */
+.fk-full-gallery-section {
+  margin-bottom: 30px;
+}
+
+.fk-section-heading {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #212121;
+  margin: 0 0 12px 0;
+}
+
+.fk-gallery-grid {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.fk-gallery-grid::-webkit-scrollbar { display: none; }
+
+.fk-gallery-img-wrapper {
+  flex: 0 0 90px;
+  height: 90px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+}
+
+.fk-gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 3. FILTER PILLS */
+.fk-filters-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  margin-bottom: 24px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.fk-filters-row::-webkit-scrollbar { display: none; }
+
+.fk-filter-pill {
+  white-space: nowrap;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  color: #212121;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-size: 0.85rem;
   cursor: pointer;
-  margin-left: 6px;
-  padding: 0;
 }
 
-.see-more-toggle-btn:hover {
-  text-decoration: underline;
-}
-
-/* Review Image */
-.review-img-box {
-  margin-top: 8px;
-}
-
-.review-user-image {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-}
-
-.review-card-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 8px;
-}
-
-.delete-btn {
-  background: transparent;
-  border: 1px solid #ef4444;
-  color: #ef4444;
-  padding: 4px 10px;
-  font-size: 0.75rem;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.delete-btn:hover {
-  background: #ef4444;
+.fk-filter-pill.active {
+  background: #2874f0;
+  border-color: #2874f0;
   color: #ffffff;
+  font-weight: 500;
+}
+
+/* 4. FULL FEED CARDS */
+.fk-full-feed-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.fk-feed-card {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 24px 0;
+}
+
+.fk-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fk-feed-badge {
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.fk-feed-time {
+  font-size: 0.8rem;
+  color: #878787;
+}
+
+.fk-feed-comment {
+  font-size: 0.95rem;
+  color: #212121;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+  white-space: pre-wrap;
+}
+
+.fk-feed-attached-img {
+  margin-bottom: 16px;
+}
+
+.fk-feed-attached-img img {
+  max-width: 150px;
+  max-height: 150px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.fk-feed-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fk-feed-author-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #878787;
+}
+
+.fk-feed-author-name {
+  font-weight: 500;
+  color: #212121;
+}
+
+.fk-feed-verified-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #878787;
+}
+
+.fk-vote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #878787;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-left: 16px;
+}
+
+.fk-vote-btn:hover {
+  color: #2874f0;
 }
 
 @media (max-width: 600px) {
-  .review-card-header {
+  .fk-meter-container {
     flex-direction: column;
     align-items: flex-start;
+    gap: 20px;
+  }
+  .fk-meter-right {
+    width: 100%;
   }
 }

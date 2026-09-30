@@ -72,6 +72,22 @@ function ProductDetail({ currency, rates, language }) {
   const [activeDetailTab, setActiveDetailTab] = useState('specifications'); // Pill Tabs
 
   const token = localStorage.getItem('token');
+  // Relative Time Helper (e.g., "2 days ago")
+  const timeAgo = (dateStr) => {
+    if (!dateStr) return "";
+    const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    return Math.floor(seconds) + " seconds ago";
+  };
 useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -502,7 +518,7 @@ return (
               )}
             </div>
 
-            {/* 🌟 FLIPKART STYLE 'RATINGS AND REVIEWS' TOGGLE */}
+{/* 🌟 FLIPKART STYLE 'RATINGS AND REVIEWS' TOGGLE 🌟 */}
             <div className="fk-all-details-container" style={{ marginTop: '15px' }}>
               <button 
                 type="button"
@@ -516,20 +532,20 @@ return (
               {showReviewsToggle && (
                 <div className="fk-details-content fk-reviews-content">
                   
-                  {/* Total Reviews Header */}
+                  {/* Total Reviews Subtitle */}
                   <div className="fk-rev-summary-sub">
                     based on {totalReviewsCount} ratings by Verified Buyers
                   </div>
 
-                  {/* 1. Customer Uploaded Photos Preview Row */}
+                  {/* 1. Customer Uploaded Photos Carousel */}
                   {customerImages.length > 0 && (
                     <div className="fk-buyer-photos-section">
                       <div className="fk-buyer-photos-row">
-                        {customerImages.slice(0, 5).map((imgUrl, idx) => (
+                        {customerImages.map((imgUrl, idx) => (
                           <img 
                             key={idx} 
                             src={resolveImage(imgUrl)} 
-                            alt="Buyer review photo" 
+                            alt="Buyer review" 
                             className="fk-buyer-thumb-img" 
                             loading="lazy"
                           />
@@ -538,36 +554,23 @@ return (
                     </div>
                   )}
 
-                  {/* 2. Aspect Pills (Skip, Timepass, Go For It, Perfection) */}
-                  <div className="fk-aspect-pills-row">
-                    {Object.keys(reviewStats || {}).map((key) => {
-                      const votes = reviewStats[key] || 0;
-                      const pct = totalReviewsCount > 0 ? Math.round((votes / totalReviewsCount) * 100) : 0;
-                      const color = getColorForOption(key);
-                      return (
-                        <div key={key} className="fk-aspect-pill">
-                          <span className="fk-pill-label">{formatLabel(key)}</span>
-                          <span className="fk-pill-val" style={{ color }}>{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* 3. Small Side-by-Side Review Cards */}
+                  {/* 2. Compact Review Cards (Carousel / Grid) */}
                   {previewReviews.length > 0 ? (
                     <div className="fk-compact-cards-grid">
-                      {previewReviews.slice(0, 2).map((rev, idx) => {
+                      {previewReviews.slice(0, 4).map((rev, idx) => {
                         const color = getColorForOption(rev.rating_type);
                         return (
                           <div key={rev.review_id || idx} className="fk-compact-review-card">
-                            <div className="fk-card-badge-row">
+                            
+                            <div className="fk-card-badge-row" style={{ justifyContent: 'space-between' }}>
                               <span className="fk-card-opinion-tag" style={{ backgroundColor: color }}>
                                 {formatLabel(rev.rating_type)}
                               </span>
+                              <span className="fk-card-relative-time">{timeAgo(rev.created_at)}</span>
                             </div>
 
                             <p className="fk-card-short-comment">
-                              {rev.comment?.length > 75 ? `${rev.comment.slice(0, 75)}...` : rev.comment}
+                              {rev.comment?.length > 60 ? `${rev.comment.slice(0, 60)}...` : rev.comment}
                             </p>
 
                             <div className="fk-card-author-footer">
@@ -585,22 +588,21 @@ return (
                   ) : (
                     <p className="fk-no-reviews-note">No customer reviews yet.</p>
                   )}
-
-                  {/* 4. Show All Reviews Link */}
-                  <Link 
-                    to={`/product/${saree.product_id}/reviews`} 
-                    className="fk-show-all-reviews-link"
-                  >
-                    Show all reviews <span style={{ fontSize: '1rem', marginLeft: '4px' }}>›</span>
-                  </Link>
-
                 </div>
               )}
             </div>
 
-          </div>
-        </div>
-      </div>
+            {/* 🌟 'SHOW ALL REVIEWS' BUTTON (OUTSIDE TOGGLE) 🌟 */}
+            <Link 
+              to={`/product/${saree.product_id}/reviews`} 
+              className="fk-standalone-reviews-btn"
+            >
+              Show all reviews <span style={{ marginLeft: '4px' }}>›</span>
+            </Link>
+
+          </div> {/* Closes info-box */}
+        </div> {/* Closes details-container */}
+      </div> {/* Closes main-container */}
 
       {/* RECOMMENDED SECTION (Mobile Friendly Swiper) */}
       <div className="full-width-review-section">
@@ -614,7 +616,7 @@ return (
           </div>
         </div>
       </div>
-    </div>
+    </div> 
   );
 }
 
