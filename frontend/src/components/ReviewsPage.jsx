@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaCheckCircle, FaThumbsUp, FaThumbsDown } from "react-icons/fa";
-import "./ProductReviewsPage.css";
+import "./ReviewsPage.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
