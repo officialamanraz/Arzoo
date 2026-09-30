@@ -62,9 +62,9 @@ function ProductDetail({ currency, rates, language }) {
   // Unique Variants State
   const [uniqueVariants, setUniqueVariants] = useState([]);
 
-  // Flipkart Style Delivery Estimate & Timer States
-  const [deliveryTimer, setDeliveryTimer] = useState("");
+  // Flipkart Style Delivery Date State (No Timer)
   const [deliveryDateStr, setDeliveryDateStr] = useState("");
+  const [userLocation, setUserLocation] = useState("Location not set");
 
   const handleImageMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -94,26 +94,47 @@ function ProductDetail({ currency, rates, language }) {
     if (interval > 1) return Math.floor(interval) + " days ago";
     return Math.floor(seconds) + " seconds ago";
   };
+  // 🌟 Translation Effect (Jo miss ho gaya tha)
+  useEffect(() => {
+    if (!saree || !language || language === 'en') return;
+    const fetchTranslations = async () => {
+      setIsTranslating(true);
+      try {
+        const [nameRes, descRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/translate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: saree.name, targetLanguage: language })
+          }),
+          fetch(`${API_BASE_URL}/api/translate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: saree.description, targetLanguage: language })
+          })
+        ]);
+        const nData = await nameRes.json();
+        const dData = await descRes.json();
+        setTranslatedName(nData.translatedText || saree.name);
+        setTranslatedDesc(dData.translatedText || saree.description);
+      } catch (err) {
+        console.error("[ProductDetail] Translation error:", err);
+      } finally {
+        setIsTranslating(false);
+      }
+    };
+    fetchTranslations();
+  }, [language, saree]);
 
   useEffect(() => {
+    // Dynamic Delivery Date (Current Date + 3 Days)
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 3);
     const options = { day: 'numeric', month: 'short', weekday: 'short' };
     setDeliveryDateStr(deliveryDate.toLocaleDateString('en-IN', options));
 
-    const timerInterval = setInterval(() => {
-      const now = new Date();
-      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      const diff = tomorrow - now;
-      
-      const h = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
-      const m = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
-      const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
-      
-      setDeliveryTimer(`${h}h ${m}m ${s}s`);
-    }, 1000);
-
-    return () => clearInterval(timerInterval);
+    // Check if user has saved location in localStorage or profile
+    const savedLoc = localStorage.getItem('user_location');
+    if (savedLoc) setUserLocation(savedLoc);
   }, []);
 
   const resolveImage = (url) => {
@@ -255,86 +276,6 @@ function ProductDetail({ currency, rates, language }) {
     if (id) fetchProductData();
   }, [id, token]);
 
-  useEffect(() => {
-    if (!saree || !language || language === 'en') return;
-    const fetchTranslations = async () => {
-      setIsTranslating(true);
-      try {
-        const [nameRes, descRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/translate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: saree.name, targetLanguage: language })
-          }),
-          fetch(`${API_BASE_URL}/api/translate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: saree.description, targetLanguage: language })
-          })
-        ]);
-        const nData = await nameRes.json();
-        const dData = await descRes.json();
-        setTranslatedName(nData.translatedText || saree.name);
-        setTranslatedDesc(dData.translatedText || saree.description);
-      } catch (err) {
-        console.error("[ProductDetail] Translation error:", err);
-      } finally {
-        setIsTranslating(false);
-      }
-    };
-    fetchTranslations();
-  }, [language, saree]);
-
-  const handleToggleLike = async () => {
-    if (!token) {
-      toast.error("Please login to like this product!");
-      return;
-    }
-    const wasLiked = isLiked;
-    setIsLiked(!wasLiked);
-    setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/likes/${id}/like`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error("Failed to toggle like");
-    } catch (error) {
-      setIsLiked(wasLiked);
-      setLikesCount(prev => wasLiked ? prev + 1 : prev - 1);
-    }
-  };
-
-  const handleCommentSubmit = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    if (!token) {
-      toast.error("Please login to post a comment!");
-      return;
-    }
-    setIsSubmittingComment(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/comments/${id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ comment_text: newComment })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setComments(prev => [data.comment, ...prev]);
-        setNewComment('');
-        toast.success("Comment posted successfully!");
-      } else {
-        toast.error(data.message || "Failed to post comment.");
-      }
-    } catch (error) {
-      toast.error("Failed to post comment.");
-    } finally {
-      setIsSubmittingComment(false);
-    }
-  };
-
   const stockQty = saree?.stock_qty ?? saree?.quantity ?? null;
   const isOutOfStock = stockQty !== null ? stockQty <= 0 : saree?.in_stock === false;
   
@@ -389,8 +330,15 @@ function ProductDetail({ currency, rates, language }) {
   if (loading) return <div className="main-container"><h2>Loading product details...</h2></div>;
   if (!saree) return <div className="main-container"><h2>Product not found!</h2></div>;
 
-  const sliderImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 ? saree.images : [saree?.image_url || "/saare_1.jpeg"];
+  const sliderImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 
+    ? saree.images.map(img => resolveImage(img)) 
+    : [resolveImage(saree?.image_url) || "/saare_1.jpeg"];
+    
   const currentImageUrl = sliderImages[activeImageIdx] || "/saare_1.jpeg";
+
+  // Determine variant label type dynamically
+  const hasDifferentColors = uniqueVariants.some(v => v.color_name && v.color_name !== (saree.color_name || saree.base_color));
+  const variantLabelText = hasDifferentColors ? "Different Color" : "Different Design";
 
   return (
     <div className="product-detail-page">
@@ -424,12 +372,12 @@ function ProductDetail({ currency, rates, language }) {
               <div className="image-zoom-hint">{isZoomHovered ? "Zoomed" : "Hover to zoom"}</div>
             </div>
 
-            {/* Slider / Thumbnails */}
+            {/* Slider / Thumbnails (Multiple Angles) */}
             {sliderImages.length > 1 && (
               <div className="thumbnail-row">
                 {sliderImages.map((img, idx) => (
                   <img
-                    key={idx} src={img} alt={`Thumbnail ${idx + 1}`} className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
+                    key={idx} src={img} alt={`Angle ${idx + 1}`} className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
                     onClick={() => setActiveImageIdx(idx)} onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }} draggable="false"
                   />
                 ))}
@@ -482,7 +430,7 @@ function ProductDetail({ currency, rates, language }) {
             )}
           </div>
 
-          {/* RIGHT: INFO, PRICE, VARIANTS (FLIPKART POSITION) */}
+          {/* RIGHT: INFO, PRICE, VARIANTS */}
           <div className="info-box">
             <h1 className="product-title">{isTranslating ? "Translating..." : translatedName}</h1>
             
@@ -498,11 +446,11 @@ function ProductDetail({ currency, rates, language }) {
               )}
             </div>
 
-            {/* 🌟 FLIPKART STYLE POSITIONED VARIANT SWATCHES (DEDUPLICATED) */}
+            {/* 🌟 DYNAMIC VARIANT SWATCHES (Different Color / Different Design) */}
             {uniqueVariants && uniqueVariants.length > 0 && (
               <div className="amazon-variants-container">
                 <div className="amazon-variant-label">
-                  Color / Pattern: <strong>{saree.color_name || saree.base_color || 'Selected'}</strong>
+                  {variantLabelText}: <strong>{saree.color_name || saree.base_color || 'Default'}</strong>
                 </div>
                 <div className="amazon-swatch-grid">
                   {uniqueVariants.map((v) => {
@@ -514,12 +462,14 @@ function ProductDetail({ currency, rates, language }) {
                         className={`amazon-swatch-item ${isActive ? 'active' : ''}`}
                         title={v.color_name || 'Variant'}
                       >
-                        <img 
-                          src={resolveImage(v.image_url || "/saare_1.jpeg")} 
-                          alt={v.color_name || 'variant'} 
-                          className="amazon-swatch-img"
-                          onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
-                        />
+                        <div className="amazon-swatch-img-wrap">
+                          <img 
+                            src={resolveImage(v.image_url || "/saare_1.jpeg")} 
+                            alt={v.color_name || 'variant'} 
+                            className="amazon-swatch-img"
+                            onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
+                          />
+                        </div>
                       </Link>
                     );
                   })}
@@ -527,22 +477,21 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             )}
 
-            {/* FLIPKART STYLE DELIVERY DETAILS WIDGET */}
+            {/* FLIPKART STYLE DELIVERY DETAILS WIDGET (No Timer, Fixed Layout) */}
             <div className="fk-delivery-widget">
               <h3 className="fk-delivery-title">Delivery details</h3>
               <div className="fk-delivery-row">
                 <span className="fk-delivery-icon">📍</span>
-                <div className="fk-delivery-text-block">
-                  <span className="fk-loc-text">Location not set</span>
+                <div className="fk-delivery-text-block" style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span className="fk-loc-text">{userLocation}</span>
                   <button className="fk-loc-action" type="button">Select delivery location ›</button>
                 </div>
               </div>
               <div className="fk-delivery-divider"></div>
               <div className="fk-delivery-row">
                 <span className="fk-delivery-icon">🚚</span>
-                <div className="fk-delivery-text-block">
+                <div className="fk-delivery-text-block" style={{ display: 'flex', flexDirection: 'column' }}>
                   <span className="fk-date-text">Delivery by {deliveryDateStr}</span>
-                  <span className="fk-timer-text">Order in {deliveryTimer}</span>
                 </div>
               </div>
             </div>

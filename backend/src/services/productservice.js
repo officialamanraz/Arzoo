@@ -382,7 +382,11 @@ const updateProductInDB = async (product_id, updateData) => {
 
         await db.execute(updateQuery, values);
         console.log(`[PRODUCT_SERVICE] ✅ Main product data updated successfully for ID: ${product_id}`);
-        
+        // ⚡ Clear Cache so updated details show immediately
+    if (typeof myCache !== 'undefined') {
+        myCache.del(`product_${product_id}`);
+        console.log(`[PRODUCT_CONTROLLER] ⚡ Cache cleared for product ID: ${product_id}`);
+    }
         if (extraImagesUrls && extraImagesUrls.length > 0) {
             console.log(`[PRODUCT_SERVICE] Adding ${extraImagesUrls.length} new extra images during update for product ID: ${product_id}`);
             const insertImagesQuery = `INSERT INTO product_images (product_id, image_url, is_primary) VALUES ?`;
