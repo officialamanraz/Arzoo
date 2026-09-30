@@ -10,7 +10,6 @@ import './ProductDetail.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-// 🌟 Field Definitions for Tabs
 const SPEC_FIELDS = [
   { key: 'fabric', label: 'Fabric/Material' },
   { key: 'primary_color', label: 'Primary Color' },
@@ -47,16 +46,23 @@ function ProductDetail({ currency, rates, language }) {
   const [translatedDesc, setTranslatedDesc] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [refreshReviews, setRefreshReviews] = useState(0);
+  
+  // Social States
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showComments, setShowComments] = useState(false);
+
+  // Zoom States
   const [isZoomHovered, setIsZoomHovered] = useState(false);
   const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
 
-  // 🌟 Flipkart Style Delivery Estimate & Timer States
+  // Unique Variants State
+  const [uniqueVariants, setUniqueVariants] = useState([]);
+
+  // Flipkart Style Delivery Estimate & Timer States
   const [deliveryTimer, setDeliveryTimer] = useState("");
   const [deliveryDateStr, setDeliveryDateStr] = useState("");
 
@@ -72,13 +78,11 @@ function ProductDetail({ currency, rates, language }) {
   const [totalReviewsCount, setTotalReviewsCount] = useState(0);
   const [previewReviews, setPreviewReviews] = useState([]);
  
-  // Flipkart Style Details Section States
   const [showAllDetails, setShowAllDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('specifications');
 
   const token = localStorage.getItem('token');
 
-  // Relative Time Helper (e.g., "2 days ago")
   const timeAgo = (dateStr) => {
     if (!dateStr) return "";
     const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
@@ -88,14 +92,9 @@ function ProductDetail({ currency, rates, language }) {
     if (interval > 1) return Math.floor(interval) + " months ago";
     interval = seconds / 86400;
     if (interval > 1) return Math.floor(interval) + " days ago";
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + " hours ago";
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + " minutes ago";
     return Math.floor(seconds) + " seconds ago";
   };
 
-  // 🌟 Delivery Date & Countdown Timer Effect
   useEffect(() => {
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 3);
@@ -117,6 +116,74 @@ function ProductDetail({ currency, rates, language }) {
     return () => clearInterval(timerInterval);
   }, []);
 
+  const resolveImage = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
+  // Smart Variant Deduplication using Canvas Signature
+  useEffect(() => {
+    if (!saree?.variants || saree.variants.length === 0) {
+      setUniqueVariants([]);
+      return;
+    }
+
+    const detectDuplicateImages = async () => {
+      const validVariants = [];
+      const seenSignatures = new Set();
+
+      for (const v of saree.variants) {
+        const imgUrl = resolveImage(v.image_url);
+        if (!imgUrl) continue;
+
+        try {
+          const colorSignature = await getImageColorSignature(imgUrl);
+          const uniqueKey = `${v.color_name || 'col'}_${colorSignature}`;
+          
+          if (!seenSignatures.has(uniqueKey)) {
+            seenSignatures.add(uniqueKey);
+            validVariants.push(v);
+          }
+        } catch (err) {
+          validVariants.push(v);
+        }
+      }
+      setUniqueVariants(validVariants);
+    };
+
+    detectDuplicateImages();
+  }, [saree]);
+
+  const getImageColorSignature = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = url;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 50;
+        canvas.height = 50;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 50, 50);
+        
+        const coords = [
+          {x: 10, y: 10}, {x: 40, y: 10},
+          {x: 25, y: 25},
+          {x: 10, y: 40}, {x: 40, y: 40}
+        ];
+        
+        let signature = '';
+        coords.forEach(pt => {
+          const pixel = ctx.getImageData(pt.x, pt.y, 1, 1).data;
+          signature += `${pixel[0]},${pixel[1]},${pixel[2]}_`;
+        });
+        resolve(signature);
+      };
+      img.onerror = () => resolve(url);
+    });
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -134,7 +201,6 @@ function ProductDetail({ currency, rates, language }) {
     if (id) fetchStats();
   }, [id, refreshReviews]);
 
-  // Dynamic Helpers for Reviews Toggle
   const formatLabel = (str) => {
     if (!str) return "Rating";
     return str.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -148,12 +214,6 @@ function ProductDetail({ currency, rates, language }) {
       perfection: "#22c55e",
     };
     return map[key?.toLowerCase()] || "#3b82f6";
-  };
-
-  const resolveImage = (url) => {
-    if (!url) return "";
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
   const customerImages = previewReviews.filter((r) => r.image_url).map((r) => r.image_url);
@@ -337,7 +397,7 @@ function ProductDetail({ currency, rates, language }) {
       <div className="main-container">
         <div className="details-container">
           
-          {/* LEFT: GALLERY & AMAZON HOVER ZOOM */}
+          {/* LEFT: GALLERY, ZOOM & SOCIAL ACTIONS */}
           <div className="gallery-section">
             <div 
               className="main-image-wrapper amazon-zoom-box"
@@ -376,46 +436,7 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             )}
 
-           {/* 🌟 AMAZON STYLE VARIANT IMAGE SWATCHES (Fixed Size) */}
-            {saree.variants && saree.variants.length > 0 && (
-              <div className="amazon-variants-container">
-                <div className="amazon-variant-label">
-                  Color: <strong>{saree.color_name || saree.base_color || 'Selected Option'}</strong>
-                </div>
-                <div className="amazon-swatch-grid" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  {saree.variants.map((v) => {
-                    const isActive = v.product_id === saree.product_id;
-                    return (
-                      <Link 
-                        key={v.product_id} 
-                        to={`/product/${v.product_id}`} 
-                        className={`amazon-swatch-item ${isActive ? 'active' : ''}`}
-                        title={v.color_name || 'Variant'}
-                        style={{
-                          display: 'block',
-                          width: '54px',
-                          height: '70px',
-                          border: isActive ? '2px solid #e77600' : '1px solid #d5d9d9',
-                          padding: '2px',
-                          background: '#fff',
-                          borderRadius: '2px',
-                          flexShrink: 0
-                        }}
-                      >
-                        <img 
-                          src={resolveImage(v.image_url || "/saare_1.jpeg")} 
-                          alt={v.color_name || 'variant'} 
-                          className="amazon-swatch-img"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                          onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
-                        />
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
+            {/* Social Action Bar */}
             <div className="social-action-bar">
               <div className="social-action-item">
                 <button type="button" className={`social-btn ${isLiked ? 'liked' : ''}`} onClick={handleToggleLike} aria-label="Like product">
@@ -437,6 +458,7 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             </div>
 
+            {/* Inline Comments Section */}
             {showComments && (
               <div className="inline-comments-section">
                 <div className="inline-comments-list">
@@ -460,7 +482,7 @@ function ProductDetail({ currency, rates, language }) {
             )}
           </div>
 
-          {/* RIGHT: INFO, PRICE, CONTROLS */}
+          {/* RIGHT: INFO, PRICE, VARIANTS (FLIPKART POSITION) */}
           <div className="info-box">
             <h1 className="product-title">{isTranslating ? "Translating..." : translatedName}</h1>
             
@@ -476,10 +498,38 @@ function ProductDetail({ currency, rates, language }) {
               )}
             </div>
 
-            {/* 🌟 FLIPKART STYLE DELIVERY DETAILS WIDGET */}
+            {/* 🌟 FLIPKART STYLE POSITIONED VARIANT SWATCHES (DEDUPLICATED) */}
+            {uniqueVariants && uniqueVariants.length > 0 && (
+              <div className="amazon-variants-container">
+                <div className="amazon-variant-label">
+                  Color / Pattern: <strong>{saree.color_name || saree.base_color || 'Selected'}</strong>
+                </div>
+                <div className="amazon-swatch-grid">
+                  {uniqueVariants.map((v) => {
+                    const isActive = v.product_id === saree.product_id;
+                    return (
+                      <Link 
+                        key={v.product_id} 
+                        to={`/product/${v.product_id}`} 
+                        className={`amazon-swatch-item ${isActive ? 'active' : ''}`}
+                        title={v.color_name || 'Variant'}
+                      >
+                        <img 
+                          src={resolveImage(v.image_url || "/saare_1.jpeg")} 
+                          alt={v.color_name || 'variant'} 
+                          className="amazon-swatch-img"
+                          onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
+                        />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* FLIPKART STYLE DELIVERY DETAILS WIDGET */}
             <div className="fk-delivery-widget">
               <h3 className="fk-delivery-title">Delivery details</h3>
-              
               <div className="fk-delivery-row">
                 <span className="fk-delivery-icon">📍</span>
                 <div className="fk-delivery-text-block">
@@ -487,9 +537,7 @@ function ProductDetail({ currency, rates, language }) {
                   <button className="fk-loc-action" type="button">Select delivery location ›</button>
                 </div>
               </div>
-
               <div className="fk-delivery-divider"></div>
-
               <div className="fk-delivery-row">
                 <span className="fk-delivery-icon">🚚</span>
                 <div className="fk-delivery-text-block">
@@ -527,7 +575,7 @@ function ProductDetail({ currency, rates, language }) {
               </button>
             </div>
 
-            {/* 🌟 FLIPKART STYLE 'ALL DETAILS' SECTION */}
+            {/* ALL DETAILS SECTION */}
             <div className="fk-all-details-container">
               <button 
                 type="button"
@@ -541,21 +589,9 @@ function ProductDetail({ currency, rates, language }) {
               {showAllDetails && (
                 <div className="fk-details-content">
                   <div className="fk-tabs-row">
-                    <button 
-                      type="button"
-                      className={`fk-tab-btn ${activeDetailTab === 'specifications' ? 'active' : ''}`}
-                      onClick={() => setActiveDetailTab('specifications')}
-                    >Specifications</button>
-                    <button 
-                      type="button"
-                      className={`fk-tab-btn ${activeDetailTab === 'description' ? 'active' : ''}`}
-                      onClick={() => setActiveDetailTab('description')}
-                    >Description</button>
-                    <button 
-                      type="button"
-                      className={`fk-tab-btn ${activeDetailTab === 'manufacturer' ? 'active' : ''}`}
-                      onClick={() => setActiveDetailTab('manufacturer')}
-                    >Manufacturer info</button>
+                    <button type="button" className={`fk-tab-btn ${activeDetailTab === 'specifications' ? 'active' : ''}`} onClick={() => setActiveDetailTab('specifications')}>Specifications</button>
+                    <button type="button" className={`fk-tab-btn ${activeDetailTab === 'description' ? 'active' : ''}`} onClick={() => setActiveDetailTab('description')}>Description</button>
+                    <button type="button" className={`fk-tab-btn ${activeDetailTab === 'manufacturer' ? 'active' : ''}`} onClick={() => setActiveDetailTab('manufacturer')}>Manufacturer info</button>
                   </div>
 
                   <div className="fk-tab-pane">
@@ -598,13 +634,8 @@ function ProductDetail({ currency, rates, language }) {
               )}
             </div>
 
-            {/* =========================================================
-                RATINGS & REVIEWS TOGGLE
-            ========================================================= */}
-            <div
-              className="fk-all-details-container reviews-toggle-container"
-              style={{ marginTop: "15px" }}
-            >
+            {/* RATINGS & REVIEWS TOGGLE */}
+            <div className="fk-all-details-container reviews-toggle-container" style={{ marginTop: "15px" }}>
               <button
                 type="button"
                 className="fk-details-toggle-btn"
@@ -612,80 +643,47 @@ function ProductDetail({ currency, rates, language }) {
                 aria-expanded={showReviewsToggle}
               >
                 <span>Ratings and reviews</span>
-                <span className="toggle-icon">
-                  {showReviewsToggle ? "▲" : "▼"}
-                </span>
+                <span className="toggle-icon">{showReviewsToggle ? "▲" : "▼"}</span>
               </button>
 
               {showReviewsToggle && (
                 <div className="fk-details-content fk-reviews-content">
-
-                  {/* Review summary */}
                   <div className="fk-rev-summary-sub">
-                    {totalReviewsCount > 0
-                      ? `Based on ${totalReviewsCount} ${totalReviewsCount === 1 ? "rating" : "ratings"}`
-                      : "No customer reviews yet"}
+                    {totalReviewsCount > 0 ? `Based on ${totalReviewsCount} ${totalReviewsCount === 1 ? "rating" : "ratings"}` : "No customer reviews yet"}
                   </div>
 
-                  {/* Customer Photos */}
                   {customerImages.length > 0 && (
                     <div className="fk-buyer-photos-section">
                       <h4 className="fk-review-subtitle">Customer Photos</h4>
                       <div className="fk-buyer-photos-row">
                         {customerImages.map((imgUrl, idx) => (
                           <div key={`${imgUrl}-${idx}`} className="fk-buyer-photo-item">
-                            <img
-                              src={resolveImage(imgUrl)}
-                              alt={`Customer review ${idx + 1}`}
-                              className="fk-buyer-thumb-img"
-                              loading="lazy"
-                              onError={(e) => { e.currentTarget.style.display = "none"; }}
-                            />
+                            <img src={resolveImage(imgUrl)} alt={`Customer review ${idx + 1}`} className="fk-buyer-thumb-img" loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Compact Reviews */}
                   <div className="fk-compact-reviews-section">
                     <h4 className="fk-review-subtitle">Customer Reviews</h4>
-
                     {previewReviews.length > 0 ? (
                       <div className="fk-compact-cards-grid">
                         {previewReviews.slice(0, 4).map((rev, idx) => (
                           <div key={rev.review_id || idx} className="fk-compact-review-card">
                             <div className="fk-card-badge-row">
-                              <span
-                                className="fk-card-opinion-tag"
-                                style={{ backgroundColor: getColorForOption(rev.rating_type) }}
-                              >
+                              <span className="fk-card-opinion-tag" style={{ backgroundColor: getColorForOption(rev.rating_type) }}>
                                 {formatLabel(rev.rating_type)}
                               </span>
-                              <span className="fk-card-relative-time">
-                                {timeAgo(rev.created_at)}
-                              </span>
+                              <span className="fk-card-relative-time">{timeAgo(rev.created_at)}</span>
                             </div>
-
                             <p className="fk-card-short-comment">
-                              {rev.comment
-                                ? rev.comment.length > 80
-                                  ? `${rev.comment.slice(0, 80)}...`
-                                  : rev.comment
-                                : "No written review."}
+                              {rev.comment ? (rev.comment.length > 80 ? `${rev.comment.slice(0, 80)}...` : rev.comment) : "No written review."}
                             </p>
-
                             <div className="fk-card-author-footer">
-                              <span className="fk-card-author-name">
-                                {rev.user_name || "Customer"}
-                              </span>
-                              {(rev.is_verified_buyer === 1 ||
-                                rev.is_verified_buyer === true ||
-                                rev.is_verified_buyer === "1") && (
-                                <span className="fk-card-verified-tag">
-                                  <FaCheckCircle size={11} />
-                                  Verified Buyer
-                                </span>
+                              <span className="fk-card-author-name">{rev.user_name || "Customer"}</span>
+                              {(rev.is_verified_buyer === 1 || rev.is_verified_buyer === true || rev.is_verified_buyer === "1") && (
+                                <span className="fk-card-verified-tag"><FaCheckCircle size={11} />Verified Buyer</span>
                               )}
                             </div>
                           </div>
@@ -695,34 +693,25 @@ function ProductDetail({ currency, rates, language }) {
                       <p className="fk-no-reviews-note">No customer reviews yet.</p>
                     )}
                   </div>
-
                 </div>
               )}
             </div>
 
-            {/* Show all reviews */}
             {totalReviewsCount > 0 && (
-              <Link
-                to={`/product-reviews/${saree.product_id}`}
-                className="fk-standalone-reviews-btn"
-              >
+              <Link to={`/product-reviews/${saree.product_id}`} className="fk-standalone-reviews-btn">
                 Show all reviews <span>›</span>
               </Link>
             )}
 
-          </div> {/* Closes info-box */}
-        </div> {/* Closes details-container */}
-      </div> {/* Closes main-container */}
+          </div>
+        </div>
+      </div>
 
       {/* RECOMMENDED SECTION */}
       <div className="full-width-review-section">
         <div className="review-inner-container">
           <div className="recommended-section-wrapper">
-            <Recommended 
-              currentProductId={saree.product_id} 
-              categoryId={saree.category_id} 
-              subcategoryId={saree.subcategory_id} 
-            />
+            <Recommended currentProductId={saree.product_id} categoryId={saree.category_id} subcategoryId={saree.subcategory_id} />
           </div>
         </div>
       </div>
