@@ -178,58 +178,44 @@ const getbyidproduct = async (productId) => {
         }
         const product = productResults[0];
         
-        // Enforce server-side computed discount calculation override
         product.discount_percentage = product.calculated_discount;
-        
-        // Frontend variant match ke liye base_color ko color_name assign kar rahe hain
         product.color_name = product.base_color; 
 
-        // 🌟 1. MULTIPLE IMAGES (GALLERY) FETCH LOGIC 
+        // 1. Fetch Multiple Images
         const imagesQuery = `SELECT image_url FROM product_images WHERE product_id = ?`;
         const [imageResults] = await db.execute(imagesQuery, [productId]);
-        console.log(`[PRODUCT_SERVICE] Found ${imageResults.length} extra images in product_images table for ID: ${productId}`);
-
-       const allImages = [];
-        if (product.image_url) {
-            allImages.push(getFullImageUrl(product.image_url));
-        }
+        
+        const allImages = [];
+        if (product.image_url) allImages.push(getFullImageUrl(product.image_url));
         if (imageResults && imageResults.length > 0) {
-            imageResults.forEach(img => {
-                allImages.push(getFullImageUrl(img.image_url));
-            });
+            imageResults.forEach(img => allImages.push(getFullImageUrl(img.image_url)));
         }
         
-        // 🌟 Duplicate images ko hatane ke liye Set use karein
         product.images = [...new Set(allImages)];
         product.gallery_images = [...new Set(allImages)];
         product.image_url = getFullImageUrl(product.image_url);
 
-        // 🌟 2. VARIANTS FETCH LOGIC (AMAZON STYLE SWATCHES)
-        // Same 'name' wale active products ko as variants nikal rahe hain
-        console.log(`[PRODUCT_SERVICE] Fetching variants for product name: "${product.name}"`);
-        const variantsQuery = `
-            SELECT product_id, base_color AS color_name, image_url 
-            FROM products 
-            WHERE name = ? AND is_active = 1
-        `;
-        const [variantResults] = await db.execute(variantsQuery, [product.name]);
-        
-        // Har variant ki image ko bhi getFullImageUrl se pass karna zaroori hai
+        // 🌟 2. VARIANTS FETCH LOGIC (UPDATED TO USE group_id)
+        let variantResults = [];
+        if (product.group_id) { // Sirf tabhi query chalegi agar is saree me koi group_id dali hogi
+            console.log(`[PRODUCT_SERVICE] Fetching variants for group_id: "${product.group_id}"`);
+            const variantsQuery = `
+                SELECT product_id, base_color AS color_name, image_url 
+                FROM products 
+                WHERE group_id = ? AND is_active = 1
+            `;
+            [variantResults] = await db.execute(variantsQuery, [product.group_id]);
+        }
+
         product.variants = variantResults.map(v => ({
             product_id: v.product_id,
             color_name: v.color_name,
             image_url: getFullImageUrl(v.image_url) 
         }));
-        if (typeof myCache !== 'undefined') {
-        myCache.del(`product_${product_id}`);
-        console.log(`[PRODUCT_CONTROLLER] ⚡ Cache cleared for product ID: ${product_id}`);
-    }
 
-        console.log(`[PRODUCT_SERVICE] ✅ Successfully built product object with ${allImages.length} images and ${product.variants.length} variants.`);
         return product;
     } catch (err) {
         console.error(`[PRODUCT_SERVICE] ❌ Error in getbyidproduct for ID ${productId}:`, err.message);
-        console.error('[PRODUCT_SERVICE] Stack:', err.stack);
         throw err;
     }
 };
@@ -240,7 +226,7 @@ const addProductToDB = async (productData) => {
             name, price, description, base_color, category_id, stock_qty, is_active = 1, mainImage,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address
+            extraImagesUrls, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id
         } = productData;
 
         const parsedPrice = Number(price) || 0;
@@ -269,8 +255,8 @@ const addProductToDB = async (productData) => {
             name, price, description, base_color, category_id, stock_qty, is_active, image_url,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
-            mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
         `;
 
         const values = [
@@ -305,7 +291,8 @@ const addProductToDB = async (productData) => {
           is_returnable !== undefined ? Number(is_returnable) : 1, 
           dealer_id || null,
           producer_address || null,
-          packer_address || null
+          packer_address || null,
+          group_id || null,
         ];
 
         const [result] = await db.execute(insertProductQuery, values);
@@ -344,7 +331,7 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color, primary_color, other_color, border_type, pattern, 
             craft, weave, zari_type, blouse, border_motifs, origin, 
             fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address
+            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id
         } = updateData;
 
         const parsedPrice = Number(price) || 0;
@@ -357,7 +344,7 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color=?, primary_color=?, other_color=?, border_type=?, pattern=?, 
             craft=?, weave=?, zari_type=?, blouse=?, border_motifs=?, origin=?, 
             fabric=?, khats=?, weight=?, blouse_length=?, producer=?, maker=?,
-            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?,producer_address=?,packer_address=?
+            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?,producer_address=?,packer_address=?,group_id=?
         `;
         
         const values = [
@@ -372,7 +359,8 @@ const updateProductInDB = async (product_id, updateData) => {
             is_returnable !== undefined ? Number(is_returnable) : 1,
             dealer_id || null,
             producer_address ||null,
-            packer_address || null
+            packer_address || null,
+            group_id || null
         ];
 
         if (mainImage) {

@@ -7,8 +7,9 @@ import './AdminAddProduct.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+// 🌟 1. Added groupId in empty state
 const emptyFormState = {
-  name: '', price: '', mrp: '', discountPercentage: '0', dealerBasePrice: '', packagingCost: '', dealerId: '', 
+  name: '', groupId: '', price: '', mrp: '', discountPercentage: '0', dealerBasePrice: '', packagingCost: '', dealerId: '', 
   description: '', baseColor: '', categoryId: '', subcategoryId: '',
   stockQty: '10', primaryColor: '', otherColor: '', borderType: '', pattern: '', craft: '',
   weave: '', zariType: '', blouse: '', borderMotifs: '', origin: '', fabric: '', khats: '',
@@ -25,7 +26,6 @@ function AdminAddProduct() {
   const [dealers, setDealers] = useState([]);
   const [form, setForm] = useState(emptyFormState);
   
-  // 🌟 NAYA: Split image states for Main and Extra images
   const [mainImage, setMainImage] = useState(null);
   const [extraImages, setExtraImages] = useState([]);
   
@@ -38,6 +38,7 @@ function AdminAddProduct() {
       console.log('[ADMIN_ADD_PRODUCT] 📝 Editing mode active. Populating form with product ID:', editingProduct.product_id);
       setForm({
         name: editingProduct.name || '',
+        groupId: editingProduct.group_id || '', // 🌟 2. Populate groupId on edit
         price: editingProduct.price || '',
         mrp: editingProduct.mrp != null ? String(editingProduct.mrp) : '',
         discountPercentage: editingProduct.discount_percentage != null ? String(editingProduct.discount_percentage) : '0',
@@ -84,7 +85,6 @@ function AdminAddProduct() {
           if (isMounted && catResult.categories) setCategories(catResult.categories);
         }
 
-        console.log('[ADMIN_ADD_PRODUCT] 🔄 Fetching dealers from API...');
         const dealerRes = await fetch(`${API_BASE_URL}/api/dealer/admin/all`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -151,10 +151,10 @@ function AdminAddProduct() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    console.log(`[ADMIN_ADD_PRODUCT] 🚀 Submitting form (Mode: ${isEditing ? 'EDIT' : 'CREATE'})...`);
 
     const formData = new FormData();
     formData.append('name', form.name);
+    formData.append('group_id', form.groupId); // 🌟 3. Append groupId to FormData
     formData.append('price', form.price);
     formData.append('mrp', form.mrp); 
     formData.append('discount_percentage', form.discountPercentage); 
@@ -185,12 +185,10 @@ function AdminAddProduct() {
     formData.append('producer_address', form.producer_address);
     formData.append('packer_address', form.packer_address);
 
-    // 🌟 1. Append Main Image
     if (mainImage) {
       formData.append('image', mainImage);
     }
 
-    // 🌟 2. Append Extra Gallery Images
     if (extraImages && extraImages.length > 0) {
       Array.from(extraImages).forEach((img) => formData.append('extraImages', img));
     }
@@ -232,29 +230,41 @@ function AdminAddProduct() {
 
       <div className="admin-form-glass form-container">
         <form onSubmit={handleSubmit} className="admin-form">
-          <div className="form-group">
-            <label>Product Name</label>
-            <input type="text" value={form.name} onChange={handleFieldChange('name')} required className="admin-input" />
+          
+          <div className="responsive-grid-2">
+            <div className="form-group">
+              <label>Product Name</label>
+              <input type="text" value={form.name} onChange={handleFieldChange('name')} required className="admin-input" />
+            </div>
+            
+            {/* 🌟 4. New Group ID input field */}
+            <div className="form-group">
+              <label>Group ID <small style={{color: '#888'}}>(To link color variants)</small></label>
+              <input 
+                type="text" 
+                value={form.groupId} 
+                onChange={handleFieldChange('groupId')} 
+                className="admin-input" 
+                placeholder="e.g. MANDALA-01" 
+                title="Use the exact same ID for different colors of the same saree"
+              />
+            </div>
           </div>
 
-          {/* FINANCIAL INPUTS SECTION */}
           <div className="financial-section">
             <div className="responsive-grid-3">
               <div className="form-group">
                 <label>MRP (₹)</label>
                 <input type="number" value={form.mrp} onChange={handleFieldChange('mrp')} className="admin-input" placeholder="e.g. 50000" />
               </div>
-
               <div className="form-group">
                 <label>Selling Price (₹)</label>
                 <input type="number" value={form.price} onChange={handleFieldChange('price')} required className="admin-input" placeholder="e.g. 34999" />
               </div>
-
               <div className="form-group">
                 <label>Discount (%)</label>
                 <input type="number" value={form.discountPercentage} onChange={handleFieldChange('discountPercentage')} className="admin-input" placeholder="e.g. 20" min="0" max="100" />
               </div>
-
               <div className="form-group">
                 <label>Dealer</label>
                 <select value={form.dealerId} onChange={handleFieldChange('dealerId')} className="admin-input">
@@ -266,12 +276,10 @@ function AdminAddProduct() {
                   ))}
                 </select>
               </div>
-
               <div className="form-group">
                 <label>Dealer Base Price (₹)</label>
                 <input type="number" value={form.dealerBasePrice} onChange={handleFieldChange('dealerBasePrice')} className="admin-input" placeholder="e.g. 27000" />
               </div>
-              
               <div className="form-group">
                 <label>Packaging Cost (₹)</label>
                 <input type="number" value={form.packagingCost} onChange={handleFieldChange('packagingCost')} required className="admin-input" placeholder="e.g. 500" />
@@ -409,12 +417,9 @@ function AdminAddProduct() {
             </div>
           </fieldset>
 
-          {/* 🌟 NAYA: Image Upload Section Split */}
           <fieldset className="admin-fieldset" style={{ marginTop: '20px' }}>
             <legend>Product Images</legend>
             <div className="responsive-grid-2">
-              
-              {/* Main Cover Image */}
               <div className="form-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
                   <FaUpload /> Main Cover Image
@@ -429,7 +434,6 @@ function AdminAddProduct() {
                 {isEditing && <small className="edit-note">Leave empty to keep existing cover image.</small>}
               </div>
 
-              {/* Extra Gallery Images */}
               <div className="form-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#555' }}>
                   <FaImages /> Extra Gallery Images (Optional)
@@ -443,7 +447,6 @@ function AdminAddProduct() {
                 />
                 <small className="edit-note">Hold Ctrl (or Cmd) to select multiple images.</small>
               </div>
-
             </div>
           </fieldset>
 
