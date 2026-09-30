@@ -4,11 +4,10 @@ import toast from 'react-hot-toast';
 import { FaHeart, FaRegHeart, FaComment, FaWhatsapp } from 'react-icons/fa';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
-import ReviewForm from '../components/ReviewForm';
-import ReviewSection from '../components/ReviewSection';
+
 import Recommended from "../components/Recommended";
 import './ProductDetail.css';
-
+import reviews from "../components/ReviewsPage"
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // 🌟 Field Definitions for Tabs
@@ -518,87 +517,164 @@ return (
               )}
             </div>
 
-{/* 🌟 FLIPKART STYLE 'RATINGS AND REVIEWS' TOGGLE 🌟 */}
-            <div className="fk-all-details-container" style={{ marginTop: '15px' }}>
-              <button 
-                type="button"
-                className="fk-details-toggle-btn" 
-                onClick={() => setShowReviewsToggle(!showReviewsToggle)}
+{/* =========================================================
+    RATINGS & REVIEWS TOGGLE
+========================================================= */}
+<div
+  className="fk-all-details-container reviews-toggle-container"
+  style={{ marginTop: "15px" }}
+>
+  <button
+    type="button"
+    className="fk-details-toggle-btn"
+    onClick={() =>
+      setShowReviewsToggle((prev) => !prev)
+    }
+    aria-expanded={showReviewsToggle}
+  >
+    <span>Ratings and reviews</span>
+
+    <span className="toggle-icon">
+      {showReviewsToggle ? "▲" : "▼"}
+    </span>
+  </button>
+
+  {showReviewsToggle && (
+    <div className="fk-details-content fk-reviews-content">
+
+      {/* Review summary */}
+      <div className="fk-rev-summary-sub">
+        {totalReviewsCount > 0
+          ? `Based on ${totalReviewsCount} ${
+              totalReviewsCount === 1
+                ? "rating"
+                : "ratings"
+            }`
+          : "No customer reviews yet"}
+      </div>
+
+      {/* Customer Photos */}
+      {customerImages.length > 0 && (
+        <div className="fk-buyer-photos-section">
+
+          <h4 className="fk-review-subtitle">
+            Customer Photos
+          </h4>
+
+          <div className="fk-buyer-photos-row">
+            {customerImages.map((imgUrl, idx) => (
+              <div
+                key={`${imgUrl}-${idx}`}
+                className="fk-buyer-photo-item"
               >
-                Ratings and reviews
-                <span className="toggle-icon">{showReviewsToggle ? '▲' : '▼'}</span>
-              </button>
+                <img
+                  src={resolveImage(imgUrl)}
+                  alt={`Customer review ${idx + 1}`}
+                  className="fk-buyer-thumb-img"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display =
+                      "none";
+                  }}
+                />
+              </div>
+            ))}
+          </div>
 
-              {showReviewsToggle && (
-                <div className="fk-details-content fk-reviews-content">
-                  
-                  {/* Total Reviews Subtitle */}
-                  <div className="fk-rev-summary-sub">
-                    based on {totalReviewsCount} ratings by Verified Buyers
-                  </div>
+        </div>
+      )}
 
-                  {/* 1. Customer Uploaded Photos Carousel */}
-                  {customerImages.length > 0 && (
-                    <div className="fk-buyer-photos-section">
-                      <div className="fk-buyer-photos-row">
-                        {customerImages.map((imgUrl, idx) => (
-                          <img 
-                            key={idx} 
-                            src={resolveImage(imgUrl)} 
-                            alt="Buyer review" 
-                            className="fk-buyer-thumb-img" 
-                            loading="lazy"
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+      {/* Compact Reviews */}
+      <div className="fk-compact-reviews-section">
 
-                  {/* 2. Compact Review Cards (Carousel / Grid) */}
-                  {previewReviews.length > 0 ? (
-                    <div className="fk-compact-cards-grid">
-                      {previewReviews.slice(0, 4).map((rev, idx) => {
-                        const color = getColorForOption(rev.rating_type);
-                        return (
-                          <div key={rev.review_id || idx} className="fk-compact-review-card">
-                            
-                            <div className="fk-card-badge-row" style={{ justifyContent: 'space-between' }}>
-                              <span className="fk-card-opinion-tag" style={{ backgroundColor: color }}>
-                                {formatLabel(rev.rating_type)}
-                              </span>
-                              <span className="fk-card-relative-time">{timeAgo(rev.created_at)}</span>
-                            </div>
+        <h4 className="fk-review-subtitle">
+          Customer Reviews
+        </h4>
 
-                            <p className="fk-card-short-comment">
-                              {rev.comment?.length > 60 ? `${rev.comment.slice(0, 60)}...` : rev.comment}
-                            </p>
+        {previewReviews.length > 0 ? (
+          <div className="fk-compact-cards-grid">
 
-                            <div className="fk-card-author-footer">
-                              <span className="fk-card-author-name">{rev.user_name || 'Customer'}</span>
-                              {(rev.is_verified_buyer === 1 || rev.is_verified_buyer === true) && (
-                                <span className="fk-card-verified-tag">
-                                  <FaCheckCircle size={10} color="#388e3c" /> Verified Buyer
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="fk-no-reviews-note">No customer reviews yet.</p>
-                  )}
+            {previewReviews.slice(0, 4).map((rev, idx) => (
+              <div
+                key={rev.review_id || idx}
+                className="fk-compact-review-card"
+              >
+
+                <div className="fk-card-badge-row">
+                  <span
+                    className="fk-card-opinion-tag"
+                    style={{
+                      backgroundColor:
+                        getColorForOption(
+                          rev.rating_type
+                        ),
+                    }}
+                  >
+                    {formatLabel(
+                      rev.rating_type
+                    )}
+                  </span>
+
+                  <span className="fk-card-relative-time">
+                    {timeAgo(rev.created_at)}
+                  </span>
                 </div>
-              )}
-            </div>
 
-            {/* 🌟 'SHOW ALL REVIEWS' BUTTON (OUTSIDE TOGGLE) 🌟 */}
-            <Link 
-              to={`/product/${saree.product_id}/reviews`} 
-              className="fk-standalone-reviews-btn"
-            >
-              Show all reviews <span style={{ marginLeft: '4px' }}>›</span>
-            </Link>
+                <p className="fk-card-short-comment">
+                  {rev.comment
+                    ? rev.comment.length > 80
+                      ? `${rev.comment.slice(
+                          0,
+                          80
+                        )}...`
+                      : rev.comment
+                    : "No written review."}
+                </p>
+
+                <div className="fk-card-author-footer">
+
+                  <span className="fk-card-author-name">
+                    {rev.user_name ||
+                      "Customer"}
+                  </span>
+
+                  {(rev.is_verified_buyer === 1 ||
+                    rev.is_verified_buyer === true ||
+                    rev.is_verified_buyer === "1") && (
+                    <span className="fk-card-verified-tag">
+                      <FaCheckCircle
+                        size={11}
+                      />
+                      Verified Buyer
+                    </span>
+                  )}
+
+                </div>
+
+              </div>
+            ))}
+
+          </div>
+        ) : (
+          <p className="fk-no-reviews-note">
+            No customer reviews yet.
+          </p>
+        )}
+
+      </div>
+    </div>
+  )}
+</div>
+
+{/* Show all reviews */}
+{totalReviewsCount > 0 && (
+  <Link
+    to={`/product-reviews/${saree.product_id}`}
+    className="fk-standalone-reviews-btn"
+  >
+    Show all reviews <span>›</span>
+  </Link>
+)}
 
           </div> {/* Closes info-box */}
         </div> {/* Closes details-container */}
