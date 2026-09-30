@@ -34,7 +34,7 @@ import About from './components/About';
 import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 import Profile from './components/Profile';
-import ProductReviewsPage from './components/ReviewsPage';
+import ReviewsPage from './components/ReviewsPage';
 
 // 🤝 NEW: Dealer Management & Portal Components
 import AdminDealers from "./components/AdminDealers";
