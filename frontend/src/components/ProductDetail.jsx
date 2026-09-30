@@ -62,7 +62,7 @@ function ProductDetail({ currency, rates, language }) {
   // Unique Variants State
   const [uniqueVariants, setUniqueVariants] = useState([]);
 
-  // Flipkart Style Delivery Date State (No Timer)
+  // Flipkart Style Delivery Date State
   const [deliveryDateStr, setDeliveryDateStr] = useState("");
   const [userLocation, setUserLocation] = useState("Location not set");
 
@@ -94,45 +94,13 @@ function ProductDetail({ currency, rates, language }) {
     if (interval > 1) return Math.floor(interval) + " days ago";
     return Math.floor(seconds) + " seconds ago";
   };
-  // 🌟 Translation Effect (Jo miss ho gaya tha)
-  useEffect(() => {
-    if (!saree || !language || language === 'en') return;
-    const fetchTranslations = async () => {
-      setIsTranslating(true);
-      try {
-        const [nameRes, descRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/translate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: saree.name, targetLanguage: language })
-          }),
-          fetch(`${API_BASE_URL}/api/translate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: saree.description, targetLanguage: language })
-          })
-        ]);
-        const nData = await nameRes.json();
-        const dData = await descRes.json();
-        setTranslatedName(nData.translatedText || saree.name);
-        setTranslatedDesc(dData.translatedText || saree.description);
-      } catch (err) {
-        console.error("[ProductDetail] Translation error:", err);
-      } finally {
-        setIsTranslating(false);
-      }
-    };
-    fetchTranslations();
-  }, [language, saree]);
 
   useEffect(() => {
-    // Dynamic Delivery Date (Current Date + 3 Days)
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 3);
     const options = { day: 'numeric', month: 'short', weekday: 'short' };
     setDeliveryDateStr(deliveryDate.toLocaleDateString('en-IN', options));
 
-    // Check if user has saved location in localStorage or profile
     const savedLoc = localStorage.getItem('user_location');
     if (savedLoc) setUserLocation(savedLoc);
   }, []);
@@ -222,6 +190,37 @@ function ProductDetail({ currency, rates, language }) {
     if (id) fetchStats();
   }, [id, refreshReviews]);
 
+  // Translation Effect Restored
+  useEffect(() => {
+    if (!saree || !language || language === 'en') return;
+    const fetchTranslations = async () => {
+      setIsTranslating(true);
+      try {
+        const [nameRes, descRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/translate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: saree.name, targetLanguage: language })
+          }),
+          fetch(`${API_BASE_URL}/api/translate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: saree.description, targetLanguage: language })
+          })
+        ]);
+        const nData = await nameRes.json();
+        const dData = await descRes.json();
+        setTranslatedName(nData.translatedText || saree.name);
+        setTranslatedDesc(dData.translatedText || saree.description);
+      } catch (err) {
+        console.error("[ProductDetail] Translation error:", err);
+      } finally {
+        setIsTranslating(false);
+      }
+    };
+    fetchTranslations();
+  }, [language, saree]);
+
   const formatLabel = (str) => {
     if (!str) return "Rating";
     return str.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -275,6 +274,56 @@ function ProductDetail({ currency, rates, language }) {
     };
     if (id) fetchProductData();
   }, [id, token]);
+
+  const handleToggleLike = async () => {
+    if (!token) {
+      toast.error("Please login to like this product!");
+      return;
+    }
+    const wasLiked = isLiked;
+    setIsLiked(!wasLiked);
+    setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/likes/${id}/like`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error("Failed to toggle like");
+    } catch (error) {
+      setIsLiked(wasLiked);
+      setLikesCount(prev => wasLiked ? prev + 1 : prev - 1);
+    }
+  };
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    if (!token) {
+      toast.error("Please login to post a comment!");
+      return;
+    }
+    setIsSubmittingComment(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/comments/${id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ comment_text: newComment })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setComments(prev => [data.comment, ...prev]);
+        setNewComment('');
+        toast.success("Comment posted successfully!");
+      } else {
+        toast.error(data.message || "Failed to post comment.");
+      }
+    } catch (error) {
+      toast.error("Failed to post comment.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   const stockQty = saree?.stock_qty ?? saree?.quantity ?? null;
   const isOutOfStock = stockQty !== null ? stockQty <= 0 : saree?.in_stock === false;
@@ -336,8 +385,8 @@ function ProductDetail({ currency, rates, language }) {
     
   const currentImageUrl = sliderImages[activeImageIdx] || "/saare_1.jpeg";
 
-  // Determine variant label type dynamically
-  const hasDifferentColors = uniqueVariants.some(v => v.color_name && v.color_name !== (saree.color_name || saree.base_color));
+  // Safe check with optional chaining to prevent blank screen crash
+  const hasDifferentColors = uniqueVariants.some(v => v.color_name && v.color_name !== (saree?.color_name || saree?.base_color));
   const variantLabelText = hasDifferentColors ? "Different Color" : "Different Design";
 
   return (
@@ -446,7 +495,7 @@ function ProductDetail({ currency, rates, language }) {
               )}
             </div>
 
-            {/* 🌟 DYNAMIC VARIANT SWATCHES (Different Color / Different Design) */}
+            {/* 🌟 DYNAMIC VARIANT SWATCHES */}
             {uniqueVariants && uniqueVariants.length > 0 && (
               <div className="amazon-variants-container">
                 <div className="amazon-variant-label">
@@ -477,7 +526,7 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             )}
 
-            {/* FLIPKART STYLE DELIVERY DETAILS WIDGET (No Timer, Fixed Layout) */}
+            {/* FLIPKART STYLE DELIVERY DETAILS WIDGET */}
             <div className="fk-delivery-widget">
               <h3 className="fk-delivery-title">Delivery details</h3>
               <div className="fk-delivery-row">
