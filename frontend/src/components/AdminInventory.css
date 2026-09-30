@@ -10,3 +10,47 @@
 
 .empty-state { text-align: center; padding: 20px; color: var(--text-light); }
 .admin-loading { text-align: center; padding: 50px; font-size: 1.2em; color: var(--text-light); }
+.admin-table-container { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th, .admin-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text-dark); }
+.admin-table th { background-color: var(--bg-light); font-weight: 600; }
+.admin-list-img { width: 80px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+
+.action-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px; font-size: 0.9em; }
+.edit-btn { background-color: #3b82f6; color: white; }
+.delete-btn { background-color: #ef4444; color: white; }
+
+.empty-state { text-align: center; padding: 20px; color: var(--text-light); }
+.admin-loading { text-align: center; padding: 50px; font-size: 1.2em; color: var(--text-light); }
+
+/* 🌟 NEW STYLES FOR SEARCH BAR & ACTIONS */
+.inventory-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.inventory-search-input {
+  flex: 1;
+  min-width: 250px;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff;
+}
+
+.inventory-search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.admin-add-new-btn {
+  margin-bottom: 0 !important; /* Overrides existing bottom margin */
+  white-space: nowrap;
+}

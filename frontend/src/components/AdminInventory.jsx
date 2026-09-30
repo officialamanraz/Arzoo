@@ -10,6 +10,7 @@ function AdminInventory() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(''); // 🌟 Search State Add Ki Gayi
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -33,16 +34,14 @@ function AdminInventory() {
     navigate('/admin/add-product', { state: { product } });
   };
 
- const handleDelete = async (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     
     try {
-      // 1. Get the token from wherever you saved it during login (e.g., localStorage)
-      const token = localStorage.getItem('token'); // Change 'token' if you saved it under a different key
+      const token = localStorage.getItem('token'); 
 
       const response = await fetch(`${API_BASE_URL}/api/products/product/${id}`, { 
         method: 'DELETE',
-        // 2. Attach the Authorization header
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -52,7 +51,6 @@ function AdminInventory() {
       if (response.ok) {
         fetchProducts();
       } else {
-        // Optional: Handle backend error messages nicely
         const errorData = await response.json();
         alert(`Delete failed: ${errorData.message}`);
       }
@@ -61,29 +59,52 @@ function AdminInventory() {
       alert('Delete failed due to a network or server error.');
     }
   };
+
+  // 🌟 Filter Logic: Search by Name, ID, Group ID, or Color
+  const filteredProducts = products.filter((product) => {
+    const search = searchTerm.toLowerCase();
+    return (
+      product.name?.toLowerCase().includes(search) ||
+      product.product_id?.toString().includes(search) ||
+      product.group_id?.toLowerCase().includes(search) ||
+      product.base_color?.toLowerCase().includes(search)
+    );
+  });
+
   if (loading) return <div className="admin-loading">Loading Inventory...</div>;
 
   return (
     <div className="admin-wrapper">
       <div className="admin-header-stats">
         <h2>Product Inventory</h2>
-        <div className="stat-badge">Total Products in DB: <strong>{products.length}</strong></div>
+        <div className="stat-badge">Showing <strong>{filteredProducts.length}</strong> of {products.length}</div>
       </div>
 
       <AdminNav />
 
-      <button
-        onClick={() => navigate('/admin/add-product')}
-        className="admin-submit-btn admin-add-new-btn"
-      >
-        ➕ Add New Product
-      </button>
+      {/* 🌟 Search Bar & Add Button Row */}
+      <div className="inventory-actions">
+        <input
+          type="text"
+          placeholder="🔍 Search by Name, ID, Group ID, or Color..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="inventory-search-input"
+        />
+        <button
+          onClick={() => navigate('/admin/add-product')}
+          className="admin-submit-btn admin-add-new-btn"
+        >
+          ➕ Add New Product
+        </button>
+      </div>
 
       <div className="admin-list-glass admin-list-glass-full">
         <div className="admin-table-container">
           <table className="admin-table">
             <thead>
               <tr>
+                <th>ID / Group</th>
                 <th>Image</th>
                 <th>Name</th>
                 <th>Price</th>
@@ -91,11 +112,15 @@ function AdminInventory() {
               </tr>
             </thead>
             <tbody>
-              {products.length === 0 ? (
-                <tr><td colSpan="4" className="admin-empty-row">No products found.</td></tr>
+              {filteredProducts.length === 0 ? (
+                <tr><td colSpan="5" className="admin-empty-row" style={{textAlign: 'center', padding: '20px'}}>No matching products found.</td></tr>
               ) : (
-                products.map((product) => (
+                filteredProducts.map((product) => (
                   <tr key={product.product_id}>
+                    <td>
+                      <div style={{ fontWeight: '600' }}>#{product.product_id}</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>{product.group_id || 'No Group'}</div>
+                    </td>
                     <td>
                       <img
                         src={getImageUrl(product.image_url)}
