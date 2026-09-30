@@ -298,7 +298,13 @@ const addProductToDB = async (productData) => {
         const [result] = await db.execute(insertProductQuery, values);
         const newProductId = result.insertId;
         console.log(`[PRODUCT_SERVICE] ✅ Main product inserted successfully with ID: ${newProductId}`);
-
+// 🌟 Product update ya variant link hone par cache clear kar dein
+    if (typeof myCache !== 'undefined') {
+        myCache.del(`product_${product_id}`);
+        // Agar aap pure products list ka cache rakhte hain, use bhi clear kar dein
+        myCache.del('all_products'); 
+        console.log(`[CACHE] ⚡ Cleared cache for product ID: ${product_id}`);
+    }
         if (extraImagesUrls && extraImagesUrls.length > 0) {
             console.log(`[PRODUCT_SERVICE] Inserting ${extraImagesUrls.length} extra images for new product ID: ${newProductId}`);
             const insertImagesQuery = `INSERT INTO product_images (product_id, image_url, is_primary) VALUES ?`;

@@ -65,32 +65,34 @@ const product = async (req, res) => {
 // 2. GET PRODUCT BY ID
 // ==========================================
 const getProductById = async (req, res) => {
-  const productId = req.params.id;
-  console.log(`[PRODUCT_CONTROLLER] 📡 Fetching product by ID: ${productId}`);
+    try {
+        const productId = req.params.id;
+        const cacheKey = `product_${productId}`;
 
-  try {
-    const cacheKey = `product_${productId}`;
-    if (myCache.has(cacheKey)) {
-        console.log(`[PRODUCT_CONTROLLER] ⚡ Success (Served from CACHE) -- product_id: ${productId}`);
-        return res.status(200).json(myCache.get(cacheKey));
+        // 1. Check if product exists in cache
+        if (typeof myCache !== 'undefined' && myCache.has(cacheKey)) {
+            console.log(`[PRODUCT_CONTROLLER] 📦 Serving product ID ${productId} from Cache`);
+            const cachedData = myCache.get(cacheKey);
+            return res.status(200).json({ success: true, data: cachedData });
+        }
+
+        // 2. If not in cache, fetch fresh from database (Yehi par variants aur group_id aayenge)
+        const product = await getbyidproduct(productId);
+
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        // 3. Save to cache for future requests (TTL e.g. 60 seconds or 5 minutes)
+        if (typeof myCache !== 'undefined') {
+            myCache.set(cacheKey, product, 300); // 5 minutes cache
+        }
+
+        return res.status(200).json({ success: true, data: product });
+    } catch (err) {
+        console.error(`[PRODUCT_CONTROLLER] Error:`, err.message);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
-
-    const foundProduct = await getbyidproduct(productId);
-    if (!foundProduct) {
-        console.warn(`[PRODUCT_CONTROLLER] ⚠️ Product not found -- product_id: ${productId}`);
-        return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    const responseData = { success: true, data: foundProduct };
-    myCache.set(cacheKey, responseData);
-    
-    console.log(`[PRODUCT_CONTROLLER] ✅ Fetch success (Fetched from DB) -- product_id: ${productId}`);
-    return res.status(200).json(responseData);
-  } catch (err) {
-    console.error(`[PRODUCT_CONTROLLER] ❌ Error fetching product by ID (${productId}):`, err.message);
-    console.error('[PRODUCT_CONTROLLER] Stack:', err.stack);
-    return res.status(500).json({ success: false, message: 'Database error fetching product details', error: err.message });
-  }
 };
 
 // ==========================================

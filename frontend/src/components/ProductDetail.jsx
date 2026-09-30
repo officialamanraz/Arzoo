@@ -59,9 +59,9 @@ function ProductDetail({ currency, rates, language }) {
   const [isZoomHovered, setIsZoomHovered] = useState(false);
   const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
 
-  // Delivery States
+  // Delivery & User Location States
   const [deliveryDateStr, setDeliveryDateStr] = useState("");
-  const [userLocation, setUserLocation] = useState("Location not set");
+  const [userLocation, setUserLocation] = useState("");
 
   const [showReviewsToggle, setShowReviewsToggle] = useState(false);
   const [reviewStats, setReviewStats] = useState({});
@@ -92,17 +92,40 @@ function ProductDetail({ currency, rates, language }) {
     return Math.floor(seconds) + " seconds ago";
   };
 
+  // Fetch Delivery Date & Dynamic Logged-in User Address
   useEffect(() => {
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 3);
     const options = { day: 'numeric', month: 'short', weekday: 'short' };
     setDeliveryDateStr(deliveryDate.toLocaleDateString('en-IN', options));
 
-    const savedLoc = localStorage.getItem('user_location');
-    if (savedLoc) setUserLocation(savedLoc);
-  }, []);
+    // Fetch user profile / saved address if token exists
+    const fetchUserAddress = async () => {
+      if (!token) {
+        setUserLocation("Location not set");
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data && data.success && data.user) {
+          // Fallback to city, address or pincode if available
+          const addr = data.user.address || data.user.city || data.user.pincode;
+          setUserLocation(addr ? `Deliver to: ${addr}` : "Location not set");
+        } else {
+          setUserLocation("Location not set");
+        }
+      } catch (err) {
+        console.error("Error fetching user location:", err);
+        setUserLocation("Location not set");
+      }
+    };
 
-  // CACHE BUSTER FIX
+    fetchUserAddress();
+  }, [token]);
+
   const resolveImage = (url) => {
     if (!url) return "";
     let finalUrl = url;
@@ -129,7 +152,7 @@ function ProductDetail({ currency, rates, language }) {
     if (id) fetchStats();
   }, [id, refreshReviews]);
 
-  // Main Data Fetch
+  // Main Product Data Fetch
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -305,7 +328,6 @@ function ProductDetail({ currency, rates, language }) {
     
   const currentImageUrl = sliderImages[activeImageIdx] || "/saare_1.jpeg";
 
-  // Check if variants have different color names
   const hasDifferentColors = saree?.variants?.some(v => v.color_name && v.color_name !== (saree?.color_name || saree?.base_color));
   const variantLabelText = hasDifferentColors ? "Different Color" : "Different Design";
 
@@ -341,7 +363,7 @@ function ProductDetail({ currency, rates, language }) {
               <div className="image-zoom-hint">{isZoomHovered ? "Zoomed" : "Hover to zoom"}</div>
             </div>
 
-            {/* Slider / Thumbnails (Multiple Angles) */}
+            {/* Slider / Thumbnails */}
             {sliderImages.length > 1 && (
               <div className="thumbnail-row">
                 {sliderImages.map((img, idx) => (
@@ -375,7 +397,6 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             </div>
 
-            {/* Inline Comments Section */}
             {showComments && (
               <div className="inline-comments-section">
                 <div className="inline-comments-list">
@@ -415,7 +436,7 @@ function ProductDetail({ currency, rates, language }) {
               )}
             </div>
 
-            {/* 🌟 DYNAMIC VARIANT SWATCHES (Canvas Bug Removed - Uses group_id Directly) */}
+            {/* VARIANTS SWATCHES */}
             {saree.variants && saree.variants.length > 0 && (
               <div className="amazon-variants-container">
                 <div className="amazon-variant-label">
@@ -446,25 +467,29 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             )}
 
-            {/* 🌟 FLIPKART STYLE DELIVERY DETAILS WIDGET (Fixed SVG size and Spacing) */}
+            {/* DYNAMIC USER ADDRESS DELIVERY WIDGET */}
             <div className="fk-delivery-widget">
               <h3 className="fk-delivery-title">Delivery details</h3>
               
               <div className="fk-delivery-row">
-                <svg style={{ width: '24px', height: '24px', fill: '#2874f0', flexShrink: 0, marginTop: '2px', marginRight: '8px' }} viewBox="0 0 24 24">
+                <svg style={{ width: '20px', height: '20px', fill: '#2874f0', flexShrink: 0, marginTop: '2px', marginRight: '8px' }} viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
                 <div className="fk-delivery-text-block" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span className="fk-loc-text">{userLocation || 'Location not set'}</span>
-                  <span className="fk-loc-divider" style={{ margin: '0 8px', color: '#ccc' }}>|</span>
-                  <button className="fk-loc-action" type="button" style={{ color: '#2874f0', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Select delivery location</button>
+                  <span className="fk-loc-text">{userLocation}</span>
+                  {userLocation === "Location not set" && (
+                    <>
+                      <span className="fk-loc-divider" style={{ margin: '0 8px', color: '#ccc' }}>|</span>
+                      <button className="fk-loc-action" type="button" style={{ color: '#2874f0', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Select delivery location</button>
+                    </>
+                  )}
                 </div>
               </div>
 
               <div className="fk-delivery-divider" style={{ borderBottom: '1px solid #f0f0f0', margin: '15px 0' }}></div>
               
               <div className="fk-delivery-row">
-                <svg style={{ width: '24px', height: '24px', fill: '#2874f0', flexShrink: 0, marginTop: '2px', marginRight: '8px' }} viewBox="0 0 24 24">
+                <svg style={{ width: '20px', height: '20px', fill: '#2874f0', flexShrink: 0, marginTop: '2px', marginRight: '8px' }} viewBox="0 0 24 24">
                   <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                 </svg>
                 <div className="fk-delivery-text-block" style={{ display: 'flex', alignItems: 'center' }}>
