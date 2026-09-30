@@ -220,6 +220,10 @@ const getbyidproduct = async (productId) => {
             color_name: v.color_name,
             image_url: getFullImageUrl(v.image_url) 
         }));
+        if (typeof myCache !== 'undefined') {
+        myCache.del(`product_${product_id}`);
+        console.log(`[PRODUCT_CONTROLLER] ⚡ Cache cleared for product ID: ${product_id}`);
+    }
 
         console.log(`[PRODUCT_SERVICE] ✅ Successfully built product object with ${allImages.length} images and ${product.variants.length} variants.`);
         return product;

@@ -105,12 +105,16 @@ function ProductDetail({ currency, rates, language }) {
     if (savedLoc) setUserLocation(savedLoc);
   }, []);
 
+ // 🌟 CACHE BUSTER FIX: Forces browser to load fresh images
   const resolveImage = (url) => {
     if (!url) return "";
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+    let finalUrl = url;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      finalUrl = `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+    }
+    // Appending current timestamp prevents browser from showing old cached images
+    return `${finalUrl}?v=${new Date().getTime()}`;
   };
-
   // Smart Variant Deduplication using Canvas Signature
   useEffect(() => {
     if (!saree?.variants || saree.variants.length === 0) {
@@ -527,24 +531,32 @@ function ProductDetail({ currency, rates, language }) {
             )}
 
             {/* FLIPKART STYLE DELIVERY DETAILS WIDGET */}
+            {/* 🌟 PROPER FLIPKART STYLE DELIVERY WIDGET */}
             <div className="fk-delivery-widget">
               <h3 className="fk-delivery-title">Delivery details</h3>
+              
               <div className="fk-delivery-row">
-                <span className="fk-delivery-icon">📍</span>
-                <div className="fk-delivery-text-block" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span className="fk-loc-text">{userLocation}</span>
-                  <button className="fk-loc-action" type="button">Select delivery location ›</button>
+                <svg className="fk-svg-icon" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <div className="fk-delivery-content">
+                  <div className="fk-loc-inline">
+                    <span className="fk-loc-text">{userLocation || 'Location not set'}</span>
+                    <span className="fk-loc-divider">|</span>
+                    <button className="fk-loc-action" type="button">Select delivery location</button>
+                  </div>
                 </div>
               </div>
-              <div className="fk-delivery-divider"></div>
-              <div className="fk-delivery-row">
-                <span className="fk-delivery-icon">🚚</span>
-                <div className="fk-delivery-text-block" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span className="fk-date-text">Delivery by {deliveryDateStr}</span>
+
+              <div className="fk-delivery-row" style={{ marginTop: '12px' }}>
+                <svg className="fk-svg-icon" viewBox="0 0 24 24">
+                  <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                </svg>
+                <div className="fk-delivery-content">
+                  <span className="fk-date-text">Delivery by <span className="fk-date-highlight">{deliveryDateStr}</span></span>
                 </div>
               </div>
             </div>
-
             <div className="badges-row">
               <span className={`stock-badge ${isOutOfStock ? 'out-of-stock' : 'in-stock'}`}>
                 {isOutOfStock ? 'Sold Out' : stockQty ? `In Stock (${stockQty} left)` : 'In Stock'}
