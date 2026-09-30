@@ -1,207 +1,1094 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaCheckCircle, FaThumbsUp, FaThumbsDown } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaCheckCircle,
+  FaThumbsUp,
+  FaThumbsDown,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import "./ReviewsPage.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
+/* =========================================================
+   HELPERS
+========================================================= */
+
 const resolveImage = (url) => {
   if (!url) return "";
-  if (url.startsWith("http")) return url;
+
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("data:")
+  ) {
+    return url;
+  }
+
   return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
-const formatLabel = (str) => {
-  if (!str) return "Rating";
-  return str.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+const formatLabel = (value) => {
+  if (!value) return "Rating";
+  return String(value)
+    .split("_")
+    .map(
+      (word) =>
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join(" ");
 };
+const timeAgo = (dateStr) => {
+  if (!dateStr) return "Recently";
+
+  const date = new Date(dateStr);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Recently";
+  }
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+  if (seconds < 60) return "Just now";
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) {
+    return `${days} ${days === 1 ? "day" : "days"} ago`;
+  }
+
+  const months = Math.floor(days / 30);
+  if (months < 12) {
+    return `${months} ${months === 1 ? "month" : "months"} ago`;
+  }
+
+  const years = Math.floor(days / 365);
+  return `${years} ${years === 1 ? "year" : "years"} ago`;
+};
+
+const getRatingColor = (ratingType) => {
+  const colors = {
+    skip: "#dc2626",
+    timepass: "#f59e0b",
+    go_for_it: "#2563eb",
+    perfection: "#16a34a",
+  };
+
+  return colors[String(ratingType || "").toLowerCase()] || "#64748b";
+};
+
+const getReviewComment = (review) => {
+  return (
+    review?.comment ||
+    review?.comment_text ||
+    review?.review_text ||
+    review?.review ||
+    ""
+  );
+};
+
+const isVerifiedBuyer = (review) => {
+  return (
+    review?.is_verified_buyer === 1 ||
+    review?.is_verified_buyer === true ||
+    review?.is_verified_buyer === "1"
+  );
+};
+
+const getReviewImages = (review) => {
+  let images = [];
+
+  if (Array.isArray(review?.images)) {
+    images = review.images;
+  } else if (Array.isArray(review?.image_urls)) {
+    images = review.image_urls;
+  } else if (typeof review?.images === "string") {
+    try {
+      const parsed = JSON.parse(review.images);
+      if (Array.isArray(parsed)) {
+        images = parsed;
+      }
+    } catch {
+      // Ignore invalid JSON
+    }
+  } else if (typeof review?.image_urls === "string") {
+    try {
+      const parsed = JSON.parse(review.image_urls);
+      if (Array.isArray(parsed)) {
+        images = parsed;
+      }
+    } catch {
+      // Ignore invalid JSON
+    }
+  }
+
+  if (review?.image_url) {
+    images.push(review.image_url);
+  }
+
+  return [...new Set(images.filter(Boolean))];
+};
+
+const getUserName = (review) => {
+  return (
+    review?.user_name ||
+    review?.username ||
+    review?.name ||
+    review?.customer_name ||
+    "Customer"
+  );
+};
+
+const getLocation = (review) => {
+  return (
+    review?.location ||
+    review?.city ||
+    review?.user_location ||
+    ""
+  );
+};
+
+/* =========================================================
+   REVIEW TYPES
+========================================================= */
 
 const OPINIONS = [
-  { id: "perfection", label: "Perfection", color: "#388e3c" },
-  { id: "go_for_it", label: "Go For It", color: "#2874f0" },
-  { id: "timepass", label: "Timepass", color: "#f5a623" },
-  { id: "skip", label: "Skip", color: "#ff6161" }
+  {
+    id: "perfection",
+    label: "Perfection",
+    color: "#16a34a",
+  },
+  {
+    id: "go_for_it",
+    label: "Go For It",
+    color: "#2563eb",
+  },
+  {
+    id: "timepass",
+    label: "Timepass",
+    color: "#f59e0b",
+  },
+  {
+    id: "skip",
+    label: "Skip",
+    color: "#dc2626",
+  },
 ];
 
-const timeAgo = (dateStr) => {
-  if (!dateStr) return "";
-  const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
-  let interval = seconds / 31536000;
-  if (interval > 1) return Math.floor(interval) + " years ago";
-  interval = seconds / 2592000;
-  if (interval > 1) return Math.floor(interval) + " months ago";
-  interval = seconds / 86400;
-  if (interval > 1) return Math.floor(interval) + " days ago";
-  return "Recently";
-};
+/* =========================================================
+   MAIN COMPONENT
+========================================================= */
 
 const ProductReviewsPage = () => {
-  const params = useParams();
-  const productId = params.id || params.productId;
+  const { id: productId } = useParams();
   const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [allReviews, setAllReviews] = useState([]);
   const [stats, setStats] = useState({});
   const [totalReviews, setTotalReviews] = useState(0);
+
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [activeFilter, setActiveFilter] = useState("Latest");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const prodRes = await fetch(`${API_BASE_URL}/api/products/product/${productId}`);
-        const prodData = await prodRes.json();
-        if (prodData?.data) setProduct(prodData.data);
+  /* Image gallery modal */
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-        const revRes = await fetch(`${API_BASE_URL}/api/reviews/${productId}`);
-        const revData = await revRes.json();
-        if (revData?.success) {
-          setAllReviews(revData.reviews || []);
-          setStats(revData.stats || {});
-          setTotalReviews(revData.totalReviews || (revData.reviews ? revData.reviews.length : 0));
+  /* Helpful / not helpful local interaction */
+  const [helpfulVotes, setHelpfulVotes] = useState({});
+
+  /* =========================================================
+     FETCH DATA
+  ========================================================= */
+
+  useEffect(() => {
+    if (!productId) {
+      setError("Product ID is missing.");
+      setLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError("");
+
+      let productResult = null;
+      let reviewResult = null;
+
+      try {
+        /* -----------------------------------------
+           PRODUCT API
+        ----------------------------------------- */
+
+        try {
+          const productResponse = await fetch(
+            `${API_BASE_URL}/api/products/product/${productId}`
+          );
+
+          if (productResponse.ok) {
+            productResult = await productResponse.json();
+
+            if (productResult?.data) {
+              setProduct(productResult.data);
+            }
+          }
+        } catch (productError) {
+          console.error(
+            "[ProductReviewsPage] Product API error:",
+            productError
+          );
+        }
+
+        /* -----------------------------------------
+           REVIEWS API
+        ----------------------------------------- */
+
+        try {
+          const reviewResponse = await fetch(
+            `${API_BASE_URL}/api/reviews/${productId}`
+          );
+
+          if (!reviewResponse.ok) {
+            throw new Error(
+              `Reviews API returned ${reviewResponse.status}`
+            );
+          }
+
+          reviewResult = await reviewResponse.json();
+
+          if (reviewResult?.success) {
+            const reviews = Array.isArray(reviewResult.reviews)
+              ? reviewResult.reviews
+              : [];
+
+            setAllReviews(reviews);
+
+            setStats(reviewResult.stats || {});
+
+            setTotalReviews(
+              Number(
+                reviewResult.totalReviews ??
+                  reviewResult.total_reviews ??
+                  reviews.length
+              )
+            );
+          } else {
+            setAllReviews([]);
+            setStats({});
+            setTotalReviews(0);
+          }
+        } catch (reviewError) {
+          console.error(
+            "[ProductReviewsPage] Reviews API error:",
+            reviewError
+          );
+
+          throw reviewError;
         }
       } catch (err) {
-        console.error("Fetch Error:", err);
+        console.error("[ProductReviewsPage] Fetch Error:", err);
+
+        setError(
+          "Unable to load reviews right now. Please try again."
+        );
       } finally {
         setLoading(false);
       }
     };
-    if (productId) fetchData();
+
+    fetchData();
   }, [productId]);
 
-  const customerImages = allReviews.filter((r) => r.image_url).map((r) => r.image_url);
+  /* =========================================================
+     ALL CUSTOMER IMAGES
+  ========================================================= */
 
-  // Apply Filters
-  let displayedReviews = [...allReviews];
-  if (activeFilter === "With Photos") {
-    displayedReviews = displayedReviews.filter(r => r.image_url);
-  } else if (activeFilter === "Positive First") {
-    displayedReviews = displayedReviews.filter(r => r.rating_type === "perfection" || r.rating_type === "go_for_it");
-  } else if (activeFilter === "Negative First") {
-    displayedReviews = displayedReviews.filter(r => r.rating_type === "skip" || r.rating_type === "timepass");
-  } else if (activeFilter === "Certified Buyer") {
-    displayedReviews = displayedReviews.filter(r => r.is_verified_buyer);
+  const customerImages = useMemo(() => {
+    const images = allReviews.flatMap((review) =>
+      getReviewImages(review)
+    );
+
+    return [...new Set(images)];
+  }, [allReviews]);
+
+  /* =========================================================
+     REVIEW FILTERING + SORTING
+  ========================================================= */
+
+  const displayedReviews = useMemo(() => {
+    let result = [...allReviews];
+
+    switch (activeFilter) {
+      case "Certified Buyer":
+        result = result.filter((review) =>
+          isVerifiedBuyer(review)
+        );
+        break;
+
+      case "With Photos":
+        result = result.filter(
+          (review) => getReviewImages(review).length > 0
+        );
+        break;
+
+      case "Positive First":
+        result.sort((a, b) => {
+          const positive = ["perfection", "go_for_it"];
+
+          const aPositive = positive.includes(
+            String(a?.rating_type || "").toLowerCase()
+          );
+
+          const bPositive = positive.includes(
+            String(b?.rating_type || "").toLowerCase()
+          );
+
+          if (aPositive !== bPositive) {
+            return Number(bPositive) - Number(aPositive);
+          }
+
+          return (
+            new Date(b?.created_at || 0) -
+            new Date(a?.created_at || 0)
+          );
+        });
+        break;
+
+      case "Negative First":
+        result.sort((a, b) => {
+          const negative = ["skip", "timepass"];
+
+          const aNegative = negative.includes(
+            String(a?.rating_type || "").toLowerCase()
+          );
+
+          const bNegative = negative.includes(
+            String(b?.rating_type || "").toLowerCase()
+          );
+
+          if (aNegative !== bNegative) {
+            return Number(bNegative) - Number(aNegative);
+          }
+
+          return (
+            new Date(b?.created_at || 0) -
+            new Date(a?.created_at || 0)
+          );
+        });
+        break;
+
+      case "Latest":
+      default:
+        result.sort(
+          (a, b) =>
+            new Date(b?.created_at || 0) -
+            new Date(a?.created_at || 0)
+        );
+        break;
+    }
+
+    return result;
+  }, [allReviews, activeFilter]);
+
+  /* =========================================================
+     STATS
+  ========================================================= */
+
+  const opinionStats = useMemo(() => {
+    return OPINIONS.map((opinion) => {
+      const count = Number(stats?.[opinion.id] || 0);
+
+      const percentage =
+        totalReviews > 0
+          ? Math.round((count / totalReviews) * 100)
+          : 0;
+
+      return {
+        ...opinion,
+        count,
+        percentage,
+      };
+    });
+  }, [stats, totalReviews]);
+
+  const positiveCount =
+    Number(stats?.perfection || 0) +
+    Number(stats?.go_for_it || 0);
+
+  const positivePercentage =
+    totalReviews > 0
+      ? Math.round((positiveCount / totalReviews) * 100)
+      : 0;
+
+  /* =========================================================
+     IMAGE MODAL
+  ========================================================= */
+
+  const openImage = (imageUrl, index = 0) => {
+    setSelectedImage(imageUrl);
+    setSelectedImageIndex(index);
+  };
+
+  const closeImage = () => {
+    setSelectedImage(null);
+  };
+
+  const showPreviousImage = () => {
+    if (!customerImages.length) return;
+
+    const previousIndex =
+      (selectedImageIndex - 1 + customerImages.length) %
+      customerImages.length;
+
+    setSelectedImageIndex(previousIndex);
+    setSelectedImage(
+      customerImages[previousIndex]
+    );
+  };
+
+  const showNextImage = () => {
+    if (!customerImages.length) return;
+
+    const nextIndex =
+      (selectedImageIndex + 1) %
+      customerImages.length;
+
+    setSelectedImageIndex(nextIndex);
+    setSelectedImage(customerImages[nextIndex]);
+  };
+
+  /* =========================================================
+     HELPFUL VOTING
+     
+     This is UI-side for now because your current API code
+     does not provide a review-helpfulness endpoint.
+  ========================================================= */
+
+  const handleHelpfulVote = (reviewId, type) => {
+    setHelpfulVotes((previous) => {
+      const current = previous[reviewId] || {
+        helpful: 0,
+        notHelpful: 0,
+        selected: null,
+      };
+
+      if (current.selected === type) {
+        return {
+          ...previous,
+          [reviewId]: {
+            ...current,
+            selected: null,
+            [type]: Math.max(0, current[type] - 1),
+          },
+        };
+      }
+
+      let updated = {
+        ...current,
+        selected: type,
+      };
+
+      if (current.selected) {
+        updated[current.selected] = Math.max(
+          0,
+          updated[current.selected] - 1
+        );
+      }
+
+      updated[type] = updated[type] + 1;
+
+      return {
+        ...previous,
+        [reviewId]: updated,
+      };
+    });
+  };
+
+  /* =========================================================
+     LOADING
+  ========================================================= */
+
+  if (loading) {
+    return (
+      <div className="reviews-page-state">
+        <div className="reviews-loading-spinner" />
+        <h2>Loading reviews...</h2>
+        <p>Please wait while customer feedback is loaded.</p>
+      </div>
+    );
   }
 
-  // Calculate Positive Percentage
-  const positiveVotes = (stats.perfection || 0) + (stats.go_for_it || 0);
-  const positivePct = totalReviews > 0 ? Math.round((positiveVotes / totalReviews) * 100) : 0;
+  /* =========================================================
+     ERROR
+  ========================================================= */
 
-  if (loading) return <div className="page-loader">Loading full reviews...</div>;
+  if (error) {
+    return (
+      <div className="reviews-page-state reviews-error-state">
+        <div className="reviews-error-box">
+          <h2>Unable to load reviews</h2>
+
+          <p>{error}</p>
+
+          <button
+            type="button"
+            className="reviews-back-btn"
+            onClick={() => navigate(-1)}
+          >
+            <FaArrowLeft />
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* =========================================================
+     MAIN RENDER
+  ========================================================= */
 
   return (
-    <div className="fk-all-rev-page">
-      <div className="fk-all-rev-wrapper">
-        
-        <div className="fk-all-rev-header">
-          <button className="back-link-btn" onClick={() => navigate(-1)}>
-            <FaArrowLeft /> Back
+    <div className="reviews-page">
+      <div className="reviews-page-wrapper">
+
+        {/* =====================================================
+            HEADER
+        ===================================================== */}
+
+        <header className="reviews-page-header">
+          <button
+            type="button"
+            className="reviews-back-button"
+            onClick={() => navigate(-1)}
+          >
+            <FaArrowLeft />
+            <span>Back</span>
           </button>
-          <h1 className="fk-all-rev-title">Reviews for {product?.name || "Product"}</h1>
-        </div>
 
-        {/* 🌟 1. RATINGS BREAKDOWN METER (Flipkart Style Layout) 🌟 */}
-        <div className="fk-meter-container">
-          <div className="fk-meter-left">
-            <div className="fk-big-score">{positivePct}%</div>
-            <div className="fk-big-score-sub">Positive Feedback</div>
-            <div className="fk-total-ratings-count">{totalReviews} Ratings & Reviews</div>
-          </div>
-          
-          <div className="fk-meter-right">
-            {OPINIONS.map((op) => {
-              const count = stats[op.id] || 0;
-              const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
-              return (
-                <div key={op.id} className="fk-meter-bar-row">
-                  <span className="fk-bar-label">{op.label}</span>
-                  <div className="fk-bar-track">
-                    <div className="fk-bar-fill" style={{ width: `${pct}%`, backgroundColor: op.color }}></div>
-                  </div>
-                  <span className="fk-bar-count">{count}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+          <div className="reviews-header-title-area">
+            <h1>Ratings and Reviews</h1>
 
-        {/* 🌟 2. FULL CUSTOMER PHOTOS GALLERY 🌟 */}
-        {customerImages.length > 0 && (
-          <div className="fk-full-gallery-section">
-            <h3 className="fk-section-heading">Customer Photos ({customerImages.length})</h3>
-            <div className="fk-gallery-grid">
-              {customerImages.map((imgUrl, idx) => (
-                <div key={idx} className="fk-gallery-img-wrapper">
-                  <img src={resolveImage(imgUrl)} alt="Customer" className="fk-gallery-img" loading="lazy" />
-                </div>
-              ))}
+            {product?.name && (
+              <p>{product.name}</p>
+            )}
+          </div>
+        </header>
+
+        {/* =====================================================
+            RATING SUMMARY
+        ===================================================== */}
+
+        <section className="reviews-summary-card">
+
+          <div className="reviews-summary-left">
+
+            <div className="reviews-score">
+              {positivePercentage}%
             </div>
+
+            <div className="reviews-score-label">
+              Positive Feedback
+            </div>
+
+            <div className="reviews-total-count">
+              {totalReviews}{" "}
+              {totalReviews === 1
+                ? "rating & review"
+                : "ratings & reviews"}
+            </div>
+
           </div>
+
+          <div className="reviews-summary-divider" />
+
+          <div className="reviews-summary-right">
+
+            <div className="reviews-breakdown-heading">
+              Feedback Breakdown
+            </div>
+
+            {opinionStats.map((item) => (
+              <div
+                key={item.id}
+                className="reviews-breakdown-row"
+              >
+                <div className="reviews-breakdown-label">
+                  {item.label}
+                </div>
+
+                <div className="reviews-breakdown-track">
+                  <div
+                    className="reviews-breakdown-fill"
+                    style={{
+                      width: `${item.percentage}%`,
+                      backgroundColor: item.color,
+                    }}
+                  />
+                </div>
+
+                <div className="reviews-breakdown-number">
+                  {item.count}
+                </div>
+
+                <div className="reviews-breakdown-percent">
+                  {item.percentage}%
+                </div>
+              </div>
+            ))}
+
+          </div>
+        </section>
+
+        {/* =====================================================
+            CUSTOMER PHOTO GALLERY
+        ===================================================== */}
+
+        {customerImages.length > 0 && (
+          <section className="customer-gallery-section">
+
+            <div className="section-heading-row">
+              <div>
+                <h2>Customer Photos</h2>
+
+                <p>
+                  Photos shared by customers with their reviews
+                </p>
+              </div>
+
+              <span className="photo-count">
+                {customerImages.length}{" "}
+                {customerImages.length === 1
+                  ? "photo"
+                  : "photos"}
+              </span>
+            </div>
+
+            <div className="customer-gallery">
+
+              {customerImages.map((image, index) => (
+                <button
+                  type="button"
+                  key={`${image}-${index}`}
+                  className="customer-gallery-item"
+                  onClick={() =>
+                    openImage(image, index)
+                  }
+                  aria-label={`Open customer photo ${
+                    index + 1
+                  }`}
+                >
+                  <img
+                    src={resolveImage(image)}
+                    alt={`Customer ${
+                      index + 1
+                    }`}
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.style.display =
+                        "none";
+                    }}
+                  />
+                </button>
+              ))}
+
+            </div>
+          </section>
         )}
 
-        {/* 🌟 3. FILTER & SORT PILLS 🌟 */}
-        <div className="fk-filters-row">
-          {["Latest", "Certified Buyer", "With Photos", "Positive First", "Negative First"].map(flt => (
-            <button 
-              key={flt}
-              className={`fk-filter-pill ${activeFilter === flt ? 'active' : ''}`}
-              onClick={() => setActiveFilter(flt)}
-            >
-              {flt}
-            </button>
-          ))}
-        </div>
+        {/* =====================================================
+            FILTERS
+        ===================================================== */}
 
-        {/* 🌟 4. FULL REVIEW FEED 🌟 */}
-        <div className="fk-full-feed-container">
+        <section className="reviews-filter-section">
+
+          <div className="reviews-filter-heading">
+            <h2>Customer Reviews</h2>
+
+            <span>
+              {displayedReviews.length} shown
+            </span>
+          </div>
+
+          <div className="reviews-filter-scroll">
+
+            {[
+              "Latest",
+              "Certified Buyer",
+              "With Photos",
+              "Positive First",
+              "Negative First",
+            ].map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                className={`reviews-filter-pill ${
+                  activeFilter === filter
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setActiveFilter(filter)
+                }
+              >
+                {filter}
+              </button>
+            ))}
+
+          </div>
+        </section>
+
+        {/* =====================================================
+            FULL REVIEW FEED
+        ===================================================== */}
+
+        <section className="reviews-feed-section">
+
           {displayedReviews.length === 0 ? (
-            <p className="fk-no-feed-msg">No reviews match your filter.</p>
+            <div className="reviews-empty-state">
+
+              <div className="empty-review-icon">
+                ☆
+              </div>
+
+              <h3>No reviews found</h3>
+
+              <p>
+                There are no reviews matching the selected
+                filter.
+              </p>
+
+              {activeFilter !== "Latest" && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveFilter("Latest")
+                  }
+                  className="clear-filter-btn"
+                >
+                  Show all reviews
+                </button>
+              )}
+
+            </div>
           ) : (
-            displayedReviews.map((rev) => {
-              const opMatch = OPINIONS.find(o => o.id === rev.rating_type) || OPINIONS[1];
+            displayedReviews.map((review, index) => {
+
+              const reviewId =
+                review?.review_id ||
+                review?.id ||
+                `review-${index}`;
+
+              const images =
+                getReviewImages(review);
+
+              const ratingType =
+                String(
+                  review?.rating_type || ""
+                ).toLowerCase();
+
+              const ratingLabel =
+                formatLabel(ratingType);
+
+              const ratingColor =
+                getRatingColor(ratingType);
+
+              const vote =
+                helpfulVotes[reviewId] || {
+                  helpful: 0,
+                  notHelpful: 0,
+                  selected: null,
+                };
+
               return (
-                <div key={rev.review_id} className="fk-feed-card">
-                  
-                  <div className="fk-feed-header">
-                    <span className="fk-feed-badge" style={{ backgroundColor: opMatch.color }}>
-                      {opMatch.label}
+                <article
+                  key={reviewId}
+                  className="full-review-card"
+                >
+
+                  {/* -------------------------------
+                      REVIEW HEADER
+                  -------------------------------- */}
+
+                  <div className="full-review-top">
+
+                    <div className="review-rating-area">
+
+                      <span
+                        className="review-type-badge"
+                        style={{
+                          backgroundColor:
+                            ratingColor,
+                        }}
+                      >
+                        {ratingLabel}
+                      </span>
+
+                    </div>
+
+                    <span className="review-time">
+                      {timeAgo(
+                        review?.created_at
+                      )}
                     </span>
-                    <span className="fk-feed-time">{timeAgo(rev.created_at)}</span>
+
                   </div>
 
-                  <p className="fk-feed-comment">{rev.comment}</p>
+                  {/* -------------------------------
+                      CUSTOMER INFO
+                  -------------------------------- */}
 
-                  {rev.image_url && (
-                    <div className="fk-feed-attached-img">
-                      <img src={resolveImage(rev.image_url)} alt="Review Attachment" />
+                  <div className="review-customer-line">
+
+                    <span className="review-customer-name">
+                      {getUserName(review)}
+                    </span>
+
+                    {isVerifiedBuyer(review) && (
+                      <span className="review-verified-badge">
+                        <FaCheckCircle />
+                        Verified Buyer
+                      </span>
+                    )}
+
+                    {getLocation(review) && (
+                      <span className="review-location">
+                        {getLocation(review)}
+                      </span>
+                    )}
+
+                  </div>
+
+                  {/* -------------------------------
+                      PURCHASE BADGE
+                  -------------------------------- */}
+
+                  {isVerifiedBuyer(review) && (
+                    <div className="review-purchase-badge">
+                      <FaCheckCircle />
+                      Purchased product
                     </div>
                   )}
 
-                  <div className="fk-feed-footer">
-                    <div className="fk-feed-author-info">
-                      <span className="fk-feed-author-name">{rev.user_name || "Customer"}</span>
-                      {(rev.is_verified_buyer === 1 || rev.is_verified_buyer === true) && (
-                        <span className="fk-feed-verified-badge">
-                          <FaCheckCircle size={11} color="#878787" /> Certified Buyer
+                  {/* -------------------------------
+                      COMMENT
+                  -------------------------------- */}
+
+                  <div className="full-review-comment">
+                    {getReviewComment(review) ? (
+                      <p>
+                        {getReviewComment(review)}
+                      </p>
+                    ) : (
+                      <p className="no-comment-text">
+                        Customer shared a rating without
+                        a written comment.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* -------------------------------
+                      REVIEW PHOTOS
+                  -------------------------------- */}
+
+                  {images.length > 0 && (
+                    <div className="review-attached-gallery">
+
+                      {images.map(
+                        (image, imageIndex) => (
+                          <button
+                            type="button"
+                            key={`${image}-${imageIndex}`}
+                            className="review-attached-image"
+                            onClick={() => {
+                              const globalIndex =
+                                customerImages.indexOf(
+                                  image
+                                );
+
+                              openImage(
+                                image,
+                                globalIndex >= 0
+                                  ? globalIndex
+                                  : 0
+                              );
+                            }}
+                          >
+                            <img
+                              src={resolveImage(image)}
+                              alt="Customer review"
+                              loading="lazy"
+                            />
+                          </button>
+                        )
+                      )}
+
+                    </div>
+                  )}
+
+                  {/* -------------------------------
+                      REVIEW FOOTER
+                  -------------------------------- */}
+
+                  <div className="full-review-footer">
+
+                    <div className="review-footer-left">
+
+                      {isVerifiedBuyer(review) && (
+                        <span className="footer-verified-text">
+                          <FaCheckCircle />
+                          Verified purchase
                         </span>
                       )}
-                      <span className="fk-feed-location">, India</span>
+
                     </div>
 
-                    <div className="fk-feed-voting">
-                      <button className="fk-vote-btn"><FaThumbsUp /> 0</button>
-                      <button className="fk-vote-btn"><FaThumbsDown /> 0</button>
+                    <div className="review-voting">
+
+                      <span className="helpful-label">
+                        Was this review helpful?
+                      </span>
+
+                      <button
+                        type="button"
+                        className={`helpful-button ${
+                          vote.selected ===
+                          "helpful"
+                            ? "selected"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          handleHelpfulVote(
+                            reviewId,
+                            "helpful"
+                          )
+                        }
+                      >
+                        <FaThumbsUp />
+
+                        <span>Helpful</span>
+
+                        <strong>
+                          {vote.helpful}
+                        </strong>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`helpful-button ${
+                          vote.selected ===
+                          "notHelpful"
+                            ? "selected"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          handleHelpfulVote(
+                            reviewId,
+                            "notHelpful"
+                          )
+                        }
+                      >
+                        <FaThumbsDown />
+
+                        <span>Not helpful</span>
+
+                        <strong>
+                          {vote.notHelpful}
+                        </strong>
+                      </button>
+
                     </div>
+
                   </div>
-                </div>
+
+                </article>
               );
             })
           )}
-        </div>
+
+        </section>
 
       </div>
+
+      {/* =======================================================
+          IMAGE MODAL
+      ======================================================= */}
+
+      {selectedImage && (
+        <div
+          className="review-image-modal"
+          onClick={closeImage}
+        >
+
+          <button
+            type="button"
+            className="review-modal-close"
+            onClick={closeImage}
+            aria-label="Close image"
+          >
+            <FaTimes />
+          </button>
+
+          {customerImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="review-modal-nav review-modal-prev"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  showPreviousImage();
+                }}
+                aria-label="Previous image"
+              >
+                <FaChevronLeft />
+              </button>
+
+              <button
+                type="button"
+                className="review-modal-nav review-modal-next"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  showNextImage();
+                }}
+                aria-label="Next image"
+              >
+                <FaChevronRight />
+              </button>
+            </>
+          )}
+
+          <div
+            className="review-modal-content"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <img
+              src={resolveImage(selectedImage)}
+              alt="Customer enlarged"
+            />
+
+            <div className="review-modal-counter">
+              {selectedImageIndex + 1} /{" "}
+              {customerImages.length}
+            </div>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 };
