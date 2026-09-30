@@ -376,13 +376,13 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             )}
 
-            {/* 🌟 AMAZON STYLE VARIANT IMAGE SWATCHES */}
+           {/* 🌟 AMAZON STYLE VARIANT IMAGE SWATCHES (Fixed Size) */}
             {saree.variants && saree.variants.length > 0 && (
               <div className="amazon-variants-container">
                 <div className="amazon-variant-label">
                   Color: <strong>{saree.color_name || saree.base_color || 'Selected Option'}</strong>
                 </div>
-                <div className="amazon-swatch-grid">
+                <div className="amazon-swatch-grid" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {saree.variants.map((v) => {
                     const isActive = v.product_id === saree.product_id;
                     return (
@@ -391,11 +391,22 @@ function ProductDetail({ currency, rates, language }) {
                         to={`/product/${v.product_id}`} 
                         className={`amazon-swatch-item ${isActive ? 'active' : ''}`}
                         title={v.color_name || 'Variant'}
+                        style={{
+                          display: 'block',
+                          width: '54px',
+                          height: '70px',
+                          border: isActive ? '2px solid #e77600' : '1px solid #d5d9d9',
+                          padding: '2px',
+                          background: '#fff',
+                          borderRadius: '2px',
+                          flexShrink: 0
+                        }}
                       >
                         <img 
                           src={resolveImage(v.image_url || "/saare_1.jpeg")} 
                           alt={v.color_name || 'variant'} 
                           className="amazon-swatch-img"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                           onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
                         />
                       </Link>

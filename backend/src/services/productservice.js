@@ -189,7 +189,7 @@ const getbyidproduct = async (productId) => {
         const [imageResults] = await db.execute(imagesQuery, [productId]);
         console.log(`[PRODUCT_SERVICE] Found ${imageResults.length} extra images in product_images table for ID: ${productId}`);
 
-        const allImages = [];
+       const allImages = [];
         if (product.image_url) {
             allImages.push(getFullImageUrl(product.image_url));
         }
@@ -199,8 +199,9 @@ const getbyidproduct = async (productId) => {
             });
         }
         
-        product.images = allImages;
-        product.gallery_images = allImages; // Frontend Amazon gallery isi key ko use karegi
+        // 🌟 Duplicate images ko hatane ke liye Set use karein
+        product.images = [...new Set(allImages)];
+        product.gallery_images = [...new Set(allImages)];
         product.image_url = getFullImageUrl(product.image_url);
 
         // 🌟 2. VARIANTS FETCH LOGIC (AMAZON STYLE SWATCHES)
