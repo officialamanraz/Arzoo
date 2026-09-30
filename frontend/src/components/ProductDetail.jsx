@@ -164,6 +164,8 @@ function ProductDetail({ currency, rates, language }) {
           setSaree(prodResult.data);
           setTranslatedName(prodResult.data.name);
           setTranslatedDesc(prodResult.data.description);
+          console.log("🔍 [DEBUG] Fetched Product Data:", prodResult.data);
+          console.log("🎨 [DEBUG] Variants Array:", prodResult.data.variants);
         }
 
         const likesRes = await fetch(`${API_BASE_URL}/api/likes/${id}/like`, {
