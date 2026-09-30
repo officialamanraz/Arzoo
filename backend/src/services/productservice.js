@@ -197,16 +197,16 @@ const getbyidproduct = async (productId) => {
 
         // 🌟 2. VARIANTS FETCH LOGIC (UPDATED TO USE group_id)
         let variantResults = [];
-        if (product.group_id) { // Sirf tabhi query chalegi agar is saree me koi group_id dali hogi
-            console.log(`[PRODUCT_SERVICE] Fetching variants for group_id: "${product.group_id}"`);
+        if (product.group_id !== null && product.group_id !== undefined && product.group_id !== '') {
+            console.log(`[PRODUCT_SERVICE] Fetching variants for group_id: "${product.group_id}" excluding product ID: ${productId}`);
             const variantsQuery = `
-                SELECT product_id, base_color AS color_name, image_url 
+                SELECT product_id, base_color AS color_name,
+             image_url 
                 FROM products 
-                WHERE group_id = ? AND is_active = 1
+                WHERE group_id = ? AND product_id != ? AND is_active = 1
             `;
-            [variantResults] = await db.execute(variantsQuery, [product.group_id]);
+            [variantResults] = await db.execute(variantsQuery, [product.group_id, productId]);
         }
-
         product.variants = variantResults.map(v => ({
             product_id: v.product_id,
             color_name: v.color_name,
