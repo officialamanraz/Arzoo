@@ -112,19 +112,26 @@ const addproducts = async (req, res) => {
         let mainImage = null;
         let extraImagesUrls = [];
 
-        if (req.files && req.files.length > 0) {
-            console.log(`[PRODUCT_CONTROLLER] Starting image upload. Total files attached: ${req.files.length}`);
+        // 🚨 UPDATE: Handling upload.fields object instead of array
+        if (req.files) {
+            console.log(`[PRODUCT_CONTROLLER] Files attached in request.`);
             
-            const uploadedMain = await uploadToImageKit(
-                req.files[0].buffer,
-                `${Date.now()}-${req.files[0].originalname}`,
-                '/arzoo-saree/products'
-            );
-            mainImage = uploadedMain.url;
+            // 1. Process Main Image (Cover Photo)
+            if (req.files['image'] && req.files['image'].length > 0) {
+                console.log(`[PRODUCT_CONTROLLER] Uploading Main Cover Image...`);
+                const mainFile = req.files['image'][0];
+                const uploadedMain = await uploadToImageKit(
+                    mainFile.buffer,
+                    `${Date.now()}-${mainFile.originalname}`,
+                    '/arzoo-saree/products'
+                );
+                mainImage = uploadedMain.url;
+            }
 
-            if (req.files.length > 1) {
-                const extraFiles = req.files.slice(1);
-                console.log(`[PRODUCT_CONTROLLER] Uploading ${extraFiles.length} extra images...`);
+            // 2. Process Extra Gallery Images (Multiple Angles)
+            if (req.files['extraImages'] && req.files['extraImages'].length > 0) {
+                const extraFiles = req.files['extraImages'];
+                console.log(`[PRODUCT_CONTROLLER] Uploading ${extraFiles.length} extra gallery images...`);
                 const uploadedExtras = await Promise.all(
                     extraFiles.map(file => uploadToImageKit(
                         file.buffer,
@@ -163,7 +170,6 @@ const addproducts = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Database error', error: err.message });
     }
 };
-
 // ==========================================
 // 4. SEARCH PRODUCT
 // ==========================================
@@ -198,21 +204,26 @@ const updateproduct = async (req, res) => {
     let mainImage = null;
     let extraImagesUrls = [];
 
-    // 🚨 NAYA FIX: Agar Edit form mein nayi images aayi hain, toh unhe ImageKit par upload karo!
-    if (req.files && req.files.length > 0) {
-        console.log(`[PRODUCT_CONTROLLER] Processing ${req.files.length} uploaded file(s) for update...`);
+    // 🚨 UPDATE: Handling upload.fields object for updates
+    if (req.files) {
+        console.log(`[PRODUCT_CONTROLLER] Processing uploaded file(s) for update...`);
         
-        // Agar pehli file ko main image banana hai (ya optional hai)
-        const uploadedMain = await uploadToImageKit(
-            req.files[0].buffer,
-            `${Date.now()}-${req.files[0].originalname}`,
-            '/arzoo-saree/products'
-        );
-        mainImage = uploadedMain.url;
+        // 1. Agar admin ne nayi Main Image daali hai
+        if (req.files['image'] && req.files['image'].length > 0) {
+            console.log(`[PRODUCT_CONTROLLER] Updating Main Cover Image...`);
+            const mainFile = req.files['image'][0];
+            const uploadedMain = await uploadToImageKit(
+                mainFile.buffer,
+                `${Date.now()}-${mainFile.originalname}`,
+                '/arzoo-saree/products'
+            );
+            mainImage = uploadedMain.url;
+        }
 
-        // Baaki extra images
-        if (req.files.length > 1) {
-            const extraFiles = req.files.slice(1);
+        // 2. Agar admin ne nayi Extra Images (Gallery) daali hain
+        if (req.files['extraImages'] && req.files['extraImages'].length > 0) {
+            const extraFiles = req.files['extraImages'];
+            console.log(`[PRODUCT_CONTROLLER] Uploading ${extraFiles.length} NEW extra gallery images...`);
             const uploadedExtras = await Promise.all(
                 extraFiles.map(file => uploadToImageKit(
                     file.buffer,
@@ -234,8 +245,8 @@ const updateproduct = async (req, res) => {
     await updateProductInDB(product_id, updateData);
 
     // ⚡ Clear Cache so updated details show immediately
-    myCache.del(`product_${product_id}`);
-    console.log(`[PRODUCT_CONTROLLER] ⚡ Cache cleared for product ID: ${product_id}`);
+    // myCache.del(`product_${product_id}`); // Uncomment if you are importing and using myCache in this file
+    console.log(`[PRODUCT_CONTROLLER] ⚡ Cache logic processed for product ID: ${product_id}`);
 
     console.log(`[PRODUCT_CONTROLLER] ✅ Update success -- product_id: ${product_id}`);
     return res.status(200).json({ success: true, message: 'Product details and images updated successfully' });

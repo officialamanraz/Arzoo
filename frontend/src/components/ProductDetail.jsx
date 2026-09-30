@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaHeart, FaRegHeart, FaComment, FaWhatsapp } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaComment, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
 
 import Recommended from "../components/Recommended";
 import './ProductDetail.css';
-import reviews from "../components/ReviewsPage"
+
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // 🌟 Field Definitions for Tabs
@@ -55,22 +55,29 @@ function ProductDetail({ currency, rates, language }) {
   const [showComments, setShowComments] = useState(false);
   const [isZoomHovered, setIsZoomHovered] = useState(false);
   const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
+
+  // 🌟 Flipkart Style Delivery Estimate & Timer States
+  const [deliveryTimer, setDeliveryTimer] = useState("");
+  const [deliveryDateStr, setDeliveryDateStr] = useState("");
+
   const handleImageMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
     setZoomCoords({ x, y });
   };
+
   const [showReviewsToggle, setShowReviewsToggle] = useState(false);
   const [reviewStats, setReviewStats] = useState({});
   const [totalReviewsCount, setTotalReviewsCount] = useState(0);
   const [previewReviews, setPreviewReviews] = useState([]);
  
-  // 🌟 New States for Flipkart Style Details Section
-  const [showAllDetails, setShowAllDetails] = useState(false); // Toggle Open/Close
-  const [activeDetailTab, setActiveDetailTab] = useState('specifications'); // Pill Tabs
+  // Flipkart Style Details Section States
+  const [showAllDetails, setShowAllDetails] = useState(false);
+  const [activeDetailTab, setActiveDetailTab] = useState('specifications');
 
   const token = localStorage.getItem('token');
+
   // Relative Time Helper (e.g., "2 days ago")
   const timeAgo = (dateStr) => {
     if (!dateStr) return "";
@@ -87,7 +94,30 @@ function ProductDetail({ currency, rates, language }) {
     if (interval > 1) return Math.floor(interval) + " minutes ago";
     return Math.floor(seconds) + " seconds ago";
   };
-useEffect(() => {
+
+  // 🌟 Delivery Date & Countdown Timer Effect
+  useEffect(() => {
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + 3);
+    const options = { day: 'numeric', month: 'short', weekday: 'short' };
+    setDeliveryDateStr(deliveryDate.toLocaleDateString('en-IN', options));
+
+    const timerInterval = setInterval(() => {
+      const now = new Date();
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const diff = tomorrow - now;
+      
+      const h = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
+      const m = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
+      const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+      
+      setDeliveryTimer(`${h}h ${m}m ${s}s`);
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, []);
+
+  useEffect(() => {
     const fetchStats = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/reviews/${id}`);
@@ -127,6 +157,7 @@ useEffect(() => {
   };
 
   const customerImages = previewReviews.filter((r) => r.image_url).map((r) => r.image_url);
+
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -300,7 +331,8 @@ useEffect(() => {
 
   const sliderImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 ? saree.images : [saree?.image_url || "/saare_1.jpeg"];
   const currentImageUrl = sliderImages[activeImageIdx] || "/saare_1.jpeg";
-return (
+
+  return (
     <div className="product-detail-page">
       <div className="main-container">
         <div className="details-container">
@@ -344,16 +376,31 @@ return (
               </div>
             )}
 
-            {/* Variant Navigation Helper */}
+            {/* 🌟 AMAZON STYLE VARIANT IMAGE SWATCHES */}
             {saree.variants && saree.variants.length > 0 && (
-              <div className="product-variants-section">
-                <span className="variant-label">Select Color / Pattern:</span>
-                <div className="variant-chips">
-                  {saree.variants.map((v) => (
-                    <Link key={v.product_id} to={`/product/${v.product_id}`} className={`variant-chip ${v.product_id === saree.product_id ? 'active' : ''}`}>
-                      {v.color_name || 'Variant'}
-                    </Link>
-                  ))}
+              <div className="amazon-variants-container">
+                <div className="amazon-variant-label">
+                  Color: <strong>{saree.color_name || saree.base_color || 'Selected Option'}</strong>
+                </div>
+                <div className="amazon-swatch-grid">
+                  {saree.variants.map((v) => {
+                    const isActive = v.product_id === saree.product_id;
+                    return (
+                      <Link 
+                        key={v.product_id} 
+                        to={`/product/${v.product_id}`} 
+                        className={`amazon-swatch-item ${isActive ? 'active' : ''}`}
+                        title={v.color_name || 'Variant'}
+                      >
+                        <img 
+                          src={resolveImage(v.image_url || "/saare_1.jpeg")} 
+                          alt={v.color_name || 'variant'} 
+                          className="amazon-swatch-img"
+                          onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
+                        />
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -416,6 +463,29 @@ return (
                   )}
                 </>
               )}
+            </div>
+
+            {/* 🌟 FLIPKART STYLE DELIVERY DETAILS WIDGET */}
+            <div className="fk-delivery-widget">
+              <h3 className="fk-delivery-title">Delivery details</h3>
+              
+              <div className="fk-delivery-row">
+                <span className="fk-delivery-icon">📍</span>
+                <div className="fk-delivery-text-block">
+                  <span className="fk-loc-text">Location not set</span>
+                  <button className="fk-loc-action" type="button">Select delivery location ›</button>
+                </div>
+              </div>
+
+              <div className="fk-delivery-divider"></div>
+
+              <div className="fk-delivery-row">
+                <span className="fk-delivery-icon">🚚</span>
+                <div className="fk-delivery-text-block">
+                  <span className="fk-date-text">Delivery by {deliveryDateStr}</span>
+                  <span className="fk-timer-text">Order in {deliveryTimer}</span>
+                </div>
+              </div>
             </div>
 
             <div className="badges-row">
@@ -517,170 +587,123 @@ return (
               )}
             </div>
 
-{/* =========================================================
-    RATINGS & REVIEWS TOGGLE
-========================================================= */}
-<div
-  className="fk-all-details-container reviews-toggle-container"
-  style={{ marginTop: "15px" }}
->
-  <button
-    type="button"
-    className="fk-details-toggle-btn"
-    onClick={() =>
-      setShowReviewsToggle((prev) => !prev)
-    }
-    aria-expanded={showReviewsToggle}
-  >
-    <span>Ratings and reviews</span>
-
-    <span className="toggle-icon">
-      {showReviewsToggle ? "▲" : "▼"}
-    </span>
-  </button>
-
-  {showReviewsToggle && (
-    <div className="fk-details-content fk-reviews-content">
-
-      {/* Review summary */}
-      <div className="fk-rev-summary-sub">
-        {totalReviewsCount > 0
-          ? `Based on ${totalReviewsCount} ${
-              totalReviewsCount === 1
-                ? "rating"
-                : "ratings"
-            }`
-          : "No customer reviews yet"}
-      </div>
-
-      {/* Customer Photos */}
-      {customerImages.length > 0 && (
-        <div className="fk-buyer-photos-section">
-
-          <h4 className="fk-review-subtitle">
-            Customer Photos
-          </h4>
-
-          <div className="fk-buyer-photos-row">
-            {customerImages.map((imgUrl, idx) => (
-              <div
-                key={`${imgUrl}-${idx}`}
-                className="fk-buyer-photo-item"
+            {/* =========================================================
+                RATINGS & REVIEWS TOGGLE
+            ========================================================= */}
+            <div
+              className="fk-all-details-container reviews-toggle-container"
+              style={{ marginTop: "15px" }}
+            >
+              <button
+                type="button"
+                className="fk-details-toggle-btn"
+                onClick={() => setShowReviewsToggle((prev) => !prev)}
+                aria-expanded={showReviewsToggle}
               >
-                <img
-                  src={resolveImage(imgUrl)}
-                  alt={`Customer review ${idx + 1}`}
-                  className="fk-buyer-thumb-img"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.style.display =
-                      "none";
-                  }}
-                />
-              </div>
-            ))}
-          </div>
+                <span>Ratings and reviews</span>
+                <span className="toggle-icon">
+                  {showReviewsToggle ? "▲" : "▼"}
+                </span>
+              </button>
 
-        </div>
-      )}
+              {showReviewsToggle && (
+                <div className="fk-details-content fk-reviews-content">
 
-      {/* Compact Reviews */}
-      <div className="fk-compact-reviews-section">
+                  {/* Review summary */}
+                  <div className="fk-rev-summary-sub">
+                    {totalReviewsCount > 0
+                      ? `Based on ${totalReviewsCount} ${totalReviewsCount === 1 ? "rating" : "ratings"}`
+                      : "No customer reviews yet"}
+                  </div>
 
-        <h4 className="fk-review-subtitle">
-          Customer Reviews
-        </h4>
-
-        {previewReviews.length > 0 ? (
-          <div className="fk-compact-cards-grid">
-
-            {previewReviews.slice(0, 4).map((rev, idx) => (
-              <div
-                key={rev.review_id || idx}
-                className="fk-compact-review-card"
-              >
-
-                <div className="fk-card-badge-row">
-                  <span
-                    className="fk-card-opinion-tag"
-                    style={{
-                      backgroundColor:
-                        getColorForOption(
-                          rev.rating_type
-                        ),
-                    }}
-                  >
-                    {formatLabel(
-                      rev.rating_type
-                    )}
-                  </span>
-
-                  <span className="fk-card-relative-time">
-                    {timeAgo(rev.created_at)}
-                  </span>
-                </div>
-
-                <p className="fk-card-short-comment">
-                  {rev.comment
-                    ? rev.comment.length > 80
-                      ? `${rev.comment.slice(
-                          0,
-                          80
-                        )}...`
-                      : rev.comment
-                    : "No written review."}
-                </p>
-
-                <div className="fk-card-author-footer">
-
-                  <span className="fk-card-author-name">
-                    {rev.user_name ||
-                      "Customer"}
-                  </span>
-
-                  {(rev.is_verified_buyer === 1 ||
-                    rev.is_verified_buyer === true ||
-                    rev.is_verified_buyer === "1") && (
-                    <span className="fk-card-verified-tag">
-                      <FaCheckCircle
-                        size={11}
-                      />
-                      Verified Buyer
-                    </span>
+                  {/* Customer Photos */}
+                  {customerImages.length > 0 && (
+                    <div className="fk-buyer-photos-section">
+                      <h4 className="fk-review-subtitle">Customer Photos</h4>
+                      <div className="fk-buyer-photos-row">
+                        {customerImages.map((imgUrl, idx) => (
+                          <div key={`${imgUrl}-${idx}`} className="fk-buyer-photo-item">
+                            <img
+                              src={resolveImage(imgUrl)}
+                              alt={`Customer review ${idx + 1}`}
+                              className="fk-buyer-thumb-img"
+                              loading="lazy"
+                              onError={(e) => { e.currentTarget.style.display = "none"; }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
 
+                  {/* Compact Reviews */}
+                  <div className="fk-compact-reviews-section">
+                    <h4 className="fk-review-subtitle">Customer Reviews</h4>
+
+                    {previewReviews.length > 0 ? (
+                      <div className="fk-compact-cards-grid">
+                        {previewReviews.slice(0, 4).map((rev, idx) => (
+                          <div key={rev.review_id || idx} className="fk-compact-review-card">
+                            <div className="fk-card-badge-row">
+                              <span
+                                className="fk-card-opinion-tag"
+                                style={{ backgroundColor: getColorForOption(rev.rating_type) }}
+                              >
+                                {formatLabel(rev.rating_type)}
+                              </span>
+                              <span className="fk-card-relative-time">
+                                {timeAgo(rev.created_at)}
+                              </span>
+                            </div>
+
+                            <p className="fk-card-short-comment">
+                              {rev.comment
+                                ? rev.comment.length > 80
+                                  ? `${rev.comment.slice(0, 80)}...`
+                                  : rev.comment
+                                : "No written review."}
+                            </p>
+
+                            <div className="fk-card-author-footer">
+                              <span className="fk-card-author-name">
+                                {rev.user_name || "Customer"}
+                              </span>
+                              {(rev.is_verified_buyer === 1 ||
+                                rev.is_verified_buyer === true ||
+                                rev.is_verified_buyer === "1") && (
+                                <span className="fk-card-verified-tag">
+                                  <FaCheckCircle size={11} />
+                                  Verified Buyer
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="fk-no-reviews-note">No customer reviews yet.</p>
+                    )}
+                  </div>
+
                 </div>
+              )}
+            </div>
 
-              </div>
-            ))}
-
-          </div>
-        ) : (
-          <p className="fk-no-reviews-note">
-            No customer reviews yet.
-          </p>
-        )}
-
-      </div>
-    </div>
-  )}
-</div>
-
-{/* Show all reviews */}
-{totalReviewsCount > 0 && (
-  <Link
-    to={`/product-reviews/${saree.product_id}`}
-    className="fk-standalone-reviews-btn"
-  >
-    Show all reviews <span>›</span>
-  </Link>
-)}
+            {/* Show all reviews */}
+            {totalReviewsCount > 0 && (
+              <Link
+                to={`/product-reviews/${saree.product_id}`}
+                className="fk-standalone-reviews-btn"
+              >
+                Show all reviews <span>›</span>
+              </Link>
+            )}
 
           </div> {/* Closes info-box */}
         </div> {/* Closes details-container */}
       </div> {/* Closes main-container */}
 
-      {/* RECOMMENDED SECTION (Mobile Friendly Swiper) */}
+      {/* RECOMMENDED SECTION */}
       <div className="full-width-review-section">
         <div className="review-inner-container">
           <div className="recommended-section-wrapper">

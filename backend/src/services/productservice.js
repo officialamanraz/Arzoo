@@ -180,7 +180,11 @@ const getbyidproduct = async (productId) => {
         
         // Enforce server-side computed discount calculation override
         product.discount_percentage = product.calculated_discount;
+        
+        // Frontend variant match ke liye base_color ko color_name assign kar rahe hain
+        product.color_name = product.base_color; 
 
+        // 🌟 1. MULTIPLE IMAGES (GALLERY) FETCH LOGIC 
         const imagesQuery = `SELECT image_url FROM product_images WHERE product_id = ?`;
         const [imageResults] = await db.execute(imagesQuery, [productId]);
         console.log(`[PRODUCT_SERVICE] Found ${imageResults.length} extra images in product_images table for ID: ${productId}`);
@@ -194,10 +198,29 @@ const getbyidproduct = async (productId) => {
                 allImages.push(getFullImageUrl(img.image_url));
             });
         }
+        
         product.images = allImages;
+        product.gallery_images = allImages; // Frontend Amazon gallery isi key ko use karegi
         product.image_url = getFullImageUrl(product.image_url);
 
-        console.log(`[PRODUCT_SERVICE] ✅ Successfully built product object with ${allImages.length} total images.`);
+        // 🌟 2. VARIANTS FETCH LOGIC (AMAZON STYLE SWATCHES)
+        // Same 'name' wale active products ko as variants nikal rahe hain
+        console.log(`[PRODUCT_SERVICE] Fetching variants for product name: "${product.name}"`);
+        const variantsQuery = `
+            SELECT product_id, base_color AS color_name, image_url 
+            FROM products 
+            WHERE name = ? AND is_active = 1
+        `;
+        const [variantResults] = await db.execute(variantsQuery, [product.name]);
+        
+        // Har variant ki image ko bhi getFullImageUrl se pass karna zaroori hai
+        product.variants = variantResults.map(v => ({
+            product_id: v.product_id,
+            color_name: v.color_name,
+            image_url: getFullImageUrl(v.image_url) 
+        }));
+
+        console.log(`[PRODUCT_SERVICE] ✅ Successfully built product object with ${allImages.length} images and ${product.variants.length} variants.`);
         return product;
     } catch (err) {
         console.error(`[PRODUCT_SERVICE] ❌ Error in getbyidproduct for ID ${productId}:`, err.message);
@@ -205,7 +228,6 @@ const getbyidproduct = async (productId) => {
         throw err;
     }
 };
-
 const addProductToDB = async (productData) => {
     console.log(`[PRODUCT_SERVICE] Attempting to add new product: "${productData?.name}"`);
     try {

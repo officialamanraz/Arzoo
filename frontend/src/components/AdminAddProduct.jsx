@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaPlus, FaUpload } from 'react-icons/fa';
+import { FaPlus, FaUpload, FaImages } from 'react-icons/fa';
 import AdminNav from './AdminNav';
 import './AdminAddProduct.css';
 
@@ -12,7 +12,7 @@ const emptyFormState = {
   description: '', baseColor: '', categoryId: '', subcategoryId: '',
   stockQty: '10', primaryColor: '', otherColor: '', borderType: '', pattern: '', craft: '',
   weave: '', zariType: '', blouse: '', borderMotifs: '', origin: '', fabric: '', khats: '',
-  weight: '', blouseLength: '', producer: '', maker: '',producer_address:'',packer_address:''
+  weight: '', blouseLength: '', producer: '', maker: '', producer_address: '', packer_address: ''
 };
 
 function AdminAddProduct() {
@@ -24,7 +24,11 @@ function AdminAddProduct() {
   const [subcategories, setSubcategories] = useState([]);
   const [dealers, setDealers] = useState([]);
   const [form, setForm] = useState(emptyFormState);
-  const [images, setImages] = useState([]);
+  
+  // 🌟 NAYA: Split image states for Main and Extra images
+  const [mainImage, setMainImage] = useState(null);
+  const [extraImages, setExtraImages] = useState([]);
+  
   const [isEditing, setIsEditing] = useState(!!editingProduct);
   const [editId, setEditId] = useState(editingProduct?.product_id || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,8 +65,8 @@ function AdminAddProduct() {
         blouseLength: editingProduct.blouse_length || '',
         producer: editingProduct.producer || '',
         maker: editingProduct.maker || '',
-        producer_address:editingProduct.producer_address || '',
-        packer_address:editingProduct.packer_address
+        producer_address: editingProduct.producer_address || '',
+        packer_address: editingProduct.packer_address || ''
       });
     }
   }, [editingProduct]);
@@ -87,8 +91,6 @@ function AdminAddProduct() {
         
         if (dealerRes.ok) {
           const dealerResult = await dealerRes.json();
-          console.log('[ADMIN_ADD_PRODUCT] 📦 Dealer API Response received:', dealerResult);
-          
           if (isMounted && dealerResult.success && dealerResult.dealers) {
             setDealers(dealerResult.dealers); 
           }
@@ -140,7 +142,8 @@ function AdminAddProduct() {
 
   const resetForm = () => {
     setForm(emptyFormState);
-    setImages([]);
+    setMainImage(null);
+    setExtraImages([]);
     setIsEditing(false);
     setEditId(null);
   };
@@ -179,11 +182,17 @@ function AdminAddProduct() {
     formData.append('blouse_length', form.blouseLength);
     formData.append('producer', form.producer);
     formData.append('maker', form.maker);
-    formData.append('producer_address',form.producer_address);
-    formData.append('packer_address',form.packer_address);
+    formData.append('producer_address', form.producer_address);
+    formData.append('packer_address', form.packer_address);
 
-    if (images && images.length > 0) {
-      Array.from(images).forEach((img) => formData.append('image', img));
+    // 🌟 1. Append Main Image
+    if (mainImage) {
+      formData.append('image', mainImage);
+    }
+
+    // 🌟 2. Append Extra Gallery Images
+    if (extraImages && extraImages.length > 0) {
+      Array.from(extraImages).forEach((img) => formData.append('extraImages', img));
     }
 
     try {
@@ -390,30 +399,53 @@ function AdminAddProduct() {
             </div>
             <div className="responsive-grid-2">
               <div className="form-group">
-                <label>producer_address</label>
+                <label>Producer Address</label>
                 <input type="text" value={form.producer_address} onChange={handleFieldChange('producer_address')} className="admin-input" />
               </div>
               <div className="form-group">
-                <label>packer_address</label>
+                <label>Packer Address</label>
                 <input type="text" value={form.packer_address} onChange={handleFieldChange('packer_address')} className="admin-input" />
               </div>
             </div>
           </fieldset>
 
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FaUpload /> Upload Product Image(s)
-            </label>
-            <input
-              type="file"
-              multiple
-              onChange={(e) => setImages(e.target.files)}
-              className="admin-file-input"
-              accept="image/*"
-              required={!isEditing}
-            />
-            {isEditing && <small className="edit-note">Leave empty to keep existing images.</small>}
-          </div>
+          {/* 🌟 NAYA: Image Upload Section Split */}
+          <fieldset className="admin-fieldset" style={{ marginTop: '20px' }}>
+            <legend>Product Images</legend>
+            <div className="responsive-grid-2">
+              
+              {/* Main Cover Image */}
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
+                  <FaUpload /> Main Cover Image
+                </label>
+                <input
+                  type="file"
+                  onChange={(e) => setMainImage(e.target.files[0])}
+                  className="admin-file-input"
+                  accept="image/*"
+                  required={!isEditing}
+                />
+                {isEditing && <small className="edit-note">Leave empty to keep existing cover image.</small>}
+              </div>
+
+              {/* Extra Gallery Images */}
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#555' }}>
+                  <FaImages /> Extra Gallery Images (Optional)
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => setExtraImages(e.target.files)}
+                  className="admin-file-input"
+                  accept="image/*"
+                />
+                <small className="edit-note">Hold Ctrl (or Cmd) to select multiple images.</small>
+              </div>
+
+            </div>
+          </fieldset>
 
           <div className="responsive-grid-2 action-buttons-container">
             <button type="submit" disabled={isSubmitting} className="admin-submit-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
