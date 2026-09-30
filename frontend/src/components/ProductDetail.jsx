@@ -59,19 +59,9 @@ function ProductDetail({ currency, rates, language }) {
   const [isZoomHovered, setIsZoomHovered] = useState(false);
   const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
 
-  // Unique Variants State
-  const [uniqueVariants, setUniqueVariants] = useState([]);
-
-  // Flipkart Style Delivery Date State
+  // Delivery States
   const [deliveryDateStr, setDeliveryDateStr] = useState("");
   const [userLocation, setUserLocation] = useState("Location not set");
-
-  const handleImageMouseMove = (e) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setZoomCoords({ x, y });
-  };
 
   const [showReviewsToggle, setShowReviewsToggle] = useState(false);
   const [reviewStats, setReviewStats] = useState({});
@@ -82,6 +72,13 @@ function ProductDetail({ currency, rates, language }) {
   const [activeDetailTab, setActiveDetailTab] = useState('specifications');
 
   const token = localStorage.getItem('token');
+
+  const handleImageMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomCoords({ x, y });
+  };
 
   const timeAgo = (dateStr) => {
     if (!dateStr) return "";
@@ -105,76 +102,14 @@ function ProductDetail({ currency, rates, language }) {
     if (savedLoc) setUserLocation(savedLoc);
   }, []);
 
- // 🌟 CACHE BUSTER FIX: Forces browser to load fresh images
+  // CACHE BUSTER FIX
   const resolveImage = (url) => {
     if (!url) return "";
     let finalUrl = url;
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
       finalUrl = `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
     }
-    // Appending current timestamp prevents browser from showing old cached images
     return `${finalUrl}?v=${new Date().getTime()}`;
-  };
-  // Smart Variant Deduplication using Canvas Signature
-  useEffect(() => {
-    if (!saree?.variants || saree.variants.length === 0) {
-      setUniqueVariants([]);
-      return;
-    }
-
-    const detectDuplicateImages = async () => {
-      const validVariants = [];
-      const seenSignatures = new Set();
-
-      for (const v of saree.variants) {
-        const imgUrl = resolveImage(v.image_url);
-        if (!imgUrl) continue;
-
-        try {
-          const colorSignature = await getImageColorSignature(imgUrl);
-          const uniqueKey = `${v.color_name || 'col'}_${colorSignature}`;
-          
-          if (!seenSignatures.has(uniqueKey)) {
-            seenSignatures.add(uniqueKey);
-            validVariants.push(v);
-          }
-        } catch (err) {
-          validVariants.push(v);
-        }
-      }
-      setUniqueVariants(validVariants);
-    };
-
-    detectDuplicateImages();
-  }, [saree]);
-
-  const getImageColorSignature = (url) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = url;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 50;
-        canvas.height = 50;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, 50, 50);
-        
-        const coords = [
-          {x: 10, y: 10}, {x: 40, y: 10},
-          {x: 25, y: 25},
-          {x: 10, y: 40}, {x: 40, y: 40}
-        ];
-        
-        let signature = '';
-        coords.forEach(pt => {
-          const pixel = ctx.getImageData(pt.x, pt.y, 1, 1).data;
-          signature += `${pixel[0]},${pixel[1]},${pixel[2]}_`;
-        });
-        resolve(signature);
-      };
-      img.onerror = () => resolve(url);
-    });
   };
 
   useEffect(() => {
@@ -194,54 +129,7 @@ function ProductDetail({ currency, rates, language }) {
     if (id) fetchStats();
   }, [id, refreshReviews]);
 
-  // Translation Effect Restored
-  useEffect(() => {
-    if (!saree || !language || language === 'en') return;
-    const fetchTranslations = async () => {
-      setIsTranslating(true);
-      try {
-        const [nameRes, descRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/translate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: saree.name, targetLanguage: language })
-          }),
-          fetch(`${API_BASE_URL}/api/translate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: saree.description, targetLanguage: language })
-          })
-        ]);
-        const nData = await nameRes.json();
-        const dData = await descRes.json();
-        setTranslatedName(nData.translatedText || saree.name);
-        setTranslatedDesc(dData.translatedText || saree.description);
-      } catch (err) {
-        console.error("[ProductDetail] Translation error:", err);
-      } finally {
-        setIsTranslating(false);
-      }
-    };
-    fetchTranslations();
-  }, [language, saree]);
-
-  const formatLabel = (str) => {
-    if (!str) return "Rating";
-    return str.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-  };
-
-  const getColorForOption = (key) => {
-    const map = {
-      skip: "#ef4444",
-      timepass: "#f59e0b",
-      go_for_it: "#3b82f6",
-      perfection: "#22c55e",
-    };
-    return map[key?.toLowerCase()] || "#3b82f6";
-  };
-
-  const customerImages = previewReviews.filter((r) => r.image_url).map((r) => r.image_url);
-
+  // Main Data Fetch
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -279,19 +167,56 @@ function ProductDetail({ currency, rates, language }) {
     if (id) fetchProductData();
   }, [id, token]);
 
+  // Translation Effect
+  useEffect(() => {
+    if (!saree || !language || language === 'en') return;
+    const fetchTranslations = async () => {
+      setIsTranslating(true);
+      try {
+        const [nameRes, descRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/translate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: saree.name, targetLanguage: language })
+          }),
+          fetch(`${API_BASE_URL}/api/translate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: saree.description, targetLanguage: language })
+          })
+        ]);
+        const nData = await nameRes.json();
+        const dData = await descRes.json();
+        setTranslatedName(nData.translatedText || saree.name);
+        setTranslatedDesc(dData.translatedText || saree.description);
+      } catch (err) {
+        console.error("[ProductDetail] Translation error:", err);
+      } finally {
+        setIsTranslating(false);
+      }
+    };
+    fetchTranslations();
+  }, [language, saree]);
+
+  const formatLabel = (str) => {
+    if (!str) return "Rating";
+    return str.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  };
+
+  const getColorForOption = (key) => {
+    const map = { skip: "#ef4444", timepass: "#f59e0b", go_for_it: "#3b82f6", perfection: "#22c55e" };
+    return map[key?.toLowerCase()] || "#3b82f6";
+  };
+
+  const customerImages = previewReviews.filter((r) => r.image_url).map((r) => r.image_url);
+
   const handleToggleLike = async () => {
-    if (!token) {
-      toast.error("Please login to like this product!");
-      return;
-    }
+    if (!token) { toast.error("Please login to like this product!"); return; }
     const wasLiked = isLiked;
     setIsLiked(!wasLiked);
     setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/likes/${id}/like`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await fetch(`${API_BASE_URL}/api/likes/${id}/like`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json();
       if (!data.success) throw new Error("Failed to toggle like");
     } catch (error) {
@@ -303,10 +228,7 @@ function ProductDetail({ currency, rates, language }) {
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    if (!token) {
-      toast.error("Please login to post a comment!");
-      return;
-    }
+    if (!token) { toast.error("Please login to post a comment!"); return; }
     setIsSubmittingComment(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/comments/${id}/comments`, {
@@ -339,10 +261,7 @@ function ProductDetail({ currency, rates, language }) {
 
   const handleAddToCart = async (sareeId) => {
     if (isOutOfStock) return;
-    if (!token) {
-      toast.error("Please login to add product to cart!");
-      return;
-    }
+    if (!token) { toast.error("Please login to add product to cart!"); return; }
     setIsAdding(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
@@ -350,11 +269,8 @@ function ProductDetail({ currency, rates, language }) {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ product_id: sareeId, quantity: quantity })
       });
-      if (response.ok) {
-        toast.success(`Added ${quantity} item(s) to cart!`);
-      } else {
-        toast.error("Could not add item to cart.");
-      }
+      if (response.ok) toast.success(`Added ${quantity} item(s) to cart!`);
+      else toast.error("Could not add item to cart.");
     } catch (error) {
       toast.error("Could not add item to cart.");
     } finally {
@@ -389,8 +305,8 @@ function ProductDetail({ currency, rates, language }) {
     
   const currentImageUrl = sliderImages[activeImageIdx] || "/saare_1.jpeg";
 
-  // Safe check with optional chaining to prevent blank screen crash
-  const hasDifferentColors = uniqueVariants.some(v => v.color_name && v.color_name !== (saree?.color_name || saree?.base_color));
+  // Check if variants have different color names
+  const hasDifferentColors = saree?.variants?.some(v => v.color_name && v.color_name !== (saree?.color_name || saree?.base_color));
   const variantLabelText = hasDifferentColors ? "Different Color" : "Different Design";
 
   return (
@@ -499,14 +415,14 @@ function ProductDetail({ currency, rates, language }) {
               )}
             </div>
 
-            {/* 🌟 DYNAMIC VARIANT SWATCHES */}
-            {uniqueVariants && uniqueVariants.length > 0 && (
+            {/* 🌟 DYNAMIC VARIANT SWATCHES (Canvas Bug Removed - Uses group_id Directly) */}
+            {saree.variants && saree.variants.length > 0 && (
               <div className="amazon-variants-container">
                 <div className="amazon-variant-label">
                   {variantLabelText}: <strong>{saree.color_name || saree.base_color || 'Default'}</strong>
                 </div>
                 <div className="amazon-swatch-grid">
-                  {uniqueVariants.map((v) => {
+                  {saree.variants.map((v) => {
                     const isActive = v.product_id === saree.product_id;
                     return (
                       <Link 
@@ -530,33 +446,33 @@ function ProductDetail({ currency, rates, language }) {
               </div>
             )}
 
-            {/* FLIPKART STYLE DELIVERY DETAILS WIDGET */}
-            {/* 🌟 PROPER FLIPKART STYLE DELIVERY WIDGET */}
+            {/* 🌟 FLIPKART STYLE DELIVERY DETAILS WIDGET (Fixed SVG size and Spacing) */}
             <div className="fk-delivery-widget">
               <h3 className="fk-delivery-title">Delivery details</h3>
               
               <div className="fk-delivery-row">
-                <svg className="fk-svg-icon" viewBox="0 0 24 24">
+                <svg style={{ width: '24px', height: '24px', fill: '#2874f0', flexShrink: 0, marginTop: '2px', marginRight: '8px' }} viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                <div className="fk-delivery-content">
-                  <div className="fk-loc-inline">
-                    <span className="fk-loc-text">{userLocation || 'Location not set'}</span>
-                    <span className="fk-loc-divider">|</span>
-                    <button className="fk-loc-action" type="button">Select delivery location</button>
-                  </div>
+                <div className="fk-delivery-text-block" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span className="fk-loc-text">{userLocation || 'Location not set'}</span>
+                  <span className="fk-loc-divider" style={{ margin: '0 8px', color: '#ccc' }}>|</span>
+                  <button className="fk-loc-action" type="button" style={{ color: '#2874f0', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Select delivery location</button>
                 </div>
               </div>
 
-              <div className="fk-delivery-row" style={{ marginTop: '12px' }}>
-                <svg className="fk-svg-icon" viewBox="0 0 24 24">
+              <div className="fk-delivery-divider" style={{ borderBottom: '1px solid #f0f0f0', margin: '15px 0' }}></div>
+              
+              <div className="fk-delivery-row">
+                <svg style={{ width: '24px', height: '24px', fill: '#2874f0', flexShrink: 0, marginTop: '2px', marginRight: '8px' }} viewBox="0 0 24 24">
                   <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                 </svg>
-                <div className="fk-delivery-content">
-                  <span className="fk-date-text">Delivery by <span className="fk-date-highlight">{deliveryDateStr}</span></span>
+                <div className="fk-delivery-text-block" style={{ display: 'flex', alignItems: 'center' }}>
+                  <span className="fk-date-text">Delivery by <span style={{ fontWeight: '600' }}>{deliveryDateStr}</span></span>
                 </div>
               </div>
             </div>
+
             <div className="badges-row">
               <span className={`stock-badge ${isOutOfStock ? 'out-of-stock' : 'in-stock'}`}>
                 {isOutOfStock ? 'Sold Out' : stockQty ? `In Stock (${stockQty} left)` : 'In Stock'}
