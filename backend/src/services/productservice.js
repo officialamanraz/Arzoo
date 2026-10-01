@@ -200,29 +200,44 @@ const getbyidproduct = async (productId) => {
         product.image_url = getFullImageUrl(product.image_url);
 
         // 🌟 2. ROBUST VARIANTS FETCH LOGIC
+// 🌟 2. ROBUST VARIANTS FETCH LOGIC (WITH DEEP DEBUGGING)
         let variantResults = [];
-        // Ensure group_id is strictly a valid value (not null, undefined or empty string)
+        
         if (product.group_id !== null && product.group_id !== undefined && String(product.group_id).trim() !== '') {
-            const cleanGroupId = String(product.group_id).trim();
-            console.log(`[PRODUCT_SERVICE] 🔍 Executing variants query for clean group_id: "${cleanGroupId}" excluding product ID: ${productId}`);
+            // TRIM() hata diya hai taaki direct raw value match ho
+            const rawGroupId = product.group_id; 
+            console.log(`[PRODUCT_SERVICE] 🔍 Executing variants query for group_id: ${rawGroupId} excluding product ID: ${productId}`);
             
+            // 🐛 DEBUG QUERY: Dekhte hain database mein is group_id se aakhir kitne products hain!
+            const debugQuery = `SELECT product_id, group_id, is_active, base_color FROM products WHERE group_id = ?`;
+            const [debugResults] = await db.execute(debugQuery, [rawGroupId]);
+            console.log(`[PRODUCT_SERVICE] 🐛 DEBUG - DB contains these products for group_id ${rawGroupId}:`, debugResults);
+
+            // 🌟 MAIN QUERY: Yahan se 'AND is_active = 1' hata diya hai taaki check kar sakein ki issue active/inactive ka toh nahi
             const variantsQuery = `
-                SELECT product_id, base_color AS color_name, image_url 
+                SELECT product_id, base_color AS color_name, image_url, is_active 
                 FROM products 
-                WHERE TRIM(group_id) = ? AND product_id != ? AND is_active = 1
+                WHERE group_id = ? AND product_id != ?
             `;
-            [variantResults] = await db.execute(variantsQuery, [cleanGroupId, Number(productId)]);
+            [variantResults] = await db.execute(variantsQuery, [rawGroupId, productId]);
+            
             console.log(`[PRODUCT_SERVICE] ✅ Variants query returned ${variantResults.length} row(s).`);
+            
+            if(variantResults.length === 0) {
+                console.warn(`[PRODUCT_SERVICE] ⚠️ No variants found. Please check your database table to ensure products 227, 228, 229 actually have group_id = ${rawGroupId}.`);
+            }
         } else {
             console.log(`[PRODUCT_SERVICE] ⚠️ Skipped variant search (Group ID is empty or null)`);
         }
 
-        product.variants = variantResults.map(v => ({
-            product_id: v.product_id,
-            color_name: v.color_name,
-            image_url: getFullImageUrl(v.image_url) 
-        }));
-
+        // Map the final variants and filter active ones in JavaScript safely
+        product.variants = variantResults
+            .filter(v => v.is_active === 1) // Sirf active products ko variants mein dikhayenge
+            .map(v => ({
+                product_id: v.product_id,
+                color_name: v.color_name,
+                image_url: getFullImageUrl(v.image_url) 
+            }));
         return product;
     } catch (err) {
         console.error(`[PRODUCT_SERVICE] ❌ Error in getbyidproduct for ID ${productId}:`, err.message);
