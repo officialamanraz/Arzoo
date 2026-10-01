@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css'; // Skeleton ki CSS
+import 'react-loading-skeleton/dist/skeleton.css';
 import { getImageUrl } from '../getImageUrl';
 import './UserOrders.css';
 
@@ -24,13 +24,26 @@ const STATUS_META = {
   cancelled: { label: 'Cancelled', className: 'status-cancelled', icon: '❌' }
 };
 
+const RATING_TAGS = [
+  { id: 'skip', label: 'Skip', color: '#ef4444' },
+  { id: 'timepass', label: 'Timepass', color: '#f59e0b' },
+  { id: 'go_for_it', label: 'Go for it', color: '#3b82f6' },
+  { id: 'perfection', label: 'Perfection', color: '#22c55e' }
+];
+
 function UserOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Review Modal States
+  const [reviewModal, setReviewModal] = useState({ isOpen: false, item: null, orderId: null });
+  const [reviewData, setReviewData] = useState({ rating: 5, ratingType: 'go_for_it', comment: '', image: null });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   useEffect(() => {
     const fetchOrders = async () => {
+      console.log('[USER_ORDERS] 📡 Fetching user orders...');
       setLoading(true);
       setError('');
       const token = localStorage.getItem('token');
@@ -44,11 +57,13 @@ function UserOrders() {
         const res = await response.json();
         if (res.success) {
           setOrders(res.data || []);
+          console.log(`[USER_ORDERS] ✅ Successfully fetched ${res.data?.length || 0} orders.`);
         } else {
           setError(res.message || 'Could not load your orders.');
+          console.warn('[USER_ORDERS] ⚠️ Error from server:', res.message);
         }
       } catch (err) {
-        console.error("Network Error fetching orders:", err);
+        console.error("[USER_ORDERS] ❌ Network Error fetching orders:", err);
         setError('Network error while loading your orders.');
       } finally {
         setLoading(false);
@@ -59,6 +74,7 @@ function UserOrders() {
   }, []);
 
   const handleCancelOrder = async (orderId) => {
+    console.log(`[USER_ORDERS] 🛑 Cancellation requested for Order ID: ${orderId}`);
     if (!window.confirm("Are you sure you want to cancel this order?")) return;
 
     try {
@@ -72,11 +88,65 @@ function UserOrders() {
       if (data.success) {
         toast.success("Order cancelled successfully!");
         setOrders(orders.map(o => o.order_id === orderId ? { ...o, status: 'cancelled' } : o));
+        console.log(`[USER_ORDERS] ✅ Order ${orderId} cancelled successfully.`);
       } else {
         toast.error(data.message || "Failed to cancel order.");
+        console.warn(`[USER_ORDERS] ⚠️ Failed to cancel order ${orderId}:`, data.message);
       }
     } catch (error) {
+      console.error("[USER_ORDERS] ❌ Cancellation Error:", error);
       toast.error("Something went wrong");
+    }
+  };
+
+  const openReviewModal = (item, orderId) => {
+    console.log(`[USER_ORDERS] ⭐ Opening review modal for Product ID: ${item.product_id}, Order ID: ${orderId}`);
+    setReviewModal({ isOpen: true, item, orderId });
+    setReviewData({ rating: 5, ratingType: 'go_for_it', comment: '', image: null });
+  };
+
+  const closeReviewModal = () => {
+    console.log('[USER_ORDERS] ✖️ Closing review modal');
+    setReviewModal({ isOpen: false, item: null, orderId: null });
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    console.log(`[USER_ORDERS] 🚀 Submitting review for Product ID: ${reviewModal.item.product_id}`);
+    setIsSubmittingReview(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('product_id', reviewModal.item.product_id);
+      formData.append('order_id', reviewModal.orderId);
+      formData.append('rating', reviewData.rating);
+      formData.append('rating_type', reviewData.ratingType);
+      formData.append('comment', reviewData.comment);
+      if (reviewData.image) {
+        formData.append('image', reviewData.image);
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/reviews`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Review submitted successfully!');
+        console.log('[USER_ORDERS] ✅ Review submitted successfully');
+        closeReviewModal();
+      } else {
+        toast.error(data.message || 'Failed to submit review');
+        console.warn('[USER_ORDERS] ⚠️ Review submission failed:', data.message);
+      }
+    } catch (error) {
+      console.error('[USER_ORDERS] ❌ Error submitting review:', error);
+      toast.error('Something went wrong while submitting review');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -98,7 +168,6 @@ function UserOrders() {
   };
 
   const buildInvoiceHtml = (order) => {
-    /* (Keep your existing long invoice HTML building logic here, I kept it intact!) */
     const items = order.items || [];
     const itemsSubtotal = items.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0);
     const itemRows = items.length > 0 ? items.map(item => {
@@ -115,6 +184,7 @@ function UserOrders() {
   };
 
   const handleDownloadInvoice = (order) => {
+    console.log(`[USER_ORDERS] 📄 Generating invoice for Order ID: ${order.order_id}`);
     const printWindow = window.open('', '_blank');
     printWindow.document.write(buildInvoiceHtml(order));
     printWindow.document.close();
@@ -124,7 +194,6 @@ function UserOrders() {
     };
   };
 
-  // 🌟 FIX: Loading Skeletons injected here!
   if (loading) {
     return (
       <div className="orders-page">
@@ -232,6 +301,16 @@ function UserOrders() {
                             >
                               Invoice
                             </button>
+                            
+                            {/* ⭐ RATE & REVIEW BUTTON (Only for Delivered Items) */}
+                            {order.status === 'delivered' && (
+                              <button 
+                                onClick={() => openReviewModal(item, order.order_id)} 
+                                className="order-action-review"
+                              >
+                                ★ Rate & Review
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -309,6 +388,104 @@ function UserOrders() {
           })
         )}
       </div>
+
+      {/* ⭐ REVIEW MODAL OVERLAY */}
+      {reviewModal.isOpen && (
+        <div className="review-modal-overlay">
+          <div className="review-modal-content">
+            <div className="review-modal-header">
+              <h3>Write a Review</h3>
+              <button className="review-modal-close" onClick={closeReviewModal}>×</button>
+            </div>
+            
+            <form onSubmit={handleReviewSubmit} className="review-modal-body">
+              <div className="review-product-preview">
+                <img src={getImageUrl(reviewModal.item.image_url || reviewModal.item.image)} alt="Product" />
+                <span>{reviewModal.item.name}</span>
+              </div>
+
+              {/* Star Rating */}
+              <div className="review-form-group">
+                <label>Overall Rating</label>
+                <div className="review-stars-container">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <span 
+                      key={star} 
+                      className={`review-star ${reviewData.rating >= star ? 'active' : ''}`}
+                      onClick={() => {
+                        setReviewData({ ...reviewData, rating: star });
+                        console.log(`[USER_ORDERS] ⭐ Star rating updated to: ${star}`);
+                      }}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Opinion Tags */}
+              <div className="review-form-group">
+                <label>Product Verdict</label>
+                <div className="review-tags-container">
+                  {RATING_TAGS.map(tag => (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      className={`review-tag-btn ${reviewData.ratingType === tag.id ? 'active' : ''}`}
+                      style={{ 
+                        borderColor: reviewData.ratingType === tag.id ? tag.color : '',
+                        backgroundColor: reviewData.ratingType === tag.id ? `${tag.color}15` : ''
+                      }}
+                      onClick={() => {
+                        setReviewData({ ...reviewData, ratingType: tag.id });
+                        console.log(`[USER_ORDERS] 🏷️ Verdict tag updated to: ${tag.id}`);
+                      }}
+                    >
+                      {tag.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Written Review */}
+              <div className="review-form-group">
+                <label>Add a written review</label>
+                <textarea
+                  className="review-textarea"
+                  placeholder="What did you like or dislike? What did you use this product for?"
+                  rows="4"
+                  value={reviewData.comment}
+                  onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                  required
+                ></textarea>
+              </div>
+
+              {/* Add Photo (Optional) */}
+              <div className="review-form-group">
+                <label>Add a photo (Optional)</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="review-file-input"
+                  onChange={(e) => {
+                    if (e.target.files[0]) {
+                      setReviewData({ ...reviewData, image: e.target.files[0] });
+                      console.log(`[USER_ORDERS] 📸 Photo selected: ${e.target.files[0].name}`);
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="review-modal-actions">
+                <button type="button" className="review-btn-cancel" onClick={closeReviewModal}>Cancel</button>
+                <button type="submit" className="review-btn-submit" disabled={isSubmittingReview}>
+                  {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -205,10 +205,7 @@
   width: 100%;
   transition: all 0.2s ease;
 }
-.order-action-cancel:hover {
-  background: #dc3545;
-  color: #fff;
-}
+.order-action-cancel:hover { background: #dc3545; color: #fff; }
 
 .order-action-track {
   display: block;
@@ -238,6 +235,23 @@
   transition: background-color 0.2s ease;
 }
 .order-action-invoice:hover { background-color: var(--substrip-bg, #f1f5f9); }
+
+/* 🌟 REVIEW BUTTON STYLE */
+.order-action-review {
+  padding: 10px 16px;
+  background-color: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9em;
+  text-align: center;
+  width: 100%;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+.order-action-review:hover { background-color: #d97706; }
 
 /* -----------------------------------------
    Right Column Information (Forced Left Align)
@@ -340,7 +354,7 @@
   text-align: left !important;
 }
 
-/* Delivery Address Card (Fixed Centering) */
+/* Delivery Address Card */
 .order-delivery-address-card {
   background: var(--substrip-bg, #f8fafc);
   padding: 14px 16px;
@@ -395,7 +409,187 @@
 }
 
 /* =========================================
-   DARK MODE ADAPTATION
+   🌟 REVIEW MODAL STYLES (Amazon/Flipkart Style)
+   ========================================= */
+.review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+.review-modal-content {
+  background: var(--card-bg, #ffffff);
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.review-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-dark, #0f172a);
+}
+
+.review-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--text-light, #94a3b8);
+  cursor: pointer;
+  line-height: 1;
+}
+.review-modal-close:hover { color: #dc3545; }
+
+.review-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.review-product-preview {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: var(--substrip-bg, #f8fafc);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.review-product-preview img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.review-product-preview span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-dark, #0f172a);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.review-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-form-group label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dark, #0f172a);
+}
+
+.review-stars-container {
+  display: flex;
+  gap: 8px;
+}
+
+.review-star {
+  font-size: 2.2rem;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.1s ease;
+}
+.review-star:hover { transform: scale(1.1); }
+.review-star.active { color: #f59e0b; } /* Yellow Star */
+
+.review-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.review-tag-btn {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: transparent;
+  color: var(--text-sub, #475569);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.review-tag-btn:hover { background: var(--substrip-bg, #f1f5f9); }
+.review-tag-btn.active { color: #0f1111; font-weight: 700; border-width: 2px; }
+
+.review-textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: var(--bg-light, #f8fafc);
+  color: var(--text-dark, #0f172a);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.review-textarea:focus { outline: none; border-color: var(--primary, #A8325E); }
+
+.review-file-input {
+  font-size: 0.9rem;
+  color: var(--text-sub, #475569);
+}
+
+.review-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.review-btn-cancel {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: 8px;
+  color: var(--text-dark, #0f172a);
+  font-weight: 600;
+  cursor: pointer;
+}
+.review-btn-cancel:hover { background: var(--substrip-bg, #f1f5f9); }
+
+.review-btn-submit {
+  padding: 10px 24px;
+  background: var(--primary, #A8325E);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.review-btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* =========================================
+   DARK MODE ADAPTATION (.dark-mode, body.dark)
    ========================================= */
 body.dark, html.dark, [data-theme='dark'], .dark {
   --bg-main: #121212;
@@ -407,122 +601,49 @@ body.dark, html.dark, [data-theme='dark'], .dark {
   --text-light: #9ca3af;
 }
 
-body.dark .order-item-img-zoom-box,
-html.dark .order-item-img-zoom-box,
-[data-theme='dark'] .order-item-img-zoom-box {
-  border-color: #38383a;
-  background: #1c1c1e;
-}
+body.dark .order-item-img-zoom-box, html.dark .order-item-img-zoom-box, [data-theme='dark'] .order-item-img-zoom-box { border-color: #38383a; background: #1c1c1e; }
+body.dark .order-discount-badge, html.dark .order-discount-badge, [data-theme='dark'] .order-discount-badge { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; }
 
-body.dark .order-discount-badge,
-html.dark .order-discount-badge,
-[data-theme='dark'] .order-discount-badge {
-  background-color: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
-}
+body.dark .order-action-review { background-color: #d97706; box-shadow: none; }
+body.dark .order-action-review:hover { background-color: #b45309; }
+
+body.dark .review-star { color: #333336; }
+body.dark .review-star.active { color: #fbbf24; }
+
+body.dark .review-textarea { background: #121212; border-color: #333336; }
+body.dark .review-btn-cancel { border-color: #333336; }
+body.dark .review-btn-cancel:hover { background: #262629; }
+
 /* =========================================================
    MOBILE OPTIMIZATION FOR MY ORDERS (Laptop Style Miniaturized)
    ========================================================= */
 @media (max-width: 768px) {
-  .orders-page {
-    padding: 20px 10px !important;
+  .orders-page { padding: 20px 10px !important; }
+  .order-card { padding: 16px !important; }
+
+  .order-item-detail-layout { flex-wrap: nowrap !important; gap: 12px !important; align-items: flex-start !important; }
+  .order-item-left-col { width: 105px !important; flex-shrink: 0 !important; }
+  .order-item-img-zoom-box { height: 125px !important; margin-bottom: 8px !important; border-radius: 8px !important; }
+  .zoom-hover-indicator { display: none !important; }
+
+  .order-item-actions-stack { gap: 6px !important; }
+  .order-action-cancel, .order-action-track, .order-action-invoice, .order-action-review {
+    padding: 6px 4px !important; font-size: 0.72rem !important; border-radius: 6px !important; line-height: 1.2 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
   }
 
-  .order-card {
-    padding: 16px !important;
-  }
+  .order-item-right-col { min-width: 0 !important; gap: 8px !important; }
+  .order-product-name { font-size: 1.05rem !important; line-height: 1.3 !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important; }
+  .order-price-main { font-size: 1.15rem !important; }
+  .order-mrp-strikethrough { font-size: 0.85rem !important; }
+  .order-discount-badge { font-size: 0.7rem !important; padding: 2px 6px !important; }
+  .order-item-qty { font-size: 0.85rem !important; display: block !important; margin-top: 4px !important; }
 
-  /* 1. Force Side-by-Side Layout Exactly Like Laptop */
-  .order-item-detail-layout {
-    flex-wrap: nowrap !important; /* Prevents columns from stacking */
-    gap: 12px !important;
-    align-items: flex-start !important;
-  }
+  .order-info-substrip, .order-delivery-address-card { padding: 8px 10px !important; border-radius: 8px !important; }
+  .order-info-substrip p, .order-delivery-address-card .address-body { font-size: 0.8rem !important; }
+  .order-delivery-address-card .address-header { font-size: 0.85rem !important; }
+  .order-delivery-address-card .address-contact { font-size: 0.75rem !important; }
 
-  /* 2. Left Column (Thumbnail Image & Buttons) */
-  .order-item-left-col {
-    width: 105px !important; /* Chota size taaki mobile par fit ho */
-    flex-shrink: 0 !important;
-  }
-
-  .order-item-img-zoom-box {
-    height: 125px !important;
-    margin-bottom: 8px !important;
-    border-radius: 8px !important;
-  }
-
-  .zoom-hover-indicator {
-    display: none !important; /* Touch screens par zoom hint ki zaroorat nahi */
-  }
-
-  /* Shrink action buttons to fit strictly under the image */
-  .order-item-actions-stack {
-    gap: 6px !important;
-  }
-
-  .order-action-cancel, 
-  .order-action-track, 
-  .order-action-invoice {
-    padding: 6px 4px !important;
-    font-size: 0.72rem !important; /* Smaller text */
-    border-radius: 6px !important;
-    line-height: 1.2 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-
-  /* 3. Right Column (Product Info, Price & Address) */
-  .order-item-right-col {
-    min-width: 0 !important; /* Text ko bahar overflow hone se rokega */
-    gap: 8px !important;
-  }
-
-  .order-product-name {
-    font-size: 1.05rem !important;
-    line-height: 1.3 !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-  }
-
-  .order-price-main {
-    font-size: 1.15rem !important;
-  }
-
-  .order-mrp-strikethrough {
-    font-size: 0.85rem !important;
-  }
-
-  .order-discount-badge {
-    font-size: 0.7rem !important;
-    padding: 2px 6px !important;
-  }
-
-  .order-item-qty {
-    font-size: 0.85rem !important;
-    display: block !important;
-    margin-top: 4px !important;
-  }
-
-  /* Shrink info strips & addresses */
-  .order-info-substrip, 
-  .order-delivery-address-card {
-    padding: 8px 10px !important;
-    border-radius: 8px !important;
-  }
-
-  .order-info-substrip p,
-  .order-delivery-address-card .address-body {
-    font-size: 0.8rem !important;
-  }
-
-  .order-delivery-address-card .address-header {
-    font-size: 0.85rem !important;
-  }
-
-  .order-delivery-address-card .address-contact {
-    font-size: 0.75rem !important;
-  }
+  .review-modal-content { max-width: 95%; }
+  .review-tags-container { gap: 6px; }
+  .review-tag-btn { padding: 6px 10px; font-size: 0.75rem; }
 }
