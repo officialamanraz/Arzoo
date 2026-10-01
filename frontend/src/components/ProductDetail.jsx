@@ -40,7 +40,11 @@ function ProductDetail({ currency, rates, language }) {
   const [saree, setSaree] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  
+  // Gallery States
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [mobileActiveIdx, setMobileActiveIdx] = useState(0); // Mobile slider dot tracker
+  
   const [quantity, setQuantity] = useState(1);
   const [translatedName, setTranslatedName] = useState("");
   const [translatedDesc, setTranslatedDesc] = useState("");
@@ -80,6 +84,17 @@ function ProductDetail({ currency, rates, language }) {
     setZoomCoords({ x, y });
   };
 
+  // Mobile slider scroll tracker for dots
+  const handleSliderScroll = (e) => {
+    const scrollLeft = e.target.scrollLeft;
+    const width = e.target.offsetWidth;
+    const newIndex = Math.round(scrollLeft / width);
+    if (newIndex !== mobileActiveIdx) {
+      setMobileActiveIdx(newIndex);
+      console.log(`[UI_EVENT] 📱 Mobile slider swiped to image index: ${newIndex}`);
+    }
+  };
+
   const timeAgo = (dateStr) => {
     if (!dateStr) return "";
     const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
@@ -92,14 +107,12 @@ function ProductDetail({ currency, rates, language }) {
     return Math.floor(seconds) + " seconds ago";
   };
 
-  // Fetch Delivery Date & Dynamic Logged-in User Address
   useEffect(() => {
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 3);
     const options = { day: 'numeric', month: 'short', weekday: 'short' };
     setDeliveryDateStr(deliveryDate.toLocaleDateString('en-IN', options));
 
-    // Fetch user profile / saved address if token exists
     const fetchUserAddress = async () => {
       if (!token) {
         setUserLocation("Location not set");
@@ -111,9 +124,9 @@ function ProductDetail({ currency, rates, language }) {
         });
         const data = await res.json();
         if (data && data.success && data.user) {
-          // Fallback to city, address or pincode if available
           const addr = data.user.address || data.user.city || data.user.pincode;
           setUserLocation(addr ? `Deliver to: ${addr}` : "Location not set");
+          console.log("[USER_DATA] 📍 Delivery location resolved:", addr);
         } else {
           setUserLocation("Location not set");
         }
@@ -144,6 +157,7 @@ function ProductDetail({ currency, rates, language }) {
           setReviewStats(data.stats || {});
           setTotalReviewsCount(data.totalReviews || (data.reviews ? data.reviews.length : 0));
           setPreviewReviews(data.reviews || []);
+          console.log("[DATA_FETCH] ⭐ Reviews stats fetched");
         }
       } catch (err) {
         console.error("Error fetching review stats:", err);
@@ -152,7 +166,6 @@ function ProductDetail({ currency, rates, language }) {
     if (id) fetchStats();
   }, [id, refreshReviews]);
 
-  // Main Product Data Fetch
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -164,8 +177,8 @@ function ProductDetail({ currency, rates, language }) {
           setSaree(prodResult.data);
           setTranslatedName(prodResult.data.name);
           setTranslatedDesc(prodResult.data.description);
-          console.log("🔍 [DEBUG] Fetched Product Data:", prodResult.data);
-          console.log("🎨 [DEBUG] Variants Array:", prodResult.data.variants);
+          console.log("🔍 [DATA_FETCH] Fetched Product Data:", prodResult.data.name);
+          console.log("🎨 [DATA_FETCH] Variants Array:", prodResult.data.variants);
         }
 
         const likesRes = await fetch(`${API_BASE_URL}/api/likes/${id}/like`, {
@@ -192,11 +205,11 @@ function ProductDetail({ currency, rates, language }) {
     if (id) fetchProductData();
   }, [id, token]);
 
-  // Translation Effect
   useEffect(() => {
     if (!saree || !language || language === 'en') return;
     const fetchTranslations = async () => {
       setIsTranslating(true);
+      console.log(`[TRANSLATION] 🌐 Translating content to ${language}...`);
       try {
         const [nameRes, descRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/translate`, {
@@ -214,6 +227,7 @@ function ProductDetail({ currency, rates, language }) {
         const dData = await descRes.json();
         setTranslatedName(nData.translatedText || saree.name);
         setTranslatedDesc(dData.translatedText || saree.description);
+        console.log(`[TRANSLATION] ✅ Content translated successfully.`);
       } catch (err) {
         console.error("[ProductDetail] Translation error:", err);
       } finally {
@@ -237,6 +251,7 @@ function ProductDetail({ currency, rates, language }) {
 
   const handleToggleLike = async () => {
     if (!token) { toast.error("Please login to like this product!"); return; }
+    console.log(`[USER_ACTION] ❤️ Toggled like button`);
     const wasLiked = isLiked;
     setIsLiked(!wasLiked);
     setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
@@ -254,6 +269,7 @@ function ProductDetail({ currency, rates, language }) {
     e.preventDefault();
     if (!newComment.trim()) return;
     if (!token) { toast.error("Please login to post a comment!"); return; }
+    console.log(`[USER_ACTION] 💬 Submitting comment...`);
     setIsSubmittingComment(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/comments/${id}/comments`, {
@@ -266,6 +282,7 @@ function ProductDetail({ currency, rates, language }) {
         setComments(prev => [data.comment, ...prev]);
         setNewComment('');
         toast.success("Comment posted successfully!");
+        console.log(`[USER_ACTION] ✅ Comment posted successfully.`);
       } else {
         toast.error(data.message || "Failed to post comment.");
       }
@@ -287,6 +304,7 @@ function ProductDetail({ currency, rates, language }) {
   const handleAddToCart = async (sareeId) => {
     if (isOutOfStock) return;
     if (!token) { toast.error("Please login to add product to cart!"); return; }
+    console.log(`[USER_ACTION] 🛒 Adding to cart, Product ID: ${sareeId}, Qty: ${quantity}`);
     setIsAdding(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
@@ -294,8 +312,10 @@ function ProductDetail({ currency, rates, language }) {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ product_id: sareeId, quantity: quantity })
       });
-      if (response.ok) toast.success(`Added ${quantity} item(s) to cart!`);
-      else toast.error("Could not add item to cart.");
+      if (response.ok) {
+          toast.success(`Added ${quantity} item(s) to cart!`);
+          console.log(`[USER_ACTION] ✅ Added to cart successfully.`);
+      } else toast.error("Could not add item to cart.");
     } catch (error) {
       toast.error("Could not add item to cart.");
     } finally {
@@ -305,6 +325,7 @@ function ProductDetail({ currency, rates, language }) {
 
   const handleBuyNow = () => {
     if (!saree || isOutOfStock) return;
+    console.log(`[USER_ACTION] 💳 Proceeding to Buy Now`);
     navigate('/add-address', {
       state: { buyNowProduct: { product_id: saree.product_id, name: saree.name, price: saree.price, quantity: quantity, image_url: saree.image_url } }
     });
@@ -312,6 +333,7 @@ function ProductDetail({ currency, rates, language }) {
 
   const handleWhatsAppInquiry = () => {
     if (!saree) return;
+    console.log(`[USER_ACTION] 📱 Redirecting to WhatsApp Inquiry`);
     const message = `Hello! I am interested in VIP Booking.\n\n*Product:* ${saree.name}\n*Quantity:* ${quantity}\n*Price:* ${currency} ${getConvertedPrice(saree.price)}\n*Link:* ${window.location.href}`;
     window.open(`${API_BASE_URL}/api/whatsapp/redirect?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
@@ -340,42 +362,67 @@ function ProductDetail({ currency, rates, language }) {
           
           {/* LEFT: GALLERY, ZOOM & SOCIAL ACTIONS */}
           <div className="gallery-section">
-            <div 
-              className="main-image-wrapper amazon-zoom-box"
-              onMouseEnter={() => setIsZoomHovered(true)}
-              onMouseLeave={() => setIsZoomHovered(false)}
-              onMouseMove={handleImageMouseMove}
-            >
-              <img
-                src={currentImageUrl} 
-                alt={saree.name} 
-                className="main-image amazon-zoom-img"
-                style={isZoomHovered ? {
-                  transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
-                  transform: 'scale(2.2)',
-                  cursor: 'crosshair'
-                } : {
-                  transform: 'scale(1)',
-                  transformOrigin: 'center center'
-                }}
-                onError={(e) => { if (!e.currentTarget.src.includes("/saare_1.jpeg")) { e.currentTarget.src = "/saare_1.jpeg"; } }} 
-                draggable="false"
-              />
-              {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
-              <div className="image-zoom-hint">{isZoomHovered ? "Zoomed" : "Hover to zoom"}</div>
+            
+            {/* 🖥️ DESKTOP VIEW: AMAZON STYLE (Vertical Thumbnails on Left) */}
+            <div className="desktop-gallery-layout">
+              {sliderImages.length > 1 && (
+                <div className="desktop-thumbnails">
+                  {sliderImages.map((img, idx) => (
+                    <img
+                      key={idx} src={img} alt={`Angle ${idx + 1}`} 
+                      className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
+                      onClick={() => { setActiveImageIdx(idx); console.log(`[UI_EVENT] 🖥️ Desktop gallery changed to image index: ${idx}`); }} 
+                      onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }} draggable="false"
+                    />
+                  ))}
+                </div>
+              )}
+              
+              <div 
+                className="main-image-wrapper amazon-zoom-box desktop-main-image"
+                onMouseEnter={() => setIsZoomHovered(true)}
+                onMouseLeave={() => setIsZoomHovered(false)}
+                onMouseMove={handleImageMouseMove}
+              >
+                <img
+                  src={currentImageUrl} 
+                  alt={saree.name} 
+                  className="main-image amazon-zoom-img"
+                  style={isZoomHovered ? {
+                    transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
+                    transform: 'scale(2.2)',
+                    cursor: 'crosshair'
+                  } : {
+                    transform: 'scale(1)',
+                    transformOrigin: 'center center'
+                  }}
+                  onError={(e) => { if (!e.currentTarget.src.includes("/saare_1.jpeg")) { e.currentTarget.src = "/saare_1.jpeg"; } }} 
+                  draggable="false"
+                />
+                {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
+                <div className="image-zoom-hint">{isZoomHovered ? "Zoomed" : "Hover to zoom"}</div>
+              </div>
             </div>
 
-            {/* Slider / Thumbnails */}
-            {sliderImages.length > 1 && (
-              <div className="thumbnail-row">
+            {/* 📱 MOBILE VIEW: FLIPKART STYLE (Swipeable Slider) */}
+            <div className="mobile-gallery-slider">
+              {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
+              <div className="mobile-slider-track" onScroll={handleSliderScroll}>
                 {sliderImages.map((img, idx) => (
-                  <img
-                    key={idx} src={img} alt={`Angle ${idx + 1}`} className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
-                    onClick={() => setActiveImageIdx(idx)} onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }} draggable="false"
-                  />
+                  <div className="mobile-slide-item" key={idx}>
+                    <img src={img} alt={`View ${idx + 1}`} onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }} draggable="false" />
+                  </div>
                 ))}
               </div>
-            )}
+              {/* Pagination Dots */}
+              {sliderImages.length > 1 && (
+                <div className="mobile-slider-dots">
+                  {sliderImages.map((_, idx) => (
+                    <span key={idx} className={`dot ${mobileActiveIdx === idx ? 'active' : ''}`}></span>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Social Action Bar */}
             <div className="social-action-bar">
@@ -438,7 +485,7 @@ function ProductDetail({ currency, rates, language }) {
               )}
             </div>
 
-            {/* VARIANTS SWATCHES */}
+            {/* VARIANTS SWATCHES (Mobile Horizontal Scroll & Sold Out overlay) */}
             {saree.variants && saree.variants.length > 0 && (
               <div className="amazon-variants-container">
                 <div className="amazon-variant-label">
@@ -447,12 +494,19 @@ function ProductDetail({ currency, rates, language }) {
                 <div className="amazon-swatch-grid">
                   {saree.variants.map((v) => {
                     const isActive = v.product_id === saree.product_id;
+                    // Safely check if variant is out of stock (using stock_qty if exists, or is_active logic)
+                    const isVariantSoldOut = (v.stock_qty !== undefined && v.stock_qty <= 0) || v.is_active === 0;
+
                     return (
                       <Link 
                         key={v.product_id} 
-                        to={`/product/${v.product_id}`} 
-                        className={`amazon-swatch-item ${isActive ? 'active' : ''}`}
+                        to={isVariantSoldOut ? '#' : `/product/${v.product_id}`} 
+                        className={`amazon-swatch-item ${isActive ? 'active' : ''} ${isVariantSoldOut ? 'sold-out-variant' : ''}`}
                         title={v.color_name || 'Variant'}
+                        onClick={(e) => {
+                           if(isVariantSoldOut) e.preventDefault(); 
+                           else console.log(`[USER_ACTION] 🔄 Navigating to variant ID: ${v.product_id}`);
+                        }}
                       >
                         <div className="amazon-swatch-img-wrap">
                           <img 
@@ -461,6 +515,12 @@ function ProductDetail({ currency, rates, language }) {
                             className="amazon-swatch-img"
                             onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
                           />
+                          {/* Sold Out Overlay for Variant */}
+                          {isVariantSoldOut && (
+                            <div className="variant-out-overlay">
+                              <span className="variant-out-text">Out of stock</span>
+                            </div>
+                          )}
                         </div>
                       </Link>
                     );
@@ -533,7 +593,7 @@ function ProductDetail({ currency, rates, language }) {
               <button 
                 type="button"
                 className="fk-details-toggle-btn" 
-                onClick={() => setShowAllDetails(!showAllDetails)}
+                onClick={() => { setShowAllDetails(!showAllDetails); console.log(`[UI_EVENT] 📜 Toggled All Details panel: ${!showAllDetails}`); }}
               >
                 All details
                 <span className="toggle-icon">{showAllDetails ? '▲' : '▼'}</span>
@@ -592,7 +652,7 @@ function ProductDetail({ currency, rates, language }) {
               <button
                 type="button"
                 className="fk-details-toggle-btn"
-                onClick={() => setShowReviewsToggle((prev) => !prev)}
+                onClick={() => { setShowReviewsToggle((prev) => !prev); console.log(`[UI_EVENT] ⭐ Toggled Reviews panel`); }}
                 aria-expanded={showReviewsToggle}
               >
                 <span>Ratings and reviews</span>
@@ -660,7 +720,7 @@ function ProductDetail({ currency, rates, language }) {
         </div>
       </div>
 
-      {/* RECOMMENDED SECTION */}
+      {/* RECOMMENDED SECTION (Arrows hidden, swipeable on mobile) */}
       <div className="full-width-review-section">
         <div className="review-inner-container">
           <div className="recommended-section-wrapper">

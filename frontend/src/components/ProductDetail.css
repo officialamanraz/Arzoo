@@ -28,19 +28,64 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
 }
 
-
 /* =========================================================
-   GALLERY (LEFT ALIGNED & SLIDER STYLE)
+   GALLERY DESKTOP (AMAZON STYLE - Left Thumbnails)
 ========================================================= */
 
 .gallery-section {
   display: flex;
   flex-direction: column;
   position: sticky;
-  top: 120px; /* Adjusted to respect the new navbar clearance */
+  top: 120px; 
   min-width: 0;
   align-items: flex-start; 
   text-align: left;
+  width: 100%;
+}
+
+.desktop-gallery-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.desktop-thumbnails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 60px; /* Fixed width for left side thumbnails */
+  flex-shrink: 0;
+}
+
+.thumbnail-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  margin-bottom: 15px;
+  justify-content: flex-start; 
+  width: 100%;
+}
+
+.thumbnail {
+  width: 60px; /* Adjusted for desktop side menu */
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border 0.3s ease, transform 0.2s ease;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.thumbnail:hover { transform: scale(1.03); }
+.thumbnail-active { border-color: var(--primary, #c28e38); box-shadow: 0 0 4px rgba(194, 142, 56, 0.5); }
+
+.desktop-main-image {
+  flex: 1;
 }
 
 .main-image-wrapper {
@@ -85,8 +130,9 @@
   opacity: 1;
 }
 
+
 /* =========================================================
-   SOLD OUT
+   SOLD OUT BADGE
 ========================================================= */
 
 .sold-out-badge {
@@ -104,36 +150,65 @@
 
 
 /* =========================================================
-   THUMBNAILS (LEFT ALIGNED - SLIDER STYLE)
+   GALLERY MOBILE (FLIPKART STYLE - Swipeable Slider)
 ========================================================= */
-
-.thumbnail-row {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 5px;
-  margin-bottom: 15px;
-  justify-content: flex-start; 
+.mobile-gallery-slider {
+  display: none; /* Hidden on desktop */
   width: 100%;
+  position: relative;
+  margin-bottom: 15px;
 }
 
-.thumbnail {
-  width: 70px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: border 0.3s ease, transform 0.2s ease;
-  flex-shrink: 0;
+.mobile-slider-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
+  border-radius: 8px;
+  background: var(--bg-light);
+}
+.mobile-slider-track::-webkit-scrollbar { display: none; }
+
+.mobile-slide-item {
+  min-width: 100%;
+  scroll-snap-align: start;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.thumbnail:hover { transform: scale(1.03); }
-.thumbnail-active { border-color: var(--primary, #c28e38); }
+.mobile-slide-item img {
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+}
+
+.mobile-slider-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mobile-slider-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.mobile-slider-dots .dot.active {
+  background: var(--primary, #c28e38);
+  transform: scale(1.2);
+}
 
 
 /* =========================================================
-   SOCIAL ACTION BAR (LEFT ALIGNED)
+   SOCIAL ACTION BAR
 ========================================================= */
 
 .social-action-bar {
@@ -256,7 +331,7 @@
 
 
 /* =========================================================
-   INFO SECTION (LEFT ALIGNED)
+   INFO SECTION
 ========================================================= */
 
 .info-box {
@@ -415,7 +490,7 @@
 
 
 /* =========================================================
-   DESCRIPTION DROPDOWN
+   DESCRIPTION DROPDOWN (RESTORED FROM ORIGINAL)
 ========================================================= */
 .description-dropdown-container {
   width: 100%;
@@ -458,7 +533,7 @@
 
 
 /* =========================================================
-   FINER DETAILS (GAP & ALIGNMENT FIXED)
+   FINER DETAILS (RESTORED FROM ORIGINAL)
 ========================================================= */
 
 .finer-details {
@@ -497,7 +572,7 @@
 
 
 /* =========================================================
-   LIGHTBOX & REVIEWS
+   LIGHTBOX & REVIEWS (RESTORED FROM ORIGINAL)
 ========================================================= */
 
 .lightbox-overlay {
@@ -527,79 +602,17 @@
 
 
 /* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 768px) {
-  .product-detail-page { padding-top: 20px; } /* 👈 Mobile ka top gap bhi minimize kar diya */
-  .main-container { max-width: 100%; padding: 0 1rem 1rem 1rem; }
-  .details-container { grid-template-columns: 1fr; gap: 2rem; padding: 1.5rem; }
-  
-  .gallery-section { 
-    position: static; 
-    align-items: flex-start !important; /* 👈 Gallery items ko left align kiya */
-  } 
-  
-  .thumbnail-row { justify-content: flex-start; } 
-  
-  .social-action-bar { 
-    justify-content: flex-start !important; /* 👈 Mobile par icons ko left side align kar diya */
-  } 
-
-  .product-title { font-size: 1.6rem; }
-  .product-price { font-size: 1.5rem; }
-  .lightbox-overlay { padding: 10px; }
-  .lightbox-image { max-width: 96vw; max-height: 90vh; }
-  .lightbox-close-btn { top: 15px; right: 15px; width: 40px; height: 40px; font-size: 1.7rem; }
-  .finer-details-list li { grid-template-columns: 1fr; gap: 3px; }
-}
-
-@media (max-width: 480px) {
-  .details-container { padding: 1rem; }
-  .social-action-bar { gap: 12px; }
-  .social-btn { width: 32px; height: 32px; font-size: 1.4rem; }
-  .whatsapp-icon { width: 24px; height: 24px; }
-  .action-buttons-row { flex-direction: column; }
-  .add-to-cart-btn, .buy-now-btn { width: 100%; }
-  .thumbnail { width: 60px; height: 60px; }
-}
-
-
-/* =========================================================
-   DYNAMIC DARK MODE FIX
-========================================================= */
-
-/* 🛠️ FIX: Made dark mode overrides much stronger using !important where needed */
-.dark-mode .inline-comment-item, body.dark .inline-comment-item { color: #f1f1f1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-.dark-mode .inline-comment-item strong, body.dark .inline-comment-item strong { color: #ffcc00; }
-.dark-mode .inline-comment-input, body.dark .inline-comment-input { background-color: #1e1e1e !important;color: var(--text-dark, #111); border: 1px solid #444 !important; }
-.dark-mode .social-action-count, body.dark .social-action-count { color: #d1d5db; }
-.dark-mode .add-to-cart-btn, body.dark .add-to-cart-btn { background-color: #f3f4f6; color: #121212; font-weight: 600; }
-.dark-mode .add-to-cart-btn:hover:not(:disabled), body.dark .add-to-cart-btn:hover:not(:disabled) { background-color: #e5e7eb; }
-.dark-mode .mrp-price, body.dark .mrp-price { color: #94a3b8; }
-.dark-mode .discount-badge, body.dark .discount-badge { background-color: rgba(34, 197, 94, 0.2) !important; color: #4ade80 !important; }
-.dark-mode .description-toggle-btn, body.dark .description-toggle-btn { background-color: #1e1e1e !important; color: #f8fafc !important; border: 1px solid #333336 !important; }
-.dark-mode .description-toggle-btn:hover { background-color: #27272a !important; }
-
-/* 🛠️ FIX: Fixed the white box on the Note Alert in Dark Mode */
-.dark-mode .policy-note, body.dark .policy-note, [data-theme='dark'] .policy-note { 
-  background-color: rgba(220, 53, 69, 0.1) !important; 
-  color: #fca5a5 !important; 
-  border: 1px solid rgba(220, 53, 69, 0.3) !important;
-  border-left: 4px solid #ef4444 !important; 
-}
-/* =========================================================
-   FLIPKART STYLE 'ALL DETAILS' SECTION (PERFECT MATCH)
+   FLIPKART STYLE 'ALL DETAILS' SECTION 
 ========================================================= */
 
 .fk-all-details-container {
   width: 100%;
   margin-top: 15px;
-  border: 1px solid #f0f0f0; /* Lighter, subtle border */
+  border: 1px solid #f0f0f0; 
   border-radius: 4px;
   background: #ffffff;
   overflow: hidden;
-  font-family: var(--font-body, 'Inter', sans-serif); /* Forces clean sans-serif font */
+  font-family: var(--font-body, 'Inter', sans-serif); 
 }
 
 .fk-details-toggle-btn {
@@ -617,11 +630,8 @@
   font-family: inherit;
 }
 
-.fk-details-content {
-  padding: 0 16px 16px 16px;
-}
+.fk-details-content { padding: 0 16px 16px 16px; }
 
-/* Scrollable Pill Tabs Row */
 .fk-tabs-row {
   display: flex;
   gap: 12px;
@@ -629,7 +639,6 @@
   padding-bottom: 8px; 
   margin-bottom: 16px;
 }
-
 .fk-tabs-row::-webkit-scrollbar { display: none; }
 
 .fk-tab-btn {
@@ -652,16 +661,12 @@
   border-color: #212121;
 }
 
-.fk-tab-pane {
-  animation: fadeInTab 0.3s ease;
-}
-
+.fk-tab-pane { animation: fadeInTab 0.3s ease; }
 @keyframes fadeInTab {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Fixed Heading Font */
 .fk-group-title {
   font-family: var(--font-body, 'Inter', sans-serif) !important;
   font-size: 1rem;
@@ -670,25 +675,21 @@
   margin: 0 0 12px 0;
 }
 
-/* Grid matching Screenshot */
 .fk-grid-2-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 24px; 
 }
 
-/* Fixed Dividers and Spacing */
 .fk-grid-item {
   display: flex;
   flex-direction: column;
-  gap: 4px; /* Tight gap between label and value */
-  padding: 12px 0; /* Padding for the row */
-  border-bottom: 1px solid #f0f0f0; /* Faint horizontal divider */
+  gap: 4px;
+  padding: 12px 0; 
+  border-bottom: 1px solid #f0f0f0; 
 }
 
-.fk-grid-item.fk-full-width {
-  grid-column: 1 / -1;
-}
+.fk-grid-item.fk-full-width { grid-column: 1 / -1; }
 
 .fk-label {
   font-size: 0.85rem;
@@ -705,22 +706,15 @@
   font-family: inherit;
 }
 
-/* Dark Mode Overrides */
-.dark-mode .fk-all-details-container, body.dark .fk-all-details-container { border-color: #333; background: #1e1e1e; }
-.dark-mode .fk-details-toggle-btn, body.dark .fk-details-toggle-btn { color: #f1f1f1; }
-.dark-mode .fk-tab-btn, body.dark .fk-tab-btn { border-color: #444; background: #1e1e1e; color: #ddd; }
-.dark-mode .fk-tab-btn.active, body.dark .fk-tab-btn.active { background: #e0e0e0; color: #121212; border-color: #e0e0e0; }
-.dark-mode .fk-label, body.dark .fk-label { color: #9ca3af; }
-.dark-mode .fk-value, body.dark .fk-value { color: #f3f4f6; }
-.dark-mode .fk-group-title, body.dark .fk-group-title { color: #f9fafb; }
-.dark-mode .fk-grid-item, body.dark .fk-grid-item { border-bottom-color: #333; }
+
 /* =========================================================
-   AMAZON STYLE VARIANT SWATCHES (Strict Sizing & Grid Fix)
+   AMAZON STYLE VARIANT SWATCHES (With Sold Out Overlay)
 ========================================================= */
 .amazon-variants-container {
   margin: 16px 0;
   padding-top: 12px;
   border-top: 1px solid #e7e7e7;
+  width: 100%;
 }
 
 .amazon-variant-label {
@@ -732,15 +726,21 @@
 
 .amazon-swatch-grid {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* Forces horizontal row on mobile */
   gap: 10px;
+  overflow-x: auto; /* Swiping enabled */
+  padding-bottom: 8px;
+  scrollbar-width: thin;
 }
+.amazon-swatch-grid::-webkit-scrollbar { height: 4px; }
+.amazon-swatch-grid::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
 
 .amazon-swatch-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 65px;
+  flex-shrink: 0; /* Prevents shrinking on mobile swipe */
   padding: 4px;
   border: 1px solid #d5d9d9;
   border-radius: 4px;
@@ -748,6 +748,7 @@
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .amazon-swatch-item:hover {
@@ -761,11 +762,20 @@
   padding: 3px;
 }
 
+/* 🔴 SOLD OUT VARIANT OVERLAY */
+.amazon-swatch-item.sold-out-variant {
+  cursor: not-allowed;
+  opacity: 0.8;
+  border-color: #eee;
+}
+.amazon-swatch-item.sold-out-variant:hover { box-shadow: none; border-color: #eee; }
+
 .amazon-swatch-img-wrap {
   width: 50px;
   height: 60px;
   overflow: hidden;
   border-radius: 2px;
+  position: relative;
 }
 
 .amazon-swatch-img {
@@ -775,13 +785,136 @@
   display: block !important;
 }
 
-.amazon-swatch-text {
-  font-size: 0.75rem;
-  color: #555;
-  margin-top: 4px;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
+.variant-out-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.65); /* Grey blur effect */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
 }
+
+.variant-out-text {
+  color: #c62828;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.95);
+  padding: 2px 4px;
+  border-radius: 2px;
+  text-align: center;
+  transform: rotate(-15deg); /* Crossed text like Flipkart */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  letter-spacing: 0.5px;
+}
+
+
+/* =========================================================
+   RECOMMENDATIONS (Override CSS to handle Mobile vs Desktop)
+========================================================= */
+.recommended-section-wrapper .slider-arrow,
+.recommended-section-wrapper .carousel-arrow,
+.recommended-section-wrapper .slick-arrow {
+  display: none !important;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+  .product-detail-page { padding-top: 20px; } 
+  .main-container { max-width: 100%; padding: 0 1rem 1rem 1rem; }
+  .details-container { grid-template-columns: 1fr; gap: 2rem; padding: 1.5rem; }
+  
+  /* Hide Desktop Gallery, Show Mobile Slider */
+  .desktop-gallery-layout { display: none !important; }
+  .mobile-gallery-slider { display: block !important; }
+  
+  .gallery-section { position: static; align-items: flex-start !important; } 
+  .thumbnail-row { justify-content: flex-start; } 
+  .social-action-bar { justify-content: flex-start !important; } 
+
+  .product-title { font-size: 1.6rem; }
+  .product-price { font-size: 1.5rem; }
+  
+  /* Restored Mobile Media Queries */
+  .lightbox-overlay { padding: 10px; }
+  .lightbox-image { max-width: 96vw; max-height: 90vh; }
+  .lightbox-close-btn { top: 15px; right: 15px; width: 40px; height: 40px; font-size: 1.7rem; }
+  .finer-details-list li { grid-template-columns: 1fr; gap: 3px; }
+
+  /* Recommendations Mobile Override (1.5 items per screen swipeable) */
+  .recommended-section-wrapper > div,
+  .recommended-section-wrapper ul,
+  .recommended-section-wrapper .product-list,
+  .recommended-section-wrapper .product-grid {
+      display: flex !important;
+      overflow-x: auto !important;
+      scroll-snap-type: x mandatory;
+      flex-wrap: nowrap !important;
+      gap: 15px !important;
+      padding-bottom: 10px;
+      scrollbar-width: none;
+  }
+  .recommended-section-wrapper > div::-webkit-scrollbar,
+  .recommended-section-wrapper ul::-webkit-scrollbar { display: none; }
+
+  .recommended-section-wrapper .product-card,
+  .recommended-section-wrapper li {
+      min-width: 65vw !important; /* Forces 1.5 cards to show on screen */
+      scroll-snap-align: start;
+      flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .details-container { padding: 1rem; }
+  .social-action-bar { gap: 12px; }
+  .social-btn { width: 32px; height: 32px; font-size: 1.4rem; }
+  .whatsapp-icon { width: 24px; height: 24px; }
+  .action-buttons-row { flex-direction: column; }
+  .add-to-cart-btn, .buy-now-btn { width: 100%; }
+  .thumbnail { width: 60px; height: 60px; }
+}
+
+
+/* =========================================================
+   DYNAMIC DARK MODE FIX
+========================================================= */
+
+.dark-mode .inline-comment-item, body.dark .inline-comment-item { color: #f1f1f1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.dark-mode .inline-comment-item strong, body.dark .inline-comment-item strong { color: #ffcc00; }
+.dark-mode .inline-comment-input, body.dark .inline-comment-input { background-color: #1e1e1e !important;color: var(--text-dark, #111); border: 1px solid #444 !important; }
+.dark-mode .social-action-count, body.dark .social-action-count { color: #d1d5db; }
+.dark-mode .add-to-cart-btn, body.dark .add-to-cart-btn { background-color: #f3f4f6; color: #121212; font-weight: 600; }
+.dark-mode .add-to-cart-btn:hover:not(:disabled), body.dark .add-to-cart-btn:hover:not(:disabled) { background-color: #e5e7eb; }
+.dark-mode .mrp-price, body.dark .mrp-price { color: #94a3b8; }
+.dark-mode .discount-badge, body.dark .discount-badge { background-color: rgba(34, 197, 94, 0.2) !important; color: #4ade80 !important; }
+
+/* Restored Dark Mode Overrides */
+.dark-mode .description-toggle-btn, body.dark .description-toggle-btn { background-color: #1e1e1e !important; color: #f8fafc !important; border: 1px solid #333336 !important; }
+.dark-mode .description-toggle-btn:hover { background-color: #27272a !important; }
+
+.dark-mode .policy-note, body.dark .policy-note, [data-theme='dark'] .policy-note { 
+  background-color: rgba(220, 53, 69, 0.1) !important; 
+  color: #fca5a5 !important; 
+  border: 1px solid rgba(220, 53, 69, 0.3) !important;
+  border-left: 4px solid #ef4444 !important; 
+}
+
+/* Dark mode for new elements */
+.dark-mode .fk-all-details-container, body.dark .fk-all-details-container { border-color: #333; background: #1e1e1e; }
+.dark-mode .fk-details-toggle-btn, body.dark .fk-details-toggle-btn { color: #f1f1f1; }
+.dark-mode .fk-tab-btn, body.dark .fk-tab-btn { border-color: #444; background: #1e1e1e; color: #ddd; }
+.dark-mode .fk-tab-btn.active, body.dark .fk-tab-btn.active { background: #e0e0e0; color: #121212; border-color: #e0e0e0; }
+.dark-mode .fk-label, body.dark .fk-label { color: #9ca3af; }
+.dark-mode .fk-value, body.dark .fk-value { color: #f3f4f6; }
+.dark-mode .fk-group-title, body.dark .fk-group-title { color: #f9fafb; }
+.dark-mode .fk-grid-item, body.dark .fk-grid-item { border-bottom-color: #333; }
+.dark-mode .amazon-swatch-item, body.dark .amazon-swatch-item { background: #1e1e1e; border-color: #444; }
+.dark-mode .amazon-variant-label, body.dark .amazon-variant-label { color: #e5e7eb; }
+.dark-mode .variant-out-overlay, body.dark .variant-out-overlay { background: rgba(0, 0, 0, 0.75); }
+.dark-mode .variant-out-text, body.dark .variant-out-text { background: rgba(0, 0, 0, 0.95); color: #ef4444; }

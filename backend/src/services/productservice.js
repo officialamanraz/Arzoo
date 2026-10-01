@@ -215,7 +215,7 @@ const getbyidproduct = async (productId) => {
 
             // 🌟 MAIN QUERY: Yahan se 'AND is_active = 1' hata diya hai taaki check kar sakein ki issue active/inactive ka toh nahi
             const variantsQuery = `
-                SELECT product_id, base_color AS color_name, image_url, is_active 
+                SELECT product_id, base_color AS color_name, image_url, is_active,stock_qty
                 FROM products 
                 WHERE group_id = ? AND product_id != ?
             `;
@@ -235,8 +235,9 @@ const getbyidproduct = async (productId) => {
             .filter(v => v.is_active === 1) // Sirf active products ko variants mein dikhayenge
             .map(v => ({
                 product_id: v.product_id,
-                color_name: v.color_name,
-                image_url: getFullImageUrl(v.image_url) 
+                color_name: v.color_name || 'Variant',
+                image_url: getFullImageUrl(v.image_url),
+                stock_qty:v.stock_qty
             }));
         return product;
     } catch (err) {
