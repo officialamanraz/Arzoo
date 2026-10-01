@@ -114,15 +114,16 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 const updateProfile = async (userId, updateData, profile_image) => {
     const { name, email, username, phone, currentPassword, newPassword } = updateData;
 
-    console.log(`\n[PROFILE-SERVICE] Update initiated for User ID: ${userId}`);
+    console.log(`\n[PROFILE-SERVICE] 🔍 Update initiated for User ID: ${userId}`);
+    console.log(`[PROFILE-SERVICE] 📦 Received updateData:`, { name, email, username, phone, hasPassword: !!newPassword, hasImage: !!profile_image });
 
     if (username && !USERNAME_REGEX.test(username)) {
-        console.warn(`[PROFILE-SERVICE] Validation failed: Invalid username format.`);
+        console.warn(`[PROFILE-SERVICE] ⚠️ Validation failed: Invalid username format.`);
         throw new Error('Invalid username. Use only letters, numbers, and underscores (3-30 characters).');
     }
 
     if (email || username) {
-        console.log(`[PROFILE-SERVICE] Checking uniqueness constraints for email/username...`);
+        console.log(`[PROFILE-SERVICE] 🔍 Checking uniqueness constraints for email/username...`);
         const checkQuery = `
             SELECT email, username FROM users 
             WHERE (email = ? OR username = ?) AND user_id != ?
@@ -131,10 +132,10 @@ const updateProfile = async (userId, updateData, profile_image) => {
         
         if (existing.length > 0) {
             const conflict = existing[0];
-            if (conflict.email === email) {
+            if (conflict.email === email && email) {
                 throw new Error('This email is already in use.');
             }
-            if (conflict.username === username) {
+            if (conflict.username === username && username) {
                 throw new Error('This username is already taken.');
             }
         }
@@ -142,38 +143,38 @@ const updateProfile = async (userId, updateData, profile_image) => {
 
     let hashedPassword = null;
     if (newPassword) {
-        console.log(`[PROFILE-SERVICE] Password update requested. Verifying current password...`);
+        console.log(`[PROFILE-SERVICE] 🔒 Password update requested. Verifying current password...`);
         if (!currentPassword) {
             throw new Error('Current password is required to set a new password.');
         }
 
-        // 🚨 FIXED: 'password' ki jagah database column 'password_hash' use kiya hai
         const [users] = await db.execute('SELECT password_hash FROM users WHERE user_id = ?', [userId]);
         if (users.length === 0) throw new Error('User not found.');
 
         const isMatch = await bcrypt.compare(currentPassword, users[0].password_hash);
         if (!isMatch) {
-            console.warn(`[PROFILE-SERVICE] Verification failed: Incorrect current password.`);
+            console.warn(`[PROFILE-SERVICE] ⚠️ Verification failed: Incorrect current password.`);
             throw new Error('Incorrect current password.');
         }
 
         const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
         hashedPassword = await bcrypt.hash(newPassword, salt);
-        console.log(`[PROFILE-SERVICE] New password successfully hashed.`);
+        console.log(`[PROFILE-SERVICE] ✅ New password successfully hashed.`);
     }
 
     const updateFields = [];
     const updateValues = [];
 
-    if (name) { updateFields.push('name = ?'); updateValues.push(name); }
-    if (email) { updateFields.push('email = ?'); updateValues.push(email); }
-    if (username) { updateFields.push('username = ?'); updateValues.push(username); }
-    if (phone) { updateFields.push('phone = ?'); updateValues.push(phone); } 
-    if (profile_image) { updateFields.push('profile_image = ?'); updateValues.push(profile_image); }
-    if (hashedPassword) { updateFields.push('password_hash = ?'); updateValues.push(hashedPassword); } // 🚨 FIXED: password_hash
+    // 🌟 Safely push only defined values to prevent SQL "Bind parameters must not contain undefined" error
+    if (name !== undefined && name !== null) { updateFields.push('name = ?'); updateValues.push(name); }
+    if (email !== undefined && email !== null) { updateFields.push('email = ?'); updateValues.push(email); }
+    if (username !== undefined && username !== null) { updateFields.push('username = ?'); updateValues.push(username); }
+    if (phone !== undefined && phone !== null) { updateFields.push('phone = ?'); updateValues.push(phone); } 
+    if (profile_image !== undefined && profile_image !== null) { updateFields.push('profile_image = ?'); updateValues.push(profile_image); }
+    if (hashedPassword !== undefined && hashedPassword !== null) { updateFields.push('password_hash = ?'); updateValues.push(hashedPassword); }
 
-    if (updateFields.length === 0 && !profile_image) {
-        console.log(`[PROFILE-SERVICE] No changes provided. Returning current user profile.`);
+    if (updateFields.length === 0) {
+        console.log(`[PROFILE-SERVICE] ⚠️ No changes provided. Returning current user profile.`);
         const [user] = await db.execute(
             'SELECT user_id, name, email, username, phone, profile_image, role FROM users WHERE user_id = ?', 
             [userId]
@@ -188,9 +189,11 @@ const updateProfile = async (userId, updateData, profile_image) => {
     updateValues.push(userId);
     const updateQuery = `UPDATE users SET ${updateFields.join(', ')} WHERE user_id = ?`;
 
-    console.log(`[PROFILE-SERVICE] Executing dynamic update query...`);
+    console.log(`[PROFILE-SERVICE] 🚀 Executing dynamic update query:`, updateQuery);
+    console.log(`[PROFILE-SERVICE] 📌 With bind values:`, updateValues);
+    
     const [result] = await db.execute(updateQuery, updateValues);
-    console.log(`[PROFILE-SERVICE] Successfully updated ${result.affectedRows} row(s).`);
+    console.log(`[PROFILE-SERVICE] ✅ Successfully updated ${result.affectedRows} row(s).`);
 
     const [updatedUser] = await db.execute(
         'SELECT user_id, name, email, username, phone, profile_image, role FROM users WHERE user_id = ?', 
