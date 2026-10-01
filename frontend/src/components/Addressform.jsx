@@ -102,7 +102,7 @@ function AddressForm() {
 
   const validate = () => {
     const newErrors = {};
-    if (!form.fullName.trim()) newErrors.fullName = 'Please provide the necessary details.';
+    if (!form.fullName.trim()) newErrors.fullName = 'Please provide your full name.';
     if (!/^\d{10}$/.test(form.phone)) newErrors.phone = 'Enter a valid 10-digit phone number.';
     if (!/^\d{6}$/.test(form.pincode)) newErrors.pincode = 'Enter a valid 6-digit pincode.';
     if (!form.state.trim()) newErrors.state = 'State is required.';
@@ -136,7 +136,6 @@ function AddressForm() {
       console.log('[AddressForm] Save address response:', data);
 
       if (data.success) {
-        // Pass buyNowProduct along with the addressId forward
         navigate('/order-summary', { 
           state: { 
             addressId: data.addressId,
@@ -173,24 +172,58 @@ function AddressForm() {
         </div>
       </div>
 
-      {/* Form */}
+      {/* Form Container */}
       <div className="address-form-container">
-        <FieldInput name="fullName" placeholder="Full Name (Required)*" value={form.fullName} onChange={handleChange} error={errors.fullName} />
-        <FieldInput name="phone" placeholder="Phone number (Required)*" value={form.phone} onChange={handleChange} error={errors.phone} type="tel" maxLength={10} />
+        <FieldInput 
+          label="Full Name *" 
+          name="fullName" 
+          placeholder="Enter your full name" 
+          value={form.fullName} 
+          onChange={handleChange} 
+          error={errors.fullName} 
+        />
+
+        <FieldInput 
+          label="Phone Number *" 
+          name="phone" 
+          placeholder="10-digit mobile number" 
+          value={form.phone} 
+          onChange={handleChange} 
+          error={errors.phone} 
+          type="tel" 
+          maxLength={10} 
+        />
 
         {!showAlternatePhone ? (
           <button type="button" onClick={() => setShowAlternatePhone(true)} className="link-btn">
             + Add Alternate Phone Number
           </button>
         ) : (
-          <FieldInput name="alternatePhone" placeholder="Alternate Phone Number" value={form.alternatePhone} onChange={handleChange} type="tel" maxLength={10} />
+          <FieldInput 
+            label="Alternate Phone Number" 
+            name="alternatePhone" 
+            placeholder="Optional secondary number" 
+            value={form.alternatePhone} 
+            onChange={handleChange} 
+            type="tel" 
+            maxLength={10} 
+          />
         )}
 
         {locationMessage && <p className="error-text">{locationMessage}</p>}
 
         <div className="form-row">
           <div className="flex-1">
-            <FieldInput name="pincode" placeholder="Pincode (Required)*" value={form.pincode} onChange={handleChange} onBlur={handlePincodeBlur} error={errors.pincode} maxLength={6} />
+            <FieldInput 
+              label="Pincode *" 
+              name="pincode" 
+              placeholder="6-digit pincode" 
+              value={form.pincode} 
+              onChange={handleChange} 
+              onBlur={handlePincodeBlur} 
+              error={errors.pincode} 
+              maxLength={6} 
+            />
           </div>
           <button type="button" onClick={handleUseMyLocation} disabled={locating} className="location-btn">
             {locating ? 'Locating...' : '📍 Use my location'}
@@ -199,22 +232,57 @@ function AddressForm() {
 
         <div className="form-row">
           <div className="flex-1">
-            <FieldInput name="state" placeholder="State (Required)*" value={form.state} onChange={handleChange} error={errors.state} />
+            <FieldInput 
+              label="State *" 
+              name="state" 
+              placeholder="State" 
+              value={form.state} 
+              onChange={handleChange} 
+              error={errors.state} 
+            />
           </div>
           <div className="flex-1">
-            <FieldInput name="city" placeholder="City (Required)*" value={form.city} onChange={handleChange} error={errors.city} />
+            <FieldInput 
+              label="City *" 
+              name="city" 
+              placeholder="City / District" 
+              value={form.city} 
+              onChange={handleChange} 
+              error={errors.city} 
+            />
           </div>
         </div>
 
-        <FieldInput name="houseNo" placeholder="House No., Building Name (Required)*" value={form.houseNo} onChange={handleChange} error={errors.houseNo} />
-        <FieldInput name="roadArea" placeholder="Road name, Area, Colony (Required)*" value={form.roadArea} onChange={handleChange} error={errors.roadArea} />
+        <FieldInput 
+          label="House No., Building Name *" 
+          name="houseNo" 
+          placeholder="House no., Building, Apartment" 
+          value={form.houseNo} 
+          onChange={handleChange} 
+          error={errors.houseNo} 
+        />
+
+        <FieldInput 
+          label="Road name, Area, Colony *" 
+          name="roadArea" 
+          placeholder="Street name, Area, Colony" 
+          value={form.roadArea} 
+          onChange={handleChange} 
+          error={errors.roadArea} 
+        />
 
         {!showLandmark ? (
           <button type="button" onClick={() => setShowLandmark(true)} className="link-btn">
             + Add Nearby Famous Shop/Mall/Landmark
           </button>
         ) : (
-          <FieldInput name="landmark" placeholder="Nearby Landmark" value={form.landmark} onChange={handleChange} />
+          <FieldInput 
+            label="Nearby Landmark" 
+            name="landmark" 
+            placeholder="E.g. Near City Mall" 
+            value={form.landmark} 
+            onChange={handleChange} 
+          />
         )}
 
         {submitError && <p className="submit-error-box">{submitError}</p>}
@@ -227,7 +295,6 @@ function AddressForm() {
   );
 }
 
-// Subcomponents
 function Step({ number, label, active }) {
   return (
     <div className="step-wrapper">
@@ -241,10 +308,21 @@ function StepLine() {
   return <div className="step-line" />;
 }
 
-function FieldInput({ name, placeholder, value, onChange, onBlur, error, type = 'text', maxLength }) {
+function FieldInput({ label, name, placeholder, value, onChange, onBlur, error, type = 'text', maxLength }) {
   return (
     <div className="input-group">
-      <input type={type} name={name} placeholder={placeholder} value={value} onChange={onChange} onBlur={onBlur} maxLength={maxLength} className={`form-input ${error ? 'input-error' : ''}`} />
+      {label && <label className="input-label" htmlFor={name}>{label}</label>}
+      <input 
+        id={name}
+        type={type} 
+        name={name} 
+        placeholder={placeholder} 
+        value={value} 
+        onChange={onChange} 
+        onBlur={onBlur} 
+        maxLength={maxLength} 
+        className={`form-input ${error ? 'input-error' : ''}`} 
+      />
       {error && <p className="error-text">{error}</p>}
     </div>
   );
