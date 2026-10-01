@@ -294,7 +294,7 @@
 }
 
 /* =========================================================
-   ROBUST DARK MODE SUPPORT (Covers .dark-mode, body.dark, html.dark)
+   ROBUST DARK MODE SUPPORT (.dark-mode, body.dark, html.dark)
 ========================================================= */
 .dark-mode, body.dark, html.dark, [data-theme='dark'], .dark {
   --bg-main: #121212 !important;
@@ -319,6 +319,7 @@
 @media (max-width: 600px) {
   .cart-page-container {
     padding: 10px 10px 90px 10px !important;
+    background-color: var(--bg-main, var(--bg-light, #f8fafc)) !important;
   }
 
   .cart-layout {
