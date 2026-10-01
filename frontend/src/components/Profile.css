@@ -41,10 +41,6 @@
   border: 3px solid #fff;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-/* Avatar Loading Spinner Overlay */
-.profile-avatar {
-  position: relative;
-}
 
 .avatar-loading-overlay {
   position: absolute;
@@ -123,7 +119,7 @@
   font-size: 15px;
   font-weight: 500;
   color: #555;
-  text-align: left; /* Perfectly aligned text */
+  text-align: left;
   transition: all 0.2s ease;
 }
 
@@ -181,7 +177,6 @@
   border: 1px solid #ffcdd2;
 }
 
-/* Security List Styling */
 .security-list {
   border: 1px solid #d5d9d9;
   border-radius: 8px;
@@ -191,7 +186,7 @@
 .security-row {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Aligns edit button and text cleanly in the center */
+  align-items: center;
   padding: 20px;
   border-bottom: 1px solid #d5d9d9;
 }
@@ -231,7 +226,6 @@
   text-align: left;
 }
 
-/* Edit Button */
 .security-edit-btn {
   background: #fff;
   border: 1px solid #d5d9d9;
@@ -252,13 +246,13 @@
 }
 
 /* =========================================================
-   INLINE EDIT FORM (Tightened Gap & Perfect Alignment)
+   INLINE EDIT FORM 
 ========================================================= */
 .security-edit-form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 4px; /* Extremely tight gap so elements sit close together */
+  gap: 4px;
   margin: 0;
   padding: 0;
   text-align: left;
@@ -280,7 +274,7 @@
   width: 100%;
   max-width: 400px;
   box-sizing: border-box;
-  margin-bottom: 0px; /* Removed extra bottom space */
+  margin-bottom: 0px;
 }
 
 .security-edit-form input:focus {
@@ -289,11 +283,10 @@
   box-shadow: 0 0 0 3px rgba(0,113,133,.2);
 }
 
-/* Decreased gap for Save/Cancel buttons right below inputs */
 .form-actions {
   display: flex;
   gap: 10px;
-  margin-top: 6px !important; /* Forces minimal space */
+  margin-top: 6px !important;
   padding-top: 0px;
 }
 
@@ -374,6 +367,7 @@
     margin: 10px;
     border-radius: 0;
     box-shadow: none;
+    background: transparent !important;
   }
   
   .profile-sidebar {
@@ -427,54 +421,81 @@
     max-width: 100%;
   }
 }
+
 /* =========================================================
-   DARK MODE STYLES FOR PROFILE PAGE
-   ========================================================= */
+   ROBUST DARK MODE STYLES FOR PROFILE PAGE (.dark-mode, body.dark)
+========================================================= */
+.dark-mode, body.dark, html.dark, [data-theme='dark'], .dark {
+  --profile-bg: #1c1c1e !important;
+  --profile-sidebar-bg: #27272a !important;
+  --profile-border: #333336 !important;
+  --profile-text: #f8fafc !important;
+  --profile-subtext: #cbd5e1 !important;
+}
+
+.dark-mode .profile-page-container,
 body.dark .profile-page-container,
 html.dark .profile-page-container,
 [data-theme='dark'] .profile-page-container,
 .dark .profile-page-container {
-  background: #1c1c1e !important;
-  color: #f8fafc !important;
+  background: var(--profile-bg) !important;
+  color: var(--profile-text) !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
 }
 
+.dark-mode .profile-sidebar,
 body.dark .profile-sidebar,
 html.dark .profile-sidebar,
 [data-theme='dark'] .profile-sidebar,
 .dark .profile-sidebar {
-  background: #27272a !important;
-  border-right-color: #333336 !important;
+  background: var(--profile-sidebar-bg) !important;
+  border-right-color: var(--profile-border) !important;
 }
 
+.dark-mode .profile-sidebar-header,
 body.dark .profile-sidebar-header,
 html.dark .profile-sidebar-header,
 [data-theme='dark'] .profile-sidebar-header,
 .dark .profile-sidebar-header {
-  border-bottom-color: #333336 !important;
+  border-bottom-color: var(--profile-border) !important;
 }
 
+.dark-mode .profile-sidebar-header h3,
 body.dark .profile-sidebar-header h3,
 html.dark .profile-sidebar-header h3,
 [data-theme='dark'] .profile-sidebar-header h3,
 .dark .profile-sidebar-header h3 {
-  color: #f8fafc !important;
+  color: var(--profile-text) !important;
 }
 
+.dark-mode .profile-sidebar-header p,
 body.dark .profile-sidebar-header p,
 html.dark .profile-sidebar-header p,
 [data-theme='dark'] .profile-sidebar-header p,
 .dark .profile-sidebar-header p {
-  color: #cbd5e1 !important;
+  color: var(--profile-subtext) !important;
 }
 
+/* 👈 Fixed the white box on mobile dark mode for profile menu */
+.dark-mode .profile-menu,
+body.dark .profile-menu,
+html.dark .profile-menu,
+[data-theme='dark'] .profile-menu,
+.dark .profile-menu {
+  background: var(--profile-sidebar-bg) !important;
+  border-color: var(--profile-border) !important;
+}
+
+.dark-mode .profile-menu li,
 body.dark .profile-menu li,
 html.dark .profile-menu li,
 [data-theme='dark'] .profile-menu li,
 .dark .profile-menu li {
-  color: #cbd5e1 !important;
+  color: var(--profile-subtext) !important;
+  border-bottom-color: var(--profile-border) !important;
 }
 
+.dark-mode .profile-menu li:hover,
 body.dark .profile-menu li:hover,
 html.dark .profile-menu li:hover,
 [data-theme='dark'] .profile-menu li:hover,
@@ -483,52 +504,59 @@ html.dark .profile-menu li:hover,
   color: #ff5252 !important;
 }
 
+.dark-mode .profile-content h2,
 body.dark .profile-content h2,
 html.dark .profile-content h2,
 [data-theme='dark'] .profile-content h2,
 .dark .profile-content h2 {
-  color: #f8fafc !important;
+  color: var(--profile-text) !important;
 }
 
+.dark-mode .security-list,
 body.dark .security-list,
 html.dark .security-list,
 [data-theme='dark'] .security-list,
 .dark .security-list {
-  background: #27272a !important;
-  border-color: #333336 !important;
+  background: var(--profile-sidebar-bg) !important;
+  border-color: var(--profile-border) !important;
 }
 
+.dark-mode .security-row,
 body.dark .security-row,
 html.dark .security-row,
 [data-theme='dark'] .security-row,
 .dark .security-row {
-  border-bottom-color: #333336 !important;
+  border-bottom-color: var(--profile-border) !important;
 }
 
+.dark-mode .security-label,
 body.dark .security-label,
 html.dark .security-label,
 [data-theme='dark'] .security-label,
 .dark .security-label {
-  color: #f8fafc !important;
+  color: var(--profile-text) !important;
 }
 
+.dark-mode .security-value,
 body.dark .security-value,
 html.dark .security-value,
 [data-theme='dark'] .security-value,
 .dark .security-value {
-  color: #cbd5e1 !important;
+  color: var(--profile-subtext) !important;
 }
 
+.dark-mode .security-edit-btn,
 body.dark .security-edit-btn,
 html.dark .security-edit-btn,
 [data-theme='dark'] .security-edit-btn,
 .dark .security-edit-btn {
-  background: #27272a !important;
-  border-color: #333336 !important;
-  color: #f8fafc !important;
+  background: var(--profile-sidebar-bg) !important;
+  border-color: var(--profile-border) !important;
+  color: var(--profile-text) !important;
   box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
 }
 
+.dark-mode .security-edit-btn:hover,
 body.dark .security-edit-btn:hover,
 html.dark .security-edit-btn:hover,
 [data-theme='dark'] .security-edit-btn:hover,
@@ -536,31 +564,35 @@ html.dark .security-edit-btn:hover,
   background: #333336 !important;
 }
 
+.dark-mode .security-edit-form label,
 body.dark .security-edit-form label,
 html.dark .security-edit-form label,
 [data-theme='dark'] .security-edit-form label,
 .dark .security-edit-form label {
-  color: #f8fafc !important;
+  color: var(--profile-text) !important;
 }
 
+.dark-mode .security-edit-form input,
 body.dark .security-edit-form input,
 html.dark .security-edit-form input,
 [data-theme='dark'] .security-edit-form input,
 .dark .security-edit-form input {
-  background: #1c1c1e !important;
-  border-color: #333336 !important;
-  color: #f8fafc !important;
+  background: var(--profile-bg) !important;
+  border-color: var(--profile-border) !important;
+  color: var(--profile-text) !important;
 }
 
+.dark-mode .cancel-btn,
 body.dark .cancel-btn,
 html.dark .cancel-btn,
 [data-theme='dark'] .cancel-btn,
 .dark .cancel-btn {
-  background: #27272a !important;
-  border-color: #333336 !important;
-  color: #f8fafc !important;
+  background: var(--profile-sidebar-bg) !important;
+  border-color: var(--profile-border) !important;
+  color: var(--profile-text) !important;
 }
 
+.dark-mode .cancel-btn:hover,
 body.dark .cancel-btn:hover,
 html.dark .cancel-btn:hover,
 [data-theme='dark'] .cancel-btn:hover,
