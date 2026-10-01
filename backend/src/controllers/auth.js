@@ -256,37 +256,25 @@ const updateUserProfile = async (req, res) => {
 };
 
 const getUserProfile = async (req, res) => {
-  console.log(`[AUTH-CONTROLLER] 📥 Incoming request to fetch user profile`);
-  
   try {
-    // Middleware se verifyToken ke baad req.user milta hai
-    const userId = req.user?.user_id || req.user?.id;
-    
+    // Safely extract user ID regardless of token payload property name
+    const userId = req.user?.user_id || req.user?.id || req.user?.userId;
+    console.log(`[AUTH-CONTROLLER] 📥 Fetching profile for resolved user_id:`, userId);
+
     if (!userId) {
-      console.warn(`[AUTH-CONTROLLER] ⚠️ Unauthorized access attempt: User ID missing in token/request`);
-      return res.status(401).json({ success: false, message: "Unauthorized: User ID not found" });
+      console.warn(`[AUTH-CONTROLLER] ⚠️ User ID is undefined in token payload:`, req.user);
+      return res.status(400).json({ success: false, message: "Invalid token payload: User ID missing" });
     }
 
-    console.log(`[AUTH-CONTROLLER] 🔍 Calling auth service for user_id: ${userId}`);
     const user = await getUserById(userId);
-
-    console.log(`[AUTH-CONTROLLER] ✅ Successfully fetched profile for user_id: ${userId}`);
-    return res.status(200).json({ 
-      success: true, 
-      user 
-    });
-
+    console.log(`[AUTH-CONTROLLER] 📤 Profile successfully fetched for user_id:`, userId);
+    return res.status(200).json({ success: true, user });
   } catch (err) {
-    console.error(`[AUTH-CONTROLLER] ❌ Error fetching user profile:`, err.message);
-    
+    console.error(`[AUTH-CONTROLLER] ❌ Error fetching profile:`, err.message);
     if (err.message === 'USER_NOT_FOUND') {
       return res.status(404).json({ success: false, message: "User not found" });
     }
-    
-    return res.status(500).json({ 
-      success: false, 
-      message: err.message || "Internal server error" 
-    });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
