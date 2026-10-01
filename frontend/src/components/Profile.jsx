@@ -23,15 +23,18 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // 1. Initial Load & Fetch Fresh Profile Data
   useEffect(() => {
+    console.log('[PROFILE_UI] 🔄 Initializing Profile component...');
     const token = localStorage.getItem('token');
     if (!token) {
+      console.warn('[PROFILE_UI] ⚠️ No auth token found. Redirecting to login.');
       navigate('/login');
       return;
     }
 
-    // 1. Pehle local storage se load karo (Fast render ke liye)
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('[PROFILE_UI] 📦 Loaded user from localStorage:', storedUser);
     setUser(storedUser);
     setFormData(prev => ({
       ...prev,
@@ -41,13 +44,14 @@ const Profile = () => {
       profile_image: storedUser.profile_image || ''
     }));
 
-    // 2. Database se hamesha fresh data fetch karo taaki image hamesha update rahe
+    console.log('[PROFILE_UI] 🌐 Fetching fresh user profile from backend...');
     fetch(`${API_BASE_URL}/api/auth/profile`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => res.json())
     .then(data => {
+      console.log('[PROFILE_UI] 📥 Profile fetch response received:', data);
       if (data.success && data.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
@@ -58,21 +62,27 @@ const Profile = () => {
           phone: data.user.phone || prev.phone,
           profile_image: data.user.profile_image || prev.profile_image
         }));
+        console.log('[PROFILE_UI] ✅ Profile state updated with fresh data.');
+      } else {
+        console.warn('[PROFILE_UI] ⚠️ Failed to load fresh profile data:', data.message);
       }
     })
-    .catch(err => console.error('[Profile] Failed to fetch fresh user data:', err));
+    .catch(err => console.error('[PROFILE_UI] ❌ Error fetching fresh user data:', err));
 
   }, [navigate]);
 
+  // 2. Form Input Change Handler
   const handleChange = (e) => {
+    console.log(`[PROFILE_UI] ✍️ Field changed: ${e.target.name} = ${e.target.value}`);
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // 3. Profile Image Upload Handler
   const handleImageChange = async (e) => {
     const file = e.target.files[0]; 
     if (!file) return;
 
-    // Preview dikhane ke liye
+    console.log('[PROFILE_UI] 📸 Profile image selected:', file.name);
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormData(prev => ({ ...prev, profile_image: reader.result }));
@@ -85,30 +95,37 @@ const Profile = () => {
       const dataToSend = new FormData();
       dataToSend.append('profile_image', file); 
       
+      console.log('[PROFILE_UI] 🚀 Sending profile image update request...');
       const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
         body: dataToSend
       });
       const data = await response.json();
+      console.log('[PROFILE_UI] 📥 Image upload response:', data);
       
       if (response.ok && data.success) {
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
         setFormData(prev => ({ ...prev, profile_image: data.user.profile_image }));
         toast.success('Profile photo updated successfully!');
+        console.log('[PROFILE_UI] ✅ Profile photo updated successfully.');
       } else {
         toast.error(data.message || 'Failed to upload image.');
+        console.warn('[PROFILE_UI] ⚠️️ Image upload failed:', data.message);
       }
     } catch (error) {
+      console.error('[PROFILE_UI] ❌ Image upload exception:', error);
       toast.error('Failed to upload image.');
     } finally {
       setIsLoading(false); 
     }
   };
 
+  // 4. General Profile Details Update Handler (Name, Email, Phone)
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    console.log('[PROFILE_UI] 📝 Submitting profile update with data:', { name: formData.name, email: formData.email, phone: formData.phone });
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -124,23 +141,30 @@ const Profile = () => {
       });
 
       const data = await response.json();
+      console.log('[PROFILE_UI] 📥 Profile update response:', data);
+
       if (response.ok && data.success) {
         toast.success('Profile updated successfully!');
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
         setEditSection(null);
+        console.log('[PROFILE_UI] ✅ Profile updated and state synchronized.');
       } else {
         toast.error(data.message || 'Failed to update profile.');
+        console.warn('[PROFILE_UI] ⚠️ Profile update failed:', data.message);
       }
     } catch (error) {
+      console.error('[PROFILE_UI] ❌ Profile update exception:', error);
       toast.error('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 5. Password Update Handler
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
+    console.log('[PROFILE_UI] 🔒 Submitting password change request...');
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -155,21 +179,28 @@ const Profile = () => {
       });
 
       const data = await response.json();
+      console.log('[PROFILE_UI] 📥 Password change response:', data);
+
       if (response.ok && data.success) {
         toast.success('Password changed successfully!');
         setEditSection(null);
         setFormData({ ...formData, currentPassword: '', newPassword: '' });
+        console.log('[PROFILE_UI] ✅ Password changed successfully.');
       } else {
         toast.error(data.message || 'Failed to change password.');
+        console.warn('[PROFILE_UI] ⚠️ Password change failed:', data.message);
       }
     } catch (error) {
+      console.error('[PROFILE_UI] ❌ Password change exception:', error);
       toast.error('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 6. Logout Handler
   const handleLogout = () => {
+    console.log('[PROFILE_UI] 🚪 Logging out user. Clearing localStorage.');
     localStorage.clear();
     navigate('/login');
     window.location.reload();

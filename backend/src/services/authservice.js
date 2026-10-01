@@ -204,12 +204,31 @@ const updateProfile = async (userId, updateData, profile_image) => {
         profile_image: getFullImageUrl(updatedUser[0].profile_image)
     };
 };
+const getUserById = async (userId) => {
+  console.log(`[AUTH-SERVICE] Fetching user profile for user_id: ${userId}`);
+  const [users] = await db.execute(
+    'SELECT user_id, name, email, username, phone, address, profile_image, role FROM users WHERE user_id = ?',
+    [userId]
+  );
 
+  if (users.length === 0) {
+    console.warn(`[AUTH-SERVICE] User not found for user_id: ${userId}`);
+    throw new Error('USER_NOT_FOUND');
+  }
+
+  const user = users[0];
+  console.log(`[AUTH-SERVICE] User profile fetched successfully for user_id: ${userId}`);
+  return {
+    ...user,
+    profile_image: getFullImageUrl(user.profile_image)
+  };
+};
 module.exports = { 
   registerUserService, 
   DuplicateEmailError, 
   forgotpassword, 
   resetpassword, 
   loginuser, 
-  updateProfile 
+  updateProfile,
+  getUserById
 };

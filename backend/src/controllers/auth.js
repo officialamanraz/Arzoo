@@ -7,7 +7,8 @@ const {
   forgotpassword, 
   resetpassword, 
   DuplicateEmailError,
-  updateProfile
+  updateProfile,
+  getUserById
 } = require('../services/authservice');
 const imagekit = require('../../config/imagekit'); 
 
@@ -254,10 +255,46 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
+const getUserProfile = async (req, res) => {
+  console.log(`[AUTH-CONTROLLER] 📥 Incoming request to fetch user profile`);
+  
+  try {
+    // Middleware se verifyToken ke baad req.user milta hai
+    const userId = req.user?.user_id || req.user?.id;
+    
+    if (!userId) {
+      console.warn(`[AUTH-CONTROLLER] ⚠️ Unauthorized access attempt: User ID missing in token/request`);
+      return res.status(401).json({ success: false, message: "Unauthorized: User ID not found" });
+    }
+
+    console.log(`[AUTH-CONTROLLER] 🔍 Calling auth service for user_id: ${userId}`);
+    const user = await getUserById(userId);
+
+    console.log(`[AUTH-CONTROLLER] ✅ Successfully fetched profile for user_id: ${userId}`);
+    return res.status(200).json({ 
+      success: true, 
+      user 
+    });
+
+  } catch (err) {
+    console.error(`[AUTH-CONTROLLER] ❌ Error fetching user profile:`, err.message);
+    
+    if (err.message === 'USER_NOT_FOUND') {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: err.message || "Internal server error" 
+    });
+  }
+};
+
 module.exports = { 
   registerUser, 
   loginUser, 
   forgotPassword, 
   resetPassword, 
-  updateUserProfile 
+  updateUserProfile,
+  getUserProfile
 };
