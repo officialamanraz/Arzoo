@@ -127,7 +127,7 @@ function UserOrders() {
         formData.append('image', reviewData.image);
       }
 
-      const res = await fetch(`${API_BASE_URL}/api/reviews`, {
+      const res = await fetch(`${API_BASE_URL}/api/reviews/add`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
