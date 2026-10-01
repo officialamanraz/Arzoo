@@ -106,7 +106,7 @@ function ProductDetail({ currency, rates, language }) {
         return;
       }
       try {
-        const res = await fetch(`${API_BASE_URL}/api/user/profile`, {
+        const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();

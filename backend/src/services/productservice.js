@@ -198,16 +198,13 @@ const getbyidproduct = async (productId) => {
         // 🌟 2. VARIANTS FETCH LOGIC (UPDATED TO USE group_id)
         // 🌟 ROBUST VARIANTS FETCH QUERY
         let variantResults = [];
-        if (product.group_id !== null && product.group_id !== undefined && String(product.group_id).trim() !== '') {
-            const cleanGroupId = String(product.group_id).trim();
-            console.log(`[PRODUCT_SERVICE] Fetching variants for clean group_id: "${cleanGroupId}" excluding product ID: ${productId}`);
-            
+        if (product.group_id) {
             const variantsQuery = `
                 SELECT product_id, base_color AS color_name, image_url 
                 FROM products 
-                WHERE TRIM(group_id) = ? AND product_id != ? AND is_active = 1
+                WHERE group_id = ? AND product_id != ? AND is_active = 1
             `;
-            [variantResults] = await db.execute(variantsQuery, [cleanGroupId, Number(productId)]);
+            [variantResults] = await db.execute(variantsQuery, [product.group_id, productId]);
         }
 
         product.variants = variantResults.map(v => ({
