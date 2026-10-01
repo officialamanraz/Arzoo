@@ -12,10 +12,12 @@ function CartPage({ currency, rates }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('[CART_PAGE] 🚀 CartPage component mounted.');
     const urlParams = new URLSearchParams(window.location.search);
     const trackingRef = urlParams.get('ref');
     if (trackingRef) {
       sessionStorage.setItem('tracking_ref', trackingRef);
+      console.log('[CART_PAGE] 📌 Tracking reference saved:', trackingRef);
       const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
@@ -23,6 +25,7 @@ function CartPage({ currency, rates }) {
   }, []);
 
   const fetchCart = async () => {
+    console.log('[CART_PAGE] 📡 Fetching cart data initiated...');
     setLoading(true);
     const token = localStorage.getItem('token');
     try {
@@ -33,16 +36,21 @@ function CartPage({ currency, rates }) {
       if (res.success) {
         const data = res.data || res.cart || [];
         setCartItems(data);
+        console.log(`[CART_PAGE] ✅ Cart fetched successfully with ${data.length} item(s).`, data);
+      } else {
+        console.warn('[CART_PAGE] ⚠️️ Failed to fetch cart data:', res.message);
       }
     } catch (err) {
-      console.error('[CartPage] Error fetching cart:', err);
+      console.error('[CART_PAGE] ❌ Error fetching cart:', err);
       toast.error('Failed to load cart items.');
     } finally {
       setLoading(false);
+      console.log('[CART_PAGE] 🏁 Cart fetch cycle completed. Loading state set to false.');
     }
   };
 
   const handleUpdateQuantity = async (cartId, newQuantity) => {
+    console.log(`[CART_PAGE] 🔄 Updating quantity for cart_id: ${cartId} to new qty: ${newQuantity}`);
     if (newQuantity <= 0) return handleRemoveItem(cartId);
     try {
       const token = localStorage.getItem('token');
@@ -54,15 +62,22 @@ function CartPage({ currency, rates }) {
       const res = await response.json();
       if (res.success) {
         setCartItems((prev) => prev.map((item) => (item.cart_id === cartId ? { ...item, quantity: newQuantity } : item)));
+        console.log(`[CART_PAGE] ✅ Quantity successfully updated for cart_id: ${cartId}`);
+      } else {
+        console.warn(`[CART_PAGE] ⚠️ Quantity update failed:`, res.message);
       }
     } catch (error) {
-      console.error('[CartPage] Update Qty Error:', error);
+      console.error('[CART_PAGE] ❌ Update Qty Error:', error);
       toast.error('Could not update quantity.');
     }
   };
 
   const handleRemoveItem = async (cartId) => {
-    if (!window.confirm('Remove this item?')) return;
+    console.log(`[CART_PAGE] 🗑️ Remove request triggered for cart_id: ${cartId}`);
+    if (!window.confirm('Remove this item?')) {
+      console.log('[CART_PAGE] ℹ️ Item removal cancelled by user.');
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/cart/remove/${cartId}`, {
@@ -73,14 +88,16 @@ function CartPage({ currency, rates }) {
       if (res.success) {
         setCartItems((prev) => prev.filter((item) => item.cart_id !== cartId));
         toast.success('Item removed from cart.');
+        console.log(`[CART_PAGE] ✅ Item successfully removed from cart, cart_id: ${cartId}`);
       }
     } catch (error) {
-      console.error('[CartPage] Remove Error:', error);
+      console.error('[CART_PAGE] ❌ Remove Error:', error);
       toast.error('Could not remove item.');
     }
   };
 
   const handleSingleBuyNow = (item) => {
+    console.log(`[CART_PAGE] ⚡ Buy Now clicked for product ID: ${item.product_id}`);
     navigate('/add-address', {
       state: { buyNowProduct: { product_id: item.product_id, name: item.name, price: item.price, quantity: item.quantity, image_url: item.image_url } }
     });
@@ -131,6 +148,7 @@ function CartPage({ currency, rates }) {
                         onClick={() => {
                           if (item.quantity >= item.stock_qty) {
                             toast.error(`Only ${item.stock_qty} available in stock.`);
+                            console.warn(`[CART_PAGE] ⚠️ Stock limit reached for product ID: ${item.product_id}`);
                             return;
                           }
                           handleUpdateQuantity(item.cart_id, Number(item.quantity) + 1);
@@ -207,7 +225,10 @@ function CartPage({ currency, rates }) {
               🛡️ Safe and secure payments. 100% Authentic products.
             </div>
 
-            <button className="btn-place-order" onClick={() => navigate('/add-address', { state: { cartItems, totalAmount } })}>
+            <button className="btn-place-order" onClick={() => {
+              console.log('[CART_PAGE] 🛍️ Place Order clicked. Navigating to address...');
+              navigate('/add-address', { state: { cartItems, totalAmount } });
+            }}>
               PLACE ORDER
             </button>
           </div>
