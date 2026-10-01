@@ -64,37 +64,49 @@ const product = async (req, res) => {
 // ==========================================
 // 2. GET PRODUCT BY ID
 // ==========================================
+// ... (Aapke baaki imports jo product.js mein the)
+
+// ==========================================
+// 2. GET PRODUCT BY ID (Cache Bypass/Debug Logging)
+// ==========================================
 const getProductById = async (req, res) => {
     try {
         const productId = req.params.id;
         const cacheKey = `product_${productId}`;
+        console.log(`[PRODUCT_CONTROLLER] 📥 Incoming GET request for product ID: ${productId}`);
 
         // 1. Check if product exists in cache
         if (typeof myCache !== 'undefined' && myCache.has(cacheKey)) {
             console.log(`[PRODUCT_CONTROLLER] 📦 Serving product ID ${productId} from Cache`);
             const cachedData = myCache.get(cacheKey);
+            console.log(`[PRODUCT_CONTROLLER] 📤 Sending cached response with ${cachedData.variants?.length || 0} variants.`);
             return res.status(200).json({ success: true, data: cachedData });
         }
 
-        // 2. If not in cache, fetch fresh from database (Yehi par variants aur group_id aayenge)
+        console.log(`[PRODUCT_CONTROLLER] 🔄 Not in cache. Fetching fresh data from database...`);
+        // 2. If not in cache, fetch fresh from database
         const product = await getbyidproduct(productId);
 
         if (!product) {
+            console.warn(`[PRODUCT_CONTROLLER] ⚠️ Product not found (ID: ${productId})`);
             return res.status(404).json({ success: false, message: "Product not found" });
         }
 
-        // 3. Save to cache for future requests (TTL e.g. 60 seconds or 5 minutes)
+        // 3. Save to cache for future requests
         if (typeof myCache !== 'undefined') {
             myCache.set(cacheKey, product, 300); // 5 minutes cache
+            console.log(`[PRODUCT_CONTROLLER] 💾 Product data successfully cached.`);
         }
 
+        console.log(`[PRODUCT_CONTROLLER] 📤 Sending fresh product response with ${product.variants?.length || 0} variants.`);
         return res.status(200).json({ success: true, data: product });
     } catch (err) {
-        console.error(`[PRODUCT_CONTROLLER] Error:`, err.message);
+        console.error(`[PRODUCT_CONTROLLER] ❌ Error in getProductById:`, err.message);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+// ... (baaki functions waise hi rahenge)
 // ==========================================
 // 3. ADD PRODUCT
 // ==========================================

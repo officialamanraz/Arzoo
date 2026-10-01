@@ -161,8 +161,10 @@ const getproduct = async() => {
     }
 };
 
+// ... (apka baki code)
+
 const getbyidproduct = async (productId) => {
-    console.log(`[PRODUCT_SERVICE] Fetching product details for ID: ${productId}`);
+    console.log(`[PRODUCT_SERVICE] 🔍 Fetching product details for ID: ${productId}`);
     try {
         const productQuery = `
             SELECT *, 
@@ -173,11 +175,13 @@ const getbyidproduct = async (productId) => {
         const [productResults] = await db.execute(productQuery, [productId]);
 
         if (productResults.length === 0) {
-            console.warn(`[PRODUCT_SERVICE] ⚠️ Product not found with ID: ${productId}`);
+            console.warn(`[PRODUCT_SERVICE] ⚠️️ Product not found with ID: ${productId}`);
             return null; 
         }
         const product = productResults[0];
         
+        console.log(`[PRODUCT_SERVICE] 📌 Found Product Name: "${product.name}", Group ID in DB: "${product.group_id}"`);
+
         product.discount_percentage = product.calculated_discount;
         product.color_name = product.base_color; 
 
@@ -195,16 +199,22 @@ const getbyidproduct = async (productId) => {
         product.gallery_images = [...new Set(allImages)];
         product.image_url = getFullImageUrl(product.image_url);
 
-        // 🌟 2. VARIANTS FETCH LOGIC (UPDATED TO USE group_id)
-        // 🌟 ROBUST VARIANTS FETCH QUERY
+        // 🌟 2. ROBUST VARIANTS FETCH LOGIC
         let variantResults = [];
-        if (product.group_id) {
+        // Ensure group_id is strictly a valid value (not null, undefined or empty string)
+        if (product.group_id !== null && product.group_id !== undefined && String(product.group_id).trim() !== '') {
+            const cleanGroupId = String(product.group_id).trim();
+            console.log(`[PRODUCT_SERVICE] 🔍 Executing variants query for clean group_id: "${cleanGroupId}" excluding product ID: ${productId}`);
+            
             const variantsQuery = `
                 SELECT product_id, base_color AS color_name, image_url 
                 FROM products 
-                WHERE group_id = ? AND product_id != ? AND is_active = 1
+                WHERE TRIM(group_id) = ? AND product_id != ? AND is_active = 1
             `;
-            [variantResults] = await db.execute(variantsQuery, [product.group_id, productId]);
+            [variantResults] = await db.execute(variantsQuery, [cleanGroupId, Number(productId)]);
+            console.log(`[PRODUCT_SERVICE] ✅ Variants query returned ${variantResults.length} row(s).`);
+        } else {
+            console.log(`[PRODUCT_SERVICE] ⚠️ Skipped variant search (Group ID is empty or null)`);
         }
 
         product.variants = variantResults.map(v => ({
@@ -219,6 +229,8 @@ const getbyidproduct = async (productId) => {
         throw err;
     }
 };
+
+// ... (apka baki code)
 const addProductToDB = async (productData) => {
     console.log(`[PRODUCT_SERVICE] Attempting to add new product: "${productData?.name}"`);
     try {
