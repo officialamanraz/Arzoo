@@ -984,15 +984,19 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
    ========================================================= */
 
 /* Make sure image wrapper has no leftover embroidery styling */
-.product-detail-page .main-image-wrapper {
-  position: relative;
-  overflow: hidden !important; 
+/* Ensure the parent wrapper takes full width */
+.product-detail-page .recommended-section-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important; /* Prevents unwanted page-level scrolling */
 }
 
 /* 1. Container: Force Horizontal Scroll (Like Amazon Carousel) */
 .product-detail-page .recommended-section-wrapper > div:last-child,
 .product-detail-page .recommended-section-wrapper [class*="grid"],
 .product-detail-page .recommended-section-wrapper [class*="flex"] {
+  width: 100% !important;      /* THE FIX: Forces container to full width */
+  max-width: 100% !important;  /* THE FIX: Prevents squishing */
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
@@ -1006,73 +1010,9 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
   /* Destroy any existing grid that ruins the slider */
   grid-template-columns: none !important;
   align-items: stretch !important;
+  justify-content: flex-start !important; /* THE FIX: Forces items to start from left */
   
   /* Stylish Desktop Scrollbar */
   scrollbar-width: thin; 
   scrollbar-color: rgba(125, 22, 56, 0.4) transparent;
-}
-
-/* Webkit Scrollbar Customization */
-.product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar,
-.product-detail-page .recommended-section-wrapper [class*="grid"]::-webkit-scrollbar {
-  height: 8px;
-}
-.product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar-thumb,
-.product-detail-page .recommended-section-wrapper [class*="grid"]::-webkit-scrollbar-thumb {
-  background: rgba(125, 22, 56, 0.4);
-  border-radius: 10px;
-}
-.product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar-track,
-.product-detail-page .recommended-section-wrapper [class*="grid"]::-webkit-scrollbar-track {
-  background: rgba(184, 137, 67, 0.1);
-  border-radius: 10px;
-}
-
-/* 2. Desktop Card Sizing (Shows multiple wide cards like Amazon Web) */
-.product-detail-page .recommended-section-wrapper .product-card,
-.product-detail-page .recommended-section-wrapper .saree-card,
-.product-detail-page .recommended-section-wrapper .product-card-simple,
-.product-detail-page .recommended-section-wrapper > div:last-child > div {
-  flex: 0 0 auto !important;
-  width: 230px !important;      /* Perfect Desktop Width */
-  min-width: 230px !important;
-  max-width: 230px !important;
-  scroll-snap-align: start;
-  height: auto !important;
-  margin: 0 !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Hover Effect for Desktop */
-.product-detail-page .recommended-section-wrapper .product-card:hover,
-.product-detail-page .recommended-section-wrapper .saree-card:hover,
-.product-detail-page .recommended-section-wrapper > div:last-child > div:hover {
-  transform: translateY(-4px);
-}
-
-/* 3. Mobile View: Swipeable Compact Cards (Like Amazon App) */
-@media (max-width: 768px) {
-  .product-detail-page .recommended-section-wrapper > div:last-child,
-  .product-detail-page .recommended-section-wrapper [class*="grid"] {
-    gap: 12px !important;
-    padding: 10px 5px 20px 5px !important;
-  }
-  
-  .product-detail-page .recommended-section-wrapper .product-card,
-  .product-detail-page .recommended-section-wrapper .saree-card,
-  .product-detail-page .recommended-section-wrapper .product-card-simple,
-  .product-detail-page .recommended-section-wrapper > div:last-child > div {
-    width: 150px !important;    /* Smaller width for Mobile touch slide */
-    min-width: 150px !important;
-    max-width: 150px !important;
-  }
-}
-
-/* =========================================================
-   HIDE FOOTER SPECIFICALLY ON PRODUCT DETAIL PAGE
-   ========================================================= */
-.product-detail-page ~ footer,
-.product-detail-page + footer,
-.product-detail-page-container footer {
-  display: none !important;
 }
