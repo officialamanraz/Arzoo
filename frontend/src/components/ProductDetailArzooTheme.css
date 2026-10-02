@@ -979,3 +979,122 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
 .dark-mode .product-detail-page .arzoo-embroidery-accent::before {
   border-color: rgba(216, 183, 122, 0.22);
 }
+/* =========================================================
+   BLUEPRINT PATCH: EMBROIDERY MOTIF A & B INTEGRATION 
+   (Overlapping the main product image as per Blueprint)
+   ========================================================= */
+
+/* Ensure the main image wrapper allows the embroidery to break outside its box */
+.product-detail-page .main-image-wrapper {
+  position: relative;
+  overflow: visible !important; 
+}
+
+/* MOTIF A (Top Right Placement) */
+.product-detail-page .main-image-wrapper::before {
+  content: "";
+  position: absolute;
+  top: -35px;
+  right: -35px;
+  width: 140px;
+  height: 140px;
+  background-image: url('/images/arzoo-embroidery.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 10;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 12px rgba(92, 15, 42, 0.15));
+}
+
+/* MOTIF B (Bottom Right Placement - Flipped) */
+.product-detail-page .main-image-wrapper::after {
+  content: "";
+  position: absolute;
+  bottom: -35px;
+  right: -25px;
+  width: 155px;
+  height: 155px;
+  background-image: url('/images/arzoo-embroidery.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 10;
+  pointer-events: none;
+  transform: rotate(165deg); /* Flipped and angled beautifully */
+  filter: drop-shadow(0 -8px 12px rgba(92, 15, 42, 0.15));
+}
+
+/* Mobile Adjustments for Motifs */
+@media (max-width: 768px) {
+  .product-detail-page .main-image-wrapper::before {
+    width: 90px;
+    height: 90px;
+    top: -20px;
+    right: -20px;
+  }
+  .product-detail-page .main-image-wrapper::after {
+    width: 100px;
+    height: 100px;
+    bottom: -20px;
+    right: -15px;
+  }
+}
+
+/* =========================================================
+   BLUEPRINT PATCH: "YOU MIGHT ALSO LIKE" SLIDER/CAROUSEL
+   ========================================================= */
+
+/* Target the container holding the cards to turn it into a horizontal scroll */
+.product-detail-page .recommended-section-wrapper > div:not(h2):not(h3):not(.recommended-section-header) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  gap: 20px !important;
+  padding: 15px 5px 35px 5px !important; /* Extra bottom padding for shadow & scrollbar */
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+/* Hide scrollbar for Chrome/Safari/Edge */
+.product-detail-page .recommended-section-wrapper > div:not(h2):not(h3):not(.recommended-section-header)::-webkit-scrollbar {
+  display: none;
+}
+
+/* Lock the width of the cards so they don't squish */
+.product-detail-page .recommended-section-wrapper .product-card,
+.product-detail-page .recommended-section-wrapper .saree-card,
+.product-detail-page .recommended-section-wrapper .product-card-simple {
+  flex: 0 0 auto !important;
+  width: 250px !important; /* Fixed width for slider items */
+  scroll-snap-align: start;
+  transition: transform 0.3s ease;
+}
+
+/* Slight hover pop effect for slider items */
+.product-detail-page .recommended-section-wrapper .product-card:hover,
+.product-detail-page .recommended-section-wrapper .saree-card:hover,
+.product-detail-page .recommended-section-wrapper .product-card-simple:hover {
+  transform: translateY(-5px);
+}
+
+/* Mobile Slider Adjustments */
+@media (max-width: 768px) {
+  .product-detail-page .recommended-section-wrapper > div:not(h2):not(h3):not(.recommended-section-header) {
+    gap: 12px !important;
+  }
+  
+  .product-detail-page .recommended-section-wrapper .product-card,
+  .product-detail-page .recommended-section-wrapper .saree-card,
+  .product-detail-page .recommended-section-wrapper .product-card-simple {
+    width: 180px !important; /* Smaller cards for mobile slider */
+  }
+}
+
+/* =========================================================
+   HIDE FOOTER SPECIFICALLY ON PRODUCT DETAIL PAGE
+   ========================================================= */
+.product-detail-page ~ footer,
+.product-detail-page + footer,
+.product-detail-page-container footer {
+  display: none !important;
+}
