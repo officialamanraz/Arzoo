@@ -490,15 +490,6 @@ if (!saree) {
             )}
           </div>
           {/* ARZOO SINGLE EMBROIDERY ACCENT */}
-<div className="arzoo-embroidery-accent">
-  <img
-    src="/images/arzoo-embroidery.png"
-    alt=""
-    aria-hidden="true"
-    draggable="false"
-  />
-</div>
-
           {/* RIGHT: INFO, PRICE, VARIANTS */}
           <div className="info-box">
             <h1 className="product-title">{isTranslating ? "Translating..." : translatedName}</h1>
