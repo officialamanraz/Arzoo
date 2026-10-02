@@ -980,89 +980,16 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
   border-color: rgba(216, 183, 122, 0.22);
 }
 /* =========================================================
-   BLUEPRINT PATCH V2: ENGRAVED/SCULPTED MOTIFS + ANIMATION
+   CLEAN PATCH: AMAZON-STYLE RESPONSIVE RECOMMENDATION SLIDER
    ========================================================= */
 
+/* Make sure image wrapper has no leftover embroidery styling */
 .product-detail-page .main-image-wrapper {
   position: relative;
-  overflow: visible !important;
+  overflow: hidden !important; 
 }
 
-/* Base Engraving Styles for both Motifs */
-.product-detail-page .main-image-wrapper::before,
-.product-detail-page .main-image-wrapper::after {
-  content: "";
-  position: absolute;
-  width: 160px;
-  height: 160px;
-  background-image: url('/images/arzoo-embroidery.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  z-index: 10;
-  pointer-events: none;
-  
-  /* MAGIC TRICK 1: Removes the white background completely */
-  mix-blend-mode: multiply;
-  
-  /* MAGIC TRICK 2: Makes it look sculpted/engraved into the image */
-  filter: contrast(1.3) brightness(0.85) sepia(0.3) drop-shadow(1px 1px 0px rgba(255,255,255,0.6));
-  
-  /* Live Carving Animation Trigger */
-  animation: carveSculpture 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-/* Motif A: Top Right */
-.product-detail-page .main-image-wrapper::before {
-  top: -30px;
-  right: -30px;
-  --rot: 0deg; /* Variable for animation */
-}
-
-/* Motif B: Bottom Right */
-.product-detail-page .main-image-wrapper::after {
-  bottom: -30px;
-  right: -15px;
-  --rot: 175deg; /* Flipped for bottom corner */
-}
-
-/* THE "LIVE CARVING" ANIMATION */
-@keyframes carveSculpture {
-  0% {
-    opacity: 0;
-    clip-path: polygon(0 0, 0 0, 0 0, 0 0); /* Starts invisible */
-    transform: scale(0.6) rotate(var(--rot));
-    filter: contrast(0) brightness(2) grayscale(1);
-  }
-  50% {
-    opacity: 0.6;
-    clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%); /* Half carved */
-    filter: contrast(1.5) brightness(1) drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
-  }
-  100% {
-    opacity: 0.9;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); /* Fully revealed */
-    transform: scale(1) rotate(var(--rot));
-    filter: contrast(1.3) brightness(0.85) sepia(0.3) drop-shadow(1px 1px 0px rgba(255,255,255,0.6));
-  }
-}
-
-/* Mobile Adjustments for Engravings */
-@media (max-width: 768px) {
-  .product-detail-page .main-image-wrapper::before,
-  .product-detail-page .main-image-wrapper::after {
-    width: 100px;
-    height: 100px;
-  }
-  .product-detail-page .main-image-wrapper::before { top: -15px; right: -15px; }
-  .product-detail-page .main-image-wrapper::after { bottom: -15px; right: -10px; }
-}
-
-
-/* =========================================================
-   BLUEPRINT PATCH V2: HORIZONTAL SLIDER (FORCE OVERRIDE)
-   ========================================================= */
-
-/* Target the grid container and FORCE it to be a horizontal slider */
+/* 1. Container: Force Horizontal Scroll (Like Amazon Carousel) */
 .product-detail-page .recommended-section-wrapper > div:last-child,
 .product-detail-page .recommended-section-wrapper [class*="grid"],
 .product-detail-page .recommended-section-wrapper [class*="flex"] {
@@ -1071,58 +998,73 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  gap: 16px !important;
-  padding: 10px 5px 30px 5px !important;
+  gap: 20px !important;
+  padding: 15px 5px 30px 5px !important;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   
-  /* Destroy existing grid layouts */
+  /* Destroy any existing grid that ruins the slider */
   grid-template-columns: none !important;
   align-items: stretch !important;
   
-  /* Custom Scrollbar Styling */
+  /* Stylish Desktop Scrollbar */
   scrollbar-width: thin; 
   scrollbar-color: rgba(125, 22, 56, 0.4) transparent;
 }
 
-/* Webkit Scrollbar for Slider */
+/* Webkit Scrollbar Customization */
 .product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar,
 .product-detail-page .recommended-section-wrapper [class*="grid"]::-webkit-scrollbar {
-  height: 6px;
+  height: 8px;
 }
 .product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar-thumb,
 .product-detail-page .recommended-section-wrapper [class*="grid"]::-webkit-scrollbar-thumb {
   background: rgba(125, 22, 56, 0.4);
   border-radius: 10px;
 }
+.product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar-track,
+.product-detail-page .recommended-section-wrapper [class*="grid"]::-webkit-scrollbar-track {
+  background: rgba(184, 137, 67, 0.1);
+  border-radius: 10px;
+}
 
-/* FORCE fixed width on the recommendation cards so they slider left-to-right */
+/* 2. Desktop Card Sizing (Shows multiple wide cards like Amazon Web) */
 .product-detail-page .recommended-section-wrapper .product-card,
 .product-detail-page .recommended-section-wrapper .saree-card,
 .product-detail-page .recommended-section-wrapper .product-card-simple,
 .product-detail-page .recommended-section-wrapper > div:last-child > div {
   flex: 0 0 auto !important;
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px !important;
+  width: 230px !important;      /* Perfect Desktop Width */
+  min-width: 230px !important;
+  max-width: 230px !important;
   scroll-snap-align: start;
   height: auto !important;
-  margin: 0 !important; /* Stop grid margins from breaking the flex */
+  margin: 0 !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Mobile view slider scaling */
+/* Hover Effect for Desktop */
+.product-detail-page .recommended-section-wrapper .product-card:hover,
+.product-detail-page .recommended-section-wrapper .saree-card:hover,
+.product-detail-page .recommended-section-wrapper > div:last-child > div:hover {
+  transform: translateY(-4px);
+}
+
+/* 3. Mobile View: Swipeable Compact Cards (Like Amazon App) */
 @media (max-width: 768px) {
+  .product-detail-page .recommended-section-wrapper > div:last-child,
+  .product-detail-page .recommended-section-wrapper [class*="grid"] {
+    gap: 12px !important;
+    padding: 10px 5px 20px 5px !important;
+  }
+  
   .product-detail-page .recommended-section-wrapper .product-card,
   .product-detail-page .recommended-section-wrapper .saree-card,
   .product-detail-page .recommended-section-wrapper .product-card-simple,
   .product-detail-page .recommended-section-wrapper > div:last-child > div {
-    width: 160px !important;
-    min-width: 160px !important;
-    max-width: 160px !important;
-  }
-  .product-detail-page .recommended-section-wrapper > div:last-child,
-  .product-detail-page .recommended-section-wrapper [class*="grid"] {
-    gap: 12px !important;
+    width: 150px !important;    /* Smaller width for Mobile touch slide */
+    min-width: 150px !important;
+    max-width: 150px !important;
   }
 }
 
