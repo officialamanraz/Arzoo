@@ -497,3 +497,147 @@ body.dark .product-detail-page .buy-now-btn,
 .dark-mode .product-detail-page .buy-now-btn {
   background: linear-gradient(135deg, #6f1235, #8f204b) !important;
 }
+
+/* =========================================================
+   ORIGINAL PRODUCT DETAIL DARK MODE — PRESERVED
+   ---------------------------------------------------------
+   These rules are carried over from the existing
+   ProductDetail.css dark-mode section so the original
+   dark-mode behavior remains available while the new
+   ARZOO theme is active.
+   ========================================================= */
+
+.dark-mode .inline-comment-item,
+body.dark .inline-comment-item {
+  color: #f1f1f1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .inline-comment-item strong,
+body.dark .inline-comment-item strong {
+  color: #ffcc00;
+}
+
+.dark-mode .inline-comment-input,
+body.dark .inline-comment-input {
+  background-color: #1e1e1e !important;
+  color: var(--text-dark, #111);
+  border: 1px solid #444 !important;
+}
+
+.dark-mode .social-action-count,
+body.dark .social-action-count {
+  color: #d1d5db;
+}
+
+.dark-mode .add-to-cart-btn,
+body.dark .add-to-cart-btn {
+  background-color: #f3f4f6;
+  color: #121212;
+  font-weight: 600;
+}
+
+.dark-mode .add-to-cart-btn:hover:not(:disabled),
+body.dark .add-to-cart-btn:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.dark-mode .mrp-price,
+body.dark .mrp-price {
+  color: #94a3b8;
+}
+
+.dark-mode .discount-badge,
+body.dark .discount-badge {
+  background-color: rgba(34, 197, 94, 0.2) !important;
+  color: #4ade80 !important;
+}
+
+/* Restored Dark Mode Overrides */
+.dark-mode .description-toggle-btn,
+body.dark .description-toggle-btn {
+  background-color: #1e1e1e !important;
+  color: #f8fafc !important;
+  border: 1px solid #333336 !important;
+}
+
+.dark-mode .description-toggle-btn:hover {
+  background-color: #27272a !important;
+}
+
+.dark-mode .policy-note,
+body.dark .policy-note,
+[data-theme='dark'] .policy-note {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(220, 53, 69, 0.3) !important;
+  border-left: 4px solid #ef4444 !important;
+}
+
+/* Dark mode for new elements */
+.dark-mode .fk-all-details-container,
+body.dark .fk-all-details-container {
+  border-color: #333;
+  background: #1e1e1e;
+}
+
+.dark-mode .fk-details-toggle-btn,
+body.dark .fk-details-toggle-btn {
+  color: #f1f1f1;
+}
+
+.dark-mode .fk-tab-btn,
+body.dark .fk-tab-btn {
+  border-color: #444;
+  background: #1e1e1e;
+  color: #ddd;
+}
+
+.dark-mode .fk-tab-btn.active,
+body.dark .fk-tab-btn.active {
+  background: #e0e0e0;
+  color: #121212;
+  border-color: #e0e0e0;
+}
+
+.dark-mode .fk-label,
+body.dark .fk-label {
+  color: #9ca3af;
+}
+
+.dark-mode .fk-value,
+body.dark .fk-value {
+  color: #f3f4f6;
+}
+
+.dark-mode .fk-group-title,
+body.dark .fk-group-title {
+  color: #f9fafb;
+}
+
+.dark-mode .fk-grid-item,
+body.dark .fk-grid-item {
+  border-bottom-color: #333;
+}
+
+.dark-mode .amazon-swatch-item,
+body.dark .amazon-swatch-item {
+  background: #1e1e1e;
+  border-color: #444;
+}
+
+.dark-mode .amazon-variant-label,
+body.dark .amazon-variant-label {
+  color: #e5e7eb;
+}
+
+.dark-mode .variant-out-overlay,
+body.dark .variant-out-overlay {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.dark-mode .variant-out-text,
+body.dark .variant-out-text {
+  background: rgba(0, 0, 0, 0.95);
+  color: #ef4444;
+}
