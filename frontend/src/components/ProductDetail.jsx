@@ -343,11 +343,13 @@ function ProductDetail({ currency, rates, language }) {
     return (basePrice * rates[currency].rate).toFixed(2);
   };
 
- if (loading) return (
-  <div className="main-container product-loading-screen">
-    <h2>Loading product details...</h2>
-  </div>
-);
+ if (loading) {
+  return (
+    <div className="product-loading-screen">
+      <h2>Loading product details...</h2>
+    </div>
+  );
+}
 if (!saree) {
   return (
     <div className="main-container product-not-found-screen">
@@ -487,6 +489,15 @@ if (!saree) {
               </div>
             )}
           </div>
+          {/* ARZOO SINGLE EMBROIDERY ACCENT */}
+<div className="arzoo-embroidery-accent">
+  <img
+    src="/images/arzoo-embroidery.png"
+    alt=""
+    aria-hidden="true"
+    draggable="false"
+  />
+</div>
 
           {/* RIGHT: INFO, PRICE, VARIANTS */}
           <div className="info-box">

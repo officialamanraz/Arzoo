@@ -27,43 +27,6 @@
     linear-gradient(135deg, #fffdf9 0%, #fbf3ea 52%, #fffaf3 100%) !important;
 }
 
-/* ---------------------------------------------------------
-   EMBROIDERY DECORATION
-   Image file should be:
-   public/images/arzoo-embroidery.png
-   --------------------------------------------------------- */
-.product-detail-page::before,
-.product-detail-page::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  z-index: 0;
-  background-image: url('/images/arzoo-embroidery.png');
-  background-repeat: no-repeat;
-  background-size: contain;
-  filter: saturate(0.88) sepia(0.10);
-}
-
-/* Upper-right embroidery: stays in empty background area */
-.product-detail-page::before {
-  width: 180px;
-  height: 180px;
-  top: 55px;
-  right: 18px;
-  opacity: 0.13;
-  transform: rotate(7deg);
-}
-
-/* Lower-left embroidery: gives the page a balanced traditional frame */
-.product-detail-page::after {
-  width: 210px;
-  height: 210px;
-  left: -28px;
-  bottom: 120px;
-  opacity: 0.09;
-  transform: rotate(-12deg) scaleX(-1);
-}
-
 /* Make sure actual content stays above decorations */
 .product-detail-page > *,
 .product-detail-page .main-container {
@@ -366,22 +329,6 @@
       linear-gradient(180deg, #fffdf9 0%, #fbf3ea 100%) !important;
   }
 
-  .product-detail-page::before {
-    width: 105px;
-    height: 105px;
-    top: 18px;
-    right: -8px;
-    opacity: 0.10;
-  }
-
-  .product-detail-page::after {
-    width: 125px;
-    height: 125px;
-    left: -25px;
-    bottom: 90px;
-    opacity: 0.07;
-  }
-
   .product-detail-page .details-container {
     padding: 1rem !important;
     border-radius: 16px !important;
@@ -421,20 +368,6 @@
    SMALL PHONES
    --------------------------------------------------------- */
 @media (max-width: 480px) {
-  .product-detail-page::before {
-    width: 82px;
-    height: 82px;
-    top: 10px;
-    right: -10px;
-  }
-
-  .product-detail-page::after {
-    width: 95px;
-    height: 95px;
-    left: -26px;
-    bottom: 80px;
-  }
-
   .product-detail-page .details-container {
     padding: 0.8rem !important;
   }
@@ -642,11 +575,10 @@ body.dark .variant-out-text {
   color: #ef4444;
 }
 
+
 /* =========================================================
-   ARZOO V4 PATCH — READABILITY + REAL EMBROIDERY + LOADER
-   ---------------------------------------------------------
-   This block is additive. Keep ProductDetail.css unchanged.
-========================================================= */
+   ARZOO V4 PATCH — READABILITY + LOADER
+   ========================================================= */
 
 /* ---------- LIGHT MODE: GUARANTEED TEXT READABILITY ---------- */
 .product-detail-page {
@@ -704,361 +636,104 @@ body.dark .variant-out-text {
   color: #5f5550 !important;
 }
 
-/* ---------- REAL EMBROIDERY: USE THE IMAGE YOU PROVIDED ---------- */
-.product-detail-page {
-  background-image:
-    url('/images/arzoo-embroidery.png'),
-    url('/images/arzoo-embroidery.png'),
-    radial-gradient(circle at 12% 18%, rgba(216, 183, 122, 0.10), transparent 24%),
-    radial-gradient(circle at 88% 76%, rgba(125, 22, 56, 0.07), transparent 26%),
-    linear-gradient(135deg, #fffdf9 0%, #fbf3ea 52%, #fffaf3 100%) !important;
-  background-repeat: no-repeat;
-  background-size: 170px 170px, 190px 190px, auto, auto, auto;
-  background-position: right 12px top 58px, left 0 bottom 110px, center, center, center;
-}
-
-/* Keep the embroidery visible inside the main product panel too. */
-.product-detail-page .details-container {
-  background-image:
-    url('/images/arzoo-embroidery.png'),
-    url('/images/arzoo-embroidery.png');
-  background-repeat: no-repeat;
-  background-size: 130px 130px, 150px 150px;
-  background-position: right 14px top 14px, left 14px bottom 14px;
-}
-
-/* ---------- PRODUCT LOADING SCREEN ---------- */
-.product-detail-page .product-loading-screen {
+/* ---------- PRODUCT LOADING SCREEN (BLUEPRINT STYLE) ---------- */
+.product-loading-screen {
   position: relative;
-  min-height: min(620px, calc(100vh - 155px));
   display: flex !important;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  margin: 0 auto;
-  padding: 60px 24px;
-  box-sizing: border-box;
-  overflow: hidden;
-  border-radius: 20px;
-  border: 1px solid rgba(125, 22, 56, 0.12);
+  min-height: 65vh;
+  width: 100%;
   background:
-    radial-gradient(circle at center, rgba(184, 137, 67, 0.10), transparent 32%),
-    linear-gradient(135deg, rgba(255,250,243,0.98), rgba(250,240,228,0.96));
-  box-shadow: 0 18px 50px rgba(92, 15, 42, 0.08);
+    radial-gradient(circle at center, rgba(184, 137, 67, 0.08), transparent 40%),
+    #fffaf3;
+  margin: 20px auto;
+  border-radius: 20px;
+  border: 1px solid rgba(184, 137, 67, 0.15);
+  box-shadow: 0 10px 30px rgba(92, 15, 42, 0.05);
 }
 
-.product-detail-page .product-loading-screen::before {
-  content: '';
+/* Dotted Spinning Ring */
+.product-loading-screen::before {
+  content: "";
   position: absolute;
-  width: 150px;
-  height: 150px;
-  top: 22px;
-  left: 22px;
-  background: url('/images/arzoo-embroidery.png') center / contain no-repeat;
-  opacity: 0.14;
-  transform: rotate(-8deg);
-  animation: arzooEmbroideryFloat 5s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.product-detail-page .product-loading-screen::after {
-  content: '';
-  position: absolute;
-  width: 112px;
-  height: 112px;
-  border: 2px solid rgba(184, 137, 67, 0.25);
-  border-top-color: #7d1638;
-  border-right-color: #b88943;
+  top: calc(50% - 60px);
+  left: 50%;
+  width: 76px;
+  height: 76px;
+  margin-left: -38px; /* Centers exactly horizontally */
   border-radius: 50%;
-  animation: arzooLoaderSpin 2.2s linear infinite;
-  pointer-events: none;
+  border: 3px dotted #7d1638;
+  border-top-color: transparent;
+  border-bottom-color: rgba(184, 137, 67, 0.5);
+  animation: blueprintSpin 2.5s linear infinite;
 }
 
-.product-detail-page .product-loading-screen h2 {
+/* Static/Pulsing Lotus Icon */
+.product-loading-screen::after {
+  content: "🪷";
+  position: absolute;
+  top: calc(50% - 60px);
+  left: 50%;
+  width: 76px;
+  height: 76px;
+  margin-left: -38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  color: #7d1638;
+  animation: blueprintPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(125, 22, 56, 0.15));
+}
+
+.product-loading-screen h2 {
+  margin-top: 90px;
   position: relative;
   z-index: 2;
-  margin: 0;
-  padding: 105px 20px 0;
-  max-width: 600px;
   color: #5c0f2a !important;
   font-family: Georgia, 'Times New Roman', serif !important;
-  font-size: clamp(1.5rem, 2.7vw, 2.35rem) !important;
-  line-height: 1.35 !important;
-  letter-spacing: 0.2px;
-}
-
-.product-detail-page .product-loading-screen h2::before {
-  content: '✿';
-  display: block;
-  position: absolute;
-  left: 50%;
-  top: 15px;
-  transform: translateX(-50%);
-  color: #7d1638;
-  font-size: 58px;
-  line-height: 1;
-  text-shadow: 0 5px 18px rgba(125, 22, 56, 0.12);
-  animation: arzooFlowerPulse 2.2s ease-in-out infinite;
-}
-
-.product-detail-page .product-loading-screen h2::after {
-  content: 'Preparing your saree details';
-  display: block;
-  margin-top: 13px;
-  color: #8a7064;
-  font-family: inherit;
-  font-size: 0.72em;
+  font-size: 1.35rem !important;
   font-weight: 500;
-  letter-spacing: 1.2px;
+  letter-spacing: 0.5px;
 }
 
-@keyframes arzooLoaderSpin {
-  to { transform: rotate(360deg); }
+@keyframes blueprintSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-@keyframes arzooFlowerPulse {
-  0%, 100% { transform: translateX(-50%) scale(0.94); opacity: 0.72; }
-  50% { transform: translateX(-50%) scale(1.08); opacity: 1; }
-}
-
-@keyframes arzooEmbroideryFloat {
-  0%, 100% { transform: rotate(-8deg) translateY(0); }
-  50% { transform: rotate(-4deg) translateY(-7px); }
-}
-
-/* ---------- GLOBAL DARK-SAFE PRODUCT DETAIL ---------- */
-html.dark .product-detail-page,
-body.dark .product-detail-page,
-.dark-mode .product-detail-page {
-  --arzoo-text: #f7e7d4;
-  --arzoo-muted: #c8b8ad;
-  --arzoo-input-bg: #282023;
-  --arzoo-surface: #211a1e;
-  background-image:
-    url('/images/arzoo-embroidery.png'),
-    url('/images/arzoo-embroidery.png'),
-    radial-gradient(circle at 10% 18%, rgba(184, 137, 67, 0.08), transparent 24%),
-    radial-gradient(circle at 88% 75%, rgba(125, 22, 56, 0.10), transparent 26%),
-    linear-gradient(135deg, #171315 0%, #21181c 53%, #151214 100%) !important;
-  background-repeat: no-repeat;
-  background-size: 160px 160px, 180px 180px, auto, auto, auto;
-  background-position: right 12px top 58px, left 0 bottom 110px, center, center, center;
-}
-
-html.dark .product-detail-page .details-container,
-body.dark .product-detail-page .details-container,
-.dark-mode .product-detail-page .details-container {
-  background-color: rgba(31, 24, 28, 0.95) !important;
-  background-image:
-    url('/images/arzoo-embroidery.png'),
-    url('/images/arzoo-embroidery.png');
-  background-repeat: no-repeat;
-  background-size: 120px 120px, 140px 140px;
-  background-position: right 14px top 14px, left 14px bottom 14px;
-}
-
-html.dark .product-detail-page .info-box h1,
-html.dark .product-detail-page .info-box h2,
-html.dark .product-detail-page .info-box h3,
-html.dark .product-detail-page .info-box h4,
-html.dark .product-detail-page .info-box p,
-html.dark .product-detail-page .info-box span,
-html.dark .product-detail-page .info-box label,
-html.dark .product-detail-page .info-box .qty-label,
-html.dark .product-detail-page .info-box .qty-display,
-html.dark .product-detail-page .info-box .fk-label,
-html.dark .product-detail-page .info-box .fk-value,
-html.dark .product-detail-page .info-box .fk-group-title,
-html.dark .product-detail-page .info-box .fk-details-toggle-btn,
-html.dark .product-detail-page .info-box .amazon-variant-label,
-body.dark .product-detail-page .info-box h1,
-body.dark .product-detail-page .info-box h2,
-body.dark .product-detail-page .info-box h3,
-body.dark .product-detail-page .info-box h4,
-body.dark .product-detail-page .info-box p,
-body.dark .product-detail-page .info-box span,
-body.dark .product-detail-page .info-box label,
-body.dark .product-detail-page .info-box .qty-label,
-body.dark .product-detail-page .info-box .qty-display,
-body.dark .product-detail-page .info-box .fk-label,
-body.dark .product-detail-page .info-box .fk-value,
-body.dark .product-detail-page .info-box .fk-group-title,
-body.dark .product-detail-page .info-box .fk-details-toggle-btn,
-body.dark .product-detail-page .info-box .amazon-variant-label,
-.dark-mode .product-detail-page .info-box h1,
-.dark-mode .product-detail-page .info-box h2,
-.dark-mode .product-detail-page .info-box h3,
-.dark-mode .product-detail-page .info-box h4,
-.dark-mode .product-detail-page .info-box p,
-.dark-mode .product-detail-page .info-box span,
-.dark-mode .product-detail-page .info-box label,
-.dark-mode .product-detail-page .info-box .qty-label,
-.dark-mode .product-detail-page .info-box .qty-display,
-.dark-mode .product-detail-page .info-box .fk-label,
-.dark-mode .product-detail-page .info-box .fk-value,
-.dark-mode .product-detail-page .info-box .fk-group-title,
-.dark-mode .product-detail-page .info-box .fk-details-toggle-btn,
-.dark-mode .product-detail-page .info-box .amazon-variant-label {
-  color: #f7e7d4 !important;
-}
-
-html.dark .product-detail-page .mrp-price,
-body.dark .product-detail-page .mrp-price,
-.dark-mode .product-detail-page .mrp-price {
-  color: #b8aaa2 !important;
-}
-
-html.dark .product-detail-page .discount-badge,
-body.dark .product-detail-page .discount-badge,
-.dark-mode .product-detail-page .discount-badge {
-  background: rgba(216, 183, 122, 0.18) !important;
-  border-color: rgba(216, 183, 122, 0.30) !important;
-  color: #f5d99d !important;
-}
-
-html.dark .product-detail-page .policy-note,
-body.dark .product-detail-page .policy-note,
-.dark-mode .product-detail-page .policy-note {
-  background: rgba(125, 22, 56, 0.18) !important;
-  color: #f3b2be !important;
-  border-color: rgba(239, 68, 68, 0.28) !important;
-  border-left-color: #d66a7f !important;
-}
-
-html.dark .product-detail-page .quantity-selector-container,
-body.dark .product-detail-page .quantity-selector-container,
-.dark-mode .product-detail-page .quantity-selector-container {
-  background: rgba(255,255,255,0.04) !important;
-}
-
-html.dark .product-detail-page .quantity-controls,
-body.dark .product-detail-page .quantity-controls,
-.dark-mode .product-detail-page .quantity-controls {
-  background: #282023 !important;
-  border-color: rgba(216, 183, 122, 0.25) !important;
-}
-
-html.dark .product-detail-page .qty-btn,
-body.dark .product-detail-page .qty-btn,
-.dark-mode .product-detail-page .qty-btn {
-  background: transparent !important;
-  color: #f7e7d4 !important;
-}
-
-html.dark .product-detail-page .fk-all-details-container,
-body.dark .product-detail-page .fk-all-details-container,
-.dark-mode .product-detail-page .fk-all-details-container {
-  background: #211a1e !important;
-  border-color: #3b3035 !important;
-}
-
-html.dark .product-detail-page .fk-tab-btn,
-body.dark .product-detail-page .fk-tab-btn,
-.dark-mode .product-detail-page .fk-tab-btn {
-  background: #282023 !important;
-  color: #eee0d5 !important;
-  border-color: #4a3d43 !important;
-}
-
-html.dark .product-detail-page .fk-tab-btn.active,
-body.dark .product-detail-page .fk-tab-btn.active,
-.dark-mode .product-detail-page .fk-tab-btn.active {
-  background: #7d1638 !important;
-  color: #fffaf3 !important;
-  border-color: #7d1638 !important;
-}
-
-html.dark .product-detail-page .amazon-swatch-item,
-body.dark .product-detail-page .amazon-swatch-item,
-.dark-mode .product-detail-page .amazon-swatch-item {
-  background: #241d21 !important;
-  border-color: #4a3d43 !important;
+@keyframes blueprintPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
 }
 
 /* ---------- LOADER DARK MODE ---------- */
-html.dark .product-detail-page .product-loading-screen,
-body.dark .product-detail-page .product-loading-screen,
-.dark-mode .product-detail-page .product-loading-screen {
+html.dark .product-loading-screen,
+body.dark .product-loading-screen,
+.dark-mode .product-loading-screen {
   background:
-    radial-gradient(circle at center, rgba(184, 137, 67, 0.08), transparent 32%),
-    linear-gradient(135deg, rgba(33,26,30,0.98), rgba(25,20,23,0.98)) !important;
-  border-color: rgba(216, 183, 122, 0.16) !important;
-  box-shadow: 0 18px 50px rgba(0,0,0,0.32) !important;
+    radial-gradient(circle at center, rgba(184, 137, 67, 0.08), transparent 40%),
+    #211a1e !important;
+  border-color: rgba(216, 183, 122, 0.15);
 }
 
-html.dark .product-detail-page .product-loading-screen h2,
-body.dark .product-detail-page .product-loading-screen h2,
-.dark-mode .product-detail-page .product-loading-screen h2 {
+html.dark .product-loading-screen::before,
+body.dark .product-loading-screen::before,
+.dark-mode .product-loading-screen::before {
+  border-color: #e3b96f;
+  border-top-color: transparent;
+  border-bottom-color: rgba(227, 185, 111, 0.4);
+}
+
+html.dark .product-loading-screen h2,
+body.dark .product-loading-screen h2,
+.dark-mode .product-loading-screen h2 {
   color: #f7e7d4 !important;
 }
 
-html.dark .product-detail-page .product-loading-screen h2::before,
-body.dark .product-detail-page .product-loading-screen h2::before,
-.dark-mode .product-detail-page .product-loading-screen h2::before {
-  color: #e3b96f !important;
-}
 
-html.dark .product-detail-page .product-loading-screen h2::after,
-body.dark .product-detail-page .product-loading-screen h2::after,
-.dark-mode .product-detail-page .product-loading-screen h2::after {
-  color: #c9b5a8 !important;
-}
-
-/* ---------- MOBILE ---------- */
-@media (max-width: 768px) {
-  .product-detail-page {
-    background-size: 95px 95px, 110px 110px, auto, auto, auto;
-    background-position: right -8px top 20px, left -18px bottom 90px, center, center, center;
-  }
-
-  .product-detail-page .details-container {
-    background-size: 85px 85px, 95px 95px;
-    background-position: right 8px top 8px, left 8px bottom 8px;
-  }
-
-  .product-detail-page .product-loading-screen {
-    min-height: calc(100vh - 160px);
-    margin: 0.5rem 0;
-    padding: 45px 15px;
-    border-radius: 16px;
-  }
-
-  .product-detail-page .product-loading-screen::before {
-    width: 90px;
-    height: 90px;
-    top: 12px;
-    left: 10px;
-  }
-
-  .product-detail-page .product-loading-screen::after {
-    width: 88px;
-    height: 88px;
-  }
-
-  .product-detail-page .product-loading-screen h2 {
-    padding-top: 82px;
-    font-size: 1.35rem !important;
-  }
-
-  .product-detail-page .product-loading-screen h2::before {
-    top: 10px;
-    font-size: 46px;
-  }
-}
-
-@media (max-width: 480px) {
-  .product-detail-page .product-loading-screen {
-    min-height: calc(100vh - 145px);
-    padding: 40px 12px;
-  }
-
-  .product-detail-page .product-loading-screen h2 {
-    font-size: 1.2rem !important;
-    padding-left: 8px;
-    padding-right: 8px;
-  }
-}
 /* =========================================================
    PRODUCT NOT FOUND — ARZOO EMPTY STATE
    ========================================================= */
@@ -1224,4 +899,83 @@ body.dark .product-detail-page .product-not-found-btn,
   .product-detail-page .product-not-found-btn {
     width: 100%;
   }
+}
+
+/* =========================================================
+   SINGLE ARZOO EMBROIDERY ACCENT
+   One actual image — NOT a background
+   ========================================================= */
+
+.product-detail-page .arzoo-embroidery-accent {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0 18px;
+  padding: 8px 0;
+  pointer-events: none;
+}
+
+.product-detail-page .arzoo-embroidery-accent img {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  display: block;
+  opacity: 0.92;
+  filter: saturate(0.95);
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+/* Very subtle premium frame around the single image */
+.product-detail-page .arzoo-embroidery-accent::before {
+  content: "";
+  position: absolute;
+  width: 176px;
+  height: 176px;
+  border: 1px solid rgba(184, 137, 67, 0.18);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.product-detail-page .arzoo-embroidery-accent img:hover {
+  transform: scale(1.02);
+  opacity: 1;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .product-detail-page .arzoo-embroidery-accent {
+    margin: 4px 0 14px;
+    padding: 4px 0;
+  }
+
+  .product-detail-page .arzoo-embroidery-accent img {
+    width: 105px;
+    height: 105px;
+  }
+
+  .product-detail-page .arzoo-embroidery-accent::before {
+    width: 125px;
+    height: 125px;
+  }
+}
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+body.dark .product-detail-page .arzoo-embroidery-accent img,
+.dark-mode .product-detail-page .arzoo-embroidery-accent img {
+  opacity: 0.82;
+  filter: saturate(0.85) brightness(0.88);
+}
+
+body.dark .product-detail-page .arzoo-embroidery-accent::before,
+.dark-mode .product-detail-page .arzoo-embroidery-accent::before {
+  border-color: rgba(216, 183, 122, 0.22);
 }
