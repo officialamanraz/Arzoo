@@ -35,6 +35,7 @@ import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 import Profile from './components/Profile';
 import ReviewsPage from './components/ReviewsPage';
+import './components/newthemeofhomepage';
 
 // 🤝 NEW: Dealer Management & Portal Components
 import AdminDealers from "./components/AdminDealers";

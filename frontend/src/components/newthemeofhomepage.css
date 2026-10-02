@@ -1,0 +1,744 @@
+/* =========================================================
+   ARZOO SAREE — PREMIUM UI THEME OVERLAY
+   ---------------------------------------------------------
+   IMPORTANT:
+   - This file ADDS styles only.
+   - Do NOT delete/replace your existing CSS.
+   - Import this file LAST so these theme rules sit on top.
+   - No layout/data/functionality is changed here.
+   ========================================================= */
+
+:root {
+  --arzoo-wine: #741434;
+  --arzoo-wine-dark: #5b0f27;
+  --arzoo-wine-soft: #8f2a4c;
+  --arzoo-gold: #c79a52;
+  --arzoo-gold-light: #e0bf7b;
+  --arzoo-cream: #fffaf2;
+  --arzoo-ivory: #f8efe3;
+  --arzoo-rose: #f5e1df;
+  --arzoo-text: #38272d;
+  --arzoo-muted: #76646a;
+  --arzoo-line: rgba(116, 20, 52, 0.14);
+  --arzoo-shadow: 0 14px 34px rgba(87, 32, 48, 0.10);
+}
+
+/* =========================================================
+   1. HOME PAGE BACKDROP
+   ========================================================= */
+.home-container {
+  color: var(--arzoo-text);
+  background:
+    radial-gradient(circle at 8% 12%, rgba(199, 154, 82, 0.08), transparent 23%),
+    radial-gradient(circle at 92% 34%, rgba(116, 20, 52, 0.055), transparent 26%),
+    linear-gradient(180deg, #fffdf9 0%, var(--arzoo-cream) 54%, #fffaf6 100%);
+}
+
+.product-section,
+#product {
+  position: relative;
+  background: transparent !important;
+}
+
+/* Decorative edge glow without changing layout dimensions */
+.product-section::before,
+#product::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 4%;
+  right: 4%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--arzoo-gold-light), transparent);
+  pointer-events: none;
+}
+
+/* =========================================================
+   2. SECTION HEADING — HERITAGE / ROYAL LOOK
+   ========================================================= */
+.section-title,
+.featured-title,
+.product-list-header {
+  color: var(--arzoo-wine) !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.10em !important;
+  text-transform: uppercase;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.section-title {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 16px 8px;
+}
+
+.section-title::before,
+.section-title::after {
+  content: "";
+  width: min(13vw, 110px);
+  height: 1px;
+  flex: 0 1 110px;
+  background: linear-gradient(90deg, transparent, var(--arzoo-gold));
+}
+
+.section-title::after {
+  background: linear-gradient(90deg, var(--arzoo-gold), transparent);
+}
+
+/* =========================================================
+   3. BANNER — KEEP ORIGINAL IMAGE/SIZE/STYLE, CHANGE THEME
+   ========================================================= */
+.hero-banner-wrapper {
+  background: #f7eee3 !important;
+  border-bottom: 1px solid rgba(199, 154, 82, 0.42);
+  box-shadow: 0 12px 28px rgba(87, 32, 48, 0.10);
+}
+
+/* Swiper controls: visual-only theme upgrade */
+.hero-swiper .swiper-button-next,
+.hero-swiper .swiper-button-prev {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--arzoo-wine) !important;
+  background: rgba(255, 251, 246, 0.92) !important;
+  border: 1px solid rgba(199, 154, 82, 0.62);
+  box-shadow: 0 5px 14px rgba(68, 32, 40, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-swiper .swiper-button-next:hover,
+.hero-swiper .swiper-button-prev:hover {
+  transform: scale(1.06);
+  box-shadow: 0 8px 18px rgba(68, 32, 40, 0.20);
+}
+
+.hero-swiper .swiper-button-next::after,
+.hero-swiper .swiper-button-prev::after {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.hero-swiper .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  opacity: 0.72;
+  background: #fff8ef;
+  border: 1px solid rgba(116, 20, 52, 0.28);
+}
+
+.hero-swiper .swiper-pagination-bullet-active {
+  opacity: 1;
+  background: var(--arzoo-wine);
+  box-shadow: 0 0 0 3px rgba(199, 154, 82, 0.22);
+}
+
+/* =========================================================
+   4. RIBBON — DEEP WINE + ANTIQUE GOLD
+   ========================================================= */
+.hero-subtitle-wrapper {
+  position: relative;
+  margin-bottom: 26px !important;
+  overflow: hidden;
+}
+
+.hero-text-overlay {
+  background: linear-gradient(90deg, #68112f 0%, #85183c 52%, #b27a2e 100%) !important;
+  color: #fff7ec !important;
+  border-top: 1px solid rgba(224, 191, 123, 0.62) !important;
+  border-bottom: 1px solid rgba(224, 191, 123, 0.62) !important;
+  box-shadow: 0 7px 18px rgba(87, 32, 48, 0.15) !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.13);
+}
+
+.hero-text-overlay::before {
+  content: "✦";
+  margin-right: 12px;
+  color: var(--arzoo-gold-light);
+}
+
+.hero-text-overlay::after {
+  content: "✦";
+  margin-left: 12px;
+  color: var(--arzoo-gold-light);
+}
+
+/* =========================================================
+   5. PRODUCT GRID — PREMIUM SAREE CARDS, NO LAYOUT RESET
+   ========================================================= */
+.product-grid {
+  position: relative;
+  isolation: isolate;
+}
+
+.product-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fffdf9 0%, #fff8f0 100%) !important;
+  border: 1px solid rgba(199, 154, 82, 0.24) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 7px 20px rgba(87, 32, 48, 0.07) !important;
+  transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+  text-decoration: none;
+}
+
+.product-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(199, 154, 82, 0.56) !important;
+  box-shadow: 0 15px 30px rgba(87, 32, 48, 0.13) !important;
+}
+
+.product-image-container {
+  background: #f4e9de;
+}
+
+.product-img {
+  transition: transform 0.40s ease, filter 0.40s ease;
+}
+
+.product-card:hover .product-img {
+  transform: scale(1.025);
+  filter: saturate(1.03);
+}
+
+.product-info {
+  padding: 12px 12px 14px !important;
+}
+
+.product-name {
+  color: var(--arzoo-text) !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 600;
+}
+
+.price-tag {
+  color: var(--arzoo-wine) !important;
+  font-weight: 800 !important;
+}
+
+.original-mrp {
+  color: #8f7c82 !important;
+}
+
+/* Replace the old marketplace-blue visual with Arzoo colours */
+.flipkart-discount-badge {
+  background: linear-gradient(135deg, var(--arzoo-wine-dark), var(--arzoo-wine-soft)) !important;
+  color: #fffaf3 !important;
+  border: 1px solid rgba(224, 191, 123, 0.55);
+  border-left: 0;
+  border-top: 0;
+  border-radius: 0 12px 12px 0 !important;
+  letter-spacing: 0.6px;
+}
+
+/* =========================================================
+   6. LOADING AREA — ELEGANT TRADITIONAL
+   Works with the existing .loader-container/.pulse-text
+   and does not require JSX changes.
+   ========================================================= */
+.loader-container {
+  position: relative;
+  min-height: 330px;
+  max-width: 1060px;
+  margin: 18px auto 36px;
+  padding: 38px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid rgba(199, 154, 82, 0.30);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 12% 15%, rgba(116, 20, 52, 0.075), transparent 25%),
+    radial-gradient(circle at 88% 85%, rgba(199, 154, 82, 0.11), transparent 29%),
+    linear-gradient(145deg, #fffdf9 0%, #fbf1e7 100%);
+  box-shadow: var(--arzoo-shadow), inset 0 0 60px rgba(255, 255, 255, 0.68);
+}
+
+.loader-container::before,
+.loader-container::after {
+  position: absolute;
+  pointer-events: none;
+  color: rgba(116, 20, 52, 0.13);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.loader-container::before {
+  content: "❈";
+  left: 24px;
+  top: 18px;
+  font-size: 30px;
+}
+
+.loader-container::after {
+  content: "❈";
+  right: 24px;
+  bottom: 16px;
+  font-size: 34px;
+}
+
+.loader-container .pulse-text {
+  position: relative;
+  margin: 0;
+  color: var(--arzoo-wine) !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+  animation: arzooLoaderFloat 2.8s ease-in-out infinite;
+}
+
+.loader-container .pulse-text::before {
+  content: "❋";
+  display: block;
+  width: fit-content;
+  margin: 0 auto 14px;
+  color: var(--arzoo-wine);
+  font-size: 54px;
+  line-height: 1;
+  filter: drop-shadow(0 7px 9px rgba(116, 20, 52, 0.12));
+  animation: arzooLoaderBloom 2.4s ease-in-out infinite;
+}
+
+.loader-container .pulse-text::after {
+  content: "";
+  display: block;
+  width: 110px;
+  height: 3px;
+  margin: 16px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--arzoo-gold), transparent);
+  background-size: 200% 100%;
+  animation: arzooLoaderShimmer 2s linear infinite;
+}
+
+@keyframes arzooLoaderFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes arzooLoaderBloom {
+  0%, 100% { transform: scale(0.92) rotate(-3deg); opacity: 0.80; }
+  50% { transform: scale(1.06) rotate(3deg); opacity: 1; }
+}
+
+@keyframes arzooLoaderShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* =========================================================
+   7. ADMIN SWITCHER — PREMIUM FLOATING BUTTON
+   ========================================================= */
+.admin-switcher-btn {
+  background: linear-gradient(135deg, #71112f, #981f45) !important;
+  color: #fff8ef !important;
+  border: 1px solid var(--arzoo-gold-light) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 10px 24px rgba(87, 32, 48, 0.22) !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.admin-switcher-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(87, 32, 48, 0.28) !important;
+}
+
+/* =========================================================
+   8. NAVBAR — SAME STRUCTURE, MORE ARZOO IDENTITY
+   ========================================================= */
+.navbar {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 249, 0.98), rgba(252, 244, 235, 0.97)) !important;
+  border-bottom: 1px solid rgba(199, 154, 82, 0.28);
+  box-shadow: 0 5px 18px rgba(87, 32, 48, 0.08) !important;
+}
+
+.nav-logo {
+  color: var(--arzoo-wine) !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.nav-logo::before {
+  content: "❖";
+  margin-right: 8px;
+  color: var(--arzoo-gold);
+  font-size: 0.86em;
+  vertical-align: 2px;
+}
+
+.nav-link {
+  color: var(--arzoo-text) !important;
+}
+
+.nav-link:hover {
+  color: var(--arzoo-wine) !important;
+}
+
+.menu-btn {
+  color: var(--arzoo-wine) !important;
+}
+
+.menu-btn:hover {
+  background: rgba(116, 20, 52, 0.07) !important;
+}
+
+.search-container {
+  background: #fffdf9 !important;
+  border-color: rgba(199, 154, 82, 0.34) !important;
+  box-shadow: inset 0 1px 2px rgba(87, 32, 48, 0.03), 0 3px 10px rgba(87, 32, 48, 0.04) !important;
+}
+
+.search-input::placeholder {
+  color: #99888c;
+}
+
+.search-btn {
+  background: linear-gradient(135deg, var(--arzoo-wine-dark), var(--arzoo-wine-soft)) !important;
+}
+
+.search-btn:hover {
+  background: linear-gradient(135deg, #4e0b21, #781537) !important;
+}
+
+.lang-select,
+.currency-toggle {
+  background: #fffdf9 !important;
+  border-color: rgba(199, 154, 82, 0.30) !important;
+  color: var(--arzoo-text) !important;
+}
+
+.cart-link {
+  background: linear-gradient(135deg, var(--arzoo-wine-dark), var(--arzoo-wine-soft));
+  color: #fff8ef !important;
+  padding: 9px 14px;
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(116, 20, 52, 0.16);
+}
+
+.cart-link:hover {
+  color: #fff8ef !important;
+  transform: translateY(-1px);
+}
+
+.theme-toggle:hover {
+  background: rgba(199, 154, 82, 0.12) !important;
+}
+
+/* =========================================================
+   9. MOBILE — SAME NAV/PRODUCT STRUCTURE, PREMIUM FEEL
+   ========================================================= */
+@media (max-width: 768px) {
+  .home-container {
+    background:
+      radial-gradient(circle at 14% 15%, rgba(199, 154, 82, 0.08), transparent 28%),
+      linear-gradient(180deg, #fffdf9 0%, #fff8f1 100%);
+  }
+
+  .navbar {
+    padding-top: 9px !important;
+    padding-bottom: 9px !important;
+    border-bottom-color: rgba(199, 154, 82, 0.35);
+  }
+
+  .nav-logo {
+    font-size: 21px !important;
+  }
+
+  .nav-logo::before {
+    margin-right: 6px;
+  }
+
+  .search-container {
+    border-radius: 10px !important;
+  }
+
+  .search-btn {
+    border-radius: 0 9px 9px 0;
+  }
+
+  .hero-banner-wrapper {
+    box-shadow: 0 9px 22px rgba(87, 32, 48, 0.12);
+  }
+
+  .hero-swiper .swiper-button-next,
+  .hero-swiper .swiper-button-prev {
+    width: 34px;
+    height: 34px;
+  }
+
+  .hero-swiper .swiper-button-next::after,
+  .hero-swiper .swiper-button-prev::after {
+    font-size: 13px;
+  }
+
+  .hero-text-overlay {
+    font-size: 11px !important;
+    letter-spacing: 1.1px !important;
+    padding: 11px 7px !important;
+  }
+
+  .hero-text-overlay::before,
+  .hero-text-overlay::after {
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+
+  .section-title {
+    gap: 8px;
+    padding: 18px 10px 6px;
+    letter-spacing: 0.07em !important;
+    font-size: 1.42rem !important;
+    line-height: 1.25;
+  }
+
+  .section-title::before,
+  .section-title::after {
+    width: 42px;
+    flex-basis: 42px;
+  }
+
+  .loader-container {
+    min-height: 330px;
+    margin: 14px 10px 32px;
+    padding: 28px 18px;
+    border-radius: 20px;
+  }
+
+  .loader-container .pulse-text {
+    font-size: 1.15rem;
+  }
+
+  .loader-container .pulse-text::before {
+    font-size: 46px;
+    margin-bottom: 12px;
+  }
+
+  .loader-container .pulse-text::after {
+    width: 90px;
+    margin-top: 13px;
+  }
+
+  .product-grid {
+    gap: 10px !important;
+  }
+
+  .product-card {
+    border-radius: 14px !important;
+  }
+
+  .product-info {
+    padding: 10px 9px 12px !important;
+  }
+
+  .mobile-bottom-nav {
+    background: rgba(255, 250, 244, 0.97) !important;
+    border-top: 1px solid rgba(199, 154, 82, 0.36) !important;
+    box-shadow: 0 -8px 22px rgba(87, 32, 48, 0.10) !important;
+    backdrop-filter: blur(12px);
+  }
+
+  .mobile-nav-item {
+    color: var(--arzoo-text) !important;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+
+  .mobile-nav-item:hover,
+  .mobile-nav-item:focus-visible {
+    color: var(--arzoo-wine) !important;
+    transform: translateY(-2px);
+  }
+
+  .mobile-nav-icon {
+    color: var(--arzoo-wine);
+  }
+
+  .admin-switcher-btn {
+    bottom: 82px !important;
+    right: 12px !important;
+    max-width: calc(100vw - 24px);
+    padding: 11px 17px !important;
+  }
+}
+
+/* =========================================================
+   10. SMALL PHONE POLISH
+   ========================================================= */
+@media (max-width: 400px) {
+  .nav-logo {
+    font-size: 19px !important;
+  }
+
+  .section-title {
+    font-size: 1.25rem !important;
+  }
+
+  .loader-container {
+    min-height: 300px;
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+}
+
+/* =========================================================
+   11. DARK MODE — KEEP EXISTING DARK FUNCTIONALITY
+   ========================================================= */
+body.dark .home-container,
+html.dark .home-container,
+[data-theme="dark"] .home-container {
+  background:
+    radial-gradient(circle at 10% 12%, rgba(199, 154, 82, 0.07), transparent 24%),
+    linear-gradient(180deg, #171214 0%, #1f171a 100%) !important;
+  color: #f7eee5;
+}
+
+body.dark .section-title,
+html.dark .section-title,
+[data-theme="dark"] .section-title {
+  color: #f1c37a !important;
+}
+
+body.dark .product-card,
+html.dark .product-card,
+[data-theme="dark"] .product-card {
+  background: linear-gradient(180deg, #241c20, #1d1719) !important;
+  border-color: rgba(199, 154, 82, 0.26) !important;
+}
+
+body.dark .product-name,
+html.dark .product-name,
+[data-theme="dark"] .product-name {
+  color: #f7eee5 !important;
+}
+
+body.dark .loader-container,
+html.dark .loader-container,
+[data-theme="dark"] .loader-container {
+  background:
+    radial-gradient(circle at 10% 15%, rgba(143, 42, 76, 0.18), transparent 27%),
+    radial-gradient(circle at 88% 85%, rgba(199, 154, 82, 0.10), transparent 29%),
+    linear-gradient(145deg, #241c20, #1c1719);
+  border-color: rgba(224, 191, 123, 0.22);
+}
+
+body.dark .loader-container .pulse-text,
+html.dark .loader-container .pulse-text,
+[data-theme="dark"] .loader-container .pulse-text {
+  color: #f1c37a !important;
+}
+
+/* =========================================================
+   END — EXISTING CSS IS NOT REMOVED BY THIS FILE
+   ========================================================= */
+
+/* =========================================================
+   12. PRODUCT-LIST.CSS CARDS — SAME GRID, ARZOO THEME ONLY
+   ========================================================= */
+.product-card-simple {
+  background: linear-gradient(180deg, #fffdf9 0%, #fff7ef 100%) !important;
+  border-color: rgba(199, 154, 82, 0.25) !important;
+  box-shadow: 0 8px 24px rgba(87, 32, 48, 0.07) !important;
+}
+
+.product-card-simple:hover {
+  box-shadow: 0 15px 30px rgba(87, 32, 48, 0.13) !important;
+  border-color: rgba(199, 154, 82, 0.55) !important;
+}
+
+.product-card-img {
+  background: #f5e9dc !important;
+}
+
+.product-card-title {
+  color: var(--arzoo-text) !important;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.product-card-desc {
+  color: var(--arzoo-muted) !important;
+}
+
+.product-card-price,
+.product-card-btn {
+  background: linear-gradient(135deg, var(--arzoo-wine-dark), var(--arzoo-wine-soft)) !important;
+}
+
+.product-card-price {
+  background: none !important;
+  color: var(--arzoo-wine) !important;
+}
+
+.product-card-btn {
+  color: #fff8ef !important;
+  border: 1px solid rgba(224, 191, 123, 0.40) !important;
+  box-shadow: 0 5px 12px rgba(116, 20, 52, 0.13);
+}
+
+.product-card-btn:hover {
+  background: linear-gradient(135deg, #4f0b22, #761538) !important;
+}
+
+/* Existing Flipkart/Amazon detail components retain their function,
+   but inherit the Arzoo colour language. */
+.fk-tab-btn.active {
+  background: var(--arzoo-wine) !important;
+  border-color: var(--arzoo-wine) !important;
+}
+
+.fk-show-all-reviews-link {
+  color: var(--arzoo-wine) !important;
+}
+
+.fk-svg-icon {
+  fill: var(--arzoo-wine) !important;
+}
+
+.amazon-swatch-item.active {
+  border-color: var(--arzoo-gold) !important;
+  box-shadow: 0 0 0 2px rgba(199, 154, 82, 0.18) !important;
+}
+
+/* Product-list dark mode */
+body.dark .product-card-simple,
+html.dark .product-card-simple,
+[data-theme="dark"] .product-card-simple {
+  background: linear-gradient(180deg, #241c20, #1d1719) !important;
+  border-color: rgba(199, 154, 82, 0.24) !important;
+}
+
+body.dark .product-card-title,
+html.dark .product-card-title,
+[data-theme="dark"] .product-card-title {
+  color: #f7eee5 !important;
+}
+
+body.dark .product-card-desc,
+html.dark .product-card-desc,
+[data-theme="dark"] .product-card-desc {
+  color: #c8b8bd !important;
+}
+
+body.dark .product-card-price,
+html.dark .product-card-price,
+[data-theme="dark"] .product-card-price {
+  color: #f1c37a !important;
+}
