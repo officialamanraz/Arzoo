@@ -1,0 +1,272 @@
+/* =========================================================
+   ARZOO GLOBAL THEME — ADDITIVE ONLY
+   ---------------------------------------------------------
+   Import this file LAST from App.jsx.
+   It does not remove or replace page-specific CSS.
+
+   Global dark mode is activated by either:
+     <html class="dark"> or <body class="dark">
+   so route changes keep the same theme automatically.
+========================================================= */
+
+:root {
+  --arzoo-global-light: #fffaf3;
+  --arzoo-global-cream: #f8efe4;
+  --arzoo-global-wine: #7d1638;
+  --arzoo-global-wine-dark: #5c0f2a;
+  --arzoo-global-gold: #b88943;
+  --arzoo-global-text: #3b252a;
+  --arzoo-global-muted: #766a64;
+  --arzoo-global-border: rgba(125, 22, 56, 0.13);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: #fffdf9;
+  color: var(--arzoo-global-text);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Shared light-mode surfaces. These are intentionally conservative. */
+.navbar,
+.mobile-bottom-nav,
+.side-sidebar {
+  color: var(--arzoo-global-text);
+}
+
+/* =========================================================
+   GLOBAL DARK MODE
+========================================================= */
+
+html.dark,
+body.dark {
+  color-scheme: dark;
+  background: #151214 !important;
+  color: #f7e7d4 !important;
+}
+
+body.dark #root {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(125, 22, 56, 0.08), transparent 28%),
+    linear-gradient(180deg, #171315 0%, #151214 100%) !important;
+  color: #f7e7d4 !important;
+}
+
+/* Main page surfaces used by your existing pages */
+body.dark .home-container,
+body.dark .product-section,
+body.dark .product-list-wrapper,
+body.dark .product-detail-page,
+body.dark .cart-page,
+body.dark .checkout-page,
+body.dark .profile-page,
+body.dark .orders-page,
+body.dark .order-page,
+body.dark .address-page,
+body.dark .payment-page,
+body.dark .about-page,
+body.dark .contact-page,
+body.dark .admin-page,
+body.dark .admin-container,
+body.dark .login-page,
+body.dark .signup-page,
+body.dark .forgot-password-page,
+body.dark .reset-password-page {
+  color: #f7e7d4 !important;
+}
+
+/* Common typography. Explicit component colors can still override where needed. */
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+body.dark p,
+body.dark label,
+body.dark small,
+body.dark .section-title,
+body.dark .featured-title,
+body.dark .product-list-header {
+  color: #f7e7d4 !important;
+}
+
+body.dark a {
+  color: #efc987;
+}
+
+/* Form controls across pages */
+body.dark input,
+body.dark textarea,
+body.dark select {
+  background: #241d21 !important;
+  color: #f7e7d4 !important;
+  border-color: #493a42 !important;
+}
+
+body.dark input::placeholder,
+body.dark textarea::placeholder {
+  color: #a99890 !important;
+  opacity: 1;
+}
+
+/* Navbar */
+body.dark .navbar,
+body.dark .side-sidebar,
+body.dark .mobile-bottom-nav {
+  --glass-bg: rgba(24, 19, 22, 0.97);
+  --white: #211a1e;
+  --bg-light: #2a2226;
+  --text-dark: #f7e7d4;
+  --text-light: #c6b8b0;
+  --border: #3c3035;
+  background: var(--glass-bg) !important;
+  color: #f7e7d4 !important;
+  border-color: #3c3035 !important;
+}
+
+body.dark .nav-link,
+body.dark .nav-logo,
+body.dark .cart-link,
+body.dark .mobile-nav-item,
+body.dark .sidebar-link,
+body.dark .user-details h3,
+body.dark .side-close-btn {
+  color: #f7e7d4 !important;
+}
+
+body.dark .nav-logo {
+  color: #e3b96f !important;
+}
+
+body.dark .menu-btn {
+  color: #e3b96f !important;
+}
+
+body.dark .search-container,
+body.dark .lang-select,
+body.dark .currency-toggle,
+body.dark .currency-menu {
+  background: #241d21 !important;
+  color: #f7e7d4 !important;
+  border-color: #493a42 !important;
+}
+
+body.dark .search-btn {
+  background: linear-gradient(135deg, #5c0f2a, #7d1638) !important;
+  color: #fffaf3 !important;
+}
+
+/* Product cards / recommendation cards */
+body.dark .product-card,
+body.dark .product-card-simple,
+body.dark .saree-card,
+body.dark .fk-compact-review-card {
+  background: #211a1e !important;
+  color: #f7e7d4 !important;
+  border-color: #3c3035 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.28) !important;
+}
+
+body.dark .product-name,
+body.dark .product-card-title,
+body.dark .fk-card-short-comment,
+body.dark .fk-card-author-name {
+  color: #f7e7d4 !important;
+}
+
+body.dark .product-desc,
+body.dark .product-card-desc,
+body.dark .text-light,
+body.dark .product-info p {
+  color: #c6b8b0 !important;
+}
+
+/* Existing Flipkart-style containers used by product UI */
+body.dark .fk-all-details-container,
+body.dark .fk-delivery-widget,
+body.dark .inline-comments-section,
+body.dark .description-toggle-btn {
+  background: #211a1e !important;
+  color: #f7e7d4 !important;
+  border-color: #3c3035 !important;
+}
+
+body.dark .fk-details-toggle-btn,
+body.dark .fk-group-title,
+body.dark .fk-value,
+body.dark .fk-tab-btn,
+body.dark .fk-label,
+body.dark .fk-delivery-title,
+body.dark .fk-date-text,
+body.dark .fk-loc-text {
+  color: #f7e7d4 !important;
+}
+
+body.dark .fk-label,
+body.dark .fk-delivery-title,
+body.dark .fk-rev-summary-sub,
+body.dark .no-comments-inline {
+  color: #a99890 !important;
+}
+
+/* Inputs inside comment forms */
+body.dark .inline-comment-input {
+  background: #241d21 !important;
+  color: #f7e7d4 !important;
+  border-color: #493a42 !important;
+}
+
+body.dark .inline-comment-post {
+  background: #7d1638 !important;
+  color: #fffaf3 !important;
+}
+
+/* Buttons: keep their existing purpose, only improve dark contrast */
+body.dark .add-to-cart-btn {
+  background: #f3ece5 !important;
+  color: #22191d !important;
+}
+
+body.dark .buy-now-btn,
+body.dark .product-card-btn {
+  background: linear-gradient(135deg, #6f1235, #8f204b) !important;
+  color: #fffaf3 !important;
+}
+
+/* Existing sale ribbon */
+body.dark .hero-text-overlay {
+  background: linear-gradient(135deg, #5c0f2a, #8f204b) !important;
+  color: #f8ead8 !important;
+}
+
+/* Admin switcher */
+body.dark .admin-switcher-btn {
+  background: linear-gradient(135deg, #5c0f2a, #8f204b) !important;
+  color: #fffaf3 !important;
+  border-color: rgba(216,183,122,0.28) !important;
+}
+
+/* Lightbox remains intentionally dark */
+body.dark .lightbox-overlay {
+  background: rgba(8, 6, 7, 0.96) !important;
+}
+
+/* =========================================================
+   MOBILE GLOBAL DARK MODE
+========================================================= */
+@media (max-width: 768px) {
+  body.dark .mobile-bottom-nav {
+    background: rgba(24, 19, 22, 0.98) !important;
+    border-top-color: #3c3035 !important;
+  }
+
+  body.dark .mobile-nav-item {
+    color: #d9c9bf !important;
+  }
+}

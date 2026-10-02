@@ -36,7 +36,7 @@ import AdminRoute from "./components/AdminRoute";
 import Profile from './components/Profile';
 import ReviewsPage from './components/ReviewsPage';
 import './components/newthemeofhomepage.css';
-import './components/productdetailtheme1.css';
+import './components/ArzooGlobalTheme1.css';
 
 // 🤝 NEW: Dealer Management & Portal Components
 import AdminDealers from "./components/AdminDealers";
@@ -106,19 +106,37 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    console.log(`[APP] 🌓 Dark mode toggled -- isDark: ${isDark}`);
-    const root = document.documentElement;
+  // useEffect(() => {
+  //   console.log(`[APP] 🌓 Dark mode toggled -- isDark: ${isDark}`);
+  //   const root = document.documentElement;
 
-    if (isDark) {
-      root.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      root.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [isDark]);
+  //   if (isDark) {
+  //     root.classList.add("dark");
+  //     localStorage.setItem("theme", "dark");
+  //   } else {
+  //     root.classList.remove("dark");
+  //     localStorage.setItem("theme", "light");
+  //   }
+  // }, [isDark]);
+useEffect(() => {
+  const root = document.documentElement;
+  const body = document.body;
 
+  root.classList.toggle('dark', isDark);
+  body.classList.toggle('dark', isDark);
+
+  localStorage.setItem(
+    'arzoo-theme',
+    isDark ? 'dark' : 'light'
+  );
+}, [isDark]);
+useEffect(() => {
+  const savedTheme = localStorage.getItem('arzoo-theme');
+
+  if (savedTheme === 'dark') {
+    setIsDark(true);
+  }
+}, []);
   useEffect(() => {
     let isMounted = true;
 

@@ -343,8 +343,27 @@ function ProductDetail({ currency, rates, language }) {
     return (basePrice * rates[currency].rate).toFixed(2);
   };
 
-  if (loading) return <div className="main-container"><h2>Loading product details...</h2></div>;
-  if (!saree) return <div className="main-container"><h2>Product not found!</h2></div>;
+ if (loading) return (
+  <div className="main-container product-loading-screen">
+    <h2>Loading product details...</h2>
+  </div>
+);
+if (!saree) {
+  return (
+    <div className="main-container product-not-found-screen">
+      <div className="product-not-found-card">
+        <div className="product-not-found-icon">✿</div>
+        <h2>Product not found!</h2>
+        <p>
+          Sorry, we couldn't find the saree you're looking for.
+        </p>
+        <Link to="/" className="product-not-found-btn">
+          Back to Collection
+        </Link>
+      </div>
+    </div>
+  );
+}
 
   const sliderImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 
     ? saree.images.map(img => resolveImage(img)) 
