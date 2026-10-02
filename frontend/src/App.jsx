@@ -37,7 +37,7 @@ import Profile from './components/Profile';
 import ReviewsPage from './components/ReviewsPage';
 import './components/newthemeofhomepage.css';
 import './components/ArzooGlobalTheme.css';
-import './ProductDetailArzooTheme.css';
+import './components/ProductDetailArzooTheme.css';
 
 // 🤝 NEW: Dealer Management & Portal Components
 import AdminDealers from "./components/AdminDealers";
