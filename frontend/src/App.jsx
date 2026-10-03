@@ -47,6 +47,7 @@ import './components/newthemeabout.css';
 import './components/newnavbartheme.css';
 import './components/newthemecontact.css';
 import './components/newthemeprofile.css';
+import './components/newreview.css';
 // 🤝 NEW: Dealer Management & Portal Components
 import AdminDealers from "./components/AdminDealers";
 import AdminDealerDetail from "./components/AdminDealerDetail";

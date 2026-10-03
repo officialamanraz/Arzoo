@@ -1,0 +1,331 @@
+/* =========================================================
+   ARZOO SAREE — LUXURY REVIEWS PAGE THEME
+   ---------------------------------------------------------
+   Warm beige base, soft borders, wine accents, and 
+   deep dark mode integration.
+========================================================= */
+
+:root {
+  --arzoo-wine: #741434;
+  --arzoo-wine-dark: #5b0f27;
+  --arzoo-gold: #c79a52;
+  --arzoo-cream: #fffdf9; /* Page Background */
+  --arzoo-nav-theme: #fdf5eb; /* Card Background */
+  --arzoo-surface: rgba(255, 255, 255, 0.6); /* Glossy inner elements */
+  --arzoo-text: #2c2c2c;
+  --arzoo-muted: #666666;
+  --arzoo-border: rgba(116, 20, 52, 0.12); /* Wine tinted borders */
+  --arzoo-shadow: 0 6px 20px rgba(116, 20, 52, 0.05);
+  
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* =========================================================
+   DARK MODE ADAPTATION (Applies Instantly)
+========================================================= */
+body.dark, .dark-mode, [data-theme='dark'] {
+  --arzoo-cream: #121212 !important;
+  --arzoo-nav-theme: #1c1c1e !important;
+  --arzoo-surface: rgba(255, 255, 255, 0.03) !important;
+  --arzoo-text: #f5f5f5 !important;
+  --arzoo-muted: #a3a3a3 !important;
+  --arzoo-border: rgba(255, 255, 255, 0.08) !important;
+  --arzoo-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+  
+  --arzoo-wine: #ff8fa3 !important; /* Lighter for dark backgrounds */
+}
+
+/* Base resets for dark mode specifically */
+body.dark .reviews-page { background: var(--arzoo-cream); color: var(--arzoo-text); }
+body.dark .reviews-page-header, 
+body.dark .reviews-summary-card,
+body.dark .customer-gallery-section,
+body.dark .reviews-filter-section,
+body.dark .reviews-feed-section {
+  background: var(--arzoo-nav-theme);
+  border-color: var(--arzoo-border);
+}
+
+body.dark .reviews-header-title-area h1,
+body.dark .reviews-score,
+body.dark .reviews-breakdown-heading,
+body.dark .section-heading-row h2,
+body.dark .reviews-filter-heading h2,
+body.dark .review-customer-name {
+  color: var(--arzoo-text);
+}
+
+body.dark .reviews-header-title-area p,
+body.dark .reviews-total-count,
+body.dark .reviews-breakdown-label,
+body.dark .reviews-filter-heading span,
+body.dark .review-time,
+body.dark .review-location,
+body.dark .helpful-label {
+  color: var(--arzoo-muted);
+}
+
+/* =========================================================
+   PAGE WRAPPER
+========================================================= */
+.reviews-page {
+  min-height: 100vh;
+  width: 100%;
+  background: var(--arzoo-cream);
+  padding: 30px 20px 60px;
+  box-sizing: border-box;
+  font-family: var(--font-body);
+  color: var(--arzoo-text);
+  transition: background-color 0.3s ease;
+}
+
+.reviews-page-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Space between cards */
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+.reviews-page-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--arzoo-nav-theme);
+  border: 1px solid var(--arzoo-border);
+  border-radius: 12px;
+  padding: 20px 25px;
+  box-shadow: var(--arzoo-shadow);
+}
+
+.reviews-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--arzoo-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--arzoo-wine);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reviews-back-button:hover {
+  background: var(--arzoo-wine);
+  color: #fff;
+}
+
+body.dark .reviews-back-button:hover { color: #111; }
+
+.reviews-header-title-area h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--arzoo-text);
+}
+
+.reviews-header-title-area p { margin: 5px 0 0; color: var(--arzoo-muted); font-size: 14px; }
+
+/* =========================================================
+   SUMMARY (RATINGS)
+========================================================= */
+.reviews-summary-card {
+  display: grid;
+  grid-template-columns: 250px 1px minmax(0, 1fr);
+  gap: 30px;
+  align-items: center;
+  background: var(--arzoo-nav-theme);
+  border: 1px solid var(--arzoo-border);
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: var(--arzoo-shadow);
+}
+
+.reviews-summary-left { text-align: center; }
+
+.reviews-score {
+  font-family: var(--font-display);
+  font-size: 58px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--arzoo-text);
+}
+
+.reviews-score-label {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #16a34a; /* Green */
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+body.dark .reviews-score-label { color: #4ade80; }
+
+.reviews-total-count { margin-top: 8px; color: var(--arzoo-muted); font-size: 13px; }
+
+.reviews-summary-divider { width: 1px; min-height: 150px; background: dashed var(--arzoo-border); border-left: 1px dashed var(--arzoo-border); }
+
+/* Breakdown Bars */
+.reviews-breakdown-heading {
+  margin-bottom: 20px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--arzoo-text);
+}
+
+.reviews-breakdown-row {
+  display: grid;
+  grid-template-columns: 100px minmax(120px, 1fr) 40px 50px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.reviews-breakdown-label { font-size: 13px; font-weight: 600; color: var(--arzoo-text); }
+
+.reviews-breakdown-track {
+  width: 100%; height: 8px; border-radius: 999px;
+  background: var(--arzoo-surface);
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+.reviews-breakdown-fill { height: 100%; border-radius: inherit; transition: width 0.4s ease; background-color: var(--arzoo-wine); }
+body.dark .reviews-breakdown-fill { background-color: var(--arzoo-wine); } /* Red/Pink in dark mode */
+
+.reviews-breakdown-number { font-size: 13px; text-align: right; font-weight: 600; color: var(--arzoo-text); }
+.reviews-breakdown-percent { font-size: 12px; color: var(--arzoo-muted); text-align: right; }
+
+/* =========================================================
+   CUSTOMER PHOTOS
+========================================================= */
+.customer-gallery-section {
+  background: var(--arzoo-nav-theme);
+  border: 1px solid var(--arzoo-border);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: var(--arzoo-shadow);
+}
+
+.section-heading-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+.section-heading-row h2 { margin: 0; font-family: var(--font-display); font-size: 1.3rem; color: var(--arzoo-text); }
+.section-heading-row p { margin: 4px 0 0; color: var(--arzoo-muted); font-size: 13px; }
+
+.photo-count {
+  padding: 6px 12px; border-radius: 4px;
+  background: var(--arzoo-surface); color: var(--arzoo-text);
+  font-size: 12px; font-weight: 600; border: 1px solid var(--arzoo-border);
+}
+
+.customer-gallery { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.customer-gallery::-webkit-scrollbar { display: none; }
+
+.customer-gallery-item {
+  flex: 0 0 110px; width: 110px; height: 110px;
+  border: 1px solid var(--arzoo-border); border-radius: 8px;
+  background: var(--arzoo-surface); overflow: hidden; cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.customer-gallery-item:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+.customer-gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+
+/* =========================================================
+   REVIEW FEED & FILTERS
+========================================================= */
+.reviews-filter-section {
+  background: var(--arzoo-nav-theme);
+  border: 1px solid var(--arzoo-border);
+  border-radius: 12px;
+  padding: 20px 25px;
+  box-shadow: var(--arzoo-shadow);
+}
+
+.reviews-filter-heading h2 { margin: 0; font-family: var(--font-display); font-size: 1.2rem; color: var(--arzoo-text); }
+.reviews-filter-heading span { color: var(--arzoo-muted); font-size: 13px; }
+
+.reviews-filter-scroll { display: flex; gap: 10px; overflow-x: auto; margin-top: 15px; scrollbar-width: none; }
+.reviews-filter-scroll::-webkit-scrollbar { display: none; }
+
+.reviews-filter-pill {
+  padding: 8px 16px; border-radius: 4px;
+  border: 1px solid var(--arzoo-border);
+  background: var(--arzoo-surface); color: var(--arzoo-text);
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.reviews-filter-pill:hover { border-color: var(--arzoo-wine); color: var(--arzoo-wine); }
+.reviews-filter-pill.active { background: var(--arzoo-wine); border-color: var(--arzoo-wine); color: #fff; }
+
+/* Review Feed Base */
+.reviews-feed-section {
+  background: var(--arzoo-nav-theme);
+  border: 1px solid var(--arzoo-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--arzoo-shadow);
+}
+
+.full-review-card { padding: 30px; border-bottom: 1px dashed var(--arzoo-border); }
+.full-review-card:last-child { border-bottom: none; }
+
+/* Single Review Details */
+.review-type-badge {
+  padding: 4px 10px; border-radius: 4px;
+  color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.review-time { color: var(--arzoo-muted); font-size: 12px; }
+
+.review-customer-name { color: var(--arzoo-text); font-size: 15px; font-weight: 700; }
+.review-verified-badge { color: #1d9b44; font-size: 12px; font-weight: 600; display: inline-flex; gap: 4px; }
+body.dark .review-verified-badge { color: #4ade80; }
+.review-location { color: var(--arzoo-muted); font-size: 12px; }
+.review-purchase-badge { color: #c79a52; font-size: 11px; font-weight: 600; display: inline-flex; gap: 5px; }
+
+.full-review-comment p {
+  color: var(--arzoo-text); font-size: 15px; line-height: 1.7; margin-top: 15px;
+}
+
+.review-attached-image {
+  width: 100px; height: 100px; border: 1px solid var(--arzoo-border); border-radius: 6px;
+  overflow: hidden; cursor: pointer; margin-top: 15px; transition: transform 0.2s;
+}
+.review-attached-image:hover { transform: translateY(-2px); }
+
+/* Footer / Helpful Buttons */
+.full-review-footer { margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.05); }
+body.dark .full-review-footer { border-top-color: rgba(255,255,255,0.05); }
+
+.helpful-button {
+  padding: 8px 12px; border: 1px solid var(--arzoo-border); border-radius: 4px;
+  background: var(--arzoo-surface); color: var(--arzoo-muted);
+  font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.helpful-button:hover { color: var(--arzoo-wine); border-color: var(--arzoo-wine); }
+.helpful-button.selected { background: rgba(116, 20, 52, 0.1); border-color: var(--arzoo-wine); color: var(--arzoo-wine); }
+
+/* =========================================================
+   MOBILE RESPONSIVENESS
+========================================================= */
+@media (max-width: 850px) {
+  .reviews-summary-card { grid-template-columns: 1fr; gap: 30px; text-align: center; }
+  .reviews-summary-divider { width: 100%; min-height: 1px; height: 1px; border-left: none; border-top: 1px dashed var(--arzoo-border); }
+  .reviews-breakdown-row { grid-template-columns: 80px minmax(100px, 1fr) 30px 40px; }
+}
+
+@media (max-width: 600px) {
+  .reviews-page { padding: 15px 10px 40px; }
+  .reviews-page-header, .reviews-summary-card, .customer-gallery-section, .reviews-filter-section, .reviews-feed-section {
+    border-radius: 8px; padding: 20px 15px;
+  }
+  .reviews-score { font-size: 48px; }
+  .full-review-card { padding: 20px 15px; }
+  .customer-gallery-item { width: 85px; height: 85px; flex-basis: 85px; }
+}
