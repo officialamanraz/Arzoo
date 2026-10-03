@@ -308,3 +308,58 @@
   
   .order-item-actions-stack { flex: 1; justify-content: center; }
 }
+/* =========================================
+   DARK MODE ADAPTATION (FIX FOR THEME)
+   ========================================= */
+
+body.dark, .dark-mode, [data-theme='dark'] {
+  --arzoo-cream: #121212; /* Page ka background totally dark ho jayega */
+  --arzoo-nav-theme: #1e1e1e; /* Order card ka background dark grey hoga */
+  --arzoo-text: #f5f5f5; /* Text color white/light grey ho jayega */
+  --arzoo-muted: #a3a3a3; /* Muted text readability ke liye */
+  --arzoo-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* Dark mode ke hisaab se shadow */
+}
+
+/* Inner Boxes (Payment, Address, Image) ko dark mode mein transparent grey banana */
+body.dark .order-info-substrip, 
+body.dark .order-delivery-address-card,
+.dark-mode .order-info-substrip,
+.dark-mode .order-delivery-address-card {
+  background: rgba(255, 255, 255, 0.05) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark .order-item-img-zoom-box,
+.dark-mode .order-item-img-zoom-box {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Header line adjust */
+body.dark .order-card-header,
+.dark-mode .order-card-header {
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Cancel Button for Dark Mode */
+body.dark .order-action-cancel,
+.dark-mode .order-action-cancel {
+  border-color: #555 !important;
+  color: #ccc !important;
+}
+
+body.dark .order-action-cancel:hover,
+.dark-mode .order-action-cancel:hover {
+  background: rgba(220, 53, 69, 0.15) !important;
+  color: #ff6b6b !important;
+  border-color: #ff6b6b !important;
+}
+
+/* Glowing Flowers effect for Dark Mode (More visible) */
+body.dark .order-card::before,
+body.dark .order-card::after,
+.dark-mode .order-card::before,
+.dark-mode .order-card::after {
+  opacity: 0.15;
+  filter: drop-shadow(0 0 20px rgba(89, 212, 203, 0.8)) brightness(1.5);
+}
