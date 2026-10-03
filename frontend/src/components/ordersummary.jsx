@@ -146,7 +146,14 @@ export default function OrderSummary({ language }) {
     }
   };
 
-  if (loading) return <div className="loading-state">{t('loading')}</div>;
+  if (loading) {
+    return (
+      <div className="summary-loading-screen">
+        <div className="summary-spinner"></div>
+        <p className="summary-loading-text">Loading Order Summary...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="summary-page">
