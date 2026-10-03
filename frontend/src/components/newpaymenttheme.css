@@ -1,0 +1,217 @@
+/* =========================================================
+   ARZOO SAREE — PROFESSIONAL PAYMENT THEME
+   ---------------------------------------------------------
+   Sleek, High-End, and Perfectly Aligned.
+========================================================= */
+
+:root {
+  --arzoo-wine: #741434;
+  --arzoo-wine-dark: #5b0f27;
+  --arzoo-gold: #c79a52;
+  --arzoo-cream: #fffdf9;
+  --arzoo-text: #2c2c2c;
+  --arzoo-muted: #666666;
+  --arzoo-border: #e8e2db;
+  --arzoo-card: #ffffff;
+  --arzoo-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+/* =========================================================
+   PAGE & BASE
+========================================================= */
+.payment-page, .checkout-page {
+  background-color: var(--arzoo-cream);
+  min-height: 100vh;
+  padding-bottom: 50px;
+  font-family: 'Inter', sans-serif;
+  color: var(--arzoo-text);
+}
+
+/* =========================================================
+   STEPPER & HEADER (Matched with Order Summary)
+========================================================= */
+.payment-header {
+  background: #ffffff;
+  padding: 15px 20px 25px;
+  border-bottom: 1px solid var(--arzoo-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  text-align: center;
+}
+
+.stepper-container { display: flex; align-items: center; justify-content: center; margin-top: 10px; gap: 0px; }
+.step-wrapper { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
+.step-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #d5d5d5; background: #f9f9f9; color: #888; font-size: 13px; font-weight: 600; transition: all 0.3s ease; }
+.step-circle.active { background: var(--arzoo-wine); color: #ffffff; border-color: var(--arzoo-wine); }
+.step-label { margin-top: 8px; color: var(--arzoo-muted); font-size: 0.8rem; font-weight: 500; }
+.active-text { color: var(--arzoo-wine); }
+.bold-text { font-weight: 600; }
+.step-line { width: 60px; height: 2px; margin: 0 8px 22px; background: #e0e0e0; }
+.completed-line { background: var(--arzoo-gold); }
+
+/* =========================================================
+   LAYOUT & CARDS
+========================================================= */
+.payment-content-wrapper, .checkout-container {
+  max-width: 650px; /* Narrower for cleaner payment focus */
+  margin: 30px auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payment-card, .checkout-step {
+  background: var(--arzoo-card);
+  border: 1px solid var(--arzoo-border);
+  border-radius: 6px; /* Sharp professional corners */
+  box-shadow: var(--arzoo-shadow);
+  padding: 30px;
+}
+
+.payment-header-title, .payment-card h2, .checkout-step h2 {
+  margin: 0 0 20px 0;
+  color: var(--arzoo-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  border-bottom: 1px solid var(--arzoo-border);
+  padding-bottom: 15px;
+}
+
+/* =========================================================
+   PAYMENT METHOD BOXES
+========================================================= */
+.payment-method-box, .payment-method-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--arzoo-border);
+  border-radius: 4px;
+  background-color: var(--arzoo-card);
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payment-method-box:hover, .payment-method-card:hover {
+  border-color: #d1d5db;
+}
+
+/* Selected State */
+.payment-method-box.active, .payment-method-card.payment-selected, .payment-method-box[style*="border"] {
+  border: 2px solid var(--arzoo-wine) !important;
+  background-color: rgba(116, 20, 52, 0.03) !important;
+  padding: 19px !important; /* Adjust padding to stop jumping due to border */
+}
+
+.payment-radio {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--arzoo-wine);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.payment-method-title, .payment-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--arzoo-text);
+}
+
+.payment-method-desc, .payment-desc {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  color: var(--arzoo-muted);
+  line-height: 1.4;
+}
+
+/* Error Message */
+.payment-error-message {
+  color: #b3261e;
+  background-color: rgba(179, 38, 30, 0.08);
+  border: 1px solid #fecaca;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-top: 16px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* =========================================================
+   BUTTON
+========================================================= */
+.place-order-btn, .btn-primary {
+  width: 100%;
+  background: var(--arzoo-wine);
+  color: #ffffff;
+  border: none;
+  padding: 16px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.2s ease;
+  margin-top: 15px;
+}
+
+.place-order-btn:hover:not(:disabled), .btn-primary:hover:not(:disabled) {
+  background: var(--arzoo-wine-dark);
+}
+
+.place-order-btn:disabled, .btn-primary:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   PROFESSIONAL LOADING SCREEN
+========================================================= */
+.payment-loading-screen, .loading-state {
+  min-height: 65vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background-color: var(--arzoo-cream, #fffdf9);
+}
+
+.payment-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3.5px solid rgba(116, 20, 52, 0.15); /* Light wine ring */
+  border-top: 3.5px solid var(--arzoo-wine, #741434); /* Solid wine accent */
+  border-radius: 50%;
+  animation: paymentSpin 0.8s linear infinite;
+}
+
+.payment-loading-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--arzoo-text, #38272d);
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+@keyframes paymentSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+========================================================= */
+@media (max-width: 768px) {
+  .payment-header { padding: 15px; }
+  .step-wrapper { min-width: 65px; }
+  .step-line { width: 40px; margin: 0 4px 22px; }
+  .payment-content-wrapper, .checkout-container { margin-top: 16px; padding: 0 16px; }
+  .payment-card, .checkout-step { padding: 16px; }
+}

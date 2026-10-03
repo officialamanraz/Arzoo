@@ -64,6 +64,14 @@ export default function PaymentPage() {
   };
 
   if (!addressId) return null;
+  if (loading) {
+    return (
+      <div className="payment-loading-screen">
+        <div className="payment-spinner"></div>
+        <p className="payment-loading-text">Securely loading payment options...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="payment-page">
