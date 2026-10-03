@@ -1,0 +1,311 @@
+/* =========================================================
+   ARZOO SAREE — LUXURY MY ORDERS THEME
+   ---------------------------------------------------------
+   Clean layout, no harsh borders, subtle glowing flowers, 
+   and perfectly matched to the main theme.
+========================================================= */
+
+:root {
+  --arzoo-wine: #741434;
+  --arzoo-wine-dark: #5b0f27;
+  --arzoo-gold: #c79a52;
+  --arzoo-cream: #fffdf9;
+  --arzoo-text: #2c2c2c;
+  --arzoo-muted: #666666;
+  --arzoo-card: #ffffff;
+  --arzoo-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.orders-loading {
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--arzoo-muted);
+  font-size: 16px;
+}
+
+/* Base Page Background Updated to Theme Cream */
+.orders-page {
+  background-color: var(--arzoo-cream); 
+  color: var(--arzoo-text);
+  min-height: 100vh;
+  padding: 40px 20px 60px;
+  text-align: left !important;
+  font-family: 'Inter', sans-serif;
+}
+
+.orders-page-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: left !important;
+}
+
+.orders-page-title {
+  margin-bottom: 22px;
+  color: var(--arzoo-text);
+  font-size: 1.85rem;
+  font-weight: 800;
+  text-align: left !important;
+  font-family: 'Fraunces', serif; /* Matching the elegant headers */
+}
+
+/* -----------------------------------------
+   Order Card (Borders Removed, Glowing Flowers Added)
+   ----------------------------------------- */
+.order-card {
+  background: var(--arzoo-card);
+  color: var(--arzoo-text);
+  padding: 30px;
+  margin-bottom: 30px;
+  border-radius: 8px; /* Sharper luxury corners */
+  box-shadow: var(--arzoo-shadow);
+  border: none; /* REMOVED BORDER */
+  text-align: left !important;
+  position: relative;
+  overflow: hidden; /* Keeps flowers inside the card */
+  z-index: 1;
+}
+
+/* GLOWING FLOWER DESIGNS (Empty Space Fillers) */
+.order-card::before,
+.order-card::after {
+  content: "";
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  /* Add your glowing flower image path here */
+  background-image: url('/path-to-your-flower.png'); 
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: -1;
+  opacity: 0.25; /* Soft transparency */
+  filter: drop-shadow(0 0 15px rgba(89, 212, 203, 0.6)) brightness(1.2); /* Cyan/Mint Glow effect */
+  transition: opacity 0.3s ease;
+}
+
+/* Top Right Flower */
+.order-card::before {
+  top: -30px;
+  right: -20px;
+  transform: rotate(15deg);
+}
+
+/* Bottom Center/Right Flower */
+.order-card::after {
+  bottom: -40px;
+  right: 35%;
+  transform: rotate(-20deg) scale(0.8);
+}
+
+.order-card:hover::before,
+.order-card:hover::after {
+  opacity: 0.4; /* Glow intensifies on hover */
+}
+
+/* -----------------------------------------
+   Header Section
+   ----------------------------------------- */
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed rgba(0,0,0,0.08); /* Soft dashed line instead of hard border */
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.order-id {
+  margin: 0 0 3px 0;
+  color: var(--arzoo-text);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.order-date {
+  margin: 0;
+  color: var(--arzoo-muted);
+  font-size: 0.85em;
+}
+
+/* -----------------------------------------
+   Product Image (Borders Removed)
+   ----------------------------------------- */
+.order-item-detail-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.order-item-left-col {
+  width: 250px;
+  flex-shrink: 0;
+}
+
+.order-item-img-zoom-box {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 320px; /* Taller luxury aspect ratio */
+  border-radius: 4px;
+  overflow: hidden;
+  border: none; /* REMOVED BORDER */
+  background: #f4f4f4;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+
+.order-item-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* -----------------------------------------
+   Right Column (Details)
+   ----------------------------------------- */
+.order-item-right-col {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.order-product-name {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--arzoo-text);
+  line-height: 1.4;
+}
+
+.order-price-main {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--arzoo-text);
+}
+
+.order-mrp-strikethrough {
+  font-size: 1.05rem;
+  color: #999;
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.order-discount-badge {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--arzoo-gold);
+  background-color: rgba(199, 154, 82, 0.1); /* Gold tint */
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+/* -----------------------------------------
+   Address & Info Strips (Borders Removed)
+   ----------------------------------------- */
+.order-info-substrip, 
+.order-delivery-address-card {
+  background: rgba(0, 0, 0, 0.02); /* Extremely subtle gray/cream background */
+  padding: 16px 20px;
+  border-radius: 6px;
+  border: none; /* REMOVED BORDER */
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.order-delivery-address-card .address-header {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--arzoo-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.order-delivery-address-card .address-name {
+  color: var(--arzoo-text);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.order-delivery-address-card .address-body,
+.order-delivery-address-card .address-contact {
+  color: var(--arzoo-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* -----------------------------------------
+   Buttons (Updated to Arzoo Theme)
+   ----------------------------------------- */
+.order-item-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-action-track {
+  background-color: var(--arzoo-wine);
+  color: #fff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+.order-action-track:hover { background-color: var(--arzoo-wine-dark); }
+
+.order-action-cancel {
+  background: transparent;
+  color: var(--arzoo-muted);
+  border: 1px solid #d5d5d5;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.order-action-cancel:hover {
+  background: #fffafa;
+  color: #b3261e;
+  border-color: #b3261e;
+}
+
+/* Status Badge */
+.order-status-badge {
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.85em;
+  letter-spacing: 0.02em;
+}
+.status-pending { background: #fdf5e6; color: #b8860b; border: 1px solid #f5deb3; }
+
+/* -----------------------------------------
+   MOBILE OPTIMIZATION
+   ----------------------------------------- */
+@media (max-width: 768px) {
+  .orders-page { padding: 20px 10px !important; }
+  .order-card { padding: 20px !important; }
+  
+  /* Adjust flower glow for mobile */
+  .order-card::before { width: 100px; height: 100px; top: -10px; right: -10px; }
+  .order-card::after { display: none; } /* Hide bottom one to save space */
+
+  .order-item-detail-layout { flex-direction: column; gap: 15px; }
+  .order-item-left-col { width: 100%; display: flex; gap: 15px; }
+  .order-item-img-zoom-box { width: 100px; height: 130px; margin-bottom: 0; }
+  
+  .order-item-actions-stack { flex: 1; justify-content: center; }
+}
