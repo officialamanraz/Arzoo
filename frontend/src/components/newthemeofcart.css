@@ -1,0 +1,357 @@
+/* =========================================================
+   ARZOO SAREE — LUXURY CART THEME (New File)
+   ---------------------------------------------------------
+   Features: Deep dark mode support, glowing flowers,
+   glossy product cards, and no hard borders.
+========================================================= */
+
+:root {
+  --arzoo-wine: #741434;
+  --arzoo-wine-dark: #5b0f27;
+  --arzoo-gold: #c79a52;
+  --arzoo-cream: #fffdf9;
+  --arzoo-nav-theme: #fdf5eb; /* Warm beige luxury background */
+  --arzoo-text: #2c2c2c;
+  --arzoo-muted: #666666;
+  --arzoo-shadow: 0 8px 24px rgba(116, 20, 52, 0.04);
+}
+
+/* =========================================
+   DARK MODE ADAPTATION (Applies Instantly)
+========================================= */
+body.dark, .dark-mode, [data-theme='dark'] {
+  --arzoo-cream: #121212 !important;
+  --arzoo-nav-theme: #1c1c1e !important;
+  --arzoo-text: #f5f5f5 !important;
+  --arzoo-muted: #a3a3a3 !important;
+  --arzoo-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* =========================================
+   MAIN LAYOUT & BACKGROUND
+========================================= */
+.cart-page-container {
+  background-color: var(--arzoo-cream);
+  min-height: 100vh;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+  text-align: left !important;
+  transition: background-color 0.3s ease;
+}
+
+.cart-layout {
+  display: flex;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: flex-start;
+}
+
+/* -----------------------------------------
+   HEADER
+----------------------------------------- */
+.cart-section-header {
+  background: var(--arzoo-nav-theme);
+  padding: 18px 24px;
+  border-radius: 8px;
+  border: none;
+  box-shadow: var(--arzoo-shadow);
+  margin-bottom: 20px;
+}
+
+.cart-section-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--arzoo-text);
+  font-weight: 700;
+  font-family: 'Fraunces', serif; /* Luxury Serif */
+}
+
+/* -----------------------------------------
+   LEFT COLUMN: CART CARDS
+----------------------------------------- */
+.cart-items-section {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cart-item-card {
+  background: var(--arzoo-nav-theme);
+  border-radius: 12px;
+  border: none; /* No hard borders */
+  box-shadow: var(--arzoo-shadow);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden; /* For glowing flowers */
+  z-index: 1;
+}
+
+/* GLOWING FLOWER EFFECT */
+.cart-item-card::before,
+.cart-item-card::after {
+  content: "";
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  background-image: url('/path-to-your-flower.png'); /* Add actual path in your project */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: -1;
+  opacity: 0.15;
+  filter: drop-shadow(0 0 15px rgba(89, 212, 203, 0.6)) brightness(1.2);
+  transition: opacity 0.3s ease;
+}
+.cart-item-card::before { top: -20px; right: -10px; transform: rotate(15deg); }
+.cart-item-card::after { bottom: 20px; left: 25%; transform: rotate(-10deg) scale(0.8); }
+
+body.dark .cart-item-card::before, body.dark .cart-item-card::after {
+  opacity: 0.1; /* Slightly dimmer in dark mode */
+}
+
+.cart-item-data-row {
+  display: flex;
+  padding: 24px;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.4); /* Glossy overlay */
+}
+
+body.dark .cart-item-data-row {
+  background: rgba(255, 255, 255, 0.02); /* Glassmorphism for dark mode */
+}
+
+/* -----------------------------------------
+   IMAGE & QUANTITY
+----------------------------------------- */
+.cart-item-img {
+  width: 120px;
+  height: 150px; /* Luxury Portrait Ratio */
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border: none;
+  background-color: #f4f4f4;
+}
+
+.cart-qty-controls {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+body.dark .cart-qty-controls { background: rgba(0,0,0,0.3); }
+
+.cart-qty-controls button {
+  background: transparent;
+  border: none;
+  width: 35px;
+  height: 35px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--arzoo-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cart-qty-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.qty-display {
+  width: 40px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--arzoo-text);
+}
+
+/* -----------------------------------------
+   PRODUCT DETAILS
+----------------------------------------- */
+.cart-item-info-col { flex: 1; text-align: left !important; }
+
+.cart-product-title {
+  margin: 0 0 6px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--arzoo-text);
+  line-height: 1.4;
+}
+
+.cart-seller-info {
+  margin: 0 0 16px 0;
+  font-size: 0.85rem;
+  color: var(--arzoo-muted);
+}
+
+.cart-price-block {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cart-discount-percent {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--arzoo-gold);
+  background: rgba(199, 154, 82, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.cart-original-mrp {
+  font-size: 1rem;
+  color: var(--arzoo-muted);
+  text-decoration: line-through;
+}
+
+.cart-final-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--arzoo-text);
+}
+
+/* -----------------------------------------
+   ACTIONS (Remove / Buy Now)
+----------------------------------------- */
+.cart-item-action-row {
+  display: flex;
+  border-top: 1px dashed rgba(116, 20, 52, 0.15); /* Soft dashed line */
+}
+
+body.dark .cart-item-action-row { border-top: 1px dashed rgba(255, 255, 255, 0.1); }
+
+.cart-action-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--arzoo-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cart-action-btn:hover { background: rgba(0, 0, 0, 0.03); color: var(--arzoo-wine); }
+body.dark .cart-action-btn:hover { background: rgba(255, 255, 255, 0.05); color: #ff8fa3; }
+.cart-action-btn:first-child { border-right: 1px dashed rgba(116, 20, 52, 0.15); }
+body.dark .cart-action-btn:first-child { border-right: 1px dashed rgba(255, 255, 255, 0.1); }
+.cart-buy-now-btn { color: var(--arzoo-wine) !important; font-weight: 700; }
+body.dark .cart-buy-now-btn { color: #ff8fa3 !important; }
+
+/* -----------------------------------------
+   RIGHT COLUMN: BILLING SECTION
+----------------------------------------- */
+.cart-bill-section {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--arzoo-nav-theme);
+  border-radius: 12px;
+  border: none;
+  box-shadow: var(--arzoo-shadow);
+  position: sticky;
+  top: 90px;
+  text-align: left !important;
+}
+
+.bill-header {
+  margin: 0;
+  padding: 20px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--arzoo-muted);
+  border-bottom: 1px dashed rgba(116, 20, 52, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+body.dark .bill-header { border-bottom: 1px dashed rgba(255, 255, 255, 0.1); }
+
+.bill-body {
+  padding: 0 20px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+body.dark .bill-body { background: rgba(255, 255, 255, 0.02); }
+
+.bill-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+  font-size: 1.05rem;
+  color: var(--arzoo-text);
+}
+
+.bill-green-text { color: #388e3c; font-weight: 600; }
+body.dark .bill-green-text { color: #4ade80; }
+
+.bill-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 0;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--arzoo-text);
+}
+
+body.dark .bill-total-row { border-color: rgba(255,255,255,0.1); }
+
+.btn-place-order {
+  width: 100%;
+  background: var(--arzoo-wine);
+  color: #fff;
+  border: none;
+  padding: 18px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  transition: background 0.2s;
+}
+.btn-place-order:hover { background: var(--arzoo-wine-dark); }
+
+/* -----------------------------------------
+   EMPTY CART & LOADING
+----------------------------------------- */
+.cart-empty {
+  background: var(--arzoo-nav-theme);
+  padding: 60px 30px;
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: var(--arzoo-shadow);
+  border: none;
+}
+.cart-empty h3 { color: var(--arzoo-text); font-size: 1.5rem; margin: 0 0 10px 0; }
+.cart-empty p { color: var(--arzoo-muted); margin-bottom: 25px; }
+
+/* -----------------------------------------
+   MOBILE OPTIMIZATION (< 768px)
+----------------------------------------- */
+@media (max-width: 768px) {
+  .cart-page-container { padding: 20px 10px; }
+  .cart-layout { flex-direction: column; }
+  .cart-bill-section { width: 100%; position: static; }
+  
+  .cart-item-data-row { padding: 15px; gap: 15px; flex-direction: row; }
+  .cart-item-img { width: 90px; height: 120px; }
+  
+  .cart-product-title { font-size: 1.1rem; }
+  .cart-final-price { font-size: 1.25rem; }
+}
