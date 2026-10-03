@@ -245,101 +245,216 @@
 }
 
 /* =========================================================
-   6. LOADING AREA — ELEGANT TRADITIONAL
-   Works with the existing .loader-container/.pulse-text
-   and does not require JSX changes.
+   6. LOADING AREA — PREMIUM SAREE / FLOWING FABRIC
+   ---------------------------------------------------------
+   Visual-only upgrade:
+   - keeps existing .loader-container / .pulse-text
+   - no JSX change required
+   - soft fabric-wave motion
+   - gold shimmer loading line
+   - premium boutique feel
+   - avoids heavy embroidery/background artwork
    ========================================================= */
+
 .loader-container {
   position: relative;
-  min-height: 330px;
+  min-height: 340px;
   max-width: 1060px;
   margin: 18px auto 36px;
-  padding: 38px 28px;
+  padding: 34px 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   overflow: hidden;
+  isolation: isolate;
   box-sizing: border-box;
-  border: 1px solid rgba(199, 154, 82, 0.30);
-  border-radius: 24px;
+
+  border: 1px solid rgba(199, 154, 82, 0.34);
+  border-radius: 26px;
+
   background:
-    radial-gradient(circle at 12% 15%, rgba(116, 20, 52, 0.075), transparent 25%),
-    radial-gradient(circle at 88% 85%, rgba(199, 154, 82, 0.11), transparent 29%),
-    linear-gradient(145deg, #fffdf9 0%, #fbf1e7 100%);
-  box-shadow: var(--arzoo-shadow), inset 0 0 60px rgba(255, 255, 255, 0.68);
+    radial-gradient(circle at 15% 18%, rgba(116, 20, 52, 0.075), transparent 23%),
+    radial-gradient(circle at 86% 82%, rgba(199, 154, 82, 0.13), transparent 26%),
+    linear-gradient(
+      168deg,
+      transparent 22%,
+      rgba(116, 20, 52, 0.025) 23%,
+      transparent 25%,
+      transparent 53%,
+      rgba(199, 154, 82, 0.045) 54%,
+      transparent 56%
+    ),
+    linear-gradient(145deg, #fffdf9 0%, #fbf3ea 52%, #fffaf4 100%);
+
+  background-size: auto, auto, 120% 100%, auto;
+  background-position: center, center, -30% 0, center;
+
+  box-shadow:
+    0 18px 40px rgba(87, 32, 48, 0.09),
+    inset 0 0 70px rgba(255, 255, 255, 0.72);
+
+  animation: arzooFabricSlide 8s ease-in-out infinite;
 }
 
+/* Soft glowing atmosphere */
 .loader-container::before,
 .loader-container::after {
+  content: "";
   position: absolute;
+  z-index: -1;
   pointer-events: none;
-  color: rgba(116, 20, 52, 0.13);
-  font-family: Georgia, "Times New Roman", serif;
+  border-radius: 50%;
+  filter: blur(8px);
 }
 
 .loader-container::before {
-  content: "❈";
-  left: 24px;
-  top: 18px;
-  font-size: 30px;
+  width: 240px;
+  height: 140px;
+  left: -90px;
+  top: -45px;
+  background: rgba(116, 20, 52, 0.045);
+  transform: rotate(-16deg);
+  animation: arzooLoaderGlowLeft 6s ease-in-out infinite;
 }
 
 .loader-container::after {
-  content: "❈";
-  right: 24px;
-  bottom: 16px;
-  font-size: 34px;
+  width: 260px;
+  height: 150px;
+  right: -95px;
+  bottom: -50px;
+  background: rgba(199, 154, 82, 0.075);
+  transform: rotate(14deg);
+  animation: arzooLoaderGlowRight 7s ease-in-out infinite;
 }
 
+/* Main loading message */
 .loader-container .pulse-text {
   position: relative;
+  z-index: 2;
   margin: 0;
   color: var(--arzoo-wine) !important;
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  letter-spacing: 0.035em;
   line-height: 1.45;
-  animation: arzooLoaderFloat 2.8s ease-in-out infinite;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  animation: arzooLoaderFloat 3.5s ease-in-out infinite;
 }
 
+/* Elegant rotating jewel/fabric emblem */
 .loader-container .pulse-text::before {
-  content: "❋";
+  content: "✦";
   display: block;
-  width: fit-content;
-  margin: 0 auto 14px;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 15px;
+
   color: var(--arzoo-wine);
-  font-size: 54px;
-  line-height: 1;
-  filter: drop-shadow(0 7px 9px rgba(116, 20, 52, 0.12));
-  animation: arzooLoaderBloom 2.4s ease-in-out infinite;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 42px;
+  line-height: 92px;
+  text-align: center;
+
+  border: 1px solid rgba(199, 154, 82, 0.42);
+  border-radius: 50% 50% 45% 55%;
+
+  background:
+    radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.95), transparent 42%),
+    linear-gradient(145deg, rgba(199, 154, 82, 0.12), rgba(116, 20, 52, 0.045));
+
+  box-shadow:
+    0 10px 24px rgba(116, 20, 52, 0.09),
+    inset 0 0 22px rgba(255, 255, 255, 0.70);
+
+  transform: rotate(-5deg);
+  animation: arzooLoaderEmblem 3s ease-in-out infinite;
 }
 
+/* Gold shimmer loading line */
 .loader-container .pulse-text::after {
   content: "";
   display: block;
-  width: 110px;
-  height: 3px;
-  margin: 16px auto 0;
+  position: relative;
+
+  width: 165px;
+  height: 4px;
+  margin: 17px auto 0;
+
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--arzoo-gold), transparent);
-  background-size: 200% 100%;
-  animation: arzooLoaderShimmer 2s linear infinite;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(199, 154, 82, 0.20) 22%,
+      var(--arzoo-gold) 50%,
+      rgba(224, 191, 123, 0.30) 78%,
+      transparent 100%
+    );
+
+  background-size: 220% 100%;
+  box-shadow: 0 0 11px rgba(199, 154, 82, 0.18);
+
+  animation: arzooLoaderShimmer 1.9s linear infinite;
 }
 
 @keyframes arzooLoaderFloat {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  50% { transform: translateY(-4px); }
 }
 
-@keyframes arzooLoaderBloom {
-  0%, 100% { transform: scale(0.92) rotate(-3deg); opacity: 0.80; }
-  50% { transform: scale(1.06) rotate(3deg); opacity: 1; }
+@keyframes arzooLoaderEmblem {
+  0%, 100% { transform: rotate(-5deg) scale(0.96); }
+  50% { transform: rotate(5deg) scale(1.04); }
 }
 
 @keyframes arzooLoaderShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% { background-position: 220% 0; }
+  100% { background-position: -220% 0; }
+}
+
+@keyframes arzooLoaderGlowLeft {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-16deg);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translate3d(30px, 10px, 0) rotate(-10deg);
+    opacity: 1;
+  }
+}
+
+@keyframes arzooLoaderGlowRight {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(14deg);
+    opacity: 0.60;
+  }
+  50% {
+    transform: translate3d(-28px, -10px, 0) rotate(8deg);
+    opacity: 0.95;
+  }
+}
+
+@keyframes arzooFabricSlide {
+  0%, 100% {
+    background-position: center, center, -30% 0, center;
+  }
+  50% {
+    background-position: center, center, 30% 0, center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-container,
+  .loader-container::before,
+  .loader-container::after,
+  .loader-container .pulse-text,
+  .loader-container .pulse-text::before,
+  .loader-container .pulse-text::after {
+    animation: none !important;
+  }
 }
 
 /* =========================================================
@@ -518,23 +633,28 @@
   }
 
   .loader-container {
-    min-height: 330px;
+    min-height: 320px;
     margin: 14px 10px 32px;
-    padding: 28px 18px;
+    padding: 24px 16px;
     border-radius: 20px;
   }
 
   .loader-container .pulse-text {
-    font-size: 1.15rem;
+    font-size: 1.08rem;
+    letter-spacing: 0.025em;
   }
 
   .loader-container .pulse-text::before {
-    font-size: 46px;
-    margin-bottom: 12px;
+    width: 78px;
+    height: 78px;
+    line-height: 78px;
+    font-size: 35px;
+    margin-bottom: 13px;
   }
 
   .loader-container .pulse-text::after {
-    width: 90px;
+    width: 120px;
+    height: 3px;
     margin-top: 13px;
   }
 
@@ -593,9 +713,22 @@
   }
 
   .loader-container {
-    min-height: 300px;
+    min-height: 285px;
     margin-left: 8px;
     margin-right: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .loader-container .pulse-text::before {
+    width: 70px;
+    height: 70px;
+    line-height: 70px;
+    font-size: 31px;
+  }
+
+  .loader-container .pulse-text {
+    font-size: 1rem;
   }
 }
 
@@ -644,6 +777,22 @@ body.dark .loader-container .pulse-text,
 html.dark .loader-container .pulse-text,
 [data-theme="dark"] .loader-container .pulse-text {
   color: #f1c37a !important;
+}
+
+body.dark .loader-container .pulse-text::before,
+html.dark .loader-container .pulse-text::before,
+[data-theme="dark"] .loader-container .pulse-text::before {
+  color: #f1c37a;
+  border-color: rgba(224, 191, 123, 0.30);
+  background:
+    radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.08), transparent 42%),
+    linear-gradient(145deg, rgba(199, 154, 82, 0.12), rgba(143, 42, 76, 0.07));
+}
+
+body.dark .loader-container .pulse-text::after,
+html.dark .loader-container .pulse-text::after,
+[data-theme="dark"] .loader-container .pulse-text::after {
+  box-shadow: 0 0 11px rgba(224, 191, 123, 0.10);
 }
 
 /* =========================================================
