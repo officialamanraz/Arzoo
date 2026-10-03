@@ -193,26 +193,34 @@
 }
 
 /* =========================================================
-   CART ITEMS (INCREASED IMAGE & FIXED ALIGNMENT)
+   CART ITEMS (FIXED ALIGNMENT & NEW COLUMNS)
 ========================================================= */
 .cart-item-row {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .border-bottom {
   border-bottom: 1px solid var(--arzoo-border);
 }
 
+/* Perfect Top & Left Alignment Enforced */
 .cart-item-details {
   display: flex;
-  align-items: flex-start; /* Perfectly aligns text to the top of the image */
+  align-items: flex-start !important; /* Forces top alignment with image */
+  justify-content: flex-start;
+  text-align: left !important;
   gap: 24px;
   width: 100%;
 }
 
+/* Hardened Image Size (Prevents Flexbox Shrinking) */
 .cart-item-img-container {
-  width: 130px; /* Increased Size */
-  height: 160px; /* Portrait ratio for sarees */
+  width: 130px;
+  height: 160px;
+  min-width: 130px !important;
+  min-height: 160px !important;
   flex-shrink: 0;
   background: #f4f4f4;
   border: 1px solid var(--arzoo-border);
@@ -223,14 +231,18 @@
 .cart-item-img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Ensures image fills the professional frame */
+  object-fit: cover; /* Edge-to-edge frame */
   display: block;
 }
 
+/* Text Container Aligned */
 .cart-item-info {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  align-items: flex-start !important;
+  text-align: left !important;
+  min-width: 0;
 }
 
 .cart-item-info h4 {
@@ -239,6 +251,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   line-height: 1.4;
+  text-align: left !important;
 }
 
 .cart-item-qty {
@@ -247,14 +260,37 @@
   margin-bottom: 12px;
 }
 
-.item-pricing {
-  margin-top: auto; /* Pushes price slightly down if needed, or keeps it structured */
+/* --- NEW PRICING & DELIVERY COLUMNS --- */
+.item-pricing-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
-.cart-item-price {
+.cart-item-final-price {
   color: var(--arzoo-text);
   font-size: 1.25rem;
   font-weight: 700;
+}
+
+.cart-item-mrp {
+  color: var(--arzoo-muted);
+  font-size: 0.95rem;
+  text-decoration: line-through;
+}
+
+.cart-item-discount-tag {
+  color: #388e3c; /* Standard E-commerce Green */
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.cart-item-delivery {
+  color: var(--arzoo-text);
+  font-size: 0.9rem;
+  margin-top: 4px;
 }
 
 /* =========================================================
@@ -346,13 +382,15 @@
   .cart-item-img-container {
     width: 100px;
     height: 130px;
+    min-width: 100px !important;
+    min-height: 130px !important;
   }
   
   .cart-item-info h4 {
     font-size: 1rem;
   }
   
-  .cart-item-price {
+  .cart-item-final-price {
     font-size: 1.15rem;
   }
 }

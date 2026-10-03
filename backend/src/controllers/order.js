@@ -5,7 +5,8 @@ const {
     getmyorderfromdb,
     createorders,
     ordercencel,
-    getDetailedOrderById  
+    getDetailedOrderById,
+    getOrderSummaryData
 } = require('../services/orderservice'); 
 
 // ==========================================
@@ -186,12 +187,35 @@ const getSingleOrderAdmin = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error while fetching order details', error: error.message });
     }
 };
+const getOrderSummary = async (req, res, next) => {
+    try {
+        // Extract user ID from your token middleware (usually req.user.user_id or req.userId)
+        const userId = req.user?.user_id || req.user?.id; 
+        const addressId = req.query.address_id;
 
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized access' });
+        }
+
+        console.log(`[CONTROLLER] 📋 Fetching Order Summary for User: ${userId}`);
+        
+        const summaryData = await getOrderSummaryData(userId, addressId);
+
+        res.status(200).json({
+            success: true,
+            data: summaryData
+        });
+    } catch (error) {
+        console.error('[CONTROLLER] ❌ Error fetching order summary:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch order summary' });
+    }
+};
 module.exports = { 
     getadminorder, 
     updateOrderStatus, 
     getmyorders, 
     orderCreate, 
     cancelOrder,
-    getSingleOrderAdmin 
+    getSingleOrderAdmin,
+    getOrderSummary
 };

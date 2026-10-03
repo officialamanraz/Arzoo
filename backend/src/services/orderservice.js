@@ -380,13 +380,89 @@ const getDetailedOrderById = async (orderId) => {
         console.error(`[ORDER_SERVICE] ❌ Error in getDetailedOrderById:`, err.message);
         throw err;
     }
-};
+};// Add this inside orderservice.js
 
+const getOrderSummaryData = async (userId, addressId) => {
+    console.log(`[ORDER_SERVICE] 🗄️ Fetching Order Summary for User ID: ${userId}`);
+    try {
+        // 1. Fetch Selected Delivery Address
+        let addressData = null;
+        if (addressId && addressId !== 'undefined') {
+            const [addrRows] = await db.execute(
+                `SELECT full_name, phone, house_no, road_area, landmark, city, state, pincode 
+                 FROM addresses WHERE address_id = ? AND user_id = ?`,
+                [addressId, userId]
+            );
+            addressData = addrRows.length > 0 ? addrRows[0] : null;
+        }
+
+        // 2. Fetch Cart Items with MRP, Discount, and Dealer Details
+        const [cartItems] = await db.execute(
+            `SELECT c.cart_id, c.quantity, p.product_id, p.name AS product_name, 
+                    p.price AS unit_price, p.mrp, p.discount_percentage, p.image_url,
+                    d.name AS seller_name
+             FROM cart c
+             INNER JOIN products p ON c.product_id = p.product_id
+             LEFT JOIN dealers d ON p.dealer_id = d.dealer_id
+             WHERE c.user_id = ?`,
+            [userId]
+        );
+
+        // 3. Process Financials and Smart Fallbacks
+        let subtotal = 0;
+        let totalMrp = 0;
+
+        const formattedItems = cartItems.map(item => {
+            const unitPrice = Number(item.unit_price) || 0;
+            const qty = Number(item.quantity) || 1;
+            
+            // Smart fallback: If database MRP is 0/null, assume 40% markup for display
+            const mrp = (item.mrp && Number(item.mrp) > unitPrice) ? Number(item.mrp) : Math.round(unitPrice * 1.4);
+            const discountPercent = item.discount_percentage || Math.round(((mrp - unitPrice) / mrp) * 100);
+            
+            subtotal += (unitPrice * qty);
+            totalMrp += (mrp * qty);
+
+            // Set Delivery Date to 5 days from today
+            const deliveryDate = new Date();
+            deliveryDate.setDate(deliveryDate.getDate() + 5);
+
+            return {
+                ...item,
+                image_url: getFullImageUrl(item.image_url),
+                seller_name: item.seller_name || 'Arzoo Saree',
+                estimated_delivery: deliveryDate.toISOString(),
+                mrp: mrp,
+                discount_percentage: discountPercent
+            };
+        });
+
+        const totalDiscount = Math.max(0, totalMrp - subtotal);
+        const deliveryCharge = subtotal > 500 ? 0 : 50; // Free delivery above ₹500
+        const totalPayable = subtotal + deliveryCharge;
+
+        return {
+            address: addressData,
+            items: formattedItems,
+            pricing: {
+                total_mrp: totalMrp,
+                total_discount: totalDiscount,
+                delivery_charge: deliveryCharge,
+                subtotal: subtotal,
+                total_payable: totalPayable
+            }
+        };
+    } catch (err) {
+        console.error('[ORDER_SERVICE] ❌ Error in getOrderSummaryData:', err.message);
+        throw err;
+    }
+};
 module.exports = {
     adminorder,
     updatestatusinDB,
     getmyorderfromdb,
     createorders,
     ordercencel,
-    getDetailedOrderById
+    getDetailedOrderById,
+    getOrderSummaryData 
 };

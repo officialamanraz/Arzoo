@@ -16,12 +16,17 @@ const {
     updateOrderStatus,
     orderCreate,
     cancelOrder,
-    getSingleOrderAdmin 
+    getSingleOrderAdmin,
+    getOrderSummary
 } = require('../controllers/order'); 
 
 // ==========================================
 // 🔍 ROUTER-LEVEL LOGGING MIDDLEWARE
 // ==========================================
+router.get('/summary', verifyToken, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 📋 Route Triggered: GET /summary by User`);
+    getOrderSummary(req, res, next);
+});
 router.use((req, res, next) => {
     console.log(`[ORDER_ROUTES] 🛣️ API Traffic Hit: [${req.method}] ${req.originalUrl}`);
     next();
