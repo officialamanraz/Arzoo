@@ -43,6 +43,7 @@ import './components/OrderSummary_Arzoo_Theme.css';
 import './components/newpaymenttheme.css';
 import './components/newthemeofuserorder.css';
 import './components/newthemeofcart.css';
+import './components/newthemeabout.css';
 // 🤝 NEW: Dealer Management & Portal Components
 import AdminDealers from "./components/AdminDealers";
 import AdminDealerDetail from "./components/AdminDealerDetail";

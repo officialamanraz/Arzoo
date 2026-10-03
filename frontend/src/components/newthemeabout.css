@@ -1,0 +1,209 @@
+/* =========================================================
+   ARZOO SAREE — LUXURY ABOUT PAGE THEME
+   ---------------------------------------------------------
+   Warm beige background, luxury typography, deep dark mode.
+========================================================= */
+
+:root {
+  --arzoo-wine: #741434;
+  --arzoo-wine-dark: #5b0f27;
+  --arzoo-gold: #c79a52;
+  --arzoo-cream: #fffdf9; /* Light mode page background */
+  --arzoo-nav-theme: #fdf5eb; /* Warm beige for luxury feel */
+  --arzoo-text: #2c2c2c;
+  --arzoo-muted: #666666;
+  --arzoo-shadow: 0 10px 30px rgba(116, 20, 52, 0.08);
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* =========================================
+   DARK MODE ADAPTATION (Works Instantly)
+========================================= */
+body.dark, .dark-mode, [data-theme='dark'] {
+  --arzoo-cream: #121212 !important;
+  --arzoo-nav-theme: #1c1c1e !important;
+  --arzoo-text: #f5f5f5 !important;
+  --arzoo-muted: #a3a3a3 !important;
+  --arzoo-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  --arzoo-wine: #a02850 !important; /* Lighter wine for dark mode contrast */
+}
+
+/* =========================================
+   MAIN LAYOUT
+========================================= */
+.about-wrapper { 
+  display: flex; 
+  justify-content: center; 
+  padding: 100px 20px; 
+  background-color: var(--arzoo-cream); /* Uses theme background */
+  font-family: var(--font-body); 
+  transition: background-color 0.3s ease;
+}
+
+.about-container { 
+  max-width: 1100px; 
+  width: 100%; 
+  display: flex; 
+  align-items: center; 
+  gap: 80px; 
+  flex-wrap: wrap; 
+}
+
+/* -----------------------------------------
+   LEFT SIDE: IMAGE FRAME
+----------------------------------------- */
+.about-image-col { 
+  flex: 1; 
+  min-width: 300px; 
+  display: flex; 
+  justify-content: center; 
+  position: relative; 
+}
+
+.about-quote-mark-top { 
+  position: absolute; 
+  top: -40px; 
+  left: -20px; 
+  font-size: 180px; 
+  color: rgba(199, 154, 82, 0.2); /* Soft gold watermark quote */
+  font-family: var(--font-display); 
+  z-index: 0; 
+  line-height: 1; 
+  user-select: none; 
+}
+
+body.dark .about-quote-mark-top { color: rgba(255, 255, 255, 0.05); }
+
+.about-image-frame { 
+  width: 380px; 
+  height: 380px; 
+  border-radius: 50%; 
+  overflow: hidden; 
+  box-shadow: var(--arzoo-shadow); 
+  border: 10px solid var(--arzoo-nav-theme); /* Warm beige border */
+  position: relative; 
+  z-index: 1; 
+  transition: border-color 0.3s ease;
+}
+
+.about-image-frame img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block; 
+}
+
+/* -----------------------------------------
+   RIGHT SIDE: TEXT CONTENT
+----------------------------------------- */
+.about-text-col { 
+  flex: 1.5; 
+  min-width: 300px; 
+  position: relative; 
+}
+
+.about-founder-row { 
+  display: flex; 
+  align-items: center; 
+  gap: 15px; 
+  margin-bottom: 25px; 
+}
+
+.about-founder-row h3 { 
+  margin: 0; 
+  font-family: var(--font-display); 
+  font-size: 1.5rem; 
+  font-weight: 600; 
+  color: var(--arzoo-text); 
+}
+
+.about-founder-role { 
+  color: var(--arzoo-wine); 
+  font-style: italic;
+  font-weight: 500;
+}
+
+.about-founder-divider { 
+  height: 1px; 
+  background-color: var(--arzoo-gold); /* Gold divider line */
+  flex: 1; 
+  opacity: 0.5;
+}
+
+.about-quote-text { 
+  font-family: var(--font-display); 
+  font-size: 1.6rem; 
+  font-style: italic; 
+  font-weight: 500; 
+  color: var(--arzoo-text); 
+  line-height: 1.7; 
+  margin: 0; 
+  position: relative; 
+  z-index: 1; 
+}
+
+.about-quote-mark-bottom { 
+  text-align: right; 
+  margin-top: -30px; 
+}
+
+.about-quote-mark-bottom span { 
+  font-size: 140px; 
+  color: var(--arzoo-wine); 
+  font-family: var(--font-display); 
+  line-height: 0; 
+  opacity: 0.8;
+}
+
+/* -----------------------------------------
+   BUTTON
+----------------------------------------- */
+.about-cta-row { margin-top: 30px; }
+
+.about-cta-btn { 
+  display: inline-block; 
+  padding: 16px 40px; 
+  background-color: var(--arzoo-wine); 
+  color: #fff; 
+  text-decoration: none; 
+  font-size: 1.1rem; 
+  font-weight: 600; 
+  font-family: var(--font-body); 
+  border-radius: 4px; /* Sharp professional corners */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease; 
+}
+
+.about-cta-btn:hover { 
+  background-color: var(--arzoo-wine-dark); 
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 12px rgba(116, 20, 52, 0.3); 
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+========================================= */
+@media (max-width: 900px) { 
+  .about-wrapper { padding: 60px 20px; } 
+  .about-container { gap: 40px; } 
+  .about-image-frame { width: 300px; height: 300px; }
+  .about-quote-text { font-size: 1.4rem; }
+}
+
+@media (max-width: 640px) { 
+  .about-wrapper { padding: 40px 16px; } 
+  .about-container { flex-direction: column; text-align: center; } 
+  .about-image-frame { width: 240px; height: 240px; border-width: 6px; margin: 0 auto;} 
+  .about-quote-mark-top { font-size: 120px; top: -20px; left: 0; right: 0; text-align: center;} 
+  
+  .about-founder-row { flex-direction: column; gap: 8px; justify-content: center; } 
+  .about-founder-divider { display: none; } 
+  
+  .about-quote-text { font-size: 1.25rem; line-height: 1.6; } 
+  .about-quote-mark-bottom { text-align: center; margin-top: -10px; } 
+  .about-quote-mark-bottom span { font-size: 100px; } 
+  
+  .about-cta-btn { width: 100%; box-sizing: border-box; text-align: center; } 
+}

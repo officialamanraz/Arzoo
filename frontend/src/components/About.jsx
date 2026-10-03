@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './About.css';
+import './About.css'; 
 
 const About = () => {
   return (
@@ -12,9 +12,8 @@ const About = () => {
           <div className="about-quote-mark-top">“</div>
           <div className="about-image-frame">
             <img
-              // 🚨 APNI PHOTO YA LOGO YAHAN DAAL 🚨
-              src="https://via.placeholder.com/400x400.png?text=Aman+Saare"
-              alt="Ayan Kadri"
+              src="/WhatsApp Image 2026-10-03 at 6.48.09 PM.jpeg"
+              alt="Aman Raza"
             />
           </div>
         </div>
@@ -23,13 +22,13 @@ const About = () => {
         <div className="about-text-col">
           <div className="about-founder-row">
             <h3>
-              Ayan Kadri, <span className="about-founder-role">Founder - Aman Saare</span>
+              Aman Raza, <span className="about-founder-role">Developer</span>
             </h3>
             <div className="about-founder-divider"></div>
           </div>
 
           <p className="about-quote-text">
-            As a homegrown brand from Kaithoon, Kota, we direct our efforts towards preserving the rich heritage of Kota Doria while creating elegant, handcrafted sarees. We believe in authentic craftsmanship. We learn from our weavers' generations of experience and strive towards enhanced customer satisfaction, bridging the gap between traditional Indian artistry and modern digital commerce.
+            I am developing my first website by myself and learning software engineering. I believe in practical learning and authentic coding. I am continuously learning from challenges and striving towards enhancing my skills, bridging the gap between theoretical knowledge and real-world development.
           </p>
 
           <div className="about-quote-mark-bottom">
