@@ -1,0 +1,307 @@
+/* =========================================================
+   ARZOO SAREE — LUXURY PROFILE THEME
+   ---------------------------------------------------------
+   Warm beige base, soft glassmorphism borders, deep dark mode.
+========================================================= */
+
+:root {
+  --arzoo-wine: #741434;
+  --arzoo-wine-dark: #5b0f27;
+  --arzoo-gold: #c79a52;
+  --arzoo-cream: #fffdf9; /* Standard background */
+  --arzoo-nav-theme: #fdf5eb; /* Warm beige for profile card */
+  --arzoo-text: #2c2c2c;
+  --arzoo-muted: #666666;
+  --arzoo-shadow: 0 8px 24px rgba(116, 20, 52, 0.05);
+}
+
+/* =========================================================
+   BASE LAYOUT (Theme applied)
+========================================================= */
+.profile-page-container {
+  display: flex;
+  max-width: 1100px;
+  margin: 40px auto;
+  background: var(--arzoo-nav-theme); /* Matches Navbar Beige */
+  border-radius: 12px;
+  box-shadow: var(--arzoo-shadow);
+  overflow: hidden;
+  min-height: 550px;
+  border: 1px solid rgba(0, 0, 0, 0.03); /* Soft edge */
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+}
+
+/* Sidebar Styling */
+.profile-sidebar {
+  width: 300px;
+  background: rgba(255, 255, 255, 0.4); /* Glossy overlay on beige */
+  border-right: 1px dashed rgba(116, 20, 52, 0.1); /* Soft wine dashed line */
+  padding: 30px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-sidebar-header {
+  text-align: center;
+  padding: 0 20px 20px;
+  border-bottom: 1px dashed rgba(116, 20, 52, 0.1);
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 15px;
+  background: #f4f4f4;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 3px solid var(--arzoo-wine); /* Wine ring */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-sidebar-header h3 {
+  margin: 0 0 5px;
+  font-size: 1.15rem;
+  color: var(--arzoo-text);
+  font-weight: 700;
+}
+
+.profile-sidebar-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--arzoo-muted);
+}
+
+/* Profile Menu */
+.profile-menu {
+  list-style: none;
+  padding: 20px 0 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-menu li {
+  padding: 15px 30px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--arzoo-muted);
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.profile-menu li:hover {
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--arzoo-wine);
+}
+
+.profile-menu li.active {
+  background: rgba(116, 20, 52, 0.05); /* Very light wine */
+  color: var(--arzoo-wine);
+  border-right: 4px solid var(--arzoo-wine);
+}
+
+.profile-menu li.logout-btn {
+  color: #c62828;
+  margin-top: 20px;
+}
+
+/* =========================================================
+   LOGIN & SECURITY CONTENT
+========================================================= */
+.profile-content {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-content h2 {
+  margin: 0 0 25px 0;
+  font-size: 1.8rem;
+  color: var(--arzoo-text);
+  font-weight: 700;
+  font-family: 'Fraunces', serif; /* Luxury Serif Header */
+}
+
+/* Security List Block */
+.security-list {
+  border: 1px solid rgba(0, 0, 0, 0.05); /* Faint border */
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6); /* Glossy inner block */
+}
+
+.security-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.security-row:last-child {
+  border-bottom: none;
+}
+
+.security-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--arzoo-text);
+}
+
+.security-value {
+  font-size: 0.95rem;
+  color: var(--arzoo-muted);
+  margin-top: 4px;
+}
+
+/* Buttons */
+.security-edit-btn {
+  background: transparent;
+  border: 1px solid var(--arzoo-wine);
+  border-radius: 4px;
+  padding: 6px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--arzoo-wine);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.security-edit-btn:hover {
+  background: var(--arzoo-wine);
+  color: #fff;
+}
+
+/* Edit Form */
+.security-edit-form input {
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.8);
+}
+.security-edit-form input:focus {
+  border-color: var(--arzoo-wine);
+  outline: none;
+}
+
+.save-btn {
+  background: var(--arzoo-wine);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.save-btn:hover { background: var(--arzoo-wine-dark); }
+
+.cancel-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* =========================================================
+   ROBUST DARK MODE SUPPORT
+========================================================= */
+body.dark, .dark-mode, [data-theme='dark'] {
+  --profile-bg: #1c1c1e !important;
+  --profile-sidebar-bg: #27272a !important;
+  --profile-border: rgba(255,255,255,0.08) !important;
+  --profile-text: #f8fafc !important;
+  --profile-subtext: #a3a3a3 !important;
+  --arzoo-wine: #e25b7b !important;
+}
+
+body.dark .profile-page-container {
+  background: var(--profile-bg) !important;
+  color: var(--profile-text) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid var(--profile-border) !important;
+}
+
+body.dark .profile-sidebar {
+  background: var(--profile-sidebar-bg) !important;
+  border-right: 1px dashed var(--profile-border) !important;
+}
+
+body.dark .profile-sidebar-header {
+  border-bottom: 1px dashed var(--profile-border) !important;
+}
+
+body.dark .profile-sidebar-header h3, 
+body.dark .profile-content h2, 
+body.dark .security-label {
+  color: var(--profile-text) !important;
+}
+
+body.dark .profile-sidebar-header p, 
+body.dark .security-value, 
+body.dark .profile-menu li {
+  color: var(--profile-subtext) !important;
+}
+
+body.dark .profile-menu li:hover { background: #333336 !important; color: var(--arzoo-wine) !important; }
+body.dark .profile-menu li.active { background: rgba(226, 91, 123, 0.1) !important; color: var(--arzoo-wine) !important; border-right-color: var(--arzoo-wine) !important;}
+
+body.dark .security-list {
+  background: var(--profile-sidebar-bg) !important;
+  border: 1px solid var(--profile-border) !important;
+}
+
+body.dark .security-row { border-bottom: 1px dashed var(--profile-border) !important; }
+
+body.dark .security-edit-btn { border-color: var(--arzoo-wine) !important; color: var(--arzoo-wine) !important; }
+body.dark .security-edit-btn:hover { background: var(--arzoo-wine) !important; color: #fff !important; }
+
+body.dark .security-edit-form input {
+  background: var(--profile-bg) !important;
+  border-color: var(--profile-border) !important;
+  color: var(--profile-text) !important;
+}
+
+body.dark .cancel-btn { border-color: #555 !important; color: #ccc !important; }
+
+/* =========================================================
+   MOBILE RESPONSIVENESS (< 768px)
+========================================================= */
+@media (max-width: 768px) {
+  .profile-page-container {
+    flex-direction: column;
+    margin: 10px;
+    border-radius: 8px;
+    box-shadow: none;
+    border: none;
+  }
+  
+  .profile-sidebar { width: 100%; border-right: none; padding: 15px 0; }
+  .profile-sidebar-header { border-bottom: none; }
+  
+  .profile-menu { background: rgba(255, 255, 255, 0.3); border-top: 1px dashed rgba(0,0,0,0.05); }
+  body.dark .profile-menu { background: var(--profile-sidebar-bg) !important; border-top: 1px dashed var(--profile-border); }
+  
+  .profile-menu li { padding: 15px 20px; border-bottom: 1px dashed rgba(0,0,0,0.05); }
+  body.dark .profile-menu li { border-bottom: 1px dashed var(--profile-border) !important; }
+  
+  .profile-content { padding: 20px 10px; }
+  .security-list { border-radius: 4px; }
+}

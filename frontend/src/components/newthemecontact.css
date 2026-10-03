@@ -1,0 +1,248 @@
+/* =========================================================
+   ARZOO SAREE — LUXURY CONTACT THEME
+   ---------------------------------------------------------
+   Features: Deep dark mode support, glowing flowers,
+   glassmorphism inputs, and seamless theme matching.
+========================================================= */
+
+:root {
+  --arzoo-wine: #741434;
+  --arzoo-wine-dark: #5b0f27;
+  --arzoo-gold: #c79a52;
+  --arzoo-cream: #fffdf9; /* Page Background */
+  --arzoo-nav-theme: #fdf5eb; /* Warm beige for the card */
+  --arzoo-text: #2c2c2c;
+  --arzoo-muted: #666666;
+  --arzoo-shadow: 0 10px 30px rgba(116, 20, 52, 0.05);
+}
+
+/* =========================================
+   DARK MODE ADAPTATION (Applies Instantly)
+========================================= */
+body.dark, .dark-mode, [data-theme='dark'] {
+  --arzoo-cream: #121212 !important;
+  --arzoo-nav-theme: #1c1c1e !important;
+  --arzoo-text: #f5f5f5 !important;
+  --arzoo-muted: #a3a3a3 !important;
+  --arzoo-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* =========================================
+   PAGE WRAPPER
+========================================= */
+.contact-wrapper { 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  min-height: 85vh; 
+  padding: 60px 20px; 
+  background-color: var(--arzoo-cream); 
+  font-family: 'Inter', sans-serif;
+  transition: background-color 0.3s ease;
+}
+
+/* =========================================
+   CONTACT CARD & GLOWING FLOWERS
+========================================= */
+.contact-card { 
+  background: var(--arzoo-nav-theme); 
+  width: 100%; 
+  max-width: 550px; 
+  padding: 50px 40px; 
+  border-radius: 12px; 
+  box-shadow: var(--arzoo-shadow); 
+  border: none; /* Removed hard borders */
+  position: relative;
+  overflow: hidden; /* Contains glowing flowers inside the card */
+  z-index: 1;
+}
+
+/* Glowing Flowers in empty corners */
+.contact-card::before,
+.contact-card::after {
+  content: "";
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background-image: url('/path-to-your-flower.png'); /* ⚠️ ADD YOUR FLOWER IMAGE PATH HERE */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: -1;
+  opacity: 0.15;
+  filter: drop-shadow(0 0 15px rgba(89, 212, 203, 0.6)) brightness(1.2);
+  transition: opacity 0.3s ease;
+}
+
+/* Top-Left Flower */
+.contact-card::before {
+  top: -20px;
+  left: -20px;
+  transform: rotate(-15deg);
+}
+
+/* Bottom-Right Flower */
+.contact-card::after {
+  bottom: -20px;
+  right: -20px;
+  transform: rotate(165deg);
+}
+
+body.dark .contact-card::before, 
+body.dark .contact-card::after {
+  opacity: 0.1; /* Slightly dimmer glow for dark mode */
+}
+
+/* =========================================
+   HEADER STYLING
+========================================= */
+.contact-header { 
+  text-align: center; 
+  margin-bottom: 35px; 
+}
+
+.contact-header h2 { 
+  color: var(--arzoo-text); 
+  font-size: 2.2rem; 
+  margin-bottom: 10px; 
+  font-family: 'Fraunces', serif; /* Luxury Serif Font */
+  font-weight: 700;
+}
+
+.contact-header p { 
+  color: var(--arzoo-muted); 
+  font-size: 1.05rem; 
+  margin: 0; 
+}
+
+/* =========================================
+   FORM ELEMENTS (Glassmorphism)
+========================================= */
+.contact-form { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 24px; 
+}
+
+.form-group { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+}
+
+.form-group label { 
+  font-weight: 600; 
+  color: var(--arzoo-text); 
+  font-size: 0.95rem; 
+  letter-spacing: 0.02em;
+}
+
+.contact-input { 
+  width: 100%; 
+  padding: 16px; 
+  border: 1px solid rgba(0, 0, 0, 0.05); 
+  border-radius: 8px; 
+  font-size: 1rem; 
+  transition: all 0.3s ease; 
+  box-sizing: border-box; 
+  background-color: rgba(255, 255, 255, 0.6); /* Glossy light input */
+  color: var(--arzoo-text); 
+  font-family: 'Inter', sans-serif;
+}
+
+body.dark .contact-input {
+  background-color: rgba(0, 0, 0, 0.2); /* Glassy dark input */
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.contact-input:focus { 
+  outline: none; 
+  border-color: rgba(116, 20, 52, 0.4); 
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 4px rgba(116, 20, 52, 0.1); 
+}
+
+body.dark .contact-input:focus {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05); 
+}
+
+.contact-textarea { 
+  min-height: 140px; 
+  resize: vertical; 
+}
+
+/* =========================================
+   BUTTON
+========================================= */
+.contact-submit-btn { 
+  width: 100%; 
+  padding: 16px; 
+  background-color: var(--arzoo-wine); 
+  color: white; 
+  border: none; 
+  border-radius: 8px; 
+  font-weight: 700; 
+  font-size: 1.1rem; 
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer; 
+  transition: background-color 0.3s, transform 0.2s; 
+  margin-top: 10px; 
+}
+
+.contact-submit-btn:hover:not(:disabled) { 
+  background-color: var(--arzoo-wine-dark); 
+  transform: translateY(-2px);
+}
+
+.contact-submit-btn:disabled { 
+  background-color: #cccccc; 
+  cursor: not-allowed; 
+  transform: none;
+}
+
+body.dark .contact-submit-btn:disabled {
+  background-color: #333;
+  color: #777;
+}
+
+/* =========================================
+   STATUS MESSAGES
+========================================= */
+.status-message { 
+  margin-top: 20px; 
+  padding: 14px; 
+  border-radius: 8px; 
+  text-align: center; 
+  font-weight: 600; 
+  font-size: 0.95rem;
+}
+
+.status-success { 
+  background-color: rgba(6, 95, 70, 0.1); 
+  color: #065f46; 
+  border: 1px dashed #34d399; 
+}
+body.dark .status-success { color: #4ade80; }
+
+.status-error { 
+  background-color: rgba(179, 38, 30, 0.1); 
+  color: #991b1b; 
+  border: 1px dashed #f87171; 
+}
+body.dark .status-error { color: #ff6b6b; }
+
+/* =========================================
+   MOBILE RESPONSIVENESS
+========================================= */
+@media (max-width: 600px) { 
+  .contact-wrapper { padding: 40px 15px; }
+  .contact-card { padding: 40px 25px; } 
+  .contact-header h2 { font-size: 1.8rem; } 
+  
+  /* Adjust flowers for smaller screens */
+  .contact-card::before { width: 100px; height: 100px; top: -10px; left: -10px; }
+  .contact-card::after { width: 100px; height: 100px; bottom: -10px; right: -10px; }
+}
