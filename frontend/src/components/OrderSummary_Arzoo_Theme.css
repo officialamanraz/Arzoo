@@ -1,387 +1,135 @@
 /* =========================================================
-   ARZOO SAREE — ORDER SUMMARY / CHECKOUT THEME
+   ARZOO SAREE — PROFESSIONAL CHECKOUT THEME
    ---------------------------------------------------------
-   Drop-in replacement for the existing OrderSummary.css.
-   Keeps the existing class names so JSX does not need to change.
+   Sleek, High-End, and Perfectly Aligned.
 ========================================================= */
 
 :root {
   --arzoo-wine: #741434;
   --arzoo-wine-dark: #5b0f27;
-  --arzoo-wine-soft: #8f2a4c;
   --arzoo-gold: #c79a52;
-  --arzoo-gold-light: #e0bf7b;
-
-  --arzoo-cream: #fffaf2;
-  --arzoo-ivory: #f8efe3;
-  --arzoo-rose: #f5e1df;
-
-  --arzoo-text: #38272d;
-  --arzoo-muted: #76646a;
-  --arzoo-border: rgba(116, 20, 52, 0.13);
-
-  --arzoo-card: rgba(255, 253, 249, 0.97);
-  --arzoo-shadow: 0 12px 30px rgba(87, 32, 48, 0.08);
-  --arzoo-shadow-hover: 0 16px 34px rgba(87, 32, 48, 0.12);
+  --arzoo-cream: #fffdf9;
+  --arzoo-text: #2c2c2c;
+  --arzoo-muted: #666666;
+  --arzoo-border: #e8e2db;
+  --arzoo-card: #ffffff;
+  --arzoo-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
 }
 
 /* =========================================================
-   PAGE
+   PAGE & HEADER
 ========================================================= */
-
 .summary-page {
   min-height: 100vh;
-  padding-bottom: 55px;
-
+  padding-bottom: 50px;
   color: var(--arzoo-text);
-
-  background:
-    radial-gradient(
-      circle at 8% 10%,
-      rgba(199, 154, 82, 0.08),
-      transparent 23%
-    ),
-    radial-gradient(
-      circle at 92% 28%,
-      rgba(116, 20, 52, 0.055),
-      transparent 25%
-    ),
-    linear-gradient(
-      180deg,
-      #fffdf9 0%,
-      var(--arzoo-cream) 55%,
-      #fffaf6 100%
-    );
-
-  font-family:
-    var(--font-body,
-    "Inter",
-    Arial,
-    sans-serif);
+  background: var(--arzoo-cream);
+  font-family: 'Inter', sans-serif;
 }
-
-/* =========================================================
-   LOADING / ERROR
-========================================================= */
-
-.loading-state,
-.error-state {
-  min-height: 55vh;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-  padding: 45px 20px;
-
-  text-align: center;
-  font-size: 1rem;
-}
-
-.loading-state {
-  color: var(--arzoo-wine);
-}
-
-.loading-state::before {
-  content: "✦";
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 58px;
-  height: 58px;
-
-  margin-bottom: 15px;
-
-  border: 1px solid rgba(199, 154, 82, 0.48);
-  border-radius: 50%;
-
-  color: var(--arzoo-wine);
-  font-size: 26px;
-
-  background: rgba(255, 253, 249, 0.78);
-
-  animation: arzooSummaryPulse 2.2s ease-in-out infinite;
-}
-
-.error-state {
-  color: var(--arzoo-wine);
-}
-
-/* =========================================================
-   HEADER
-========================================================= */
 
 .summary-header {
-  position: relative;
-
-  padding: 30px 20px 25px;
-
+  padding: 15px 20px 25px;
   text-align: center;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 253, 249, 0.98),
-      rgba(252, 244, 235, 0.95)
-    );
-
-  border-bottom: 1px solid rgba(199, 154, 82, 0.25);
-
-  box-shadow:
-    0 5px 18px rgba(87, 32, 48, 0.06);
-
-  overflow: hidden;
-}
-
-.summary-header::before,
-.summary-header::after {
-  content: "✦";
-
-  position: absolute;
-
-  color: rgba(199, 154, 82, 0.28);
-
-  font-size: 18px;
-
-  pointer-events: none;
-}
-
-.summary-header::before {
-  left: 12%;
-  top: 21px;
-}
-
-.summary-header::after {
-  right: 12%;
-  top: 21px;
-}
-
-.summary-header h2 {
-  margin: 0;
-
-  color: var(--arzoo-wine);
-
-  font-family:
-    Georgia,
-    "Times New Roman",
-    serif;
-
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  font-weight: 700;
-
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
-}
-
-.summary-header h2::after {
-  content: "";
-  display: block;
-
-  width: 96px;
-  height: 2px;
-
-  margin: 13px auto 0;
-
-  border-radius: 99px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      var(--arzoo-gold),
-      transparent
-    );
+  background: #ffffff;
+  border-bottom: 1px solid var(--arzoo-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
 }
 
 /* =========================================================
-   STEPPER
+   STEPPER (COMPACT & PROFESSIONAL)
 ========================================================= */
-
 .stepper-container {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  margin-top: 27px;
-
-  gap: 8px;
+  margin-top: 10px;
+  gap: 0px; /* Reduced gap */
 }
 
 .step-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  min-width: 105px;
+  min-width: 80px; /* Decreased width */
 }
 
 .step-circle {
-  width: 38px;
-  height: 38px;
-
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  border: 1px solid rgba(199, 154, 82, 0.42);
+  border: 1px solid #d5d5d5;
   border-radius: 50%;
-
-  background: #f5ecdf;
-  color: #897a7f;
-
-  font-size: 14px;
-  font-weight: 700;
-
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.65);
-
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
+  background: #f9f9f9;
+  color: #888;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .step-circle.active {
-  background:
-    linear-gradient(
-      135deg,
-      var(--arzoo-wine-dark),
-      var(--arzoo-wine-soft)
-    );
-
-  color: #fff8ef;
-
-  border-color: var(--arzoo-gold-light);
-
-  box-shadow:
-    0 7px 16px rgba(116, 20, 52, 0.16),
-    0 0 0 4px rgba(199, 154, 82, 0.12);
+  background: var(--arzoo-wine);
+  color: #ffffff;
+  border-color: var(--arzoo-wine);
 }
 
 .step-label {
   margin-top: 8px;
-
   color: var(--arzoo-muted);
-
-  font-size: 0.82rem;
-  line-height: 1.2;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .active-text {
   color: var(--arzoo-wine);
 }
-
 .bold-text {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .step-line {
-  width: min(110px, 10vw);
-  height: 1px;
-
-  margin: 0 5px 24px;
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(199, 154, 82, 0.18),
-      rgba(199, 154, 82, 0.44),
-      rgba(199, 154, 82, 0.18)
-    );
+  width: 60px; /* Decreased line width for compact look */
+  height: 2px;
+  margin: 0 8px 22px;
+  background: #e0e0e0;
 }
 
 .completed-line {
-  background:
-    linear-gradient(
-      90deg,
-      var(--arzoo-gold),
-      var(--arzoo-wine)
-    );
+  background: var(--arzoo-gold);
 }
 
 /* =========================================================
-   MAIN LAYOUT
+   MAIN LAYOUT & CARDS
 ========================================================= */
-
 .summary-content-wrapper {
   width: min(1180px, calc(100% - 40px));
-
-  margin: 28px auto 0;
-
+  margin: 30px auto 0;
   display: flex;
   align-items: flex-start;
-
-  gap: 22px;
+  gap: 24px;
 }
 
 .summary-left-pane {
   flex: 1 1 65%;
-
-  min-width: 0;
-
   display: flex;
   flex-direction: column;
-
-  gap: 16px;
+  gap: 20px;
 }
 
 .summary-right-pane {
   flex: 0 1 35%;
-
-  min-width: 300px;
-
+  min-width: 320px;
   position: sticky;
   top: 20px;
 }
 
-/* =========================================================
-   CARDS
-========================================================= */
-
 .summary-card {
-  position: relative;
-
   background: var(--arzoo-card);
-
-  border: 1px solid rgba(199, 154, 82, 0.24);
-
-  border-radius: 15px;
-
+  border: 1px solid var(--arzoo-border);
+  border-radius: 6px; /* Sharp, professional corners */
   box-shadow: var(--arzoo-shadow);
-
-  padding: 23px;
-
-  overflow: hidden;
-
-  transition:
-    box-shadow 0.22s ease,
-    border-color 0.22s ease;
-}
-
-.summary-card:hover {
-  border-color: rgba(199, 154, 82, 0.38);
-  box-shadow: var(--arzoo-shadow-hover);
-}
-
-.summary-card::before {
-  content: "";
-
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-
-  height: 2px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(199, 154, 82, 0.62),
-      transparent
-    );
+  padding: 24px;
 }
 
 .no-padding {
@@ -392,860 +140,219 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  gap: 15px;
-
-  margin-bottom: 15px;
+  margin-bottom: 18px;
 }
 
 .card-header h3,
-.section-subtitle,
 .price-details-header {
   margin: 0;
-
-  color: var(--arzoo-wine);
-
-  font-family:
-    Georgia,
-    "Times New Roman",
-    serif;
-
-  font-size: 1rem;
+  color: var(--arzoo-text);
+  font-size: 1.05rem;
   font-weight: 700;
-
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .price-details-header {
-  padding-bottom: 15px;
-  margin-bottom: 18px;
-
-  border-bottom: 1px solid
-    rgba(199, 154, 82, 0.24);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--arzoo-border);
 }
 
 .change-btn {
-  position: relative;
-
-  padding: 3px 0;
-
   color: var(--arzoo-wine);
-
-  border: none;
-  background: none;
-
+  border: 1px solid var(--arzoo-wine);
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: 4px;
   cursor: pointer;
-
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
-.change-btn::after {
-  content: "";
-
-  position: absolute;
-
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  height: 1px;
-
-  background: var(--arzoo-gold);
-
-  transform: scaleX(0);
-  transform-origin: right;
-
-  transition: transform 0.2s ease;
-}
-
-.change-btn:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
+.change-btn:hover {
+  background: var(--arzoo-wine);
+  color: #fff;
 }
 
 .address-name-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-
-  gap: 10px;
-
+  gap: 15px;
   color: var(--arzoo-text);
-
-  font-size: 1.05rem;
-}
-
-.address-name-row::before {
-  content: "✦";
-
-  color: var(--arzoo-gold);
-  font-size: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .address-details {
-  margin: 10px 0 0 0;
-
-  color: var(--arzoo-text);
-
-  line-height: 1.65;
-  font-size: 0.94rem;
-}
-
-.section-desc {
-  margin: 8px 0 16px;
-
+  margin: 8px 0 0 0;
   color: var(--arzoo-muted);
-
-  font-size: 0.88rem;
-  line-height: 1.55;
-}
-
-/* =========================================================
-   FORM
-========================================================= */
-
-.email-input {
-  width: 100%;
-
-  padding: 13px 14px;
-
-  color: var(--arzoo-text);
-
-  background: #fffdf9;
-
-  border: 1px solid rgba(199, 154, 82, 0.30);
-  border-radius: 9px;
-
+  line-height: 1.6;
   font-size: 0.95rem;
-
-  box-sizing: border-box;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-}
-
-.email-input::placeholder {
-  color: #9b898f;
-}
-
-.email-input:focus {
-  outline: none;
-
-  border-color: var(--arzoo-wine);
-
-  background: #ffffff;
-
-  box-shadow:
-    0 0 0 3px rgba(116, 20, 52, 0.07);
-}
-
-.input-error {
-  border-color: #b3261e;
-}
-
-.error-text {
-  margin: 8px 0 0;
-
-  color: #b3261e;
-
-  font-size: 0.8rem;
 }
 
 /* =========================================================
-   CART ITEMS
+   CART ITEMS (INCREASED IMAGE & FIXED ALIGNMENT)
 ========================================================= */
-
-.empty-cart-text {
-  padding: 28px;
-
-  text-align: center;
-
-  color: var(--arzoo-muted);
-}
-
 .cart-item-row {
-  display: flex;
-  justify-content: space-between;
-
-  padding: 23px;
+  padding: 24px;
 }
 
 .border-bottom {
-  border-bottom:
-    1px solid
-    rgba(199, 154, 82, 0.16);
+  border-bottom: 1px solid var(--arzoo-border);
 }
 
 .cart-item-details {
   display: flex;
-  align-items: center;
-
-  gap: 21px;
-
+  align-items: flex-start; /* Perfectly aligns text to the top of the image */
+  gap: 24px;
   width: 100%;
-
-  min-width: 0;
 }
 
 .cart-item-img-container {
-  width: 112px;
-  height: 112px;
-
+  width: 130px; /* Increased Size */
+  height: 160px; /* Portrait ratio for sarees */
   flex-shrink: 0;
-
-  padding: 7px;
-
-  background:
-    linear-gradient(
-      145deg,
-      #f7ede1,
-      #fffaf3
-    );
-
-  border: 1px solid
-    rgba(199, 154, 82, 0.28);
-
-  border-radius: 11px;
-
+  background: #f4f4f4;
+  border: 1px solid var(--arzoo-border);
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .cart-item-img {
   width: 100%;
   height: 100%;
-
-  object-fit: contain;
-
+  object-fit: cover; /* Ensures image fills the professional frame */
   display: block;
 }
 
 .cart-item-info {
-  min-width: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .cart-item-info h4 {
-  margin: 0 0 9px;
-
+  margin: 0 0 8px;
   color: var(--arzoo-text);
-
-  font-family:
-    Georgia,
-    "Times New Roman",
-    serif;
-
-  font-size: 1.08rem;
+  font-size: 1.1rem;
   font-weight: 600;
-
   line-height: 1.4;
 }
 
 .cart-item-qty {
-  display: block;
-
-  margin-bottom: 9px;
-
   color: var(--arzoo-muted);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
 
-  font-size: 0.88rem;
+.item-pricing {
+  margin-top: auto; /* Pushes price slightly down if needed, or keeps it structured */
 }
 
 .cart-item-price {
-  color: var(--arzoo-wine);
-
-  font-size: 1.2rem;
-  font-weight: 800;
+  color: var(--arzoo-text);
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 /* =========================================================
    PRICE DETAILS
 ========================================================= */
-
-.summary-right-pane .summary-card {
-  padding: 25px;
-}
-
 .price-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  gap: 20px;
-
-  margin-bottom: 15px;
-
+  margin-bottom: 14px;
   color: var(--arzoo-text);
-
-  font-size: 0.94rem;
-}
-
-.price-row span:last-child {
-  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .total-amount-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  gap: 18px;
-
-  padding: 17px 0;
-  margin: 17px 0;
-
-  border-top: 1px dashed
-    rgba(199, 154, 82, 0.38);
-
-  border-bottom: 1px dashed
-    rgba(199, 154, 82, 0.38);
-
-  color: var(--arzoo-wine);
-
-  font-size: 1.18rem;
-  font-weight: 800;
-}
-
-.total-amount-row::before {
-  content: "";
-  display: none;
+  padding: 16px 0;
+  margin: 16px 0;
+  border-top: 1px solid var(--arzoo-border);
+  border-bottom: 1px solid var(--arzoo-border);
+  color: var(--arzoo-text);
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .continue-btn {
   width: 100%;
-
-  padding: 15px 17px;
-
-  color: #fffaf3;
-
-  border: 1px solid
-    rgba(224, 191, 123, 0.48);
-
-  border-radius: 10px;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--arzoo-wine-dark),
-      var(--arzoo-wine-soft)
-    );
-
-  box-shadow:
-    0 8px 18px rgba(116, 20, 52, 0.16);
-
+  padding: 16px;
+  color: #ffffff;
+  background: var(--arzoo-wine);
+  border: none;
+  border-radius: 4px; /* Sharp professional button */
   font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-
+  font-weight: 600;
+  letter-spacing: 0.05em;
   cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .continue-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-
-  background:
-    linear-gradient(
-      135deg,
-      #4f0b22,
-      #761538
-    );
-
-  box-shadow:
-    0 12px 23px rgba(116, 20, 52, 0.21);
-}
-
-.continue-btn:active:not(:disabled) {
-  transform: translateY(0);
+  background: var(--arzoo-wine-dark);
 }
 
 .continue-btn:disabled {
-  background: #ddd6d1;
-  color: #918a87;
-
-  border-color: #d7d0ca;
-
-  box-shadow: none;
-
+  background: #cccccc;
   cursor: not-allowed;
 }
 
-/* Small trust line under payment button.
-   Uses an existing container if present; safe if absent. */
-.summary-right-pane .continue-btn + * {
-  margin-top: 12px;
-}
-
 /* =========================================================
-   DESKTOP POLISH
+   RESPONSIVE DESIGN (TABLET & MOBILE)
 ========================================================= */
-
-@media (min-width: 769px) {
-  .summary-right-pane::after {
-    content: "✦ Secure checkout • Protected payment • Arzoo Saree";
-
-    display: block;
-
-    margin-top: 12px;
-
-    color: var(--arzoo-muted);
-
-    font-size: 0.73rem;
-    text-align: center;
-    line-height: 1.5;
-    letter-spacing: 0.02em;
-  }
-}
-
-/* =========================================================
-   TABLET
-========================================================= */
-
 @media (max-width: 950px) {
   .summary-content-wrapper {
-    width: min(100% - 28px, 760px);
-
     flex-direction: column;
   }
-
-  .summary-left-pane,
-  .summary-right-pane {
-    width: 100%;
-  }
-
   .summary-right-pane {
     position: static;
-    min-width: 0;
-  }
-
-  .summary-right-pane .summary-card {
     width: 100%;
-  }
-
-  .stepper-container {
-    margin-top: 22px;
-  }
-
-  .step-wrapper {
-    min-width: 90px;
-  }
-
-  .step-line {
-    width: min(90px, 9vw);
   }
 }
 
-/* =========================================================
-   MOBILE
-========================================================= */
-
 @media (max-width: 768px) {
-  .summary-page {
-    padding-bottom: 30px;
-  }
-
   .summary-header {
-    padding: 22px 13px 19px;
+    padding: 15px;
   }
-
-  .summary-header h2 {
-    font-size: 1.45rem;
-    letter-spacing: 0.035em;
-  }
-
-  .summary-header::before {
-    left: 7%;
-    top: 18px;
-  }
-
-  .summary-header::after {
-    right: 7%;
-    top: 18px;
-  }
-
-  .stepper-container {
-    display: flex;
-
-    margin-top: 21px;
-
-    gap: 4px;
-  }
-
-  .step-wrapper {
-    min-width: 74px;
-  }
-
-  .step-circle {
-    width: 34px;
-    height: 34px;
-
-    font-size: 12px;
-  }
-
-  .step-label {
-    max-width: 80px;
-
-    margin-top: 7px;
-
-    font-size: 0.72rem;
-
-    text-align: center;
-  }
-
-  .step-line {
-    width: 43px;
-
-    margin: 0 2px 22px;
-  }
-
+  
+  .step-wrapper { min-width: 65px; }
+  .step-line { width: 40px; margin: 0 4px 22px; }
+  
   .summary-content-wrapper {
-    width: 100%;
-
-    margin-top: 12px;
-
-    padding: 0 11px;
-
-    gap: 12px;
+    margin-top: 16px;
+    padding: 0 16px;
   }
-
-  .summary-left-pane {
-    gap: 12px;
-  }
-
+  
   .summary-card {
-    padding: 17px;
-
-    border-radius: 13px;
+    padding: 16px;
   }
-
-  .card-header {
-    margin-bottom: 12px;
-  }
-
-  .card-header h3,
-  .section-subtitle,
-  .price-details-header {
-    font-size: 0.9rem;
-  }
-
-  .change-btn {
-    font-size: 0.82rem;
-  }
-
-  .address-name-row {
-    font-size: 0.98rem;
-  }
-
-  .address-details {
-    font-size: 0.87rem;
-    line-height: 1.6;
-  }
-
+  
   .cart-item-row {
     padding: 16px;
   }
-
+  
   .cart-item-details {
-    align-items: flex-start;
-
-    gap: 13px;
+    gap: 16px;
   }
-
+  
   .cart-item-img-container {
-    width: 89px;
-    height: 89px;
-
-    padding: 5px;
-    border-radius: 9px;
+    width: 100px;
+    height: 130px;
   }
-
+  
   .cart-item-info h4 {
-    margin-bottom: 7px;
-
-    font-size: 0.96rem;
-  }
-
-  .cart-item-qty {
-    margin-bottom: 6px;
-
-    font-size: 0.8rem;
-  }
-
-  .cart-item-price {
-    font-size: 1.06rem;
-  }
-
-  .price-row {
-    font-size: 0.88rem;
-  }
-
-  .total-amount-row {
-    font-size: 1.08rem;
-  }
-
-  .continue-btn {
-    padding: 14px 12px;
-
-    font-size: 0.92rem;
-  }
-}
-
-/* =========================================================
-   SMALL PHONES
-========================================================= */
-
-@media (max-width: 430px) {
-  .summary-header h2 {
-    font-size: 1.28rem;
-  }
-
-  .step-wrapper {
-    min-width: 65px;
-  }
-
-  .step-circle {
-    width: 31px;
-    height: 31px;
-  }
-
-  .step-label {
-    font-size: 0.67rem;
-  }
-
-  .step-line {
-    width: 28px;
-  }
-
-  .summary-content-wrapper {
-    padding: 0 8px;
-  }
-
-  .summary-card {
-    padding: 14px;
-  }
-
-  .cart-item-row {
-    padding: 14px;
-  }
-
-  .cart-item-details {
-    gap: 11px;
-  }
-
-  .cart-item-img-container {
-    width: 75px;
-    height: 75px;
-  }
-
-  .cart-item-info h4 {
-    font-size: 0.89rem;
-  }
-
-  .cart-item-qty {
-    font-size: 0.76rem;
-  }
-
-  .cart-item-price {
-    font-size: 0.98rem;
-  }
-
-  .total-amount-row {
     font-size: 1rem;
   }
-}
-
-/* =========================================================
-   DARK MODE
-========================================================= */
-
-body.dark .summary-page,
-html.dark .summary-page,
-[data-theme="dark"] .summary-page {
-  color: #f7eee5;
-
-  background:
-    radial-gradient(
-      circle at 10% 10%,
-      rgba(199, 154, 82, 0.07),
-      transparent 24%
-    ),
-    linear-gradient(
-      180deg,
-      #171214 0%,
-      #1f171a 100%
-    );
-}
-
-body.dark .summary-header,
-html.dark .summary-header,
-[data-theme="dark"] .summary-header {
-  background:
-    linear-gradient(
-      180deg,
-      #22191c,
-      #1d1618
-    );
-
-  border-bottom-color:
-    rgba(224, 191, 123, 0.19);
-}
-
-body.dark .summary-header h2,
-html.dark .summary-header h2,
-[data-theme="dark"] .summary-header h2 {
-  color: #f1c37a;
-}
-
-body.dark .summary-card,
-html.dark .summary-card,
-[data-theme="dark"] .summary-card {
-  background:
-    linear-gradient(
-      180deg,
-      #241c20,
-      #1d1719
-    );
-
-  border-color:
-    rgba(199, 154, 82, 0.24);
-
-  box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.18);
-}
-
-body.dark .card-header h3,
-html.dark .card-header h3,
-[data-theme="dark"] .card-header h3,
-body.dark .section-subtitle,
-html.dark .section-subtitle,
-[data-theme="dark"] .section-subtitle,
-body.dark .price-details-header,
-html.dark .price-details-header,
-[data-theme="dark"] .price-details-header {
-  color: #f1c37a;
-}
-
-body.dark .address-name-row,
-html.dark .address-name-row,
-[data-theme="dark"] .address-name-row,
-body.dark .address-details,
-html.dark .address-details,
-[data-theme="dark"] .address-details,
-body.dark .price-row,
-html.dark .price-row,
-[data-theme="dark"] .price-row,
-body.dark .cart-item-info h4,
-html.dark .cart-item-info h4,
-[data-theme="dark"] .cart-item-info h4 {
-  color: #f4e7df;
-}
-
-body.dark .address-details,
-html.dark .address-details,
-[data-theme="dark"] .address-details,
-body.dark .section-desc,
-html.dark .section-desc,
-[data-theme="dark"] .section-desc,
-body.dark .cart-item-qty,
-html.dark .cart-item-qty,
-[data-theme="dark"] .cart-item-qty {
-  color: #c6b5bb;
-}
-
-body.dark .cart-item-price,
-html.dark .cart-item-price,
-[data-theme="dark"] .cart-item-price,
-body.dark .total-amount-row,
-html.dark .total-amount-row,
-[data-theme="dark"] .total-amount-row {
-  color: #f1c37a;
-}
-
-body.dark .email-input,
-html.dark .email-input,
-[data-theme="dark"] .email-input {
-  color: #f4e7df;
-
-  background: #241c20;
-
-  border-color:
-    rgba(224, 191, 123, 0.25);
-}
-
-body.dark .email-input::placeholder,
-html.dark .email-input::placeholder,
-[data-theme="dark"] .email-input::placeholder {
-  color: #aa969d;
-}
-
-body.dark .step-circle,
-html.dark .step-circle,
-[data-theme="dark"] .step-circle {
-  background: #302326;
-  color: #bcaeb3;
-}
-
-body.dark .cart-item-img-container,
-html.dark .cart-item-img-container,
-[data-theme="dark"] .cart-item-img-container {
-  background:
-    linear-gradient(
-      145deg,
-      #302428,
-      #251c20
-    );
-
-  border-color:
-    rgba(199, 154, 82, 0.23);
-}
-
-body.dark .change-btn,
-html.dark .change-btn,
-[data-theme="dark"] .change-btn {
-  color: #f1c37a;
-}
-
-/* =========================================================
-   ANIMATION
-========================================================= */
-
-@keyframes arzooSummaryPulse {
-  0%,
-  100% {
-    transform: scale(0.96);
-    opacity: 0.78;
+  
+  .cart-item-price {
+    font-size: 1.15rem;
   }
-
-  50% {
-    transform: scale(1.04);
-    opacity: 1;
-  }
-}
-
-/* =========================================================
-   ACCESSIBILITY
-========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-  .loading-state::before,
-  .summary-card,
-  .step-circle,
-  .continue-btn,
-  .change-btn::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-button:focus-visible,
-input:focus-visible {
-  outline: 2px solid var(--arzoo-gold);
-  outline-offset: 2px;
 }
