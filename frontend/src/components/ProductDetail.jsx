@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaHeart, FaRegHeart, FaComment, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
-import Zoom from 'react-medium-image-zoom';
-import 'react-medium-image-zoom/dist/styles.css';
 
 import Recommended from "../components/Recommended";
 import './ProductDetail.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+const FALLBACK_IMAGE = "/saare_1.jpeg";
 
 const SPEC_FIELDS = [
   { key: 'fabric', label: 'Fabric/Material' },
@@ -33,6 +32,425 @@ const MFG_FIELDS = [
   { key: 'producer_address', label: 'Name and address of the Manufacturer', fullWidth: true },
   { key: 'packer_address', label: 'Name and address of the Packer', fullWidth: true }
 ];
+
+/* =========================================================
+   AMAZON-STYLE FULLSCREEN IMAGE VIEWER (touch devices)
+   - Pinch to zoom (focal point stays under the fingers)
+   - Double tap to zoom in / out at the tapped point
+   - Drag to pan while zoomed (limited to the image edges)
+   - Swipe left / right to change the image
+   - Drag down to close
+   - Thumbnails, image counter, Escape / arrow keys
+   ========================================================= */
+
+const MIN_SCALE = 1;
+const MAX_SCALE = 4;
+const DOUBLE_TAP_SCALE = 2.5;
+const ZOOMED_THRESHOLD = 0.01;
+const SNAP_TO_FIT_SCALE = 1.05;
+const DOUBLE_TAP_DELAY_MS = 300;
+const DOUBLE_TAP_DISTANCE_PX = 40;
+const TAP_MOVE_TOLERANCE_PX = 10;
+const TAP_MAX_DURATION_MS = 250;
+const AXIS_LOCK_PX = 8;
+const SWIPE_DISTANCE_RATIO = 0.2;
+const SWIPE_VELOCITY_PX_PER_MS = 0.5;
+const EDGE_RESISTANCE = 0.35;
+const CLOSE_DRAG_PX = 110;
+const CLOSE_FADE_RANGE_RATIO = 0.6;
+const MIN_BACKDROP_ALPHA = 0.35;
+const SNAP_MS = 220;
+const SLIDE_OUT_MS = 160;
+const WHEEL_ZOOM_SPEED = 0.002;
+const HINT_VISIBLE_MS = 3200;
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+function MobileImageZoom({
+  images = [],
+  startIndex = 0,
+  title = '',
+  fallbackSrc = '',
+  hintText = 'Double tap or pinch to zoom',
+  onClose
+}) {
+  const lastIndex = Math.max(0, images.length - 1);
+  const [index, setIndex] = useState(clamp(startIndex, 0, lastIndex));
+  const [direction, setDirection] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [showHint, setShowHint] = useState(true);
+
+  const overlayRef = useRef(null);
+  const stageRef = useRef(null);
+  const imgRef = useRef(null);
+  const thumbsRef = useRef(null);
+
+  const transform = useRef({ scale: MIN_SCALE, x: 0, y: 0 });
+  const pointers = useRef(new Map());
+  const gesture = useRef(null);
+  const lastTap = useRef({ time: 0, x: 0, y: 0 });
+  const isBusy = useRef(false);
+  const timers = useRef([]);
+  const indexRef = useRef(index);
+  indexRef.current = index;
+
+  const later = (fn, ms) => {
+    const id = setTimeout(fn, ms);
+    timers.current.push(id);
+    return id;
+  };
+
+  /* ---------- transform helpers ---------- */
+
+  const applyTransform = useCallback((animate = false) => {
+    const img = imgRef.current;
+    if (!img) return;
+    const { scale, x, y } = transform.current;
+    img.style.transition = animate ? `transform ${SNAP_MS}ms ease-out` : 'none';
+    img.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+    const zoomed = scale > MIN_SCALE + ZOOMED_THRESHOLD;
+    setIsZoomed((prev) => (prev === zoomed ? prev : zoomed));
+  }, []);
+
+  const setBackdrop = (alpha) => {
+    if (overlayRef.current) overlayRef.current.style.setProperty('--mz-backdrop-alpha', String(alpha));
+  };
+
+  const clampPan = (scale, x, y) => {
+    const stage = stageRef.current;
+    const img = imgRef.current;
+    if (!stage || !img) return { x, y };
+    const maxX = Math.max(0, (img.offsetWidth * scale - stage.clientWidth) / 2);
+    const maxY = Math.max(0, (img.offsetHeight * scale - stage.clientHeight) / 2);
+    return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
+  };
+
+  // Point relative to the centre of the stage (the transform origin of the image)
+  const toStagePoint = (clientX, clientY) => {
+    const rect = stageRef.current.getBoundingClientRect();
+    return { x: clientX - rect.left - rect.width / 2, y: clientY - rect.top - rect.height / 2 };
+  };
+
+  const resetTransform = useCallback((animate = false) => {
+    transform.current = { scale: MIN_SCALE, x: 0, y: 0 };
+    applyTransform(animate);
+  }, [applyTransform]);
+
+  // Zoom to nextScale keeping the content under point p fixed
+  const zoomAt = (p, nextScale, animate = false) => {
+    const { scale, x, y } = transform.current;
+    const target = clamp(nextScale, MIN_SCALE, MAX_SCALE);
+    const ratio = target / scale;
+    const pan = clampPan(target, p.x - (p.x - x) * ratio, p.y - (p.y - y) * ratio);
+    transform.current = { scale: target, x: pan.x, y: pan.y };
+    applyTransform(animate);
+  };
+
+  /* ---------- navigation ---------- */
+
+  const goTo = useCallback((next, dir) => {
+    if (next < 0 || next > lastIndex || next === indexRef.current) return;
+    setDirection(dir !== undefined ? dir : next > indexRef.current ? 1 : -1);
+    setIndex(next);
+  }, [lastIndex]);
+
+  const slideOutThenGo = (dir) => {
+    const stage = stageRef.current;
+    isBusy.current = true;
+    transform.current = { scale: MIN_SCALE, x: -dir * stage.clientWidth, y: 0 };
+    imgRef.current.style.transition = `transform ${SLIDE_OUT_MS}ms ease-in`;
+    imgRef.current.style.transform = `translate3d(${transform.current.x}px, 0, 0) scale(1)`;
+    later(() => {
+      isBusy.current = false;
+      goTo(indexRef.current + dir, dir);
+    }, SLIDE_OUT_MS);
+  };
+
+  const closeViewer = useCallback(() => {
+    if (onClose) onClose(indexRef.current);
+  }, [onClose]);
+
+  /* ---------- gestures ---------- */
+
+  const handlePointerDown = (e) => {
+    if (isBusy.current) return;
+    stageRef.current.setPointerCapture(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    setShowHint(false);
+
+    if (pointers.current.size === 1) {
+      gesture.current = {
+        mode: 'pending',
+        axis: null,
+        startX: e.clientX,
+        startY: e.clientY,
+        startTime: performance.now(),
+        baseX: transform.current.x,
+        baseY: transform.current.y,
+        prevX: e.clientX,
+        prevTime: performance.now(),
+        velocityX: 0,
+        pinched: false
+      };
+    } else if (pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.values()];
+      gesture.current = {
+        ...gesture.current,
+        mode: 'pinch',
+        pinched: true,
+        startDist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        startScale: transform.current.scale,
+        prevMid: toStagePoint((a.x + b.x) / 2, (a.y + b.y) / 2)
+      };
+    }
+  };
+
+  const handlePinchMove = () => {
+    const [a, b] = [...pointers.current.values()];
+    const g = gesture.current;
+    const mid = toStagePoint((a.x + b.x) / 2, (a.y + b.y) / 2);
+    const dist = Math.hypot(a.x - b.x, a.y - b.y);
+    const { scale, x, y } = transform.current;
+    const target = clamp(g.startScale * (dist / g.startDist), MIN_SCALE, MAX_SCALE);
+    const ratio = target / scale;
+    const pan = clampPan(target, mid.x - (g.prevMid.x - x) * ratio, mid.y - (g.prevMid.y - y) * ratio);
+    transform.current = { scale: target, x: pan.x, y: pan.y };
+    g.prevMid = mid;
+    applyTransform(false);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!pointers.current.has(e.pointerId) || !gesture.current) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const g = gesture.current;
+
+    if (pointers.current.size >= 2) {
+      handlePinchMove();
+      return;
+    }
+
+    const dx = e.clientX - g.startX;
+    const dy = e.clientY - g.startY;
+    const now = performance.now();
+    if (now > g.prevTime) {
+      g.velocityX = (e.clientX - g.prevX) / (now - g.prevTime);
+      g.prevX = e.clientX;
+      g.prevTime = now;
+    }
+
+    // Zoomed in: one finger pans the image
+    if (transform.current.scale > MIN_SCALE + ZOOMED_THRESHOLD) {
+      g.mode = 'pan';
+      const pan = clampPan(transform.current.scale, g.baseX + dx, g.baseY + dy);
+      transform.current = { ...transform.current, x: pan.x, y: pan.y };
+      applyTransform(false);
+      return;
+    }
+
+    // Fit to screen: lock the drag to one axis (swipe or close)
+    if (!g.axis && Math.hypot(dx, dy) > AXIS_LOCK_PX) {
+      g.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      g.mode = 'drag';
+    }
+    if (g.axis === 'x') {
+      const atEdge = (indexRef.current === 0 && dx > 0) || (indexRef.current === lastIndex && dx < 0);
+      transform.current = { scale: MIN_SCALE, x: atEdge ? dx * EDGE_RESISTANCE : dx, y: 0 };
+      applyTransform(false);
+    } else if (g.axis === 'y') {
+      transform.current = { scale: MIN_SCALE, x: dx * EDGE_RESISTANCE, y: dy };
+      applyTransform(false);
+      const range = stageRef.current.clientHeight * CLOSE_FADE_RANGE_RATIO;
+      setBackdrop(clamp(1 - Math.abs(dy) / range, MIN_BACKDROP_ALPHA, 1));
+    }
+  };
+
+  const handleDoubleTap = (clientX, clientY) => {
+    if (transform.current.scale > MIN_SCALE + ZOOMED_THRESHOLD) {
+      resetTransform(true);
+    } else {
+      zoomAt(toStagePoint(clientX, clientY), DOUBLE_TAP_SCALE, true);
+    }
+  };
+
+  const finishGesture = (e, cancelled) => {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.delete(e.pointerId);
+    const g = gesture.current;
+    if (!g) return;
+
+    // One finger left after a pinch: continue as a pan from the current position
+    if (pointers.current.size === 1) {
+      const rest = [...pointers.current.values()][0];
+      g.mode = 'pan';
+      g.startX = rest.x;
+      g.startY = rest.y;
+      g.baseX = transform.current.x;
+      g.baseY = transform.current.y;
+      return;
+    }
+    if (pointers.current.size > 1) return;
+
+    const dx = e.clientX - g.startX;
+    const dy = e.clientY - g.startY;
+    const duration = performance.now() - g.startTime;
+    gesture.current = null;
+
+    // Pinch ended: snap back to fit if almost fully zoomed out
+    if (g.pinched) {
+      if (transform.current.scale < SNAP_TO_FIT_SCALE) resetTransform(true);
+      return;
+    }
+
+    if (cancelled) {
+      resetTransform(true);
+      setBackdrop(1);
+      return;
+    }
+
+    // Tap / double tap
+    const isTap = Math.hypot(dx, dy) < TAP_MOVE_TOLERANCE_PX && duration < TAP_MAX_DURATION_MS;
+    if (isTap) {
+      const now = performance.now();
+      const prev = lastTap.current;
+      const isDouble = now - prev.time < DOUBLE_TAP_DELAY_MS &&
+        Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < DOUBLE_TAP_DISTANCE_PX;
+      if (isDouble) {
+        lastTap.current = { time: 0, x: 0, y: 0 };
+        handleDoubleTap(e.clientX, e.clientY);
+      } else {
+        lastTap.current = { time: now, x: e.clientX, y: e.clientY };
+      }
+      return;
+    }
+
+    if (transform.current.scale > MIN_SCALE + ZOOMED_THRESHOLD) return; // pan ended, keep the position
+
+    if (g.axis === 'x') {
+      const stageWidth = stageRef.current.clientWidth;
+      const fastEnough = Math.abs(g.velocityX) > SWIPE_VELOCITY_PX_PER_MS;
+      const farEnough = Math.abs(dx) > stageWidth * SWIPE_DISTANCE_RATIO;
+      const dir = dx < 0 ? 1 : -1;
+      const target = indexRef.current + dir;
+      if ((fastEnough || farEnough) && target >= 0 && target <= lastIndex) {
+        slideOutThenGo(dir);
+      } else {
+        resetTransform(true);
+      }
+    } else if (g.axis === 'y') {
+      if (Math.abs(dy) > CLOSE_DRAG_PX) {
+        closeViewer();
+      } else {
+        resetTransform(true);
+        setBackdrop(1);
+      }
+    }
+  };
+
+  const handleWheel = (e) => {
+    if (isBusy.current) return;
+    const p = toStagePoint(e.clientX, e.clientY);
+    zoomAt(p, transform.current.scale * Math.exp(-e.deltaY * WHEEL_ZOOM_SPEED), false);
+    if (transform.current.scale < SNAP_TO_FIT_SCALE) resetTransform(false);
+  };
+
+  /* ---------- effects ---------- */
+
+  // New image: reset zoom and keep the active thumbnail visible
+  useEffect(() => {
+    resetTransform(false);
+    setBackdrop(1);
+    const thumb = thumbsRef.current && thumbsRef.current.children[index];
+    if (thumb && thumb.scrollIntoView) thumb.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [index, resetTransform]);
+
+  // Lock page scroll while the viewer is open
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, []);
+
+  // Keyboard support
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') closeViewer();
+      else if (e.key === 'ArrowRight') goTo(indexRef.current + 1, 1);
+      else if (e.key === 'ArrowLeft') goTo(indexRef.current - 1, -1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [closeViewer, goTo]);
+
+  // Hide the hint after a short time and clear all timers on unmount
+  useEffect(() => {
+    const id = later(() => setShowHint(false), HINT_VISIBLE_MS);
+    const pending = timers.current;
+    return () => { clearTimeout(id); pending.forEach(clearTimeout); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleImageError = (e) => {
+    if (fallbackSrc && !e.currentTarget.dataset.fallbackApplied) {
+      e.currentTarget.dataset.fallbackApplied = 'true';
+      e.currentTarget.src = fallbackSrc;
+    }
+  };
+
+  const enterClass = direction > 0 ? 'mz-enter-next' : direction < 0 ? 'mz-enter-prev' : '';
+
+  return (
+    <div
+      ref={overlayRef}
+      className="mz-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title || 'Image viewer'}
+    >
+      <div className="mz-topbar">
+        <span className="mz-counter">{images.length > 1 ? `${index + 1} / ${images.length}` : ''}</span>
+        <span className="mz-title">{title}</span>
+        <button type="button" className="mz-close" onClick={closeViewer} aria-label="Close image viewer">×</button>
+      </div>
+
+      <div
+        ref={stageRef}
+        className={`mz-stage ${isZoomed ? 'mz-stage-zoomed' : ''}`}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={(e) => finishGesture(e, false)}
+        onPointerCancel={(e) => finishGesture(e, true)}
+        onWheel={handleWheel}
+      >
+        <img
+          ref={imgRef}
+          key={index}
+          src={images[index]}
+          alt={title ? `${title} - ${index + 1}` : `Image ${index + 1}`}
+          className={`mz-img ${enterClass}`}
+          draggable="false"
+          onError={handleImageError}
+        />
+        {showHint && !isZoomed && <div className="mz-hint">{hintText}</div>}
+      </div>
+
+      {images.length > 1 && (
+        <div className="mz-thumbs" ref={thumbsRef}>
+          {images.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={`Thumbnail ${i + 1}`}
+              className={`mz-thumb ${i === index ? 'mz-thumb-active' : ''}`}
+              draggable="false"
+              onClick={() => goTo(i)}
+              onError={handleImageError}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ProductDetail({ currency, rates, language }) {
   const { id } = useParams();
@@ -75,10 +493,24 @@ function ProductDetail({ currency, rates, language }) {
   const [showAllDetails, setShowAllDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('specifications');
   
-  // 📱 Mobile Flipkart-Style Fullscreen Zoom States
+  // 📱 Mobile fullscreen zoom viewer (Amazon style)
   const [mobileZoomOpen, setMobileZoomOpen] = useState(false);
-  const [mobileZoomScale, setMobileZoomScale] = useState(1);
+  const mobileTrackRef = useRef(null);
+
+  // One cache-busting value per page visit. A new value on every render made the images
+  // reload each time any state changed (for example on every mouse move over the desktop zoom).
+  const [assetVersion] = useState(() => Date.now());
   const token = localStorage.getItem('token');
+
+  // Close the zoom viewer and bring the swipe gallery to the image that was last viewed
+  const handleZoomClose = (lastViewedIdx) => {
+    setMobileZoomOpen(false);
+    setMobileActiveIdx(lastViewedIdx);
+    requestAnimationFrame(() => {
+      const track = mobileTrackRef.current;
+      if (track) track.scrollTo({ left: lastViewedIdx * track.offsetWidth, behavior: 'auto' });
+    });
+  };
 
   const handleImageMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -148,7 +580,7 @@ function ProductDetail({ currency, rates, language }) {
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
       finalUrl = `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
     }
-    return `${finalUrl}?v=${new Date().getTime()}`;
+    return `${finalUrl}?v=${assetVersion}`;
   };
 
   useEffect(() => {
@@ -378,9 +810,9 @@ if (!saree) {
 
   const sliderImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 
     ? saree.images.map(img => resolveImage(img)) 
-    : [resolveImage(saree?.image_url) || "/saare_1.jpeg"];
+    : [resolveImage(saree?.image_url) || FALLBACK_IMAGE];
     
-  const currentImageUrl = sliderImages[activeImageIdx] || "/saare_1.jpeg";
+  const currentImageUrl = sliderImages[activeImageIdx] || FALLBACK_IMAGE;
 
   const hasDifferentColors = saree?.variants?.some(v => v.color_name && v.color_name !== (saree?.color_name || saree?.base_color));
   const variantLabelText = hasDifferentColors ? "Different Color" : "Different Design";
@@ -402,7 +834,7 @@ if (!saree) {
                       key={idx} src={img} alt={`Angle ${idx + 1}`} 
                       className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
                       onClick={() => { setActiveImageIdx(idx); console.log(`[UI_EVENT] 🖥️ Desktop gallery changed to image index: ${idx}`); }} 
-                      onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }} draggable="false"
+                      onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }} draggable="false"
                     />
                   ))}
                 </div>
@@ -426,7 +858,7 @@ if (!saree) {
                     transform: 'scale(1)',
                     transformOrigin: 'center center'
                   }}
-                  onError={(e) => { if (!e.currentTarget.src.includes("/saare_1.jpeg")) { e.currentTarget.src = "/saare_1.jpeg"; } }} 
+                  onError={(e) => { if (!e.currentTarget.src.includes(FALLBACK_IMAGE)) { e.currentTarget.src = FALLBACK_IMAGE; } }} 
                   draggable="false"
                 />
                 {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
@@ -452,21 +884,20 @@ if (!saree) {
             {/* 📱 MOBILE VIEW: FLIPKART STYLE (Swipeable Slider + Tap to Zoom) */}
             <div className="mobile-gallery-slider" style={{ position: 'relative' }}>
               {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
-              <div className="mobile-slider-track" onScroll={handleSliderScroll}>
+              <div className="mobile-slider-track" ref={mobileTrackRef} onScroll={handleSliderScroll}>
                 {sliderImages.map((img, idx) => (
                   <div 
                     className="mobile-slide-item" 
                     key={idx}
                     onClick={() => {
                       setMobileActiveIdx(idx);
-                      setMobileZoomScale(1);
                       setMobileZoomOpen(true);
                     }}
                   >
                     <img 
                       src={img} 
                       alt={`View ${idx + 1}`} 
-                      onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }} 
+                      onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }} 
                       draggable="false" 
                     />
                   </div>
@@ -576,10 +1007,10 @@ if (!saree) {
                       >
                         <div className="amazon-swatch-img-wrap">
                           <img 
-                            src={resolveImage(v.image_url || "/saare_1.jpeg")} 
+                            src={resolveImage(v.image_url || FALLBACK_IMAGE)} 
                             alt={v.color_name || 'variant'} 
                             className="amazon-swatch-img"
-                            onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
+                            onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                           />
                           {/* Sold Out Overlay for Variant */}
                           {isVariantSoldOut && (
@@ -794,63 +1225,15 @@ if (!saree) {
           </div>
         </div>
       </div>
-      {/* 🔍 FLIPKART-STYLE MOBILE FULLSCREEN IMAGE ZOOM MODAL */}
+      {/* 🔍 AMAZON-STYLE FULLSCREEN IMAGE VIEWER (pinch, double tap, pan, swipe) */}
       {mobileZoomOpen && (
-        <div className="fk-zoom-modal-overlay" onClick={() => setMobileZoomOpen(false)}>
-          <div className="fk-zoom-topbar" onClick={(e) => e.stopPropagation()}>
-            <span className="fk-zoom-title">{translatedName || saree.name}</span>
-            <button
-              type="button"
-              className="fk-zoom-close"
-              onClick={() => setMobileZoomOpen(false)}
-              aria-label="Close zoom"
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="fk-zoom-stage" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={sliderImages[mobileActiveIdx] || currentImageUrl}
-              alt={saree.name}
-              style={{ transform: `scale(${mobileZoomScale})` }}
-              onClick={() => setMobileZoomScale((prev) => (prev >= 2.5 ? 1 : Number((prev + 0.75).toFixed(2))))}
-              onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
-            />
-          </div>
-
-          {/* Thumbnail Switcher inside Zoom Modal (If product has multiple images) */}
-          {sliderImages.length > 1 && (
-            <div className="fk-zoom-thumbs" onClick={(e) => e.stopPropagation()}>
-              {sliderImages.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`Thumb ${idx + 1}`}
-                  className={`fk-zoom-thumb-item ${mobileActiveIdx === idx ? 'active' : ''}`}
-                  onClick={() => {
-                    setMobileActiveIdx(idx);
-                    setMobileZoomScale(1);
-                  }}
-                  onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
-                />
-              ))}
-            </div>
-          )}
-
-          <div className="fk-zoom-controls" onClick={(e) => e.stopPropagation()}>
-            {[1, 1.75, 2.5].map((lvl) => (
-              <button
-                key={lvl}
-                type="button"
-                className={`fk-zoom-btn ${mobileZoomScale === lvl ? 'active' : ''}`}
-                onClick={() => setMobileZoomScale(lvl)}
-              >
-                {lvl}x Zoom
-              </button>
-            ))}
-          </div>
-        </div>
+        <MobileImageZoom
+          images={sliderImages}
+          startIndex={mobileActiveIdx}
+          title={translatedName || saree.name}
+          fallbackSrc={FALLBACK_IMAGE}
+          onClose={handleZoomClose}
+        />
       )}
     </div> 
   );

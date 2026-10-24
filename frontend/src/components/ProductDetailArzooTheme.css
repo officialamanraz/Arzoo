@@ -979,325 +979,421 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
 .dark-mode .product-detail-page .arzoo-embroidery-accent::before {
   border-color: rgba(216, 183, 122, 0.22);
 }
-/* =========================================================
-   CLEAN PATCH: AMAZON-STYLE RESPONSIVE RECOMMENDATION SLIDER
-   ========================================================= */
 
 /* =========================================================
-   FIXED: FLIPKART / AMAZON VERTICAL RECOMMENDED SECTION
-   (Title on Top + Vertical Portrait Saree Cards + Mobile Grid)
+   RECOMMENDED SECTION - FLIPKART STYLE (replaces the old patch)
+   Heading on top, then ONE ROW of vertical (portrait) cards that
+   slides sideways. The next card peeks in at the edge so people
+   know they can swipe. Colours follow the Arzoo theme variables.
    ========================================================= */
-
-/* 1. Force Main Recommended Wrapper to Stack Vertically (Heading on Top, Cards Below) */
 .product-detail-page .recommended-section-wrapper {
+  --rec-gap: 12px;
+  --rec-edge: 12px;
+  --rec-card-w: clamp(140px, 40vw, 220px);
+  --rec-radius: 14px;
+  --rec-heading: var(--arzoo-wine-dark, #5c0f2a);
+  --rec-ink: #212121;
+  --rec-muted: #878787;
+  --rec-price: var(--arzoo-wine, #7d1638);
+  --rec-green: #0f8a4b;
+  --rec-image-bg: var(--arzoo-cream, #f8efe4);
+
   width: 100% !important;
   max-width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  justify-content: flex-start !important;
-  gap: 18px !important;
-  margin-top: 40px !important;
-  padding: 10px 12px 30px !important;
+  gap: 14px !important;
+  padding: 8px 0 24px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
-/* Heading Full Width on Top */
-.product-detail-page .recommended-section-wrapper h2,
-.product-detail-page .recommended-section-wrapper h3,
+/* Heading (keeps the Arzoo serif font and wine colour from the theme) */
+.product-detail-page .recommended-section-wrapper > h2,
+.product-detail-page .recommended-section-wrapper > h3,
 .product-detail-page .recommended-section-wrapper > *:first-child:not(:only-child) {
   width: 100% !important;
-  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 var(--rec-edge) !important;
+  box-sizing: border-box !important;
   text-align: left !important;
-  margin: 0 0 6px 0 !important;
-  padding: 0 4px !important;
-  font-size: 1.45rem !important;
+  font-size: 1.3rem !important;
+  font-weight: 700 !important;
   line-height: 1.3 !important;
-  flex: none !important;
+  color: var(--rec-heading) !important;
 }
 
-/* 2. Products Container — Desktop Grid / Clean Layout */
+/* The row of cards: horizontal slider with snap */
 .product-detail-page .recommended-section-wrapper > div:last-child,
 .product-detail-page .recommended-section-wrapper .recommended-grid,
 .product-detail-page .recommended-section-wrapper .products-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  gap: var(--rec-gap) !important;
   width: 100% !important;
   max-width: 100% !important;
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)) !important;
-  gap: 18px !important;
-  padding: 6px 2px 16px !important;
+  padding: 4px var(--rec-edge) 12px !important;
   box-sizing: border-box !important;
-  overflow: visible !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--rec-edge);
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
-/* 3. Individual Product Card — Strict Vertical Portrait Layout */
+.product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar,
+.product-detail-page .recommended-section-wrapper .recommended-grid::-webkit-scrollbar,
+.product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar {
+  display: none;
+}
+
+/* One card = one vertical tab: image on top, details below, no box */
 .product-detail-page .recommended-section-wrapper .product-card,
 .product-detail-page .recommended-section-wrapper .saree-card,
 .product-detail-page .recommended-section-wrapper .product-card-simple,
 .product-detail-page .recommended-section-wrapper > div:last-child > a,
 .product-detail-page .recommended-section-wrapper > div:last-child > div {
-  width: 100% !important;
+  flex: 0 0 var(--rec-card-w) !important;
+  width: var(--rec-card-w) !important;
   min-width: 0 !important;
-  max-width: 100% !important;
+  max-width: var(--rec-card-w) !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-start !important;
   align-items: stretch !important;
-  background: rgba(255, 250, 243, 0.98) !important;
-  border: 1px solid rgba(125, 22, 56, 0.14) !important;
-  border-radius: 12px !important;
-  padding: 10px !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   box-sizing: border-box !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   text-decoration: none !important;
-  box-shadow: 0 6px 18px rgba(92, 15, 42, 0.06) !important;
+  color: var(--rec-ink) !important;
+  scroll-snap-align: start;
 }
 
-/* 4. Card Image — Vertical Saree Portrait Aspect Ratio (3:4) */
+/* Portrait image (3:4) with rounded corners */
 .product-detail-page .recommended-section-wrapper img {
   width: 100% !important;
   height: auto !important;
   aspect-ratio: 3 / 4 !important;
   object-fit: cover !important;
   object-position: top center !important;
-  border-radius: 8px !important;
+  border-radius: var(--rec-radius) !important;
   display: block !important;
-  margin-bottom: 10px !important;
-  background: #f8efe4 !important;
+  margin: 0 0 8px !important;
+  background: var(--rec-image-bg) !important;
 }
 
-/* 5. Card Title — Wrap Cleanly (Never Cut Off Horizontally) */
-.product-detail-page .recommended-section-wrapper h4,
-.product-detail-page .recommended-section-wrapper h3,
-.product-detail-page .recommended-section-wrapper p,
-.product-detail-page .recommended-section-wrapper .product-name,
-.product-detail-page .recommended-section-wrapper .card-title {
+/* Product name: one line, cut with "..." like Flipkart (only inside the cards, never the heading) */
+.product-detail-page .recommended-section-wrapper > div:last-child :is(h3, h4, p, .product-name, .card-title),
+.product-detail-page .recommended-section-wrapper :is(.product-card, .saree-card, .product-card-simple) :is(h3, h4, p, .product-name, .card-title) {
   width: 100% !important;
-  white-space: normal !important;
+  margin: 0 0 4px !important;
+  padding: 0 !important;
+  font-family: inherit !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  color: var(--rec-ink) !important;
+  text-align: left !important;
+  white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  display: -webkit-box !important;
-  -webkit-line-clamp: 2 !important;
-  -webkit-box-orient: vertical !important;
-  font-size: 0.95rem !important;
-  font-weight: 600 !important;
-  line-height: 1.35 !important;
-  color: #3b252a !important;
-  text-align: left !important;
-  margin: 0 0 6px 0 !important;
+  display: block !important;
 }
 
-/* 6. Card Price — Left Aligned & Never Clipped */
+/* Price (bold, wine) */
 .product-detail-page .recommended-section-wrapper .price,
 .product-detail-page .recommended-section-wrapper .product-price,
 .product-detail-page .recommended-section-wrapper span[class*="price"] {
-  display: block !important;
-  width: 100% !important;
-  text-align: left !important;
-  font-size: 1.05rem !important;
+  display: inline-block !important;
+  margin: 0 !important;
+  font-size: 1rem !important;
   font-weight: 700 !important;
-  color: #7d1638 !important;
-  margin-top: auto !important;
+  color: var(--rec-price) !important;
   white-space: nowrap !important;
 }
 
-/* 7. MOBILE PHONE STRUCTURE (Flipkart / Amazon 2-Column Vertical Feed) */
+/* Old price (struck through, grey): del, s, or a class with mrp / old-price / original-price */
+.product-detail-page .recommended-section-wrapper del,
+.product-detail-page .recommended-section-wrapper s,
+.product-detail-page .recommended-section-wrapper [class*="mrp"],
+.product-detail-page .recommended-section-wrapper .old-price,
+.product-detail-page .recommended-section-wrapper .original-price {
+  margin-right: 6px !important;
+  font-size: 0.8rem !important;
+  font-weight: 400 !important;
+  color: var(--rec-muted) !important;
+  text-decoration: line-through !important;
+}
+
+/* Discount label in green: "84% OFF" */
+.product-detail-page .recommended-section-wrapper [class*="discount"],
+.product-detail-page .recommended-section-wrapper .off-label {
+  display: block !important;
+  margin: 0 0 2px !important;
+  padding: 0 !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  color: var(--rec-green) !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Rating chip text (used when a card has a class that contains "rating") */
+.product-detail-page .recommended-section-wrapper [class*="rating"] {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+}
+
+/* Mobile: a little less space above (the theme gives 55px on desktop) */
 @media (max-width: 768px) {
   .product-detail-page .recommended-section-wrapper {
-    padding: 8px 8px 24px !important;
-    margin-top: 28px !important;
-    gap: 12px !important;
-  }
-
-  .product-detail-page .recommended-section-wrapper h2,
-  .product-detail-page .recommended-section-wrapper > *:first-child:not(:only-child) {
-    font-size: 1.3rem !important;
-    text-align: left !important;
-  }
-
-  /* 2 Vertical Cards Per Row on Mobile — Exactly Like Flipkart/Amazon */
-  .product-detail-page .recommended-section-wrapper > div:last-child,
-  .product-detail-page .recommended-section-wrapper .recommended-grid,
-  .product-detail-page .recommended-section-wrapper .products-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px !important;
-    padding: 4px 0 12px !important;
-    overflow-x: hidden !important;
-  }
-
-  .product-detail-page .recommended-section-wrapper .product-card,
-  .product-detail-page .recommended-section-wrapper .saree-card,
-  .product-detail-page .recommended-section-wrapper .product-card-simple,
-  .product-detail-page .recommended-section-wrapper > div:last-child > a,
-  .product-detail-page .recommended-section-wrapper > div:last-child > div {
-    padding: 8px !important;
-    border-radius: 10px !important;
-  }
-
-  .product-detail-page .recommended-section-wrapper img {
-    aspect-ratio: 3 / 4 !important;
-    margin-bottom: 8px !important;
-    border-radius: 6px !important;
-  }
-
-  .product-detail-page .recommended-section-wrapper h4,
-  .product-detail-page .recommended-section-wrapper h3,
-  .product-detail-page .recommended-section-wrapper p,
-  .product-detail-page .recommended-section-wrapper .product-name {
-    font-size: 0.85rem !important;
-    line-height: 1.3 !important;
-    min-height: 2.2em !important;
+    margin-top: 32px !important;
   }
 }
 
-/* =========================================================
-   🔍 FLIPKART-STYLE MAIN PRODUCT IMAGE ZOOM LIGHTBOX
-   ========================================================= */
+/* Desktop: fixed card width, thin scrollbar so the row can also be dragged */
+@media (min-width: 769px) {
+  .product-detail-page .recommended-section-wrapper {
+    --rec-gap: 16px;
+    --rec-edge: 4px;
+    --rec-card-w: 210px;
+  }
+
+  .product-detail-page .recommended-section-wrapper > div:last-child,
+  .product-detail-page .recommended-section-wrapper .recommended-grid,
+  .product-detail-page .recommended-section-wrapper .products-grid {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(125, 22, 56, 0.35) transparent;
+  }
+
+  .product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar,
+  .product-detail-page .recommended-section-wrapper .recommended-grid::-webkit-scrollbar,
+  .product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+  }
+
+  .product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar-thumb,
+  .product-detail-page .recommended-section-wrapper .recommended-grid::-webkit-scrollbar-thumb,
+  .product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar-thumb {
+    background: rgba(125, 22, 56, 0.35);
+    border-radius: 999px;
+  }
+}
+
+/* Dark mode */
+body.dark .product-detail-page .recommended-section-wrapper,
+.dark-mode .product-detail-page .recommended-section-wrapper {
+  --rec-heading: #f7e7d4;
+  --rec-ink: #f7e7d4;
+  --rec-muted: #b8a999;
+  --rec-price: #e3b96f;
+  --rec-green: #4cc38a;
+  --rec-image-bg: #2a2023;
+}
+
+/* Cursor hint on the product images */
 .product-detail-page .main-image-wrapper,
 .product-detail-page .mobile-gallery-slider img {
   cursor: zoom-in !important;
 }
 
-.fk-zoom-modal-overlay {
+/* =========================================================
+   AMAZON-STYLE FULLSCREEN IMAGE VIEWER (mobile zoom)
+   Used by the MobileImageZoom component inside ProductDetail.jsx
+   ========================================================= */
+.mz-overlay {
+  --mz-bg-rgb: 255, 255, 255;
+  --mz-text: #0f1111;
+  --mz-muted: #565959;
+  --mz-accent: #7d1638;
+  --mz-border: rgba(15, 17, 17, 0.14);
+  --mz-chip-bg: rgba(15, 17, 17, 0.07);
+  --mz-backdrop-alpha: 1;
+  --mz-thumb-w: 52px;
+  --mz-thumb-h: 66px;
+
   position: fixed;
   inset: 0;
-  background: rgba(15, 10, 12, 0.94);
   z-index: 999999;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
+  background: rgba(var(--mz-bg-rgb), var(--mz-backdrop-alpha));
+  color: var(--mz-text);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
   box-sizing: border-box;
-  backdrop-filter: blur(6px);
+  overscroll-behavior: contain;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.fk-zoom-topbar {
-  width: 100%;
-  max-width: 650px;
+body.dark .mz-overlay,
+.dark-mode .mz-overlay {
+  --mz-bg-rgb: 18, 13, 15;
+  --mz-text: #fffaf3;
+  --mz-muted: #cdbfae;
+  --mz-accent: #d8b77a;
+  --mz-border: rgba(255, 255, 255, 0.18);
+  --mz-chip-bg: rgba(255, 255, 255, 0.12);
+}
+
+.mz-topbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  color: #fffaf3;
-  padding: 4px 6px;
+  gap: 12px;
+  padding: 8px 12px;
+  min-height: 52px;
+  box-sizing: border-box;
 }
 
-.fk-zoom-title {
-  font-size: 0.95rem;
+.mz-counter {
+  flex: none;
+  min-width: 48px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mz-muted);
+}
+
+.mz-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.92rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80%;
+  text-align: center;
 }
 
-.fk-zoom-close {
-  width: 38px;
-  height: 38px;
+.mz-close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: none;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  font-size: 1.5rem;
+  background: var(--mz-chip-bg);
+  color: var(--mz-text);
+  font-size: 1.7rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+}
+
+.mz-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  touch-action: none; /* the viewer handles every gesture itself */
+  cursor: zoom-in;
 }
 
-.fk-zoom-stage {
-  width: 100%;
-  max-width: 600px;
-  height: 70vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-  border-radius: 12px;
-  background: #120d0f;
-  border: 1px solid rgba(184, 137, 67, 0.25);
-  touch-action: pan-x pan-y pinch-zoom;
+.mz-stage-zoomed {
+  cursor: grab;
 }
 
-.fk-zoom-stage img {
+.mz-img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  transition: transform 0.25s ease;
   transform-origin: center center;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
-.fk-zoom-controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 8px;
+.mz-enter-next {
+  animation: mz-enter-next 0.22s ease-out;
 }
 
-.fk-zoom-btn {
-  padding: 8px 16px;
+.mz-enter-prev {
+  animation: mz-enter-prev 0.22s ease-out;
+}
+
+@keyframes mz-enter-next {
+  from { opacity: 0; transform: translate3d(40%, 0, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes mz-enter-prev {
+  from { opacity: 0; transform: translate3d(-40%, 0, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.mz-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(216, 183, 122, 0.35);
-  background: rgba(255, 255, 255, 0.1);
-  color: #fffaf3;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
+  background: rgba(15, 17, 17, 0.72);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
-.fk-zoom-btn.active {
-  background: #7d1638;
-  border-color: #d8b77a;
-}
-
-/* Dark Mode Support for Recommended Cards */
-body.dark .product-detail-page .recommended-section-wrapper .product-card,
-.dark-mode .product-detail-page .recommended-section-wrapper .product-card,
-body.dark .product-detail-page .recommended-section-wrapper > div:last-child > a,
-.dark-mode .product-detail-page .recommended-section-wrapper > div:last-child > a,
-body.dark .product-detail-page .recommended-section-wrapper > div:last-child > div,
-.dark-mode .product-detail-page .recommended-section-wrapper > div:last-child > div {
-  background: rgba(30, 24, 27, 0.96) !important;
-  border-color: rgba(216, 183, 122, 0.18) !important;
-}
-
-body.dark .product-detail-page .recommended-section-wrapper h4,
-.dark-mode .product-detail-page .recommended-section-wrapper h4,
-body.dark .product-detail-page .recommended-section-wrapper p,
-.dark-mode .product-detail-page .recommended-section-wrapper p {
-  color: #f7e7d4 !important;
-}
-
-body.dark .product-detail-page .recommended-section-wrapper .price,
-.dark-mode .product-detail-page .recommended-section-wrapper .price,
-body.dark .product-detail-page .recommended-section-wrapper span[class*="price"],
-.dark-mode .product-detail-page .recommended-section-wrapper span[class*="price"] {
-  color: #e3b96f !important;
-}
-.fk-zoom-thumbs {
+.mz-thumbs {
   display: flex;
   gap: 10px;
+  padding: 10px 12px 12px;
   overflow-x: auto;
-  max-width: 100%;
-  padding: 6px 4px;
+  justify-content: flex-start;
+  border-top: 1px solid var(--mz-border);
+  scrollbar-width: none;
 }
 
-.fk-zoom-thumb-item {
-  width: 48px;
-  height: 60px;
+.mz-thumbs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Centre the strip when it is shorter than the screen */
+.mz-thumbs::before,
+.mz-thumbs::after {
+  content: '';
+  margin: auto;
+}
+
+.mz-thumb {
+  flex: none;
+  width: var(--mz-thumb-w);
+  height: var(--mz-thumb-h);
   object-fit: cover;
   border-radius: 6px;
   border: 2px solid transparent;
-  opacity: 0.6;
+  opacity: 0.65;
   cursor: pointer;
-  flex-shrink: 0;
+  background: var(--mz-chip-bg);
 }
 
-.fk-zoom-thumb-item.active {
-  border-color: #d8b77a;
+.mz-thumb-active {
+  border-color: var(--mz-accent);
   opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mz-enter-next,
+  .mz-enter-prev {
+    animation: none;
+  }
 }
