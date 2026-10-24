@@ -715,6 +715,7 @@ module.exports = {
     ordercencel,
     getDetailedOrderById,
     getOrderSummaryData,
+    getDeliveredOrderHistory
     // markOutForDelivery,
     // verifyDeliveryOtp,
     // markDeliveryAttemptFailed
