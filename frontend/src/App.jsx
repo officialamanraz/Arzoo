@@ -55,6 +55,7 @@ import './components/newlogintheme.css';
 import AdminDealers from "./components/AdminDealers";
 import AdminDealerDetail from "./components/AdminDealerDetail";
 import AdminAddDealer from "./components/AdminAddDealer";
+import DeliveredOrderHistory from "./components/DeliveredOrderHistory";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -361,7 +362,7 @@ useEffect(() => {
       <Route path="/cart" element={<CartPage />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
-      <Route path="/delivered-history" element={<orderhistory />} />
+      <Route path="/delivered-history" element={<DeliveredOrderHistory />} />
       {/* =========================================
          AUTHENTICATION & USER PROFILE ROUTES
          ========================================= */}
