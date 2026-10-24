@@ -986,48 +986,68 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
    slides sideways. The next card peeks in at the edge so people
    know they can swipe. Colours follow the Arzoo theme variables.
    ========================================================= */
+/* =========================================================
+   FLIPKART STYLE: HORIZONTAL SLIDER WITH VERTICAL TAB CARDS
+   ========================================================= */
+
 .product-detail-page .recommended-section-wrapper {
   --rec-gap: 12px;
-  --rec-edge: 12px;
-  --rec-card-w: clamp(140px, 40vw, 220px);
-  --rec-radius: 14px;
+  --rec-edge: 14px;
+  --rec-card-w: clamp(145px, 42vw, 185px); /* Mobile pe 2nd/3rd card thoda dikhega taaki scroll ka pata chale */
+  --rec-radius: 12px;
   --rec-heading: var(--arzoo-wine-dark, #5c0f2a);
   --rec-ink: #212121;
   --rec-muted: #878787;
   --rec-price: var(--arzoo-wine, #7d1638);
-  --rec-green: #0f8a4b;
-  --rec-image-bg: var(--arzoo-cream, #f8efe4);
+  --rec-green: #388e3c;
+  --rec-image-bg: #f8efe4;
 
   width: 100% !important;
   max-width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  gap: 14px !important;
-  padding: 8px 0 24px !important;
+  gap: 12px !important;
+  padding: 16px 0 28px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
+  clear: both !important;
 }
 
-/* Heading (keeps the Arzoo serif font and wine colour from the theme) */
-.product-detail-page .recommended-section-wrapper > h2,
-.product-detail-page .recommended-section-wrapper > h3,
-.product-detail-page .recommended-section-wrapper > *:first-child:not(:only-child) {
+/* 1. Outer component wrappers ko column mein force karein taaki heading hamesha top par rahe */
+.product-detail-page .recommended-section-wrapper > div,
+.product-detail-page .recommended-section-wrapper .recommended-container {
   width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 2. Heading: Full width on top */
+.product-detail-page .recommended-section-wrapper h2,
+.product-detail-page .recommended-section-wrapper h3,
+.product-detail-page .recommended-section-wrapper .recommended-title {
+  width: 100% !important;
+  max-width: 100% !important;
   margin: 0 !important;
   padding: 0 var(--rec-edge) !important;
   box-sizing: border-box !important;
   text-align: left !important;
-  font-size: 1.3rem !important;
+  font-size: 1.25rem !important;
   font-weight: 700 !important;
-  line-height: 1.3 !important;
   color: var(--rec-heading) !important;
+  display: block !important;
 }
 
-/* The row of cards: horizontal slider with snap */
-.product-detail-page .recommended-section-wrapper > div:last-child,
+/* 3. The Horizontal Track (Flipkart Slider) */
 .product-detail-page .recommended-section-wrapper .recommended-grid,
-.product-detail-page .recommended-section-wrapper .products-grid {
+.product-detail-page .recommended-section-wrapper .products-grid,
+.product-detail-page .recommended-section-wrapper .recommended-list,
+.product-detail-page .recommended-section-wrapper > div > div:last-child {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
@@ -1035,51 +1055,49 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
   gap: var(--rec-gap) !important;
   width: 100% !important;
   max-width: 100% !important;
-  padding: 4px var(--rec-edge) 12px !important;
+  padding: 4px var(--rec-edge) 14px !important;
   box-sizing: border-box !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  scroll-snap-type: x proximity;
-  scroll-padding-left: var(--rec-edge);
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scroll-snap-type: x mandatory !important;
+  scroll-padding-left: var(--rec-edge) !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important; /* Hide scrollbar for clean app feel */
 }
 
-.product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar,
 .product-detail-page .recommended-section-wrapper .recommended-grid::-webkit-scrollbar,
-.product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar {
-  display: none;
+.product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar,
+.product-detail-page .recommended-section-wrapper > div > div:last-child::-webkit-scrollbar {
+  display: none !important;
 }
 
-/* One card = one vertical tab: image on top, details below, no box */
+/* 4. Individual Card = Vertical Tab */
 .product-detail-page .recommended-section-wrapper .product-card,
 .product-detail-page .recommended-section-wrapper .saree-card,
 .product-detail-page .recommended-section-wrapper .product-card-simple,
-.product-detail-page .recommended-section-wrapper > div:last-child > a,
-.product-detail-page .recommended-section-wrapper > div:last-child > div {
+.product-detail-page .recommended-section-wrapper .recommended-grid > *,
+.product-detail-page .recommended-section-wrapper .products-grid > *,
+.product-detail-page .recommended-section-wrapper > div > div:last-child > * {
   flex: 0 0 var(--rec-card-w) !important;
   width: var(--rec-card-w) !important;
-  min-width: 0 !important;
+  min-width: var(--rec-card-w) !important;
   max-width: var(--rec-card-w) !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-start !important;
   align-items: stretch !important;
-  gap: 0 !important;
   padding: 0 !important;
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   box-sizing: border-box !important;
-  overflow: visible !important;
   text-decoration: none !important;
-  color: var(--rec-ink) !important;
-  scroll-snap-align: start;
+  scroll-snap-align: start !important;
+  cursor: pointer;
 }
 
-/* Portrait image (3:4) with rounded corners */
+/* 5. Portrait Saree Image (3:4 ratio with curved edges) */
 .product-detail-page .recommended-section-wrapper img {
   width: 100% !important;
   height: auto !important;
@@ -1088,20 +1106,18 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
   object-position: top center !important;
   border-radius: var(--rec-radius) !important;
   display: block !important;
-  margin: 0 0 8px !important;
-  background: var(--rec-image-bg) !important;
+  margin: 0 0 8px 0 !important;
+  background-color: var(--rec-image-bg) !important;
 }
 
-/* Product name: one line, cut with "..." like Flipkart (only inside the cards, never the heading) */
-.product-detail-page .recommended-section-wrapper > div:last-child :is(h3, h4, p, .product-name, .card-title),
-.product-detail-page .recommended-section-wrapper :is(.product-card, .saree-card, .product-card-simple) :is(h3, h4, p, .product-name, .card-title) {
+/* 6. Product Title (1 line with ellipsis like Flipkart) */
+.product-detail-page .recommended-section-wrapper :is(.product-card, .saree-card, .product-card-simple, div > div:last-child > *) :is(h3, h4, p, .product-name, .card-title) {
   width: 100% !important;
   margin: 0 0 4px !important;
   padding: 0 !important;
-  font-family: inherit !important;
   font-size: 0.88rem !important;
   font-weight: 500 !important;
-  line-height: 1.35 !important;
+  line-height: 1.3 !important;
   color: var(--rec-ink) !important;
   text-align: left !important;
   white-space: nowrap !important;
@@ -1110,84 +1126,65 @@ body.dark .product-detail-page .arzoo-embroidery-accent::before,
   display: block !important;
 }
 
-/* Price (bold, wine) */
+/* 7. Pricing & Discount formatting */
+.product-detail-page .recommended-section-wrapper [class*="discount"],
+.product-detail-page .recommended-section-wrapper .off-label {
+  display: block !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  color: var(--rec-green) !important;
+  margin-bottom: 2px !important;
+  text-align: left !important;
+}
+
 .product-detail-page .recommended-section-wrapper .price,
 .product-detail-page .recommended-section-wrapper .product-price,
 .product-detail-page .recommended-section-wrapper span[class*="price"] {
   display: inline-block !important;
-  margin: 0 !important;
-  font-size: 1rem !important;
+  font-size: 0.98rem !important;
   font-weight: 700 !important;
   color: var(--rec-price) !important;
-  white-space: nowrap !important;
+  margin-right: 6px !important;
 }
 
-/* Old price (struck through, grey): del, s, or a class with mrp / old-price / original-price */
 .product-detail-page .recommended-section-wrapper del,
 .product-detail-page .recommended-section-wrapper s,
 .product-detail-page .recommended-section-wrapper [class*="mrp"],
-.product-detail-page .recommended-section-wrapper .old-price,
-.product-detail-page .recommended-section-wrapper .original-price {
-  margin-right: 6px !important;
+.product-detail-page .recommended-section-wrapper .old-price {
   font-size: 0.8rem !important;
   font-weight: 400 !important;
   color: var(--rec-muted) !important;
   text-decoration: line-through !important;
 }
 
-/* Discount label in green: "84% OFF" */
-.product-detail-page .recommended-section-wrapper [class*="discount"],
-.product-detail-page .recommended-section-wrapper .off-label {
-  display: block !important;
-  margin: 0 0 2px !important;
-  padding: 0 !important;
-  font-size: 0.8rem !important;
-  font-weight: 700 !important;
-  color: var(--rec-green) !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-/* Rating chip text (used when a card has a class that contains "rating") */
-.product-detail-page .recommended-section-wrapper [class*="rating"] {
-  font-size: 0.72rem !important;
-  font-weight: 700 !important;
-}
-
-/* Mobile: a little less space above (the theme gives 55px on desktop) */
-@media (max-width: 768px) {
-  .product-detail-page .recommended-section-wrapper {
-    margin-top: 32px !important;
-  }
-}
-
-/* Desktop: fixed card width, thin scrollbar so the row can also be dragged */
+/* 8. Desktop Adjustments (Fixed wider cards & sleek scrollbar) */
 @media (min-width: 769px) {
   .product-detail-page .recommended-section-wrapper {
     --rec-gap: 16px;
-    --rec-edge: 4px;
-    --rec-card-w: 210px;
+    --rec-edge: 8px;
+    --rec-card-w: 205px;
+    margin-top: 40px !important;
   }
 
-  .product-detail-page .recommended-section-wrapper > div:last-child,
   .product-detail-page .recommended-section-wrapper .recommended-grid,
-  .product-detail-page .recommended-section-wrapper .products-grid {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(125, 22, 56, 0.35) transparent;
+  .product-detail-page .recommended-section-wrapper .products-grid,
+  .product-detail-page .recommended-section-wrapper > div > div:last-child {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(125, 22, 56, 0.25) transparent !important;
   }
 
-  .product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar,
   .product-detail-page .recommended-section-wrapper .recommended-grid::-webkit-scrollbar,
-  .product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar {
-    display: block;
-    height: 6px;
+  .product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar,
+  .product-detail-page .recommended-section-wrapper > div > div:last-child::-webkit-scrollbar {
+    display: block !important;
+    height: 5px !important;
   }
 
-  .product-detail-page .recommended-section-wrapper > div:last-child::-webkit-scrollbar-thumb,
   .product-detail-page .recommended-section-wrapper .recommended-grid::-webkit-scrollbar-thumb,
-  .product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar-thumb {
-    background: rgba(125, 22, 56, 0.35);
-    border-radius: 999px;
+  .product-detail-page .recommended-section-wrapper .products-grid::-webkit-scrollbar-thumb,
+  .product-detail-page .recommended-section-wrapper > div > div:last-child::-webkit-scrollbar-thumb {
+    background: rgba(125, 22, 56, 0.25) !important;
+    border-radius: 10px !important;
   }
 }
 
