@@ -3,7 +3,12 @@ const db = require('../DATABASE/mysql');
 const myCache = require('../../config/cache');
 
 const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMethod, tracking_ref, customEmail) => {
-    const method = paymentMethod === 'online' ? 'online' : 'cod';
+    // 🚨 ULTIMATE COD KILL SWITCH: Completely block COD for everything
+    if (paymentMethod === 'cod') {
+        throw new Error('Cash on Delivery has been completely disabled. Please choose Online Payment.');
+    }
+
+    const method = 'online'; // Force method to be online
     const sourcevisiter = tracking_ref ?? null;
     
     console.log(`[CHECKOUT] 🚀 Starting checkout process for User ID: ${user_id}, Method: ${method}`);
@@ -61,7 +66,7 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         const estimatedDeliverySQL = estimatedDeliveryDateObj.toISOString().split('T')[0];
         console.log(`[CHECKOUT] ✅ Estimated delivery calculated: ${estimatedDeliverySQL}`);
 
-        // 4. PROCESS CART / BUY NOW (With dealer_base_price & packaging_cost AND Categories)
+        // 4. PROCESS CART / BUY NOW
         let cartItems = [];
         const isBuyNow = buyNowProduct && buyNowProduct.product_id;
 
@@ -102,8 +107,9 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         console.log(`[CHECKOUT] ✅ Cart items loaded: ${cartItems.length} item(s) found.`);
 
         // ========================================================
-        // 🔒 KOTA DORIYA STRICT COD BLOCK
+        // 🔒 FIRST KOTA DORIYA COD BLOCK (COMMENTED OUT)
         // ========================================================
+        /*
         const isKotaDoriyaOrder = cartItems.some(item => {
             const text = `${item.product_name || ''} ${item.category_name || ''} ${item.fabric || ''}`.toLowerCase();
             return text.includes('kota doriya') || text.includes('kotadoria') || text.includes('doriya');
@@ -113,6 +119,7 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
             console.error(`[CHECKOUT] 🚨 SECURITY BLOCK: COD attempted for Kota Doriya products.`);
             throw new Error('Cash on Delivery is not allowed for authentic Kota Doriya products.');
         }
+        */
 
         // 5. 💰 SERVER-SIDE PRICING & PROFIT CALCULATION
         let subtotal = 0;
@@ -197,6 +204,22 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
             console.log(`[CHECKOUT] 🗑️ Clearing cart for User ID: ${user_id}...`);
             await connection.execute('DELETE FROM cart WHERE user_id = ?', [user_id]);
         }
+
+        // ========================================================
+        // 🔒 SECOND KOTA DORIYA COD BLOCK (ORIGINAL BOTTOM BLOCK)
+        // (COMMENTED OUT: Restored and disabled safely)
+        // ========================================================
+        /*
+        // Inside your checkout service before creating the order record:
+        const isKotaDoriyaOrder_duplicate = orderItems.some(item => {
+          const text = `${item.name || ''} ${item.title || ''} ${item.category_name || ''} ${item.fabric || ''}`.toLowerCase();
+          return text.includes('kota doriya') || text.includes('kotadoria') || text.includes('doriya');
+        });
+
+        if (isKotaDoriyaOrder_duplicate && String(paymentMethod).toLowerCase() === 'cod') {
+          throw new Error('COD_NOT_ALLOWED_FOR_KOTA_DORIYA');
+        }
+        */
 
         // 10. COMMIT TRANSACTION PERMANENTLY
         await connection.commit();
