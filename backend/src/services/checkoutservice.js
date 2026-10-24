@@ -180,7 +180,15 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
             console.log(`[CHECKOUT] 🗑️ Clearing cart for User ID: ${user_id}...`);
             await connection.execute('DELETE FROM cart WHERE user_id = ?', [user_id]);
         }
+        // Inside your checkout service before creating the order record:
+const isKotaDoriyaOrder = orderItems.some(item => {
+  const text = `${item.name || ''} ${item.title || ''} ${item.category_name || ''} ${item.fabric || ''}`.toLowerCase();
+  return text.includes('kota doriya') || text.includes('kotadoria') || text.includes('doriya');
+});
 
+if (isKotaDoriyaOrder && String(paymentMethod).toLowerCase() === 'cod') {
+  throw new Error('COD_NOT_ALLOWED_FOR_KOTA_DORIYA');
+}
         // 10. COMMIT TRANSACTION PERMANENTLY
         await connection.commit();
         console.log(`[CHECKOUT] 🎉 Transaction committed successfully for Order ID: ${newOrderId}`);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
@@ -12,22 +12,35 @@ export default function PaymentPage() {
 
   const { addressId, totalAmount, buyNowProduct, customerEmail } = location.state || {};
 
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState('online'); // default to online for safety
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [isCartKotaDoriya, setIsCartKotaDoriya] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
   const [checkingCart, setCheckingCart] = useState(!buyNowProduct);
 
-  // 1. Check if Buy-Now item contains Kota Doriya
-  const isBuyNowKotaDoriya = Boolean(
-    buyNowProduct &&
-    buyNowProduct.name &&
-    buyNowProduct.name.toLowerCase().includes('kota doriya')
-  );
+  // Helper function to check if any item or text represents Kota Doriya
+  const checkIsKotaDoriya = (item) => {
+    if (!item) return false;
+    const combinedText = [
+      item.name,
+      item.title,
+      item.category_name,
+      item.category,
+      item.fabric,
+      item.craft,
+      item.description
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .replace(/[\s_-]+/g, ''); // removes spaces/hyphens: matches 'kotadoriya', 'kotadoria'
 
-  // 2. If it's a regular cart checkout, check cart items from backend
+    return combinedText.includes('kotadori') || combinedText.includes('doriya') || combinedText.includes('doria');
+  };
+
+  // Fetch cart if not a direct Buy-Now
   useEffect(() => {
     if (!buyNowProduct) {
-      const checkCartForKotaDoriya = async () => {
+      const fetchCart = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
           setCheckingCart(false);
@@ -39,46 +52,44 @@ export default function PaymentPage() {
           });
           const data = await res.json();
           const items = data.items || data.cart || (Array.isArray(data) ? data : []);
-          const hasKota = items.some(item =>
-            (item.name && item.name.toLowerCase().includes('kota doriya')) ||
-            (item.title && item.title.toLowerCase().includes('kota doriya'))
-          );
-          if (hasKota) {
-            setIsCartKotaDoriya(true);
-          }
+          setCartItems(items);
         } catch (err) {
-          console.error('[PaymentPage] Error checking cart:', err);
+          console.error('[PaymentPage] Cart fetch error:', err);
         } finally {
           setCheckingCart(false);
         }
       };
-      checkCartForKotaDoriya();
+      fetchCart();
+    } else {
+      setCheckingCart(false);
     }
   }, [buyNowProduct]);
 
-  // Combined rule: Kota Doriya is strictly restricted from COD
-  const isKotaDoriya = isBuyNowKotaDoriya || isCartKotaDoriya;
+  // Consolidated Kota Doriya Flag
+  const isKotaDoriya = useMemo(() => {
+    if (buyNowProduct) {
+      return checkIsKotaDoriya(buyNowProduct);
+    }
+    return cartItems.some(checkIsKotaDoriya);
+  }, [buyNowProduct, cartItems]);
 
-  // Auto-switch to online if Kota Doriya is detected
+  // Force method to online if Kota Doriya is detected
   useEffect(() => {
-    if (isKotaDoriya && paymentMethod === 'cod') {
+    if (isKotaDoriya) {
       setPaymentMethod('online');
     }
-  }, [isKotaDoriya, paymentMethod]);
+  }, [isKotaDoriya]);
 
   useEffect(() => {
-    console.log('[PaymentPage] Initializing component. State received:', location.state);
     if (!addressId) {
-      console.warn('[PaymentPage] Missing addressId, redirecting to /add-address');
       navigate('/add-address');
     }
   }, [addressId, navigate]);
 
-  // Razorpay Payment Flow
   const startRazorpayPayment = async (internalOrderId, displayOrderId, token) => {
     try {
       if (!window.Razorpay) {
-        toast.error('Razorpay SDK failed to load. Please check your internet connection.');
+        toast.error('Razorpay SDK failed to load. Check your internet connection.');
         setPlacingOrder(false);
         return;
       }
@@ -95,7 +106,7 @@ export default function PaymentPage() {
       const razorpayData = await razorpayRes.json();
 
       if (!razorpayData.success) {
-        toast.error('Failed to start payment: ' + (razorpayData.message || 'Error'));
+        toast.error('Payment initiation failed: ' + (razorpayData.message || ''));
         setPlacingOrder(false);
         return;
       }
@@ -105,7 +116,7 @@ export default function PaymentPage() {
         amount: razorpayData.amount,
         currency: razorpayData.currency || 'INR',
         name: 'Arzoo Saree',
-        description: 'Purchase Checkout',
+        description: 'Order Checkout',
         order_id: razorpayData.razorpay_order_id,
         handler: async function (response) {
           try {
@@ -123,13 +134,12 @@ export default function PaymentPage() {
             });
 
             const verifyData = await verifyRes.json();
-
             if (verifyData.success) {
               sessionStorage.removeItem('tracking_ref');
               toast.success(`Payment Successful! Order ID: ${displayOrderId}`);
               navigate(`/track-order/${displayOrderId}`);
             } else {
-              toast.error('Payment verification failed. Please contact support.');
+              toast.error('Payment verification failed.');
             }
           } finally {
             setPlacingOrder(false);
@@ -145,38 +155,36 @@ export default function PaymentPage() {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function () {
-        toast.error('Payment failed. Please try again.');
+        toast.error('Payment failed. Please retry.');
         setPlacingOrder(false);
       });
       rzp.open();
     } catch (err) {
-      console.error('[PaymentPage] Razorpay error:', err);
-      toast.error('Something went wrong starting online payment.');
+      console.error('[PaymentPage] Razorpay Error:', err);
+      toast.error('Payment error encountered.');
       setPlacingOrder(false);
     }
   };
 
   const handlePlaceOrder = async () => {
-    // Strict block guard
+    // Hard rejection at the handler level
     if (isKotaDoriya && paymentMethod === 'cod') {
-      toast.error('Cash on Delivery (COD) is not allowed for Kota Doriya Sarees.');
+      toast.error('Cash on Delivery is disabled for Kota Doriya products.');
       return;
     }
 
     setPlacingOrder(true);
     const token = localStorage.getItem('token');
-    
+
     try {
       const storedTrackingRef = sessionStorage.getItem('tracking_ref') || null;
-      const payload = { 
+      const payload = {
         addressId,
-        paymentMethod,
+        paymentMethod: isKotaDoriya ? 'online' : paymentMethod,
         ...(buyNowProduct && { buyNowProduct }),
         tracking_ref: storedTrackingRef,
         customerEmail
       };
-
-      console.log('[PaymentPage] Submitting payload to checkout API:', payload);
 
       const res = await fetch(`${API_BASE_URL}/api/orders/checkout`, {
         method: 'POST',
@@ -186,29 +194,26 @@ export default function PaymentPage() {
         },
         body: JSON.stringify(payload)
       });
-      
+
       const data = await res.json();
-      console.log('[PaymentPage] Server response:', data);
 
       if (!data.success) {
-        console.error('[PaymentPage] Order placement failed:', data.message || data.error);
-        toast.error(data.message || data.error || 'Could not place your order.');
+        toast.error(data.message || data.error || 'Failed to place order.');
         setPlacingOrder(false);
         return;
       }
 
-      if (paymentMethod === 'cod') {
+      if (paymentMethod === 'cod' && !isKotaDoriya) {
         sessionStorage.removeItem('tracking_ref');
         toast.success('Order placed successfully!');
         navigate(`/track-order/${data.orderId || data.order_id}`);
         setPlacingOrder(false);
       } else {
-        // Proceed to Razorpay
         await startRazorpayPayment(data.order_id, data.orderId, token);
       }
     } catch (err) {
-      console.error('[PaymentPage] Order placement exception:', err);
-      toast.error('Something went wrong while placing your order.');
+      console.error('[PaymentPage] Checkout error:', err);
+      toast.error('Error processing your order.');
       setPlacingOrder(false);
     }
   };
@@ -217,10 +222,8 @@ export default function PaymentPage() {
 
   if (checkingCart) {
     return (
-      <div className="payment-loading-screen" style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <p className="payment-loading-text" style={{ color: '#741434', fontWeight: 600 }}>
-          Verifying order items & payment options...
-        </p>
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: '#741434' }}>
+        Verifying payment eligibility...
       </div>
     );
   }
@@ -241,10 +244,10 @@ export default function PaymentPage() {
       <div className="payment-content-wrapper">
         <div className="payment-left-pane">
           <div className="payment-card">
-            <h3 className="section-title">SELECT PAYMENT METHOD</h3>
+            <h3 className="section-title">PAYMENT METHOD</h3>
 
-            {/* Online Payment Option */}
-            <div 
+            {/* Online Payment */}
+            <div
               className={`payment-method-box ${paymentMethod === 'online' ? 'selected' : ''}`}
               onClick={() => setPaymentMethod('online')}
               style={{
@@ -256,84 +259,84 @@ export default function PaymentPage() {
                 borderRadius: '8px',
                 border: paymentMethod === 'online' ? '2px solid #741434' : '1px solid #e2e8f0',
                 background: paymentMethod === 'online' ? '#fdf5eb' : '#fff',
-                marginBottom: '14px',
-                transition: 'all 0.2s ease'
+                marginBottom: '14px'
               }}
             >
-              <input 
-                type="radio" 
-                name="paymentMethod" 
-                value="online" 
-                checked={paymentMethod === 'online'} 
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="online"
+                checked={paymentMethod === 'online'}
                 onChange={() => setPaymentMethod('online')}
-                className="payment-radio" 
+                className="payment-radio"
               />
               <FaCreditCard size={22} color="#741434" />
               <div>
-                <p className="payment-method-title" style={{ fontWeight: 600, margin: 0, color: '#1a202c' }}>
+                <p style={{ fontWeight: 600, margin: 0, color: '#1a202c' }}>
                   Pay Online (UPI, Cards, Netbanking)
                 </p>
-                <p className="payment-method-desc" style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
-                  Safe & fast transaction via Razorpay.
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
+                  Secure payment via Razorpay.
                 </p>
               </div>
             </div>
 
-            {/* Cash on Delivery Option (Blocked if Kota Doriya) */}
-            <div 
+            {/* Cash On Delivery */}
+            <div
               className={`payment-method-box ${paymentMethod === 'cod' ? 'selected' : ''}`}
               onClick={() => {
                 if (!isKotaDoriya) setPaymentMethod('cod');
               }}
               style={{
                 cursor: isKotaDoriya ? 'not-allowed' : 'pointer',
-                opacity: isKotaDoriya ? 0.45 : 1,
+                opacity: isKotaDoriya ? 0.35 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
                 padding: '14px',
                 borderRadius: '8px',
                 border: paymentMethod === 'cod' ? '2px solid #2f855a' : '1px solid #e2e8f0',
-                background: isKotaDoriya ? '#f8f9fa' : (paymentMethod === 'cod' ? '#f0fff4' : '#fff'),
-                position: 'relative',
-                transition: 'all 0.2s ease'
+                background: isKotaDoriya ? '#f1f1f1' : (paymentMethod === 'cod' ? '#f0fff4' : '#fff'),
+                pointerEvents: isKotaDoriya ? 'none' : 'auto' // Complete click block
               }}
             >
-              <input 
-                type="radio" 
-                name="paymentMethod" 
-                value="cod" 
-                checked={paymentMethod === 'cod'} 
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="cod"
+                checked={paymentMethod === 'cod' && !isKotaDoriya}
                 disabled={isKotaDoriya || placingOrder}
                 onChange={() => {
                   if (!isKotaDoriya) setPaymentMethod('cod');
                 }}
-                className="payment-radio" 
+                className="payment-radio"
               />
               <FaMoneyBillWave size={22} color={isKotaDoriya ? '#a0aec0' : '#2f855a'} />
               <div>
-                <p className="payment-method-title" style={{ fontWeight: 600, margin: 0, color: isKotaDoriya ? '#718096' : '#1a202c' }}>
+                <p style={{ fontWeight: 600, margin: 0, color: isKotaDoriya ? '#a0aec0' : '#1a202c' }}>
                   Cash on Delivery (COD)
                 </p>
-                <p className="payment-method-desc" style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
                   Pay the delivery agent in cash when your order arrives.
                 </p>
               </div>
             </div>
 
-            {/* Warning when COD is blocked */}
+            {/* Ineligible notice */}
             {isKotaDoriya && (
-              <div style={{
-                marginTop: '10px',
-                padding: '10px 14px',
-                backgroundColor: '#fff5f5',
-                borderLeft: '4px solid #e53e3e',
-                borderRadius: '4px',
-                color: '#c53030',
-                fontSize: '0.86rem',
-                fontWeight: 500
-              }}>
-                ⚠️ <strong>COD Unavailable:</strong> Cash on Delivery is not supported for authentic Kota Doriya Handcrafted Sarees. Please use online payment to complete your order.
+              <div
+                style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  backgroundColor: '#fff5f5',
+                  border: '1px solid #feb2b2',
+                  borderRadius: '6px',
+                  color: '#c53030',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.4'
+                }}
+              >
+                <strong>Cash on Delivery Unavailable:</strong> This order contains authentic handcrafted Kota Doriya items, which are not eligible for Cash on Delivery. Please proceed with Online Payment.
               </div>
             )}
           </div>
@@ -342,7 +345,7 @@ export default function PaymentPage() {
         <div className="payment-right-pane">
           <div className="payment-card">
             <h3 className="order-total-header">ORDER TOTAL</h3>
-            
+
             <div className="total-amount-row">
               <span>Total Amount</span>
               <span>₹{Number(totalAmount || 0).toFixed(2)}</span>
@@ -353,9 +356,9 @@ export default function PaymentPage() {
               disabled={placingOrder}
               className={`place-order-btn ${placingOrder ? 'btn-disabled' : ''}`}
             >
-              {placingOrder 
-                ? 'Processing...' 
-                : (paymentMethod === 'cod' ? 'Place Order (COD)' : 'Proceed to Pay Online')}
+              {placingOrder
+                ? 'Processing...'
+                : (paymentMethod === 'cod' && !isKotaDoriya ? 'Place Order (COD)' : 'Proceed to Pay Online')}
             </button>
           </div>
         </div>
