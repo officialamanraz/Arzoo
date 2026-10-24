@@ -6,7 +6,11 @@ const {
     createorders,
     ordercencel,
     getDetailedOrderById,
-    getOrderSummaryData
+    getOrderSummaryData,
+    // markOutForDelivery,
+    // markDeliveryAttemptFailed,
+    // verifyDeliveryOtp
+    getDeliveredOrderHistory
 } = require('../services/orderservice'); 
 
 // ==========================================
@@ -210,6 +214,123 @@ const getOrderSummary = async (req, res, next) => {
         res.status(500).json({ success: false, message: 'Failed to fetch order summary' });
     }
 };
+
+// const markOutForDeliveryController = async (req, res) => {
+//   try {
+//     const orderId = req.body.orderId || req.body.order_id;
+
+//     if (!orderId) {
+//       console.error('[ORDER_CONTROLLER] ❌ Order ID not provided in request body');
+//       return res.status(400).json({ success: false, message: 'Order ID is required' });
+//     }
+
+//     console.log(`[ORDER_CONTROLLER] 🚚 Marking Order ID ${orderId} as Out for Delivery`);
+
+//     // Direct assignment (no array brackets)
+//     const result = await markOutForDelivery(orderId);
+
+//     console.log(`[ORDER_CONTROLLER] ✅ Successfully updated Order ID: ${orderId}`);
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Order marked out for delivery',
+//       data: result
+//     });
+//   } catch (err) {
+//     console.error('[ORDER_CONTROLLER_ERROR] ❌', err);
+//     return res.status(400).json({ success: false, message: err.message });
+//   }
+// };
+// const verifyDeliveryOtpController = async (req, res) => {
+//   try {
+//     // Frontend alag-alag keys bhej sakta hai, isliye fallback options rakhe hain
+//     const orderId = req.body.orderId || req.body.order_id;
+//     const enteredOtp = req.body.otp || req.body.enteredOtp;
+
+//     if (!orderId || !enteredOtp) {
+//       console.error('[ORDER_CONTROLLER] ❌ Order ID and OTP are required for verification');
+//       return res.status(400).json({ 
+//         success: false, 
+//         message: 'Order ID and OTP are required' 
+//       });
+//     }
+
+//     console.log(`[ORDER_CONTROLLER] 🔐 Verifying OTP for Order ID: ${orderId}`);
+
+//     // Call the service function
+//     const result = await verifyDeliveryOtp(orderId, enteredOtp);
+
+//     console.log(`[ORDER_CONTROLLER] ✅ Order ID: ${orderId} successfully verified and delivered.`);
+//     return res.status(200).json({
+//       success: true,
+//       message: result.message,
+//       data: result
+//     });
+
+//   } catch (err) {
+//     console.error('[ORDER_CONTROLLER_ERROR] ❌', err.message);
+//     // Service se aane wale errors (Lockout, Expired, Incorrect) yahan catch honge
+//     return res.status(400).json({ 
+//       success: false, 
+//       message: err.message 
+//     });
+//   }
+// };
+// const markDeliveryAttemptFailedController = async (req, res) => {
+//   try {
+//     const orderId = req.body.orderId || req.body.order_id;
+//     const { failureReason, agentNotes } = req.body;
+
+//     if (!orderId || !failureReason) {
+//       console.error('[ORDER_CONTROLLER] ❌ Order ID and Failure Reason are required');
+//       return res.status(400).json({ 
+//         success: false, 
+//         message: 'Order ID and Failure Reason are required' 
+//       });
+//     }
+
+//     console.log(`[ORDER_CONTROLLER] ⚠️ Processing Failed Attempt for Order ID: ${orderId} | Reason: ${failureReason}`);
+
+//     // Call the service function
+//     const result = await markDeliveryAttemptFailed(orderId, failureReason, agentNotes);
+
+//     console.log(`[ORDER_CONTROLLER] 📝 Failed attempt logged for Order ID: ${orderId}. Current Status: ${result.newStatus}`);
+//     return res.status(200).json({
+//       success: true,
+//       message: result.message,
+//       data: result
+//     });
+
+//   } catch (err) {
+//     console.error('[ORDER_CONTROLLER_ERROR] ❌', err.message);
+//     return res.status(400).json({ 
+//       success: false, 
+//       message: err.message 
+//     });
+//   }
+// };
+const getDeliveredOrderHistoryController = async (req, res) => {
+    try {
+        // Extract user ID from auth token
+        const userId = req.user?.user_id || req.user?.id;
+        
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized access' });
+        }
+
+        console.log(`[CONTROLLER] 📦 Fetching Delivered History for User: ${userId}`);
+        
+        const result = await getDeliveredOrderHistory(userId);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Delivered orders fetched successfully',
+            data: result
+        });
+    } catch (error) {
+        console.error('[CONTROLLER] ❌ Error fetching delivered history:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to fetch order history' });
+    }
+};
 module.exports = { 
     getadminorder, 
     updateOrderStatus, 
@@ -217,5 +338,9 @@ module.exports = {
     orderCreate, 
     cancelOrder,
     getSingleOrderAdmin,
-    getOrderSummary
+    getOrderSummary,
+    // markOutForDeliveryController,
+    // markDeliveryAttemptFailedController,
+    // verifyDeliveryOtpController
+     getDeliveredOrderHistoryController 
 };

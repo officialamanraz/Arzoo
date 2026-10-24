@@ -41,7 +41,7 @@ const processCheckout = async (req, res) => {
         if (error.message === 'USER_NOT_FOUND') return res.status(404).json({ success: false, message: 'User account not found.' });
         if (error.message === 'PRODUCT_NOT_FOUND') return res.status(404).json({ success: false, message: 'Buy-now product not found.' });
         if (error.message === 'CART_EMPTY') return res.status(400).json({ success: false, message: 'Your cart is empty.' });
-
+        if(error.message === 'COD_NOT_ALLOWED_FOR_KOTA_DORIYA') return res.status(400).json({success:false,message:'Cash on Delivery (COD) is not available for Kota Doriya Sarees. Please choose online payment.'})
         return res.status(500).json({ success: false, error: 'Checkout failed, please try again.' });
     }
 };

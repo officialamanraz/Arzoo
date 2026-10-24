@@ -74,7 +74,10 @@ function ProductDetail({ currency, rates, language }) {
  
   const [showAllDetails, setShowAllDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('specifications');
-
+  
+  // 📱 Mobile Flipkart-Style Fullscreen Zoom States
+  const [mobileZoomOpen, setMobileZoomOpen] = useState(false);
+  const [mobileZoomScale, setMobileZoomScale] = useState(1);
   const token = localStorage.getItem('token');
 
   const handleImageMouseMove = (e) => {
@@ -331,13 +334,19 @@ function ProductDetail({ currency, rates, language }) {
     });
   };
 
-  const handleWhatsAppInquiry = () => {
+ const handleWhatsAppInquiry = () => {
     if (!saree) return;
     console.log(`[USER_ACTION] 📱 Redirecting to WhatsApp Inquiry`);
-    const message = `Hello! I am interested in VIP Booking.\n\n*Product:* ${saree.name}\n*Quantity:* ${quantity}\n*Price:* ${currency} ${getConvertedPrice(saree.price)}\n*Link:* ${window.location.href}`;
-    window.open(`${API_BASE_URL}/api/whatsapp/redirect?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
-  };
+    
+    const pName = encodeURIComponent(saree.name);
+    const pPrice = encodeURIComponent(`${currency} ${getConvertedPrice(saree.price)}`);
+    const pImage = encodeURIComponent(resolveImage(saree.image_url));
+    const extraDetails = encodeURIComponent(`Quantity: ${quantity}\nPage Link: ${window.location.href}`);
 
+    const backendWhatsappUrl = `${API_BASE_URL}/api/whatsapp/redirect?product=${pName}&price=${pPrice}&image=${pImage}&text=${extraDetails}`;
+    
+    window.open(backendWhatsappUrl, "_blank", "noopener,noreferrer");
+};
   const getConvertedPrice = (basePrice) => {
     if (currency === 'INR' || !rates || !rates[currency]) return basePrice;
     return (basePrice * rates[currency].rate).toFixed(2);
@@ -425,16 +434,53 @@ if (!saree) {
               </div>
             </div>
 
-            {/* 📱 MOBILE VIEW: FLIPKART STYLE (Swipeable Slider) */}
-            <div className="mobile-gallery-slider">
+            {/* 🎥 PRODUCT VIDEO SHOWCASE (Only on Detail Page if available) */}
+            {saree.video_url && (
+              <div className="product-video-container" style={{ marginTop: '15px', width: '100%', borderRadius: '12px', overflow: 'hidden', background: '#000' }}>
+                <video 
+                  src={resolveImage(saree.video_url)} 
+                  controls 
+                  preload="metadata"
+                  style={{ width: '100%', height: 'auto', maxHeight: '450px', objectFit: 'contain', display: 'block' }}
+                  poster={currentImageUrl}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+
+            {/* 📱 MOBILE VIEW: FLIPKART STYLE (Swipeable Slider + Tap to Zoom) */}
+            <div className="mobile-gallery-slider" style={{ position: 'relative' }}>
               {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
               <div className="mobile-slider-track" onScroll={handleSliderScroll}>
                 {sliderImages.map((img, idx) => (
-                  <div className="mobile-slide-item" key={idx}>
-                    <img src={img} alt={`View ${idx + 1}`} onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }} draggable="false" />
+                  <div 
+                    className="mobile-slide-item" 
+                    key={idx}
+                    onClick={() => {
+                      setMobileActiveIdx(idx);
+                      setMobileZoomScale(1);
+                      setMobileZoomOpen(true);
+                    }}
+                  >
+                    <img 
+                      src={img} 
+                      alt={`View ${idx + 1}`} 
+                      onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }} 
+                      draggable="false" 
+                    />
                   </div>
                 ))}
               </div>
+
+              {/* Tap to Zoom Hint on Mobile */}
+              <div 
+                className="image-zoom-hint" 
+                style={{ pointerEvents: 'none', bottom: sliderImages.length > 1 ? '34px' : '12px' }}
+              >
+                🔍 Tap image to zoom
+              </div>
+
               {/* Pagination Dots */}
               {sliderImages.length > 1 && (
                 <div className="mobile-slider-dots">
@@ -515,7 +561,6 @@ if (!saree) {
                 <div className="amazon-swatch-grid">
                   {saree.variants.map((v) => {
                     const isActive = v.product_id === saree.product_id;
-                    // Safely check if variant is out of stock (using stock_qty if exists, or is_active logic)
                     const isVariantSoldOut = (v.stock_qty !== undefined && v.stock_qty <= 0) || v.is_active === 0;
 
                     return (
@@ -749,6 +794,64 @@ if (!saree) {
           </div>
         </div>
       </div>
+      {/* 🔍 FLIPKART-STYLE MOBILE FULLSCREEN IMAGE ZOOM MODAL */}
+      {mobileZoomOpen && (
+        <div className="fk-zoom-modal-overlay" onClick={() => setMobileZoomOpen(false)}>
+          <div className="fk-zoom-topbar" onClick={(e) => e.stopPropagation()}>
+            <span className="fk-zoom-title">{translatedName || saree.name}</span>
+            <button
+              type="button"
+              className="fk-zoom-close"
+              onClick={() => setMobileZoomOpen(false)}
+              aria-label="Close zoom"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="fk-zoom-stage" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={sliderImages[mobileActiveIdx] || currentImageUrl}
+              alt={saree.name}
+              style={{ transform: `scale(${mobileZoomScale})` }}
+              onClick={() => setMobileZoomScale((prev) => (prev >= 2.5 ? 1 : Number((prev + 0.75).toFixed(2))))}
+              onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
+            />
+          </div>
+
+          {/* Thumbnail Switcher inside Zoom Modal (If product has multiple images) */}
+          {sliderImages.length > 1 && (
+            <div className="fk-zoom-thumbs" onClick={(e) => e.stopPropagation()}>
+              {sliderImages.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`Thumb ${idx + 1}`}
+                  className={`fk-zoom-thumb-item ${mobileActiveIdx === idx ? 'active' : ''}`}
+                  onClick={() => {
+                    setMobileActiveIdx(idx);
+                    setMobileZoomScale(1);
+                  }}
+                  onError={(e) => { e.currentTarget.src = "/saare_1.jpeg"; }}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="fk-zoom-controls" onClick={(e) => e.stopPropagation()}>
+            {[1, 1.75, 2.5].map((lvl) => (
+              <button
+                key={lvl}
+                type="button"
+                className={`fk-zoom-btn ${mobileZoomScale === lvl ? 'active' : ''}`}
+                onClick={() => setMobileZoomScale(lvl)}
+              >
+                {lvl}x Zoom
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div> 
   );
 }

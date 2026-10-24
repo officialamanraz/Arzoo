@@ -15,6 +15,16 @@ const Checkout = () => {
     const [loading, setLoading] = useState(false);
     const [fallbackAddressId, setFallbackAddressId] = useState(null);
 
+    // 🛑 Check if buy-now or cart product contains "Kota Doriya"
+    const isKotaDoriya = buyNowProduct && buyNowProduct.name && buyNowProduct.name.toLowerCase().includes('kota doriya');
+
+    // Automatically switch payment method to 'online' if COD is blocked for Kota Doriya
+    useEffect(() => {
+        if (isKotaDoriya && paymentMethod === 'cod') {
+            setPaymentMethod('online');
+        }
+    }, [isKotaDoriya, paymentMethod]);
+
     useEffect(() => {
         if (!passedAddressId) {
             const fetchLatestAddress = async () => {
@@ -191,20 +201,25 @@ const Checkout = () => {
                 <div className="checkout-step step-active">
                     <div className="step-content">
                         
-                        <div className={`payment-method-card ${paymentMethod === 'cod' ? 'payment-selected' : ''}`}>
-                            <label className="payment-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <div className={`payment-method-card ${paymentMethod === 'cod' ? 'payment-selected' : ''}`} style={{ opacity: isKotaDoriya ? 0.6 : 1 }}>
+                            <label className="payment-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isKotaDoriya ? 'not-allowed' : 'pointer' }}>
                                 <input
                                     type="radio"
                                     name="paymentMethod"
                                     checked={paymentMethod === 'cod'}
                                     onChange={() => setPaymentMethod('cod')}
-                                    disabled={loading}
+                                    disabled={loading || isKotaDoriya}
                                     className="payment-radio"
                                 />
                                 <FaMoneyBillWave color="#2f855a" size={18} />
                                 <span className="payment-name">Cash on Delivery (COD)</span>
                             </label>
                             <p className="payment-desc">Pay the delivery agent in cash when your order arrives.</p>
+                            {isKotaDoriya && (
+                                <p style={{ color: '#b3261e', fontSize: '0.82rem', marginTop: '6px', fontWeight: '600' }}>
+                                    *COD is not available for Kota Doriya Sarees. Please choose online payment.
+                                </p>
+                            )}
                         </div>
 
                         <div className={`payment-method-card ${paymentMethod === 'online' ? 'payment-selected' : ''}`}>

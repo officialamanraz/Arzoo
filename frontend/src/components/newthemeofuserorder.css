@@ -1,19 +1,16 @@
 /* =========================================================
-   ARZOO SAREE — LUXURY MY ORDERS THEME
-   ---------------------------------------------------------
-   Clean layout, navbar-matched beige background, subtle 
-   glowing flowers, and perfectly matched to the main theme.
+   ARZOO SAREE — LUXURY MY ORDERS THEME (COMPLETE & FIXED)
 ========================================================= */
 
 :root {
   --arzoo-wine: #741434;
   --arzoo-wine-dark: #5b0f27;
   --arzoo-gold: #c79a52;
-  --arzoo-cream: #fffdf9; /* Page Background */
-  --arzoo-nav-theme: #fdf5eb; /* NEW: Matches the top Navbar warm beige/peach theme */
+  --arzoo-cream: #fffdf9;
+  --arzoo-nav-theme: #fdf5eb;
   --arzoo-text: #2c2c2c;
   --arzoo-muted: #666666;
-  --arzoo-shadow: 0 8px 24px rgba(116, 20, 52, 0.04); /* Subtle wine-tinted shadow */
+  --arzoo-shadow: 0 8px 24px rgba(116, 20, 52, 0.05);
 }
 
 .orders-loading {
@@ -23,12 +20,11 @@
   font-size: 16px;
 }
 
-/* Base Page Background Updated to Theme Cream */
 .orders-page {
-  background-color: var(--arzoo-cream); 
+  background-color: var(--arzoo-cream);
   color: var(--arzoo-text);
   min-height: 100vh;
-  padding: 40px 20px 60px;
+  padding: 40px 20px 100px;
   text-align: left !important;
   font-family: 'Inter', sans-serif;
 }
@@ -45,51 +41,80 @@
   font-size: 1.85rem;
   font-weight: 800;
   text-align: left !important;
-  font-family: 'Fraunces', serif; /* Matching the elegant headers */
+  font-family: 'Fraunces', 'Playfair Display', serif;
 }
+
+.orders-error-banner {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 0.9em;
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  text-align: left !important;
+}
+
+.orders-empty-card {
+  background: var(--arzoo-nav-theme);
+  color: var(--arzoo-text);
+  padding: 45px 30px;
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+  border-radius: 14px;
+  border: 1px solid rgba(199, 154, 82, 0.2);
+}
+
+.orders-empty-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--arzoo-wine);
+  font-weight: 700;
+  text-decoration: none;
+}
+.orders-empty-link:hover { text-decoration: underline; }
 
 /* -----------------------------------------
    Order Card (Navbar Theme Matched)
    ----------------------------------------- */
 .order-card {
-  background: var(--arzoo-nav-theme); /* Matches Navbar perfectly */
+  background: var(--arzoo-nav-theme);
   color: var(--arzoo-text);
-  padding: 30px;
-  margin-bottom: 30px;
-  border-radius: 12px; /* Slightly softer luxury corners */
+  padding: 28px;
+  margin-bottom: 28px;
+  border-radius: 12px;
   box-shadow: var(--arzoo-shadow);
-  border: 1px solid rgba(199, 154, 82, 0.15); /* Very faint gold border for premium feel */
+  border: 1px solid rgba(199, 154, 82, 0.2);
   text-align: left !important;
   position: relative;
-  overflow: hidden; /* Keeps flowers inside the card */
+  overflow: hidden;
   z-index: 1;
 }
 
-/* GLOWING FLOWER DESIGNS (Empty Space Fillers) */
 .order-card::before,
 .order-card::after {
   content: "";
   position: absolute;
   width: 160px;
   height: 160px;
-  background-image: url('/path-to-your-flower.png'); /* ⚠️ Add your flower image path here */
+  background-image: url('/path-to-your-flower.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   z-index: -1;
-  opacity: 0.25; /* Soft transparency */
-  filter: drop-shadow(0 0 15px rgba(89, 212, 203, 0.6)) brightness(1.2); /* Cyan/Mint Glow effect */
+  opacity: 0.22;
+  filter: drop-shadow(0 0 15px rgba(89, 212, 203, 0.6)) brightness(1.2);
   transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-/* Top Right Flower */
 .order-card::before {
   top: -30px;
   right: -20px;
   transform: rotate(15deg);
 }
 
-/* Bottom Center/Right Flower */
 .order-card::after {
   bottom: -40px;
   right: 35%;
@@ -98,11 +123,11 @@
 
 .order-card:hover::before,
 .order-card:hover::after {
-  opacity: 0.4; /* Glow intensifies on hover */
+  opacity: 0.38;
 }
 
 /* -----------------------------------------
-   Header Section
+   Header Section & Status Badges
    ----------------------------------------- */
 .order-card-header {
   display: flex;
@@ -110,7 +135,7 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px dashed rgba(116, 20, 52, 0.15); /* Soft wine-tinted dashed line */
+  border-bottom: 1px dashed rgba(116, 20, 52, 0.15);
   flex-wrap: wrap;
   gap: 10px;
 }
@@ -118,7 +143,7 @@
 .order-id {
   margin: 0 0 3px 0;
   color: var(--arzoo-text);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
 }
 
@@ -128,19 +153,35 @@
   font-size: 0.85em;
 }
 
+.order-status-badge {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.status-pending { background: #fdf5e6; color: #b8860b; border: 1px solid #f5deb3; }
+.status-processing { background: #e8f2ff; color: #084298; border: 1px solid #b6d4fe; }
+.status-shipped { background: #e0f7fa; color: #006064; border: 1px solid #b2ebf2; }
+.status-delivered { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+.status-cancelled { background: #fdecea; color: #b3261e; border: 1px solid #f5c6cb; }
+
 /* -----------------------------------------
-   Product Image
+   Product Image & Lens Zoom
    ----------------------------------------- */
 .order-item-detail-layout {
   display: flex;
-  gap: 30px;
+  gap: 28px;
   align-items: flex-start;
   flex-wrap: wrap;
   margin-bottom: 15px;
+  width: 100%;
 }
 
 .order-item-left-col {
-  width: 250px;
+  width: 240px;
   flex-shrink: 0;
 }
 
@@ -148,72 +189,194 @@
   display: block;
   position: relative;
   width: 100%;
-  height: 320px; /* Taller luxury aspect ratio */
-  border-radius: 6px;
+  height: 300px;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  background: rgba(255, 255, 255, 0.6); /* Translucent white to sit on beige */
+  border: 1px solid rgba(199, 154, 82, 0.25);
+  background: #ffffff;
   margin-bottom: 14px;
-  cursor: pointer;
+  cursor: zoom-in;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .order-item-main-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: center center;
+}
+
+.order-item-img-zoom-box:hover .order-item-main-img {
+  transform: scale(1.16);
+}
+
+.zoom-hover-indicator {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(44, 44, 44, 0.78);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 5px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
 }
 
 /* -----------------------------------------
-   Right Column (Details)
+   Action Buttons (All Styled Consistently)
+   ----------------------------------------- */
+.order-item-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.order-action-track,
+.order-action-cancel,
+.order-action-invoice,
+.order-action-review {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.order-action-track {
+  background-color: var(--arzoo-wine);
+  color: #ffffff;
+  border: 1px solid var(--arzoo-wine);
+}
+.order-action-track:hover {
+  background-color: var(--arzoo-wine-dark);
+}
+
+.order-action-cancel {
+  background: rgba(255, 255, 255, 0.8);
+  color: #b3261e;
+  border: 1px solid rgba(179, 38, 30, 0.35);
+}
+.order-action-cancel:hover {
+  background: #b3261e;
+  color: #ffffff;
+  border-color: #b3261e;
+}
+
+.order-action-invoice {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--arzoo-text);
+  border: 1px solid rgba(199, 154, 82, 0.35);
+}
+.order-action-invoice:hover {
+  background: #ffffff;
+  border-color: var(--arzoo-wine);
+  color: var(--arzoo-wine);
+}
+
+.order-action-review {
+  background-color: var(--arzoo-gold);
+  color: #ffffff;
+  border: 1px solid var(--arzoo-gold);
+}
+.order-action-review:hover {
+  background-color: #b0843e;
+}
+
+/* -----------------------------------------
+   Right Column (Product Details)
    ----------------------------------------- */
 .order-item-right-col {
   flex: 1;
-  min-width: 280px;
+  min-width: 260px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+
+.order-product-name-link {
+  text-decoration: none;
+  display: block;
+  width: 100%;
 }
 
 .order-product-name {
   margin: 0;
-  font-size: 1.4rem;
-  font-weight: 600;
+  font-size: 1.35rem;
+  font-weight: 700;
   color: var(--arzoo-text);
-  line-height: 1.4;
+  line-height: 1.35;
+  font-family: 'Fraunces', 'Playfair Display', serif;
+  transition: color 0.2s ease;
+}
+
+.order-product-name-link:hover .order-product-name {
+  color: var(--arzoo-wine);
+}
+
+.order-price-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.order-item-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .order-price-main {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--arzoo-text);
+  font-weight: 800;
+  color: var(--arzoo-wine);
 }
 
 .order-mrp-strikethrough {
-  font-size: 1.05rem;
-  color: #999;
+  font-size: 1rem;
+  color: #999999;
   text-decoration: line-through;
   font-weight: 500;
 }
 
 .order-discount-badge {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: var(--arzoo-gold);
-  background-color: rgba(199, 154, 82, 0.12); /* Gold tint */
-  padding: 4px 10px;
+  color: #946c2c;
+  background-color: rgba(199, 154, 82, 0.18);
+  padding: 3px 9px;
   border-radius: 4px;
 }
 
+.order-item-qty {
+  font-size: 0.92rem;
+  color: var(--arzoo-muted);
+  font-weight: 500;
+}
+
 /* -----------------------------------------
-   Address & Info Strips (Glossy look on Beige)
+   Address & Info Strips
    ----------------------------------------- */
-.order-info-substrip, 
+.order-info-substrip,
 .order-delivery-address-card {
-  background: rgba(255, 255, 255, 0.65); /* Semi-transparent white to contrast against the beige card */
-  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 15px 18px;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.03); 
+  border: 1px solid rgba(199, 154, 82, 0.15);
   width: 100%;
   box-sizing: border-box;
   display: flex;
@@ -221,145 +384,413 @@
   gap: 6px;
 }
 
+.order-info-substrip p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--arzoo-text);
+}
+
 .order-delivery-address-card .address-header {
-  font-size: 0.95rem;
-  font-weight: 600;
+  margin: 0 0 4px 0 !important;
+  font-size: 0.88rem;
+  font-weight: 700;
   color: var(--arzoo-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 4px;
 }
 
 .order-delivery-address-card .address-name {
   color: var(--arzoo-text);
-  font-weight: 600;
-  font-size: 1.05rem;
+  font-weight: 700;
+  font-size: 1.02rem;
 }
 
 .order-delivery-address-card .address-body,
 .order-delivery-address-card .address-contact {
+  margin: 0 !important;
   color: var(--arzoo-muted);
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
-/* -----------------------------------------
-   Buttons (Updated to Arzoo Theme)
-   ----------------------------------------- */
-.order-item-actions-stack {
+/* =========================================================
+   🔍 FLIPKART-STYLE FULLSCREEN IMAGE ZOOM MODAL
+========================================================= */
+.order-zoom-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  z-index: 100000;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(6px);
+}
+
+.order-zoom-modal-topbar {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.order-zoom-modal-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 75%;
+}
+
+.order-zoom-close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-zoom-viewport {
+  width: 100%;
+  max-width: 520px;
+  height: 68vh;
+  background: #111111;
+  border-radius: 12px;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.order-zoom-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+  transform-origin: center center;
+  cursor: zoom-in;
+}
+
+.order-zoom-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.order-zoom-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.order-zoom-btn.active {
+  background: var(--arzoo-wine);
+  border-color: var(--arzoo-gold);
+}
+
+.order-zoom-product-link {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: var(--arzoo-gold);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* =========================================================
+   🌟 REVIEW MODAL STYLES
+========================================================= */
+.review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+.review-modal-content {
+  background: var(--arzoo-nav-theme);
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.review-modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(116, 20, 52, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--arzoo-wine);
+}
+
+.review-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--arzoo-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.review-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.review-product-preview {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.review-product-preview img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.review-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-form-group label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--arzoo-text);
+}
+
+.review-stars-container {
+  display: flex;
+  gap: 8px;
+}
+
+.review-star {
+  font-size: 2.2rem;
+  color: #d6d3d1;
+  cursor: pointer;
+}
+.review-star.active { color: #f59e0b; }
+
+.review-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.review-tag-btn {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: var(--arzoo-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.review-textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(116, 20, 52, 0.25);
+  background: #ffffff;
+  color: var(--arzoo-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.review-modal-actions {
+  display: flex;
+  justify-content: flex-end;
   gap: 12px;
 }
 
-.order-action-track {
-  background-color: var(--arzoo-wine);
-  color: #fff;
-  border: none;
-  padding: 12px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  text-align: center;
-  text-decoration: none;
-  transition: background 0.2s ease;
-}
-.order-action-track:hover { background-color: var(--arzoo-wine-dark); }
-
-.order-action-cancel {
-  background: transparent;
-  color: var(--arzoo-muted);
-  border: 1px solid #d5d5d5;
-  padding: 12px 16px;
-  border-radius: 6px;
+.review-btn-cancel {
+  padding: 10px 18px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: var(--arzoo-text);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-.order-action-cancel:hover {
-  background: #fff;
-  color: #b3261e;
-  border-color: #b3261e;
 }
 
-/* Status Badge */
-.order-status-badge {
-  padding: 6px 14px;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.85em;
-  letter-spacing: 0.02em;
+.review-btn-submit {
+  padding: 10px 24px;
+  background: var(--arzoo-wine);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
 }
-.status-pending { background: #fdf5e6; color: #b8860b; border: 1px solid #f5deb3; }
 
-/* -----------------------------------------
-   MOBILE OPTIMIZATION
-   ----------------------------------------- */
+/* =========================================================
+   📱 MOBILE OPTIMIZATION (FIXES SQUISHED PRODUCT IMAGE)
+========================================================= */
 @media (max-width: 768px) {
-  .orders-page { padding: 20px 10px !important; }
-  .order-card { padding: 20px !important; }
-  
-  /* Adjust flower glow for mobile */
-  .order-card::before { width: 100px; height: 100px; top: -10px; right: -10px; }
-  .order-card::after { display: none; } /* Hide bottom one to save space */
+  .orders-page {
+    padding: 20px 12px 100px !important;
+  }
 
-  .order-item-detail-layout { flex-direction: column; gap: 15px; }
-  .order-item-left-col { width: 100%; display: flex; gap: 15px; }
-  .order-item-img-zoom-box { width: 100px; height: 130px; margin-bottom: 0; }
-  
-  .order-item-actions-stack { flex: 1; justify-content: center; }
+  .order-card {
+    padding: 18px 15px !important;
+  }
+
+  .order-card::before {
+    width: 100px;
+    height: 100px;
+    top: -10px;
+    right: -10px;
+  }
+  .order-card::after {
+    display: none;
+  }
+
+  /* Critical Fix: Stretch full width so children never squash */
+  .order-item-detail-layout {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+    width: 100% !important;
+  }
+
+  /* Top row on mobile: Visible Saree Photo on Left + Action Buttons on Right */
+  .order-item-left-col {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+
+  /* Locked dimensions so image is NEVER squished */
+  .order-item-img-zoom-box {
+    width: 120px !important;
+    min-width: 120px !important;
+    height: 155px !important;
+    flex-shrink: 0 !important;
+    margin-bottom: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  .order-item-actions-stack {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  .order-action-track,
+  .order-action-cancel,
+  .order-action-invoice,
+  .order-action-review {
+    padding: 9px 10px !important;
+    font-size: 0.82rem !important;
+    border-radius: 6px !important;
+    width: 100% !important;
+  }
+
+  .order-item-right-col {
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 10px !important;
+  }
+
+  .order-product-name {
+    font-size: 1.18rem !important;
+  }
+
+  .order-price-main {
+    font-size: 1.35rem !important;
+  }
 }
-/* =========================================
-   DARK MODE ADAPTATION (FIX FOR THEME)
-   ========================================= */
 
-body.dark, .dark-mode, [data-theme='dark'] {
-  --arzoo-cream: #121212; /* Page ka background totally dark ho jayega */
-  --arzoo-nav-theme: #1e1e1e; /* Order card ka background dark grey hoga */
-  --arzoo-text: #f5f5f5; /* Text color white/light grey ho jayega */
-  --arzoo-muted: #a3a3a3; /* Muted text readability ke liye */
-  --arzoo-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* Dark mode ke hisaab se shadow */
+/* =========================================================
+   🌙 DARK MODE ADAPTATION
+========================================================= */
+body.dark, html.dark, .dark-mode, [data-theme='dark'] {
+  --arzoo-cream: #121212;
+  --arzoo-nav-theme: #1e1e1e;
+  --arzoo-text: #f5f5f5;
+  --arzoo-muted: #a3a3a3;
+  --arzoo-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* Inner Boxes (Payment, Address, Image) ko dark mode mein transparent grey banana */
-body.dark .order-info-substrip, 
+body.dark .order-info-substrip,
 body.dark .order-delivery-address-card,
 .dark-mode .order-info-substrip,
 .dark-mode .order-delivery-address-card {
-  background: rgba(255, 255, 255, 0.05) !important; 
+  background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 body.dark .order-item-img-zoom-box,
 .dark-mode .order-item-img-zoom-box {
-  background: rgba(0, 0, 0, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #27272a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Header line adjust */
-body.dark .order-card-header,
-.dark-mode .order-card-header {
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.15) !important;
+body.dark .order-action-invoice,
+.dark-mode .order-action-invoice {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f5f5f5 !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-/* Cancel Button for Dark Mode */
 body.dark .order-action-cancel,
 .dark-mode .order-action-cancel {
-  border-color: #555 !important;
-  color: #ccc !important;
-}
-
-body.dark .order-action-cancel:hover,
-.dark-mode .order-action-cancel:hover {
-  background: rgba(220, 53, 69, 0.15) !important;
-  color: #ff6b6b !important;
-  border-color: #ff6b6b !important;
-}
-
-/* Glowing Flowers effect for Dark Mode (More visible) */
-body.dark .order-card::before,
-body.dark .order-card::after,
-.dark-mode .order-card::before,
-.dark-mode .order-card::after {
-  opacity: 0.15;
-  filter: drop-shadow(0 0 20px rgba(89, 212, 203, 0.8)) brightness(1.5);
+  background: transparent !important;
+  border-color: #ef4444 !important;
+  color: #f87171 !important;
 }

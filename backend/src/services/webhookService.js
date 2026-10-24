@@ -125,4 +125,57 @@ const processWebhookEventInDB = async (event) => {
     }
 };
 
-module.exports = { processWebhookEventInDB };
+const processCourierWebhook = async (awbNumber, newStatus, statusMessage) => {
+  // Fix 1: && ki jagah || (OR) use karna chahiye. Dono mein se ek bhi missing ho toh error.
+  if (!awbNumber || !newStatus) {
+    throw new Error('AWB Number and Status are required'); // Fix 2: 'new Error()' hota hai
+  }
+
+  try {
+    // Fix 3: Query ke aage [awbNumber] pass karna zaroori hai
+    const [orderRow] = await db.execute(
+      "SELECT order_id, status FROM orders WHERE tracking_awb_number = ?", 
+      [awbNumber]
+    );
+
+    if (!orderRow || orderRow.length === 0) {
+      throw new Error('Order not found for this AWB');
+    }
+
+    // Fix 4: Variable destructure karna padega pehle
+    const { order_id, status } = orderRow[0];
+
+    // Agar status already same hai toh database ko wapas touch nahi karenge
+    if (status === newStatus) {
+      // Fix 5: Service layer mein 'res' nahi hota, plain object return karte hain
+      return {
+        success: true,
+        message: "Status is already up to date"
+      };
+    }
+
+    // Step 1: Update main orders table
+    await db.execute(
+      "UPDATE orders SET status = ? WHERE tracking_awb_number = ?",
+      [newStatus, awbNumber]
+    );
+
+    // Step 2: Insert into order_tracking (Yeh aapke code mein missing tha)
+    await db.execute(
+      "INSERT INTO order_tracking (order_id, status, status_message) VALUES (?, ?, ?)",
+      [order_id, newStatus, statusMessage || `Status updated by courier to ${newStatus}`]
+    );
+
+    return {
+      success: true,
+      orderId: order_id,
+      status: newStatus,
+      message: "Order and tracking history updated successfully"
+    };
+
+  } catch (err) {
+    throw err; // Fix 6: Error catch karke aage controller ko bhejna zaroori hai
+  }
+};
+
+module.exports = { processWebhookEventInDB,processCourierWebhook };

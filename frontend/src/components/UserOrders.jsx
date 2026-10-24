@@ -35,7 +35,9 @@ function UserOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
+// 🔍 Flipkart-Style Image Zoom Lightbox State
+  const [zoomModal, setZoomModal] = useState({ isOpen: false, imgUrl: '', name: '', productId: null });
+  const [zoomScale, setZoomScale] = useState(1);
   // Review Modal States
   const [reviewModal, setReviewModal] = useState({ isOpen: false, item: null, orderId: null });
   const [reviewData, setReviewData] = useState({ rating: 5, ratingType: 'go_for_it', comment: '', image: null });
@@ -313,7 +315,48 @@ function UserOrders() {
                             )}
                           </div>
                         </div>
+{/* 🔍 FLIPKART-STYLE PRODUCT IMAGE ZOOM MODAL */}
+      {zoomModal.isOpen && (
+        <div className="order-zoom-modal-overlay" onClick={() => setZoomModal({ isOpen: false, imgUrl: '', name: '', productId: null })}>
+          <div className="order-zoom-modal-topbar" onClick={(e) => e.stopPropagation()}>
+            <span className="order-zoom-modal-title">{zoomModal.name}</span>
+            <button
+              type="button"
+              className="order-zoom-close-btn"
+              onClick={() => setZoomModal({ isOpen: false, imgUrl: '', name: '', productId: null })}
+            >
+              ×
+            </button>
+          </div>
 
+          <div className="order-zoom-viewport" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={zoomModal.imgUrl}
+              alt={zoomModal.name}
+              className="order-zoom-img"
+              style={{ transform: `scale(${zoomScale})` }}
+              onClick={() => setZoomScale((prev) => (prev >= 2.5 ? 1 : Number((prev + 0.75).toFixed(2))))}
+              onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
+            />
+          </div>
+
+          <div className="order-zoom-controls" onClick={(e) => e.stopPropagation()}>
+            {[1, 1.75, 2.5].map((scale) => (
+              <button
+                key={scale}
+                type="button"
+                className={`order-zoom-btn ${zoomScale === scale ? 'active' : ''}`}
+                onClick={() => setZoomScale(scale)}
+              >
+                {scale}x Zoom
+              </button>
+            ))}
+            <Link to={`/product/${zoomModal.productId}`} className="order-zoom-product-link">
+              View Product Page →
+            </Link>
+          </div>
+        </div>
+      )}
                         <div className="order-item-right-col">
                           <Link 
                             to={`/product/${item.product_id}`} 
@@ -483,6 +526,48 @@ function UserOrders() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* 🔍 FLIPKART-STYLE PRODUCT IMAGE ZOOM MODAL */}
+      {zoomModal.isOpen && (
+        <div className="order-zoom-modal-overlay" onClick={() => setZoomModal({ isOpen: false, imgUrl: '', name: '', productId: null })}>
+          <div className="order-zoom-modal-topbar" onClick={(e) => e.stopPropagation()}>
+            <span className="order-zoom-modal-title">{zoomModal.name}</span>
+            <button
+              type="button"
+              className="order-zoom-close-btn"
+              onClick={() => setZoomModal({ isOpen: false, imgUrl: '', name: '', productId: null })}
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="order-zoom-viewport" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={zoomModal.imgUrl}
+              alt={zoomModal.name}
+              className="order-zoom-img"
+              style={{ transform: `scale(${zoomScale})` }}
+              onClick={() => setZoomScale((prev) => (prev >= 2.5 ? 1 : Number((prev + 0.75).toFixed(2))))}
+              onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
+            />
+          </div>
+
+          <div className="order-zoom-controls" onClick={(e) => e.stopPropagation()}>
+            {[1, 1.75, 2.5].map((scale) => (
+              <button
+                key={scale}
+                type="button"
+                className={`order-zoom-btn ${zoomScale === scale ? 'active' : ''}`}
+                onClick={() => setZoomScale(scale)}
+              >
+                {scale}x Zoom
+              </button>
+            ))}
+            <Link to={`/product/${zoomModal.productId}`} className="order-zoom-product-link">
+              View Product Page →
+            </Link>
           </div>
         </div>
       )}

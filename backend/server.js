@@ -114,8 +114,8 @@ app.use((req, res, next) => {
 // Layer 5: Body Parser with Payload Limit & Data Sanitization
 // File: backend/server.js
 // 4K aur badi files ko bina error accept karne ke liye limit 50mb kar di
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
 // Logger
 app.use(morgan('dev'));

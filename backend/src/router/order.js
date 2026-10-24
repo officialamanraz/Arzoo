@@ -7,6 +7,7 @@ const router = express.Router();
 // ==========================================
 const { processCheckout } = require('../controllers/checkout');
 const { getOrderTracking } = require('../controllers/tracking'); 
+const { courierWebhookController } = require('../controllers/webhook');
 const { getCart } = require('../controllers/cart');
 const { verifyToken, verifyAdmin } = require('../middleware/authmiddleware');
 
@@ -17,7 +18,11 @@ const {
     orderCreate,
     cancelOrder,
     getSingleOrderAdmin,
-    getOrderSummary
+    getOrderSummary,
+//     markOutForDeliveryController,
+//   verifyDeliveryOtpController,
+//   markDeliveryAttemptFailedController
+getDeliveredOrderHistoryController,
 } = require('../controllers/order'); 
 
 // ==========================================
@@ -73,11 +78,10 @@ router.get('/tracking/:orderId', verifyToken, (req, res, next) => {
     console.log(`[ORDER_ROUTES] 🚚 Route Triggered: GET /tracking/${req.params.orderId}`);
     getOrderTracking(req, res, next);
 });
-
-
-// ==========================================
-// 👑 ADMIN ROUTES (Requires: verifyToken + verifyAdmin)
-// ==========================================
+router.get('/delivered-history', verifyToken, (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 📦 Route Triggered: GET /delivered-history by User`);
+    getDeliveredOrderHistoryController(req, res, next);
+});
 
 // 1. Admin: View all orders (List)
 router.get('/admin/all', verifyToken, verifyAdmin, (req, res, next) => {
@@ -101,6 +105,31 @@ router.patch('/admin/status', verifyToken, verifyAdmin, (req, res, next) => {
 router.put('/:id/status', verifyToken, verifyAdmin, (req, res, next) => {
     console.log(`[ORDER_ROUTES] 👑 Admin Route Triggered: PUT /${req.params.id}/status`);
     updateOrderStatus(req, res, next);
+});
+// router.post('/admin/out-for-delivery', verifyToken, verifyAdmin, (req, res, next) => {
+//     console.log(`[ORDER_ROUTES] 🚚 Admin Route Triggered: POST /admin/out-for-delivery`);
+//     markOutForDeliveryController(req, res, next);
+// });
+
+// // 6. Admin/Agent: Verify Delivery Boy's OTP at Doorstep
+// router.post('/admin/verify-delivery-otp', verifyToken, verifyAdmin, (req, res, next) => {
+//     console.log(`[ORDER_ROUTES] 🔐 Admin Route Triggered: POST /admin/verify-delivery-otp`);
+//     verifyDeliveryOtpController(req, res, next);
+// });
+
+// // 7. Admin/Agent: Mark Attempt as Failed (Customer not found, etc.)
+// router.post('/admin/delivery-attempt-failed', verifyToken, verifyAdmin, (req, res, next) => {
+//     console.log(`[ORDER_ROUTES] ❌ Admin Route Triggered: POST /admin/delivery-attempt-failed`);
+//     markDeliveryAttemptFailedController(req, res, next);
+// });
+// ==========================================
+// 🚚 3PL COURIER WEBHOOK ROUTES (No Auth Middleware)
+// ==========================================
+
+// Webhook listener for automatic status updates from Shiprocket/Delhivery
+router.post('/webhook/courier', (req, res, next) => {
+    console.log(`[ORDER_ROUTES] 🚚 Webhook Route Triggered: POST /webhook/courier by 3PL`);
+    courierWebhookController(req, res, next);
 });
 
 module.exports = router;

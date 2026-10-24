@@ -35,6 +35,7 @@ import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 import Profile from './components/Profile';
 import ReviewsPage from './components/ReviewsPage';
+import orderhistory from './components/DeliveredOrderHistory'
 import './components/newthemeofhomepage.css';
 import './components/ArzooGlobalTheme.css';
 import './components/ProductDetailArzooTheme.css';
@@ -48,6 +49,8 @@ import './components/newnavbartheme.css';
 import './components/newthemecontact.css';
 import './components/newthemeprofile.css';
 import './components/newreview.css';
+import './components/newsignuptheme.css';
+import './components/newlogintheme.css';
 // 🤝 NEW: Dealer Management & Portal Components
 import AdminDealers from "./components/AdminDealers";
 import AdminDealerDetail from "./components/AdminDealerDetail";
@@ -358,7 +361,7 @@ useEffect(() => {
       <Route path="/cart" element={<CartPage />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
-
+      <Route path="/delivered-history" element={<orderhistory />} />
       {/* =========================================
          AUTHENTICATION & USER PROFILE ROUTES
          ========================================= */}

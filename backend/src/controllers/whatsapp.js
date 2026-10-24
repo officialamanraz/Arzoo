@@ -1,17 +1,37 @@
+// File: src/controllers/whatsappController.js (ya aapka jo bhi controller ho)
+
 const redirectWhatsApp = (req, res) => {
     try {
-        // BACKEND HARDCODE: Yeh 100% secure hai kyunki ye server par chal raha hai.
-        // Hacker isko 'Inspect Element' karke kabhi nahi dekh sakta.
-        // Niche "919876543210" ki jagah apna asli WhatsApp number daal do.
-        const phoneNumber = "919530060288"; 
+        // Yahan aap apna primary ya naya WhatsApp number daal sakte hain (Country code ke sath, bina '+' ke)
+        const phoneNumber = "919166293202"; 
 
-        // Frontend se jo message aaya hai usko uthao
-        const message = req.query.text || ''; 
+        // Frontend ya query se ane wale parameters ko extract karein
+        const productName = req.query.product || 'Arzoo Saree';
+        const productPrice = req.query.price || '';
+        const productImage = req.query.image || '';
+        const customText = req.query.text || '';
+
+        // Ek clean aur readable message format banayein taaki admin/dealer ko 
+        // link kholne ki zaroorat na pade aur sab kuch turant dikh jaye.
+        let formattedMessage = `Hello! I am inquiring about this product:\n\n`;
+        formattedMessage += `🛍️ *Product:* ${productName}\n`;
+        if (productPrice) {
+            formattedMessage += `💰 *Price:* ${productPrice}\n`;
+        }
+        if (productImage) {
+            formattedMessage += `🖼️ *Image Link:* ${productImage}\n`;
+        }
+        if (customText) {
+            formattedMessage += `\n📝 *Details:* ${customText}\n`;
+        }
+
+        // URL encode karein taaki spaces aur emojis properly format ho jayein
+        const encodedMessage = encodeURIComponent(formattedMessage);
         
         // WhatsApp ka final link banao
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
         
-        // User ko seedha WhatsApp par phek do (Redirect)
+        // User ko WhatsApp par redirect karein
         res.redirect(whatsappUrl);
     } catch (error) {
         console.error("[WhatsApp API] Error:", error);
