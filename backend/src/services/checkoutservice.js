@@ -61,15 +61,17 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         const estimatedDeliverySQL = estimatedDeliveryDateObj.toISOString().split('T')[0];
         console.log(`[CHECKOUT] ✅ Estimated delivery calculated: ${estimatedDeliverySQL}`);
 
-        // 4. PROCESS CART / BUY NOW
+        // 4. PROCESS CART / BUY NOW (With dealer_base_price & packaging_cost AND Categories)
         let cartItems = [];
         const isBuyNow = buyNowProduct && buyNowProduct.product_id;
 
         if (isBuyNow) {
             console.log(`[CHECKOUT] 🛍️ Processing 'Buy Now' for Product ID: ${buyNowProduct.product_id}`);
             const [productRows] = await connection.execute(
-                `SELECT product_id, name AS product_name, price AS unit_price, hsn_code, dealer_base_price, packaging_cost
-                 FROM products WHERE product_id = ?`,
+                `SELECT p.product_id, p.name AS product_name, p.price AS unit_price, p.hsn_code, p.dealer_base_price, p.packaging_cost, c.name AS category_name
+                 FROM products p
+                 LEFT JOIN categories c ON p.category_id = c.category_id
+                 WHERE p.product_id = ?`,
                 [buyNowProduct.product_id]
             );
             if (productRows.length === 0) {
@@ -83,10 +85,11 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         } else {
             console.log(`[CHECKOUT] 🛒 Fetching cart items for User ID: ${user_id}`);
             const [rows] = await connection.execute(
-                `SELECT c.product_id, c.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code, p.dealer_base_price, p.packaging_cost
-                 FROM cart c
-                 INNER JOIN products p ON c.product_id = p.product_id
-                 WHERE c.user_id = ?`,
+                `SELECT cart.product_id, cart.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code, p.dealer_base_price, p.packaging_cost, c.name AS category_name
+                 FROM cart
+                 INNER JOIN products p ON cart.product_id = p.product_id
+                 LEFT JOIN categories c ON p.category_id = c.category_id
+                 WHERE cart.user_id = ?`,
                 [user_id]
             );
             cartItems = rows;
@@ -99,10 +102,10 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         console.log(`[CHECKOUT] ✅ Cart items loaded: ${cartItems.length} item(s) found.`);
 
         // ========================================================
-        // 🔒 SECURITY CHECK: BLOCK COD FOR KOTA DORIYA
+        // 🔒 KOTA DORIYA STRICT COD BLOCK
         // ========================================================
         const isKotaDoriyaOrder = cartItems.some(item => {
-            const text = `${item.product_name || ''} ${item.title || ''} ${item.fabric || ''}`.toLowerCase();
+            const text = `${item.product_name || ''} ${item.category_name || ''} ${item.fabric || ''}`.toLowerCase();
             return text.includes('kota doriya') || text.includes('kotadoria') || text.includes('doriya');
         });
 
