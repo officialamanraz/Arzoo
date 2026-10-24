@@ -1,0 +1,245 @@
+/* =========================================================
+   PAYMENT PAGE CSS (ARZOO THEME - ONLINE ONLY)
+   ========================================================= */
+
+/* Main Container */
+.payment-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 20px 80px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #fafafa;
+  min-height: 80vh;
+}
+
+/* Header & Stepper */
+.payment-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.payment-header h2 {
+  font-size: 2rem;
+  color: #741434; /* Arzoo Wine */
+  margin-bottom: 25px;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+}
+
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.step-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  width: 80px;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  color: #718096;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.step-circle.active {
+  background-color: #741434;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(116, 20, 52, 0.15);
+}
+
+.step-label {
+  font-size: 0.8rem;
+  color: #718096;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.step-label.active-text {
+  color: #741434;
+}
+
+.step-label.bold-text {
+  font-weight: 700;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background-color: #e2e8f0;
+  margin: 0 10px;
+  margin-bottom: 22px; /* aligns with circle center */
+}
+
+.step-line.completed-line {
+  background-color: #741434;
+}
+
+/* Layout Wrapper */
+.payment-content-wrapper {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+/* Left & Right Panes */
+.payment-left-pane {
+  flex: 1.5;
+}
+
+.payment-right-pane {
+  flex: 1;
+  position: sticky;
+  top: 100px;
+}
+
+/* Common Card Styling */
+.payment-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0f0;
+  margin-bottom: 20px;
+}
+
+.section-title, 
+.order-total-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 12px;
+}
+
+/* Payment Method Box (Radio Styling) */
+.payment-radio {
+  width: 18px;
+  height: 18px;
+  accent-color: #741434;
+  cursor: pointer;
+}
+
+.payment-method-box {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payment-method-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(116, 20, 52, 0.08);
+}
+
+/* Order Total Section */
+.total-amount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 25px;
+  padding: 15px 0;
+  border-top: 1px dashed #e2e8f0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+/* Primary Button */
+.place-order-btn {
+  width: 100%;
+  background-color: #741434;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(116, 20, 52, 0.25);
+}
+
+.place-order-btn:hover:not(.btn-disabled) {
+  background-color: #921840;
+  transform: translateY(-1px);
+}
+
+.place-order-btn.btn-disabled {
+  background-color: #cbd5e0;
+  color: #718096;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 860px) {
+  .payment-content-wrapper {
+    flex-direction: column;
+  }
+  
+  .payment-left-pane,
+  .payment-right-pane {
+    flex: none;
+    width: 100%;
+  }
+
+  .payment-right-pane {
+    position: static;
+  }
+
+  .payment-page {
+    padding: 20px 15px 60px;
+  }
+
+  .stepper-container {
+    width: 100%;
+  }
+
+  .step-wrapper {
+    width: 70px;
+  }
+
+  .step-label {
+    font-size: 0.75rem;
+  }
+
+  .payment-card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .payment-header h2 {
+    font-size: 1.6rem;
+  }
+
+  .total-amount-row {
+    font-size: 1.15rem;
+  }
+  
+  .place-order-btn {
+    padding: 14px;
+    font-size: 1rem;
+  }
+}

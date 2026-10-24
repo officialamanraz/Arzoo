@@ -1,385 +1,385 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
-import './Payment.css';
+// import React, { useState, useEffect, useMemo } from 'react';
+// import { useLocation, useNavigate } from 'react-router-dom';
+// import toast from 'react-hot-toast';
+// import { FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
+// import './Payment.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-export default function PaymentPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
+// export default function PaymentPage() {
+//   const location = useLocation();
+//   const navigate = useNavigate();
 
-  const { addressId, totalAmount, buyNowProduct, customerEmail } = location.state || {};
+//   const { addressId, totalAmount, buyNowProduct, customerEmail } = location.state || {};
 
-  const [paymentMethod, setPaymentMethod] = useState('online'); // default to online for safety
-  const [placingOrder, setPlacingOrder] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
-  const [checkingCart, setCheckingCart] = useState(!buyNowProduct);
+//   const [paymentMethod, setPaymentMethod] = useState('online'); // default to online for safety
+//   const [placingOrder, setPlacingOrder] = useState(false);
+//   const [cartItems, setCartItems] = useState([]);
+//   const [checkingCart, setCheckingCart] = useState(!buyNowProduct);
 
-  // Helper function to check if any item or text represents Kota Doriya
-  const checkIsKotaDoriya = (item) => {
-    if (!item) return false;
-    const combinedText = [
-      item.name,
-      item.title,
-      item.category_name,
-      item.category,
-      item.fabric,
-      item.craft,
-      item.description
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-      .replace(/[\s_-]+/g, ''); // removes spaces/hyphens: matches 'kotadoriya', 'kotadoria'
+//   // Helper function to check if any item or text represents Kota Doriya
+//   const checkIsKotaDoriya = (item) => {
+//     if (!item) return false;
+//     const combinedText = [
+//       item.name,
+//       item.title,
+//       item.category_name,
+//       item.category,
+//       item.fabric,
+//       item.craft,
+//       item.description
+//     ]
+//       .filter(Boolean)
+//       .join(' ')
+//       .toLowerCase()
+//       .replace(/[\s_-]+/g, ''); // removes spaces/hyphens: matches 'kotadoriya', 'kotadoria'
 
-    return combinedText.includes('kotadori') || combinedText.includes('doriya') || combinedText.includes('doria');
-  };
+//     return combinedText.includes('kotadori') || combinedText.includes('doriya') || combinedText.includes('doria');
+//   };
 
-  // Fetch cart if not a direct Buy-Now
-  useEffect(() => {
-    if (!buyNowProduct) {
-      const fetchCart = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setCheckingCart(false);
-          return;
-        }
-        try {
-          const res = await fetch(`${API_BASE_URL}/api/cart`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const data = await res.json();
-          const items = data.items || data.cart || (Array.isArray(data) ? data : []);
-          setCartItems(items);
-        } catch (err) {
-          console.error('[PaymentPage] Cart fetch error:', err);
-        } finally {
-          setCheckingCart(false);
-        }
-      };
-      fetchCart();
-    } else {
-      setCheckingCart(false);
-    }
-  }, [buyNowProduct]);
+//   // Fetch cart if not a direct Buy-Now
+//   useEffect(() => {
+//     if (!buyNowProduct) {
+//       const fetchCart = async () => {
+//         const token = localStorage.getItem('token');
+//         if (!token) {
+//           setCheckingCart(false);
+//           return;
+//         }
+//         try {
+//           const res = await fetch(`${API_BASE_URL}/api/cart`, {
+//             headers: { Authorization: `Bearer ${token}` }
+//           });
+//           const data = await res.json();
+//           const items = data.items || data.cart || (Array.isArray(data) ? data : []);
+//           setCartItems(items);
+//         } catch (err) {
+//           console.error('[PaymentPage] Cart fetch error:', err);
+//         } finally {
+//           setCheckingCart(false);
+//         }
+//       };
+//       fetchCart();
+//     } else {
+//       setCheckingCart(false);
+//     }
+//   }, [buyNowProduct]);
 
-  // Consolidated Kota Doriya Flag
-  const isKotaDoriya = useMemo(() => {
-    if (buyNowProduct) {
-      return checkIsKotaDoriya(buyNowProduct);
-    }
-    return cartItems.some(checkIsKotaDoriya);
-  }, [buyNowProduct, cartItems]);
+//   // Consolidated Kota Doriya Flag
+//   const isKotaDoriya = useMemo(() => {
+//     if (buyNowProduct) {
+//       return checkIsKotaDoriya(buyNowProduct);
+//     }
+//     return cartItems.some(checkIsKotaDoriya);
+//   }, [buyNowProduct, cartItems]);
 
-  // Force method to online if Kota Doriya is detected
-  useEffect(() => {
-    if (isKotaDoriya) {
-      setPaymentMethod('online');
-    }
-  }, [isKotaDoriya]);
+//   // Force method to online if Kota Doriya is detected
+//   useEffect(() => {
+//     if (isKotaDoriya) {
+//       setPaymentMethod('online');
+//     }
+//   }, [isKotaDoriya]);
 
-  useEffect(() => {
-    if (!addressId) {
-      navigate('/add-address');
-    }
-  }, [addressId, navigate]);
+//   useEffect(() => {
+//     if (!addressId) {
+//       navigate('/add-address');
+//     }
+//   }, [addressId, navigate]);
 
-  const startRazorpayPayment = async (internalOrderId, displayOrderId, token) => {
-    try {
-      if (!window.Razorpay) {
-        toast.error('Razorpay SDK failed to load. Check your internet connection.');
-        setPlacingOrder(false);
-        return;
-      }
+//   const startRazorpayPayment = async (internalOrderId, displayOrderId, token) => {
+//     try {
+//       if (!window.Razorpay) {
+//         toast.error('Razorpay SDK failed to load. Check your internet connection.');
+//         setPlacingOrder(false);
+//         return;
+//       }
 
-      const razorpayRes = await fetch(`${API_BASE_URL}/api/orders/create-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ order_id: internalOrderId })
-      });
+//       const razorpayRes = await fetch(`${API_BASE_URL}/api/orders/create-order`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${token}`
+//         },
+//         body: JSON.stringify({ order_id: internalOrderId })
+//       });
 
-      const razorpayData = await razorpayRes.json();
+//       const razorpayData = await razorpayRes.json();
 
-      if (!razorpayData.success) {
-        toast.error('Payment initiation failed: ' + (razorpayData.message || ''));
-        setPlacingOrder(false);
-        return;
-      }
+//       if (!razorpayData.success) {
+//         toast.error('Payment initiation failed: ' + (razorpayData.message || ''));
+//         setPlacingOrder(false);
+//         return;
+//       }
 
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: razorpayData.amount,
-        currency: razorpayData.currency || 'INR',
-        name: 'Arzoo Saree',
-        description: 'Order Checkout',
-        order_id: razorpayData.razorpay_order_id,
-        handler: async function (response) {
-          try {
-            const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
-              })
-            });
+//       const options = {
+//         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+//         amount: razorpayData.amount,
+//         currency: razorpayData.currency || 'INR',
+//         name: 'Arzoo Saree',
+//         description: 'Order Checkout',
+//         order_id: razorpayData.razorpay_order_id,
+//         handler: async function (response) {
+//           try {
+//             const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+//               method: 'POST',
+//               headers: {
+//                 'Content-Type': 'application/json',
+//                 Authorization: `Bearer ${token}`
+//               },
+//               body: JSON.stringify({
+//                 razorpay_order_id: response.razorpay_order_id,
+//                 razorpay_payment_id: response.razorpay_payment_id,
+//                 razorpay_signature: response.razorpay_signature
+//               })
+//             });
 
-            const verifyData = await verifyRes.json();
-            if (verifyData.success) {
-              sessionStorage.removeItem('tracking_ref');
-              toast.success(`Payment Successful! Order ID: ${displayOrderId}`);
-              navigate(`/track-order/${displayOrderId}`);
-            } else {
-              toast.error('Payment verification failed.');
-            }
-          } finally {
-            setPlacingOrder(false);
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            setPlacingOrder(false);
-          }
-        },
-        theme: { color: '#741434' }
-      };
+//             const verifyData = await verifyRes.json();
+//             if (verifyData.success) {
+//               sessionStorage.removeItem('tracking_ref');
+//               toast.success(`Payment Successful! Order ID: ${displayOrderId}`);
+//               navigate(`/track-order/${displayOrderId}`);
+//             } else {
+//               toast.error('Payment verification failed.');
+//             }
+//           } finally {
+//             setPlacingOrder(false);
+//           }
+//         },
+//         modal: {
+//           ondismiss: function () {
+//             setPlacingOrder(false);
+//           }
+//         },
+//         theme: { color: '#741434' }
+//       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function () {
-        toast.error('Payment failed. Please retry.');
-        setPlacingOrder(false);
-      });
-      rzp.open();
-    } catch (err) {
-      console.error('[PaymentPage] Razorpay Error:', err);
-      toast.error('Payment error encountered.');
-      setPlacingOrder(false);
-    }
-  };
+//       const rzp = new window.Razorpay(options);
+//       rzp.on('payment.failed', function () {
+//         toast.error('Payment failed. Please retry.');
+//         setPlacingOrder(false);
+//       });
+//       rzp.open();
+//     } catch (err) {
+//       console.error('[PaymentPage] Razorpay Error:', err);
+//       toast.error('Payment error encountered.');
+//       setPlacingOrder(false);
+//     }
+//   };
 
-  const handlePlaceOrder = async () => {
-    // Hard rejection at the handler level
-    if (isKotaDoriya && paymentMethod === 'cod') {
-      toast.error('Cash on Delivery is disabled for Kota Doriya products.');
-      return;
-    }
+//   const handlePlaceOrder = async () => {
+//     // Hard rejection at the handler level
+//     if (isKotaDoriya && paymentMethod === 'cod') {
+//       toast.error('Cash on Delivery is disabled for Kota Doriya products.');
+//       return;
+//     }
 
-    setPlacingOrder(true);
-    const token = localStorage.getItem('token');
+//     setPlacingOrder(true);
+//     const token = localStorage.getItem('token');
 
-    try {
-      const storedTrackingRef = sessionStorage.getItem('tracking_ref') || null;
-      const payload = {
-        addressId,
-        paymentMethod: isKotaDoriya ? 'online' : paymentMethod,
-        ...(buyNowProduct && { buyNowProduct }),
-        tracking_ref: storedTrackingRef,
-        customerEmail
-      };
+//     try {
+//       const storedTrackingRef = sessionStorage.getItem('tracking_ref') || null;
+//       const payload = {
+//         addressId,
+//         paymentMethod: isKotaDoriya ? 'online' : paymentMethod,
+//         ...(buyNowProduct && { buyNowProduct }),
+//         tracking_ref: storedTrackingRef,
+//         customerEmail
+//       };
 
-      const res = await fetch(`${API_BASE_URL}/api/orders/checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
+//       const res = await fetch(`${API_BASE_URL}/api/orders/checkout`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${token}`
+//         },
+//         body: JSON.stringify(payload)
+//       });
 
-      const data = await res.json();
+//       const data = await res.json();
 
-      if (!data.success) {
-        toast.error(data.message || data.error || 'Failed to place order.');
-        setPlacingOrder(false);
-        return;
-      }
+//       if (!data.success) {
+//         toast.error(data.message || data.error || 'Failed to place order.');
+//         setPlacingOrder(false);
+//         return;
+//       }
 
-      if (paymentMethod === 'cod' && !isKotaDoriya) {
-        sessionStorage.removeItem('tracking_ref');
-        toast.success('Order placed successfully!');
-        navigate(`/track-order/${data.orderId || data.order_id}`);
-        setPlacingOrder(false);
-      } else {
-        await startRazorpayPayment(data.order_id, data.orderId, token);
-      }
-    } catch (err) {
-      console.error('[PaymentPage] Checkout error:', err);
-      toast.error('Error processing your order.');
-      setPlacingOrder(false);
-    }
-  };
+//       if (paymentMethod === 'cod' && !isKotaDoriya) {
+//         sessionStorage.removeItem('tracking_ref');
+//         toast.success('Order placed successfully!');
+//         navigate(`/track-order/${data.orderId || data.order_id}`);
+//         setPlacingOrder(false);
+//       } else {
+//         await startRazorpayPayment(data.order_id, data.orderId, token);
+//       }
+//     } catch (err) {
+//       console.error('[PaymentPage] Checkout error:', err);
+//       toast.error('Error processing your order.');
+//       setPlacingOrder(false);
+//     }
+//   };
 
-  if (!addressId) return null;
+//   if (!addressId) return null;
 
-  if (checkingCart) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', color: '#741434' }}>
-        Verifying payment eligibility...
-      </div>
-    );
-  }
+//   if (checkingCart) {
+//     return (
+//       <div style={{ textAlign: 'center', padding: '60px 20px', color: '#741434' }}>
+//         Verifying payment eligibility...
+//       </div>
+//     );
+//   }
 
-  return (
-    <div className="payment-page">
-      <div className="payment-header">
-        <h2>Checkout</h2>
-        <div className="stepper-container">
-          <Step number={1} label="Address" completed />
-          <StepLine completed />
-          <Step number={2} label="Order Summary" completed />
-          <StepLine completed />
-          <Step number={3} label="Payment" active />
-        </div>
-      </div>
+//   return (
+//     <div className="payment-page">
+//       <div className="payment-header">
+//         <h2>Checkout</h2>
+//         <div className="stepper-container">
+//           <Step number={1} label="Address" completed />
+//           <StepLine completed />
+//           <Step number={2} label="Order Summary" completed />
+//           <StepLine completed />
+//           <Step number={3} label="Payment" active />
+//         </div>
+//       </div>
 
-      <div className="payment-content-wrapper">
-        <div className="payment-left-pane">
-          <div className="payment-card">
-            <h3 className="section-title">PAYMENT METHOD</h3>
+//       <div className="payment-content-wrapper">
+//         <div className="payment-left-pane">
+//           <div className="payment-card">
+//             <h3 className="section-title">PAYMENT METHOD</h3>
 
-            {/* Online Payment */}
-            <div
-              className={`payment-method-box ${paymentMethod === 'online' ? 'selected' : ''}`}
-              onClick={() => setPaymentMethod('online')}
-              style={{
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '14px',
-                borderRadius: '8px',
-                border: paymentMethod === 'online' ? '2px solid #741434' : '1px solid #e2e8f0',
-                background: paymentMethod === 'online' ? '#fdf5eb' : '#fff',
-                marginBottom: '14px'
-              }}
-            >
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="online"
-                checked={paymentMethod === 'online'}
-                onChange={() => setPaymentMethod('online')}
-                className="payment-radio"
-              />
-              <FaCreditCard size={22} color="#741434" />
-              <div>
-                <p style={{ fontWeight: 600, margin: 0, color: '#1a202c' }}>
-                  Pay Online (UPI, Cards, Netbanking)
-                </p>
-                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
-                  Secure payment via Razorpay.
-                </p>
-              </div>
-            </div>
+//             {/* Online Payment */}
+//             <div
+//               className={`payment-method-box ${paymentMethod === 'online' ? 'selected' : ''}`}
+//               onClick={() => setPaymentMethod('online')}
+//               style={{
+//                 cursor: 'pointer',
+//                 display: 'flex',
+//                 alignItems: 'center',
+//                 gap: '12px',
+//                 padding: '14px',
+//                 borderRadius: '8px',
+//                 border: paymentMethod === 'online' ? '2px solid #741434' : '1px solid #e2e8f0',
+//                 background: paymentMethod === 'online' ? '#fdf5eb' : '#fff',
+//                 marginBottom: '14px'
+//               }}
+//             >
+//               <input
+//                 type="radio"
+//                 name="paymentMethod"
+//                 value="online"
+//                 checked={paymentMethod === 'online'}
+//                 onChange={() => setPaymentMethod('online')}
+//                 className="payment-radio"
+//               />
+//               <FaCreditCard size={22} color="#741434" />
+//               <div>
+//                 <p style={{ fontWeight: 600, margin: 0, color: '#1a202c' }}>
+//                   Pay Online (UPI, Cards, Netbanking)
+//                 </p>
+//                 <p style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
+//                   Secure payment via Razorpay.
+//                 </p>
+//               </div>
+//             </div>
 
-            {/* Cash On Delivery */}
-            <div
-              className={`payment-method-box ${paymentMethod === 'cod' ? 'selected' : ''}`}
-              onClick={() => {
-                if (!isKotaDoriya) setPaymentMethod('cod');
-              }}
-              style={{
-                cursor: isKotaDoriya ? 'not-allowed' : 'pointer',
-                opacity: isKotaDoriya ? 0.35 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '14px',
-                borderRadius: '8px',
-                border: paymentMethod === 'cod' ? '2px solid #2f855a' : '1px solid #e2e8f0',
-                background: isKotaDoriya ? '#f1f1f1' : (paymentMethod === 'cod' ? '#f0fff4' : '#fff'),
-                pointerEvents: isKotaDoriya ? 'none' : 'auto' // Complete click block
-              }}
-            >
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="cod"
-                checked={paymentMethod === 'cod' && !isKotaDoriya}
-                disabled={isKotaDoriya || placingOrder}
-                onChange={() => {
-                  if (!isKotaDoriya) setPaymentMethod('cod');
-                }}
-                className="payment-radio"
-              />
-              <FaMoneyBillWave size={22} color={isKotaDoriya ? '#a0aec0' : '#2f855a'} />
-              <div>
-                <p style={{ fontWeight: 600, margin: 0, color: isKotaDoriya ? '#a0aec0' : '#1a202c' }}>
-                  Cash on Delivery (COD)
-                </p>
-                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
-                  Pay the delivery agent in cash when your order arrives.
-                </p>
-              </div>
-            </div>
+//             {/* Cash On Delivery */}
+//             <div
+//               className={`payment-method-box ${paymentMethod === 'cod' ? 'selected' : ''}`}
+//               onClick={() => {
+//                 if (!isKotaDoriya) setPaymentMethod('cod');
+//               }}
+//               style={{
+//                 cursor: isKotaDoriya ? 'not-allowed' : 'pointer',
+//                 opacity: isKotaDoriya ? 0.35 : 1,
+//                 display: 'flex',
+//                 alignItems: 'center',
+//                 gap: '12px',
+//                 padding: '14px',
+//                 borderRadius: '8px',
+//                 border: paymentMethod === 'cod' ? '2px solid #2f855a' : '1px solid #e2e8f0',
+//                 background: isKotaDoriya ? '#f1f1f1' : (paymentMethod === 'cod' ? '#f0fff4' : '#fff'),
+//                 pointerEvents: isKotaDoriya ? 'none' : 'auto' // Complete click block
+//               }}
+//             >
+//               <input
+//                 type="radio"
+//                 name="paymentMethod"
+//                 value="cod"
+//                 checked={paymentMethod === 'cod' && !isKotaDoriya}
+//                 disabled={isKotaDoriya || placingOrder}
+//                 onChange={() => {
+//                   if (!isKotaDoriya) setPaymentMethod('cod');
+//                 }}
+//                 className="payment-radio"
+//               />
+//               <FaMoneyBillWave size={22} color={isKotaDoriya ? '#a0aec0' : '#2f855a'} />
+//               <div>
+//                 <p style={{ fontWeight: 600, margin: 0, color: isKotaDoriya ? '#a0aec0' : '#1a202c' }}>
+//                   Cash on Delivery (COD)
+//                 </p>
+//                 <p style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
+//                   Pay the delivery agent in cash when your order arrives.
+//                 </p>
+//               </div>
+//             </div>
 
-            {/* Ineligible notice */}
-            {isKotaDoriya && (
-              <div
-                style={{
-                  marginTop: '12px',
-                  padding: '12px',
-                  backgroundColor: '#fff5f5',
-                  border: '1px solid #feb2b2',
-                  borderRadius: '6px',
-                  color: '#c53030',
-                  fontSize: '0.85rem',
-                  lineHeight: '1.4'
-                }}
-              >
-                <strong>Cash on Delivery Unavailable:</strong> This order contains authentic handcrafted Kota Doriya items, which are not eligible for Cash on Delivery. Please proceed with Online Payment.
-              </div>
-            )}
-          </div>
-        </div>
+//             {/* Ineligible notice */}
+//             {isKotaDoriya && (
+//               <div
+//                 style={{
+//                   marginTop: '12px',
+//                   padding: '12px',
+//                   backgroundColor: '#fff5f5',
+//                   border: '1px solid #feb2b2',
+//                   borderRadius: '6px',
+//                   color: '#c53030',
+//                   fontSize: '0.85rem',
+//                   lineHeight: '1.4'
+//                 }}
+//               >
+//                 <strong>Cash on Delivery Unavailable:</strong> This order contains authentic handcrafted Kota Doriya items, which are not eligible for Cash on Delivery. Please proceed with Online Payment.
+//               </div>
+//             )}
+//           </div>
+//         </div>
 
-        <div className="payment-right-pane">
-          <div className="payment-card">
-            <h3 className="order-total-header">ORDER TOTAL</h3>
+//         <div className="payment-right-pane">
+//           <div className="payment-card">
+//             <h3 className="order-total-header">ORDER TOTAL</h3>
 
-            <div className="total-amount-row">
-              <span>Total Amount</span>
-              <span>₹{Number(totalAmount || 0).toFixed(2)}</span>
-            </div>
+//             <div className="total-amount-row">
+//               <span>Total Amount</span>
+//               <span>₹{Number(totalAmount || 0).toFixed(2)}</span>
+//             </div>
 
-            <button
-              onClick={handlePlaceOrder}
-              disabled={placingOrder}
-              className={`place-order-btn ${placingOrder ? 'btn-disabled' : ''}`}
-            >
-              {placingOrder
-                ? 'Processing...'
-                : (paymentMethod === 'cod' && !isKotaDoriya ? 'Place Order (COD)' : 'Proceed to Pay Online')}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+//             <button
+//               onClick={handlePlaceOrder}
+//               disabled={placingOrder}
+//               className={`place-order-btn ${placingOrder ? 'btn-disabled' : ''}`}
+//             >
+//               {placingOrder
+//                 ? 'Processing...'
+//                 : (paymentMethod === 'cod' && !isKotaDoriya ? 'Place Order (COD)' : 'Proceed to Pay Online')}
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
-function Step({ number, label, active, completed }) {
-  return (
-    <div className="step-wrapper">
-      <div className={`step-circle ${active || completed ? 'active' : ''}`}>
-        {completed ? '✓' : number}
-      </div>
-      <span className={`step-label ${active || completed ? 'active-text' : ''} ${active ? 'bold-text' : ''}`}>
-        {label}
-      </span>
-    </div>
-  );
-}
+// function Step({ number, label, active, completed }) {
+//   return (
+//     <div className="step-wrapper">
+//       <div className={`step-circle ${active || completed ? 'active' : ''}`}>
+//         {completed ? '✓' : number}
+//       </div>
+//       <span className={`step-label ${active || completed ? 'active-text' : ''} ${active ? 'bold-text' : ''}`}>
+//         {label}
+//       </span>
+//     </div>
+//   );
+// }
 
-function StepLine({ completed }) {
-  return <div className={`step-line ${completed ? 'completed-line' : ''}`} />;
-}
+// function StepLine({ completed }) {
+//   return <div className={`step-line ${completed ? 'completed-line' : ''}`} />;
+// }
