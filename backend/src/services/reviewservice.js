@@ -1,5 +1,21 @@
 const db = require('../DATABASE/mysql');
 
+// 🛡️ HELPER FUNCTION: Hamesha top par rahega taaki safely JSON parse kar sake.
+// Agar database mein kharab data bhi hoga toh yeh crash nahi hone dega.
+const parseSafeJsonArray = (val, fallbackAsSingleItem = false) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+        try {
+            const parsed = JSON.parse(val);
+            return Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+            return fallbackAsSingleItem ? [val] : [];
+        }
+    }
+    return [];
+};
+
 const addReviewInDB = async (product_id, user_id, rating, title, comment, attributes, mediaFiles) => {
     console.log(`[REVIEW_SERVICE] Adding review for Product ID: ${product_id} by User ID: ${user_id}`);
     try {
@@ -28,27 +44,25 @@ const addReviewInDB = async (product_id, user_id, rating, title, comment, attrib
 
         const review_id = reviewResult.insertId;
 
-        // 3. Insert media if uploaded
-        // 3. Insert media if uploaded (🛡️ FIXED & SAFE)
+        // 3. Insert media if uploaded (🛡️ FIXED, CONSOLIDATED & SAFE)
         if (mediaFiles && mediaFiles.length > 0) {
             const mediaValues = [];
-            
             for (const file of mediaFiles) {
-                // Multer storage ke mutabiq sahi property pick karein
-                const mediaUrl = file.location || file.path || file.filename;
-                
+                // Check all possible Multer paths (local, S3, cloud, etc.)
+                const mediaUrl = file.url || file.location || file.filename || file.path;
                 if (mediaUrl) {
+                    const cleanUrl = String(mediaUrl).replace(/\\/g, '/'); // Windows path fix
                     const isVideo = file.mimetype && file.mimetype.startsWith('video/') ? 'video' : 'image';
-                    // Agar path absolute nahi hai ya relative storage path hai toh adjust kar sakte hain
-                    mediaValues.push([review_id, isVideo, mediaUrl]);
+                    mediaValues.push([review_id, isVideo, cleanUrl]);
                 }
             }
-
+            
             if (mediaValues.length > 0) {
                 const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
                 await db.query(insertMediaQuery, [mediaValues]);
             }
         }
+
         console.log(`[REVIEW_SERVICE] ✅ Review added successfully with ID: ${review_id}`);
         return review_id;
     } catch (err) {
@@ -93,25 +107,12 @@ const getReviewsFromDB = async (product_id) => {
 
         return {
             stats: statsResult[0] || {},
-            reviews: reviews.map(rev => {
-                let safeAttributes = [];
-                try {
-                    safeAttributes = rev.attributes_json ? JSON.parse(rev.attributes_json) : [];
-                    if (!Array.isArray(safeAttributes)) safeAttributes = [safeAttributes]; // Convert to array if string
-                } catch (e) {
-                    // Agar JSON parse fail ho, toh raw text ko array mein daal do
-                    safeAttributes = rev.attributes_json ? [rev.attributes_json] : [];
-                }
-
-                let safeMedia = [];
-                try { safeMedia = rev.media ? JSON.parse(rev.media) : []; } catch (e) {}
-
-                return {
-                    ...rev,
-                    attributes: safeAttributes,
-                    media: safeMedia
-                };
-            })
+            // 🛡️ Safely mapped arrays for frontend
+            reviews: reviews.map(rev => ({
+                ...rev,
+                attributes: parseSafeJsonArray(rev.attributes_json, true),
+                media: parseSafeJsonArray(rev.media, false).filter(m => m && m.url)
+            }))
         };
     } catch (err) {
         console.error('[REVIEW_SERVICE] ❌ Error in getReviewsFromDB:', err.message);
@@ -180,24 +181,12 @@ const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortB
             totalReviews,
             currentPage: Number(page),
             totalPages: Math.ceil(totalReviews / limit),
-            reviews: reviews.map(rev => {
-                let safeAttributes = [];
-                try {
-                    safeAttributes = rev.attributes_json ? JSON.parse(rev.attributes_json) : [];
-                    if (!Array.isArray(safeAttributes)) safeAttributes = [safeAttributes]; 
-                } catch (e) {
-                    safeAttributes = rev.attributes_json ? [rev.attributes_json] : [];
-                }
-
-                let safeMedia = [];
-                try { safeMedia = rev.media ? JSON.parse(rev.media) : []; } catch (e) {}
-
-                return {
-                    ...rev,
-                    attributes: safeAttributes,
-                    media: safeMedia
-                };
-            })
+            // 🛡️ Safely mapped arrays for frontend
+            reviews: reviews.map(rev => ({
+                ...rev,
+                attributes: parseSafeJsonArray(rev.attributes_json, true),
+                media: parseSafeJsonArray(rev.media, false).filter(m => m && m.url)
+            }))
         };
 
     } catch (err) {
@@ -223,18 +212,15 @@ const updateReviewInDB = async (review_id, user_id, rating, title, comment, attr
         `;
         await db.execute(updateQuery, [Number(rating), title || null, comment || null, attributes || null, review_id]);
 
-       // 3. Insert media if uploaded (🛡️ FIXED & SAFE)
+       // 3. Insert new media if uploaded during update (🛡️ FIXED & SAFE)
         if (mediaFiles && mediaFiles.length > 0) {
             const mediaValues = [];
-            
             for (const file of mediaFiles) {
-                // Multer storage ke mutabiq sahi property pick karein
-                const mediaUrl = file.location || file.path || file.filename;
-                
+                const mediaUrl = file.url || file.location || file.filename || file.path;
                 if (mediaUrl) {
+                    const cleanUrl = String(mediaUrl).replace(/\\/g, '/');
                     const isVideo = file.mimetype && file.mimetype.startsWith('video/') ? 'video' : 'image';
-                    // Agar path absolute nahi hai ya relative storage path hai toh adjust kar sakte hain
-                    mediaValues.push([review_id, isVideo, mediaUrl]);
+                    mediaValues.push([review_id, isVideo, cleanUrl]);
                 }
             }
 
