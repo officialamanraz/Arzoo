@@ -38,7 +38,8 @@ router.use(routeLogger);
 // Main photo 'image' field mein aayegi, baaki angles 'extraImages' mein
 const productUploads = upload.fields([
     { name: 'image', maxCount: 1 },        // Single Main Cover Photo
-    { name: 'extraImages', maxCount: 10 }  // Gallery Multiple Angles
+    { name: 'extraImages', maxCount: 10 },
+    {name: 'video',maxCount:1} // Gallery Multiple Angles
 ]);
 
 // 2. GET Routes
@@ -55,8 +56,7 @@ router.post('/product', verifyToken, verifyAdmin, productUploads, (req, res, nex
         console.log(`[ROUTER LOG] 📁 Files received:`, Object.keys(req.files));
         if (req.files['image']) console.log(`[ROUTER LOG] - Main Image: ${req.files['image'].length} file(s)`);
         if (req.files['extraImages']) console.log(`[ROUTER LOG] - Extra Images: ${req.files['extraImages'].length} file(s)`);
-    } else {
-        console.log(`[ROUTER LOG] ⚠️ No files received in request.`);
+        if (req.files['video']) console.log(`[ROUTER LOG] - Video: ${req.files['video'].length} file(s)`); // 👈 Yeh bhi add kar sakte hain
     }
     next();
 }, addproducts);

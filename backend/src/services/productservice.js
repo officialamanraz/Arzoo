@@ -251,7 +251,7 @@ const addProductToDB = async (productData) => {
     console.log(`[PRODUCT_SERVICE] Attempting to add new product: "${productData?.name}"`);
     try {
         const {
-            name, price, description, base_color, category_id, stock_qty, is_active = 1, mainImage,
+            name, price, description, base_color, category_id, stock_qty, is_active = 1, mainImage,video_url,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
             extraImagesUrls, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id
@@ -283,8 +283,8 @@ const addProductToDB = async (productData) => {
             name, price, description, base_color, category_id, stock_qty, is_active, image_url,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
-            mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+            mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id,video_url
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
         `;
 
         const values = [
@@ -296,6 +296,7 @@ const addProductToDB = async (productData) => {
           Number(stock_qty) || 10, 
           Number(is_active) || 1, 
           mainImage || null,
+          video_url || null,
           primary_color || null, 
           other_color || null, 
           border_type || null, 
@@ -365,7 +366,7 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color, primary_color, other_color, border_type, pattern, 
             craft, weave, zari_type, blouse, border_motifs, origin, 
             fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id
+            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id,video_url
         } = updateData;
 
         const parsedPrice = Number(price) || 0;
@@ -378,7 +379,7 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color=?, primary_color=?, other_color=?, border_type=?, pattern=?, 
             craft=?, weave=?, zari_type=?, blouse=?, border_motifs=?, origin=?, 
             fabric=?, khats=?, weight=?, blouse_length=?, producer=?, maker=?,
-            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?,producer_address=?,packer_address=?,group_id=?
+            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?,producer_address=?,packer_address=?,group_id=?,video_url=?
         `;
         
         const values = [
@@ -394,7 +395,8 @@ const updateProductInDB = async (product_id, updateData) => {
             dealer_id || null,
             producer_address ||null,
             packer_address || null,
-            group_id || null
+            group_id || null,
+            video_url || null,
         ];
 
         if (mainImage) {
@@ -405,6 +407,11 @@ const updateProductInDB = async (product_id, updateData) => {
 
         updateQuery += ` WHERE product_id=?`;
         values.push(Number(product_id));
+        if (video_url !== undefined) { 
+            console.log(`[PRODUCT_SERVICE] Updating video for product ID: ${product_id}`);
+            updateQuery += `, video_url=?`;
+            values.push(video_url);
+        }
 
         await db.execute(updateQuery, values);
         console.log(`[PRODUCT_SERVICE] ✅ Main product data updated successfully for ID: ${product_id}`);

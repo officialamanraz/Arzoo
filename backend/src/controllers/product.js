@@ -125,6 +125,7 @@ const addproducts = async (req, res) => {
 
         let mainImage = null;
         let extraImagesUrls = [];
+        let videoUrl = req.body.vidoe_url || null;
 
         // 🚨 UPDATE: Handling upload.fields object instead of array
         if (req.files) {
@@ -141,7 +142,17 @@ const addproducts = async (req, res) => {
                 );
                 mainImage = uploadedMain.url;
             }
-
+if (req.files['video'] && req.files['video'].length > 0) {
+                console.log(`[PRODUCT_CONTROLLER] Uploading Product Video...`);
+                const videoFile = req.files['video'][0];
+                // Note: ImageKit can handle video uploads just like images
+                const uploadedVideo = await uploadToImageKit(
+                    videoFile.buffer,
+                    `${Date.now()}-${videoFile.originalname}`,
+                    '/arzoo-saree/products'
+                );
+                videoUrl = uploadedVideo.url;
+            }
             // 2. Process Extra Gallery Images (Multiple Angles)
             if (req.files['extraImages'] && req.files['extraImages'].length > 0) {
                 const extraFiles = req.files['extraImages'];
@@ -163,7 +174,8 @@ const addproducts = async (req, res) => {
             ...data,
             is_active: data.is_active ?? 1,
             mainImage,
-            extraImagesUrls
+            extraImagesUrls,
+            videoUrlvideo_url: videoUrl || data.videoUrl || null
         };
 
         const newProductId = await addProductToDB(productData);
@@ -217,6 +229,7 @@ const updateproduct = async (req, res) => {
   try {
     let mainImage = null;
     let extraImagesUrls = [];
+    let videoUrl = undefined
 
     // 🚨 UPDATE: Handling upload.fields object for updates
     if (req.files) {
@@ -233,7 +246,16 @@ const updateproduct = async (req, res) => {
             );
             mainImage = uploadedMain.url;
         }
-
+if (req.files['video'] && req.files['video'].length > 0) {
+            console.log(`[PRODUCT_CONTROLLER] Updating Product Video...`);
+            const videoFile = req.files['video'][0];
+            const uploadedVideo = await uploadToImageKit(
+                videoFile.buffer,
+                `${Date.now()}-${videoFile.originalname}`,
+                '/arzoo-saree/products'
+            );
+            videoUrl = uploadedVideo.url;
+        }
         // 2. Agar admin ne nayi Extra Images (Gallery) daali hain
         if (req.files['extraImages'] && req.files['extraImages'].length > 0) {
             const extraFiles = req.files['extraImages'];
@@ -248,12 +270,16 @@ const updateproduct = async (req, res) => {
             extraImagesUrls = uploadedExtras.map(uploaded => uploaded.url);
         }
     }
+    if (req.body.videoUrl === '') {
+        videoUrl = null;
+    }
 
     // Update data object ready karo
     const updateData = {
         ...req.body,
         mainImage,
-        extraImagesUrls
+        extraImagesUrls,
+       video_url: videoUrl
     };
 
     await updateProductInDB(product_id, updateData);
