@@ -262,10 +262,8 @@ const addProductToDB = async (productData) => {
 
         const parsedPrice = Number(price) || 0;
         const parsedMrp = Number(mrp) || 0;
-        // Automatically compute precise server-side discount percentage
         const computedDiscount = (parsedMrp > parsedPrice) ? Math.round(((parsedMrp - parsedPrice) / parsedMrp) * 100) : 0;
         
-        // Ensure is_returnable is strictly 0 or 1
         const safeIsReturnable = (is_returnable === true || is_returnable === '1' || is_returnable === 1) ? 1 : 0;
 
         const categoryQuery = 'SELECT category_id FROM categories WHERE category_id = ?';
@@ -290,9 +288,10 @@ const addProductToDB = async (productData) => {
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
             mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id,video_url
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
+        // 🌟 FIX: Order is now matched EXACTLY line by line with the INSERT columns above.
         const values = [
           name, 
           parsedPrice, 
@@ -302,7 +301,6 @@ const addProductToDB = async (productData) => {
           Number(stock_qty) || 10, 
           Number(is_active) || 1, 
           mainImage || null,
-          video_url || null,
           primary_color || null, 
           other_color || null, 
           border_type || null, 
@@ -320,7 +318,7 @@ const addProductToDB = async (productData) => {
           producer || null, 
           maker || null,
           parsedMrp ? parsedMrp : null,
-          computedDiscount, // Server-computed accurate percentage
+          computedDiscount,
           dealer_base_price ? Number(dealer_base_price) : null,
           packaging_cost ? Number(packaging_cost) : null,
           safeIsReturnable, 
@@ -328,18 +326,17 @@ const addProductToDB = async (productData) => {
           producer_address || null,
           packer_address || null,
           group_id || null,
+          video_url || null  // 👈 video_url is now at the exact correct 34th position
         ];
 
         const [result] = await db.execute(insertProductQuery, values);
         const newProductId = result.insertId;
         console.log(`[PRODUCT_SERVICE] ✅ Main product inserted successfully with ID: ${newProductId}`);
-// 🌟 Product update ya variant link hone par cache clear kar dein
-    if (typeof myCache !== 'undefined') {
-        myCache.del(`product_${product_id}`);
-        // Agar aap pure products list ka cache rakhte hain, use bhi clear kar dein
-        myCache.del('all_products'); 
-        console.log(`[CACHE] ⚡ Cleared cache for product ID: ${product_id}`);
-    }
+
+        if (typeof myCache !== 'undefined') {
+            myCache.del('all_products'); 
+        }
+        
         if (extraImagesUrls && extraImagesUrls.length > 0) {
             console.log(`[PRODUCT_SERVICE] Inserting ${extraImagesUrls.length} extra images for new product ID: ${newProductId}`);
             const insertImagesQuery = `INSERT INTO product_images (product_id, image_url, is_primary) VALUES ?`;
@@ -351,11 +348,9 @@ const addProductToDB = async (productData) => {
         return newProductId;
     } catch (err) {
         console.error(`[PRODUCT_SERVICE] ❌ Error in addProductToDB:`, err.message);
-        console.error('[PRODUCT_SERVICE] Stack:', err.stack);
         throw err;
     }
 };
-
 const updateProductInDB = async (product_id, updateData) => {
     console.log(`[PRODUCT_SERVICE] Attempting to update product ID: ${product_id}`);
     try {
