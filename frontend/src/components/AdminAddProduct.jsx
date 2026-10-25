@@ -459,7 +459,7 @@ function AdminAddProduct() {
     </label>
     <input
       type="file"
-      onChange={(e) => setVideoFile(e.target.files[0])}
+      onChange={(e) => setvidoeFile(e.target.files[0])}
       className="admin-file-input"
       accept="video/mp4,video/webm,video/ogg"
     />
