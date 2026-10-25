@@ -71,6 +71,9 @@ const allproductget = async(minPrice, maxPrice, limit, offset) => {
             queryParams.push(minPrice, maxPrice);
         }
         
+        // 🌟 Yeh line yahan add karni hai taaki naye products sabse upar (first page par) aayein
+        query += ` ORDER BY product_id DESC`;
+        
         query += ` LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
         const [results] = await db.execute(query, queryParams);
@@ -412,7 +415,7 @@ const updateProductInDB = async (product_id, updateData) => {
 
         updateQuery += ` WHERE product_id=?`;
         values.push(Number(product_id));
-        
+
         await db.execute(updateQuery, values);
         console.log(`[PRODUCT_SERVICE] ✅ Main product data updated successfully for ID: ${product_id}`);
         // ⚡ Clear Cache so updated details show immediately
