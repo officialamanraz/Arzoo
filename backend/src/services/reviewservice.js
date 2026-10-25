@@ -1,161 +1,242 @@
 const db = require('../DATABASE/mysql');
-const imagekit = require('../../config/imagekit'); 
 
-let cachedRatingOptions = null; 
-
-const getReviewsByProductbydb = async (product_id) => {
-    const reviewsQuery = `
-      SELECT r.review_id, r.product_id, r.user_id, u.name AS user_name, r.rating_type, 
-             r.comment, r.image_url, r.is_verified_buyer, r.created_at
-      FROM reviews r
-      JOIN users u ON r.user_id = u.user_id
-      WHERE r.product_id = ?
-      ORDER BY r.created_at DESC
-    `;
-
-    const statsQuery = `
-      SELECT rating_type, COUNT(*) AS total
-      FROM reviews
-      WHERE product_id = ?
-      GROUP BY rating_type
-    `;
-
-    const reviewsPromise = db.execute(reviewsQuery, [product_id]);
-    const statsPromise = db.execute(statsQuery, [product_id]);
-
-    let dynamicOptions = [];
-
-    if (cachedRatingOptions) {
-        dynamicOptions = cachedRatingOptions;
-    } else {
-        const reviewOptionQuery = `
-          SELECT COLUMN_TYPE 
-          FROM INFORMATION_SCHEMA.COLUMNS 
-          WHERE TABLE_NAME = 'reviews' 
-            AND COLUMN_NAME = 'rating_type' 
-            AND TABLE_SCHEMA = DATABASE()
+const addReviewInDB = async (product_id, user_id, rating, title, comment, attributes, mediaFiles) => {
+    console.log(`[REVIEW_SERVICE] Adding review for Product ID: ${product_id} by User ID: ${user_id}`);
+    try {
+        // 1. Check if verified buyer
+        const verifyQuery = `
+            SELECT oi.order_id FROM order_items oi
+            JOIN orders o ON oi.order_id = o.order_id
+            WHERE o.user_id = ? AND oi.product_id = ? LIMIT 1
         `;
-        const [schemaResult] = await db.execute(reviewOptionQuery);
-        
-        if (schemaResult.length > 0) {
-            const columnType = schemaResult[0].COLUMN_TYPE; 
-            const matches = columnType.match(/'([^']+)'/g);
-            if (matches) {
-                cachedRatingOptions = matches.map(option => option.replace(/'/g, ''));
-                dynamicOptions = cachedRatingOptions;
-            }
-        } else {
-            dynamicOptions = ['skip', 'timepass', 'go_for_it', 'perfection']; 
+        const [orderCheck] = await db.execute(verifyQuery, [user_id, product_id]);
+        const is_verified_buyer = orderCheck.length > 0 ? 1 : 0;
+        const order_id = orderCheck.length > 0 ? orderCheck[0].order_id : null;
+
+        // 2. Insert main review
+        const insertQuery = `
+            INSERT INTO product_reviews 
+            (product_id, user_id, order_id, rating, title, comment, attributes_json, is_verified_buyer) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        const [reviewResult] = await db.execute(insertQuery, [
+            product_id, user_id, order_id, Number(rating), 
+            title || null, comment || null, attributes || null, is_verified_buyer
+        ]);
+
+        const review_id = reviewResult.insertId;
+
+        // 3. Insert media if uploaded
+        if (mediaFiles && mediaFiles.length > 0) {
+            const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
+            const mediaValues = mediaFiles.map(file => {
+                const isVideo = file.mimetype.startsWith('video/') ? 'video' : 'image';
+                return [review_id, isVideo, file.location || file.filename]; 
+            });
+            await db.query(insertMediaQuery, [mediaValues]);
         }
+
+        console.log(`[REVIEW_SERVICE] ✅ Review added successfully with ID: ${review_id}`);
+        return review_id;
+    } catch (err) {
+        console.error('[REVIEW_SERVICE] ❌ Error in addReviewInDB:', err.message);
+        throw err;
     }
-
-    const [[reviews], [stats]] = await Promise.all([reviewsPromise, statsPromise]);
-
-    const reviewStats = {};
-    
-    dynamicOptions.forEach((optId) => {
-        reviewStats[optId] = 0;
-    });
-    stats.forEach((row) => {
-        reviewStats[row.rating_type] = row.total;
-    });
-
-    const totalReviews = Object.values(reviewStats).reduce((sum, value) => sum + value, 0);
-
-    return { reviews, reviewStats, totalReviews, availableOptions: dynamicOptions };
 };
 
-const addReviewindb = async (product_id, rating_type, comment, user_id, fileBase64) => {
-    
-    // 1. Purchase Check (Verified Buyer Status)
-    const verifyPurchaseQuery = `
-      SELECT 1 FROM orders o
-      JOIN orderitems oi ON o.order_id = oi.order_id
-      WHERE o.user_id = ? AND oi.product_id = ?
-      LIMIT 1
-    `;
-    const [purchaseResult] = await db.execute(verifyPurchaseQuery, [user_id, product_id]);
-    const is_verified_buyer = purchaseResult.length > 0 ? 1 : 0;
+const getReviewsFromDB = async (product_id) => {
+    console.log(`[REVIEW_SERVICE] Fetching reviews for Product ID: ${product_id}`);
+    try {
+        // 1. Get Summary Stats
+        const statsQuery = `
+            SELECT 
+                COUNT(*) as totalReviews,
+                ROUND(AVG(rating), 1) as avgRating,
+                SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as stars5,
+                SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as stars4,
+                SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as stars3,
+                SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as stars2,
+                SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as stars1
+            FROM product_reviews WHERE product_id = ?
+        `;
+        const [statsResult] = await db.execute(statsQuery, [product_id]);
 
-    // 2. Block Image Upload for Non-Verified Buyers
-    if (!is_verified_buyer && fileBase64) {
-        console.warn("[REVIEW] Blocked -- non-verified buyer tried to upload image");
+        // 2. Get Detailed Reviews with Media
+        const reviewsQuery = `
+            SELECT 
+                pr.review_id, pr.rating, pr.title, pr.comment, pr.attributes_json, 
+                pr.is_verified_buyer, pr.helpful_votes, pr.created_at,
+                u.name as user_name,
+                (
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('type', rm.media_type, 'url', rm.media_url))
+                    FROM review_media rm WHERE rm.review_id = pr.review_id
+                ) as media
+            FROM product_reviews pr
+            LEFT JOIN users u ON pr.user_id = u.id
+            WHERE pr.product_id = ?
+            ORDER BY pr.created_at DESC
+        `;
+        const [reviews] = await db.execute(reviewsQuery, [product_id]);
+
         return {
-            success: false,
-            message: "Only verified buyers can upload images with their review."
+            stats: statsResult[0],
+            reviews: reviews.map(rev => ({
+                ...rev,
+                attributes: rev.attributes_json ? JSON.parse(rev.attributes_json) : [],
+                media: rev.media ? JSON.parse(rev.media) : []
+            }))
         };
+    } catch (err) {
+        console.error('[REVIEW_SERVICE] ❌ Error in getReviewsFromDB:', err.message);
+        throw err;
     }
+};
 
-    // 3. Check if user has ALREADY reviewed this product
-    const checkExistingQuery = `
-        SELECT review_id, image_url FROM reviews WHERE user_id = ? AND product_id = ?
-    `;
-    const [existingReviews] = await db.execute(checkExistingQuery, [user_id, product_id]);
-
-    // 4. IMAGEKIT UPLOAD LOGIC 
-    let finalImageUrl = null;
-    
-    if (fileBase64) {
-        const uploadResponse = await imagekit.files.upload({
-            file: fileBase64,
-            fileName: `review_${product_id}_${user_id}_${Date.now()}`,
-            folder: process.env.IMAGEKIT_REVIEW_FOLDER || "/arzoo-saree/reviews" 
-        });
-        finalImageUrl = uploadResponse.url; 
+const incrementHelpfulCount = async (review_id) => {
+    console.log(`[REVIEW_SERVICE] Upvoting review ID: ${review_id}`);
+    try {
+        const updateQuery = `UPDATE product_reviews SET helpful_votes = helpful_votes + 1 WHERE review_id = ?`;
+        await db.execute(updateQuery, [review_id]);
+        return true;
+    } catch (err) {
+        console.error('[REVIEW_SERVICE] ❌ Error in incrementHelpfulCount:', err.message);
+        throw err;
     }
+};
+const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortBy = 'recent', filterRating = null, withMedia = false) => {
+    console.log(`[REVIEW_SERVICE] Fetching paginated reviews for Product ID: ${product_id} | Page: ${page}`);
+    try {
+        const offset = (page - 1) * limit;
+        let queryParams = [product_id];
+        
+        // Base Query
+        let baseCondition = `WHERE pr.product_id = ?`;
 
-    let review_id;
+        // Apply Filters
+        if (filterRating) {
+            baseCondition += ` AND pr.rating = ?`;
+            queryParams.push(Number(filterRating));
+        }
 
-    if (existingReviews.length > 0) {
-        // 🔄 UPDATE EXISTING REVIEW (User already reviewed, so update rating/comment/image instead of inserting a duplicate)
-        const currentReview = existingReviews[0];
-        const imageUrlToSave = finalImageUrl !== null ? finalImageUrl : currentReview.image_url; // Agar nayi image nahi di toh purani retain karo
+        if (withMedia === 'true' || withMedia === true) {
+            // Sirf wo reviews jinme media attach hai
+            baseCondition += ` AND EXISTS (SELECT 1 FROM review_media rm WHERE rm.review_id = pr.review_id)`;
+        }
 
+        // 1. Get Total Count for Pagination Logic
+        const countQuery = `SELECT COUNT(*) as total FROM product_reviews pr ${baseCondition}`;
+        const [countResult] = await db.execute(countQuery, queryParams);
+        const totalReviews = countResult[0].total;
+
+        // 2. Get the actual paginated data
+        let dataQuery = `
+            SELECT 
+                pr.review_id, pr.rating, pr.title, pr.comment, pr.attributes_json, 
+                pr.is_verified_buyer, pr.helpful_votes, pr.created_at,
+                u.name as user_name,
+                (
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('type', rm.media_type, 'url', rm.media_url))
+                    FROM review_media rm WHERE rm.review_id = pr.review_id
+                ) as media
+            FROM product_reviews pr
+            LEFT JOIN users u ON pr.user_id = u.id
+            ${baseCondition}
+        `;
+
+        // Apply Sorting
+        if (sortBy === 'helpful') {
+            dataQuery += ` ORDER BY pr.helpful_votes DESC, pr.created_at DESC`;
+        } else {
+            // Default to 'recent'
+            dataQuery += ` ORDER BY pr.created_at DESC`;
+        }
+
+        // Apply Pagination
+        dataQuery += ` LIMIT ? OFFSET ?`;
+        queryParams.push(Number(limit), Number(offset));
+
+        const [reviews] = await db.execute(dataQuery, queryParams);
+
+        return {
+            totalReviews,
+            currentPage: Number(page),
+            totalPages: Math.ceil(totalReviews / limit),
+            reviews: reviews.map(rev => ({
+                ...rev,
+                attributes: rev.attributes_json ? JSON.parse(rev.attributes_json) : [],
+                media: rev.media ? JSON.parse(rev.media) : []
+            }))
+        };
+
+    } catch (err) {
+        console.error('[REVIEW_SERVICE] ❌ Error in getPaginatedReviewsFromDB:', err.message);
+        throw err;
+    }
+};
+// ✏️ UPDATE REVIEW IN DB
+const updateReviewInDB = async (review_id, user_id, rating, title, comment, attributes, mediaFiles) => {
+    console.log(`[REVIEW_SERVICE] Updating Review ID: ${review_id} by User ID: ${user_id}`);
+    try {
+        // Step 1: Verify Ownership (Check if this review actually belongs to the user)
+        const checkQuery = `SELECT review_id FROM product_reviews WHERE review_id = ? AND user_id = ?`;
+        const [checkRes] = await db.execute(checkQuery, [review_id, user_id]);
+        
+        if (checkRes.length === 0) {
+            throw new Error("UNAUTHORIZED_OR_NOT_FOUND");
+        }
+
+        // Step 2: Update Review Text and Rating
         const updateQuery = `
-            UPDATE reviews 
-            SET rating_type = ?, comment = ?, image_url = ?, is_verified_buyer = ?
+            UPDATE product_reviews 
+            SET rating = ?, title = ?, comment = ?, attributes_json = ? 
             WHERE review_id = ?
         `;
-        await db.execute(updateQuery, [rating_type, comment, imageUrlToSave, is_verified_buyer, currentReview.review_id]);
-        review_id = currentReview.review_id;
+        await db.execute(updateQuery, [Number(rating), title || null, comment || null, attributes || null, review_id]);
 
-        return {
-            success: true,
-            message: "Review updated successfully!",
-            review_id
-        };
-    } else {
-        // ➕ INSERT NEW REVIEW (First time review)
-        const insertReviewQuery = `
-          INSERT INTO reviews (product_id, user_id, rating_type, comment, image_url, is_verified_buyer)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `;
-        const values = [product_id, user_id, rating_type, comment, finalImageUrl, is_verified_buyer];
-        const [insertResult] = await db.execute(insertReviewQuery, values);
-        review_id = insertResult.insertId;
+        // Step 3: Insert NEW media if the user uploaded more files during edit
+        if (mediaFiles && mediaFiles.length > 0) {
+            const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
+            const mediaValues = mediaFiles.map(file => {
+                const isVideo = file.mimetype.startsWith('video/') ? 'video' : 'image';
+                return [review_id, isVideo, file.location || file.filename]; 
+            });
+            await db.query(insertMediaQuery, [mediaValues]);
+        }
 
-        return {
-            success: true,
-            message: "Review added successfully!",
-            review_id
-        };
+        console.log(`[REVIEW_SERVICE] ✅ Review ID: ${review_id} updated successfully.`);
+        return true;
+    } catch (err) {
+        console.error('[REVIEW_SERVICE] ❌ Error in updateReviewInDB:', err.message);
+        throw err;
     }
 };
 
-const deleteReviewInDb = async (review_id, userId, userRole) => {
-    const [reviews] = await db.execute('SELECT user_id FROM reviews WHERE review_id = ?', [review_id]);
-    if (reviews.length === 0) {
-        return { success: false, message: "Review not found." };
+// 🗑️ DELETE REVIEW FROM DB
+const deleteReviewFromDB = async (review_id, user_id) => {
+    console.log(`[REVIEW_SERVICE] Deleting Review ID: ${review_id} by User ID: ${user_id}`);
+    try {
+        // Step 1: Verify Ownership
+        const checkQuery = `SELECT review_id FROM product_reviews WHERE review_id = ? AND user_id = ?`;
+        const [checkRes] = await db.execute(checkQuery, [review_id, user_id]);
+        
+        if (checkRes.length === 0) {
+            throw new Error("UNAUTHORIZED_OR_NOT_FOUND");
+        }
+
+        // Step 2: Delete Review. 
+        // Note: IF you added "ON DELETE CASCADE" in the database structure as suggested earlier, 
+        // this will automatically delete the linked photos/videos from the 'review_media' table as well.
+        const deleteQuery = `DELETE FROM product_reviews WHERE review_id = ?`;
+        await db.execute(deleteQuery, [review_id]);
+
+        console.log(`[REVIEW_SERVICE] ✅ Review ID: ${review_id} deleted successfully.`);
+        return true;
+    } catch (err) {
+        console.error('[REVIEW_SERVICE] ❌ Error in deleteReviewFromDB:', err.message);
+        throw err;
     }
-
-    const reviewOwnerId = reviews[0].user_id;
-
-    if (reviewOwnerId !== userId && userRole !== 'admin') {
-        return { success: false, message: "Unauthorized to delete this review." };
-    }
-
-    await db.execute('DELETE FROM reviews WHERE review_id = ?', [review_id]);
-    return { success: true };
 };
 
-module.exports = { getReviewsByProductbydb, addReviewindb, deleteReviewInDb };
+// Don't forget to export them at the bottom:
+// module.exports = { addReviewInDB, getReviewsFromDB, incrementHelpfulCount, getPaginatedReviewsFromDB, updateReviewInDB, deleteReviewFromDB };
+module.exports = { addReviewInDB, getReviewsFromDB, incrementHelpfulCount,getPaginatedReviewsFromDB,updateReviewInDB,deleteReviewFromDB   };

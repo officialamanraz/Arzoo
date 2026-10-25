@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaHeart, FaRegHeart, FaComment, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaComment, FaWhatsapp } from 'react-icons/fa';
 
 import Recommended from "../components/Recommended";
+import ProductReviewsWidget from './ProductReviewsWidget'; // 🌟 Naya Review Widget Import kiya
 import './ProductDetail.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -36,7 +37,6 @@ const MFG_FIELDS = [
 /* =========================================================
    AMAZON-STYLE FULLSCREEN IMAGE VIEWER (touch devices)
    ========================================================= */
-
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
 const DOUBLE_TAP_SCALE = 2.5;
@@ -441,7 +441,6 @@ function ProductDetail({ currency, rates, language }) {
   const [translatedName, setTranslatedName] = useState("");
   const [translatedDesc, setTranslatedDesc] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
-  const [refreshReviews, setRefreshReviews] = useState(0);
   
   // Social States
   const [isLiked, setIsLiked] = useState(false);
@@ -458,11 +457,6 @@ function ProductDetail({ currency, rates, language }) {
   // Delivery & User Location States
   const [deliveryDateStr, setDeliveryDateStr] = useState("");
   const [userLocation, setUserLocation] = useState("");
-
-  const [showReviewsToggle, setShowReviewsToggle] = useState(false);
-  const [reviewStats, setReviewStats] = useState({});
-  const [totalReviewsCount, setTotalReviewsCount] = useState(0);
-  const [previewReviews, setPreviewReviews] = useState([]);
  
   const [showAllDetails, setShowAllDetails] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('specifications');
@@ -498,18 +492,6 @@ function ProductDetail({ currency, rates, language }) {
       setMobileActiveIdx(newIndex);
       console.log(`[UI_EVENT] 📱 Mobile slider swiped to media index: ${newIndex}`);
     }
-  };
-
-  const timeAgo = (dateStr) => {
-    if (!dateStr) return "";
-    const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + " years ago";
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + " months ago";
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + " days ago";
-    return Math.floor(seconds) + " seconds ago";
   };
 
   useEffect(() => {
@@ -550,23 +532,6 @@ function ProductDetail({ currency, rates, language }) {
     }
     return `${finalUrl}?v=${assetVersion}`;
   };
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/reviews/${id}`);
-        const data = await res.json();
-        if (data?.success) {
-          setReviewStats(data.stats || {});
-          setTotalReviewsCount(data.totalReviews || (data.reviews ? data.reviews.length : 0));
-          setPreviewReviews(data.reviews || []);
-        }
-      } catch (err) {
-        console.error("Error fetching review stats:", err);
-      }
-    };
-    if (id) fetchStats();
-  }, [id, refreshReviews]);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -634,18 +599,6 @@ function ProductDetail({ currency, rates, language }) {
     };
     fetchTranslations();
   }, [language, saree]);
-
-  const formatLabel = (str) => {
-    if (!str) return "Rating";
-    return str.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-  };
-
-  const getColorForOption = (key) => {
-    const map = { skip: "#ef4444", timepass: "#f59e0b", go_for_it: "#3b82f6", perfection: "#22c55e" };
-    return map[key?.toLowerCase()] || "#3b82f6";
-  };
-
-  const customerImages = previewReviews.filter((r) => r.image_url).map((r) => r.image_url);
 
   const handleToggleLike = async () => {
     if (!token) { toast.error("Please login to like this product!"); return; }
@@ -734,6 +687,7 @@ function ProductDetail({ currency, rates, language }) {
     
     window.open(backendWhatsappUrl, "_blank", "noopener,noreferrer");
 };
+
   const getConvertedPrice = (basePrice) => {
     if (currency === 'INR' || !rates || !rates[currency]) return basePrice;
     return (basePrice * rates[currency].rate).toFixed(2);
@@ -763,18 +717,16 @@ if (!saree) {
   );
 }
 
-  // 🌟 AMAZON STYLE: Construct Unified Media Array (Images first, Video last)
   const baseImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 
     ? saree.images.map(img => resolveImage(img)) 
     : [resolveImage(saree?.image_url) || FALLBACK_IMAGE];
     
   const mediaItems = baseImages.map(url => ({ type: 'image', url }));
   if (saree?.video_url) {
-    console.log("[PRODUCT_DETAIL] 🎥 Video found, appending to thumbnail gallery.");
     mediaItems.push({ 
       type: 'video', 
       url: resolveImage(saree.video_url), 
-      thumb: baseImages[0] // Use first image as thumbnail placeholder for video
+      thumb: baseImages[0] 
     });
   }
 
@@ -790,7 +742,7 @@ if (!saree) {
           {/* LEFT: GALLERY, ZOOM & SOCIAL ACTIONS */}
           <div className="gallery-section">
             
-            {/* 🖥️ DESKTOP VIEW: AMAZON STYLE (Vertical Thumbnails on Left) */}
+            {/* 🖥️ DESKTOP VIEW: AMAZON STYLE */}
             <div className="desktop-gallery-layout">
               {mediaItems.length > 1 && (
                 <div className="desktop-thumbnails">
@@ -800,10 +752,9 @@ if (!saree) {
                         src={media.type === 'video' ? media.thumb : media.url} 
                         alt={`Media ${idx + 1}`} 
                         className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
-                        onClick={() => { setActiveImageIdx(idx); console.log(`[UI_EVENT] 🖥️ Desktop gallery changed to media index: ${idx} (${media.type})`); }} 
+                        onClick={() => { setActiveImageIdx(idx); }} 
                         onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }} draggable="false"
                       />
-                      {/* Play Icon overlay for video thumbnail */}
                       {media.type === 'video' && <div className="video-play-overlay-thumb">▶</div>}
                     </div>
                   ))}
@@ -848,7 +799,7 @@ if (!saree) {
               </div>
             </div>
 
-            {/* 📱 MOBILE VIEW: FLIPKART STYLE (Swipeable Slider + Tap to Zoom) */}
+            {/* 📱 MOBILE VIEW: FLIPKART STYLE */}
             <div className="mobile-gallery-slider" style={{ position: 'relative' }}>
               {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
               <div className="mobile-slider-track" ref={mobileTrackRef} onScroll={handleSliderScroll}>
@@ -890,7 +841,6 @@ if (!saree) {
                 {mediaItems[mobileActiveIdx]?.type === 'image' ? "🔍 Tap image to zoom" : ""}
               </div>
 
-              {/* Pagination Dots */}
               {mediaItems.length > 1 && (
                 <div className="mobile-slider-dots">
                   {mediaItems.map((_, idx) => (
@@ -961,7 +911,6 @@ if (!saree) {
               )}
             </div>
 
-            {/* VARIANTS SWATCHES (Mobile Horizontal Scroll & Sold Out overlay) */}
             {saree.variants && saree.variants.length > 0 && (
               <div className="amazon-variants-container">
                 <div className="amazon-variant-label">
@@ -1002,10 +951,8 @@ if (!saree) {
               </div>
             )}
 
-            {/* DYNAMIC USER ADDRESS DELIVERY WIDGET */}
             <div className="fk-delivery-widget">
               <h3 className="fk-delivery-title">Delivery details</h3>
-              
               <div className="fk-delivery-row">
                 <svg style={{ width: '20px', height: '20px', fill: '#2874f0', flexShrink: 0, marginTop: '2px', marginRight: '8px' }} viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
@@ -1120,74 +1067,8 @@ if (!saree) {
               )}
             </div>
 
-            {/* RATINGS & REVIEWS TOGGLE */}
-            <div className="fk-all-details-container reviews-toggle-container" style={{ marginTop: "15px" }}>
-              <button
-                type="button"
-                className="fk-details-toggle-btn"
-                onClick={() => { setShowReviewsToggle((prev) => !prev); }}
-                aria-expanded={showReviewsToggle}
-              >
-                <span>Ratings and reviews</span>
-                <span className="toggle-icon">{showReviewsToggle ? "▲" : "▼"}</span>
-              </button>
-
-              {showReviewsToggle && (
-                <div className="fk-details-content fk-reviews-content">
-                  <div className="fk-rev-summary-sub">
-                    {totalReviewsCount > 0 ? `Based on ${totalReviewsCount} ${totalReviewsCount === 1 ? "rating" : "ratings"}` : "No customer reviews yet"}
-                  </div>
-
-                  {customerImages.length > 0 && (
-                    <div className="fk-buyer-photos-section">
-                      <h4 className="fk-review-subtitle">Customer Photos</h4>
-                      <div className="fk-buyer-photos-row">
-                        {customerImages.map((imgUrl, idx) => (
-                          <div key={`${imgUrl}-${idx}`} className="fk-buyer-photo-item">
-                            <img src={resolveImage(imgUrl)} alt={`Customer review ${idx + 1}`} className="fk-buyer-thumb-img" loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="fk-compact-reviews-section">
-                    <h4 className="fk-review-subtitle">Customer Reviews</h4>
-                    {previewReviews.length > 0 ? (
-                      <div className="fk-compact-cards-grid">
-                        {previewReviews.slice(0, 4).map((rev, idx) => (
-                          <div key={rev.review_id || idx} className="fk-compact-review-card">
-                            <div className="fk-card-badge-row">
-                              <span className="fk-card-opinion-tag" style={{ backgroundColor: getColorForOption(rev.rating_type) }}>
-                                {formatLabel(rev.rating_type)}
-                              </span>
-                              <span className="fk-card-relative-time">{timeAgo(rev.created_at)}</span>
-                            </div>
-                            <p className="fk-card-short-comment">
-                              {rev.comment ? (rev.comment.length > 80 ? `${rev.comment.slice(0, 80)}...` : rev.comment) : "No written review."}
-                            </p>
-                            <div className="fk-card-author-footer">
-                              <span className="fk-card-author-name">{rev.user_name || "Customer"}</span>
-                              {(rev.is_verified_buyer === 1 || rev.is_verified_buyer === true || rev.is_verified_buyer === "1") && (
-                                <span className="fk-card-verified-tag"><FaCheckCircle size={11} />Verified Buyer</span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="fk-no-reviews-note">No customer reviews yet.</p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {totalReviewsCount > 0 && (
-              <Link to={`/product-reviews/${saree.product_id}`} className="fk-standalone-reviews-btn">
-                Show all reviews <span>›</span>
-              </Link>
-            )}
+            {/* 🌟 NAYA REVIEW WIDGET YAHAN JOD DIYA GAYA HAI */}
+            <ProductReviewsWidget productId={saree.product_id} />
 
           </div>
         </div>
@@ -1202,7 +1083,6 @@ if (!saree) {
         </div>
       </div>
       
-      {/* 🔍 AMAZON-STYLE FULLSCREEN IMAGE VIEWER (Only passed image array) */}
       {mobileZoomOpen && (
         <MobileImageZoom
           images={baseImages}
