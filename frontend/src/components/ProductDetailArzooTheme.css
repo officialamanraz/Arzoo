@@ -643,6 +643,168 @@ body.dark .variant-out-text {
   color: #5f5550 !important;
 }
 
+/* =========================================================
+   DARK MODE FIX — READABILITY + SURFACES
+   ---------------------------------------------------------
+   Why: the V4 readability rules above force dark brown text
+   with !important. That is right for light mode, but on the
+   dark background the text almost disappears.
+   Fix: in dark mode the text variables become light, and the
+   few rules that use fixed colours are overridden here.
+   Uses the same toggle classes as the rest of this theme: body.dark and .dark-mode.
+   ========================================================= */
+
+:is(body.dark, .dark-mode) .product-detail-page {
+  --arzoo-text: #f3e6d6;
+  --arzoo-muted: #cdbdb4;
+  --arzoo-input-bg: #2b2528;
+  --arzoo-surface: #211a1e;
+}
+
+/* ---------- Text with fixed colours in the V4 block ---------- */
+:is(body.dark, .dark-mode) .product-detail-page .info-box .product-price {
+  color: #e3b96f !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .info-box .mrp-price {
+  color: #b8a999 !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .info-box .discount-badge {
+  color: #f5d99d !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .info-box .stock-badge.in-stock {
+  background: rgba(76, 195, 138, 0.14) !important;
+  color: #7fdcae !important;
+  border-color: rgba(76, 195, 138, 0.30) !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .info-box .stock-badge.out-of-stock {
+  background: rgba(214, 106, 127, 0.16) !important;
+  color: #f3b2be !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .info-box .policy-note,
+:is(body.dark, .dark-mode) .product-detail-page .info-box .policy-note strong {
+  color: #f3b2be !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .info-box .fk-card-short-comment,
+:is(body.dark, .dark-mode) .product-detail-page .info-box .fk-card-author-name,
+:is(body.dark, .dark-mode) .product-detail-page .info-box .fk-card-relative-time,
+:is(body.dark, .dark-mode) .product-detail-page .info-box .fk-rev-summary-sub,
+:is(body.dark, .dark-mode) .product-detail-page .info-box .fk-no-reviews-note {
+  color: #cdbdb4 !important;
+}
+
+/* Label / value pairs inside "All details" */
+:is(body.dark, .dark-mode) .product-detail-page .info-box .fk-label {
+  color: #b8a999 !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .info-box .fk-value,
+:is(body.dark, .dark-mode) .product-detail-page .info-box .fk-group-title {
+  color: #f3e6d6 !important;
+}
+
+/* ---------- Gallery frame and thumbnails ---------- */
+:is(body.dark, .dark-mode) .product-detail-page .main-image-wrapper {
+  background: #2a2023 !important;
+  border-color: rgba(216, 183, 122, 0.22) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .thumbnail {
+  background: #2a2023 !important;
+  border-color: rgba(216, 183, 122, 0.20) !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .thumbnail-active {
+  border-color: #d8b77a !important;
+  box-shadow: 0 0 0 2px rgba(216, 183, 122, 0.22) !important;
+}
+
+/* ---------- Quantity selector ---------- */
+:is(body.dark, .dark-mode) .product-detail-page .quantity-selector-container {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .quantity-controls {
+  background: #2b2528 !important;
+  border-color: rgba(216, 183, 122, 0.28) !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .qty-btn,
+:is(body.dark, .dark-mode) .product-detail-page .qty-display {
+  background: transparent !important;
+  color: #f3e6d6 !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .qty-btn:hover:not(:disabled) {
+  background: rgba(216, 183, 122, 0.16) !important;
+}
+
+/* ---------- All details / description / reviews panels ---------- */
+:is(body.dark, .dark-mode) .product-detail-page .description-toggle-btn,
+:is(body.dark, .dark-mode) .product-detail-page .fk-all-details-container {
+  background: rgba(33, 26, 30, 0.92) !important;
+  border-color: rgba(216, 183, 122, 0.16) !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .description-toggle-btn,
+:is(body.dark, .dark-mode) .product-detail-page .fk-details-toggle-btn {
+  color: #f3e6d6 !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .description-toggle-btn:hover {
+  background: #2b2528 !important;
+}
+
+/* ---------- Variants ---------- */
+:is(body.dark, .dark-mode) .product-detail-page .amazon-variants-container {
+  border-top-color: rgba(216, 183, 122, 0.22) !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .amazon-variant-label {
+  color: #f3e6d6 !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .amazon-swatch-item {
+  background: #2b2528 !important;
+  border-color: rgba(216, 183, 122, 0.28) !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .amazon-swatch-item:hover,
+:is(body.dark, .dark-mode) .product-detail-page .amazon-swatch-item.active {
+  border-color: #d8b77a !important;
+  box-shadow: 0 0 0 2px rgba(216, 183, 122, 0.20) !important;
+}
+
+/* ---------- Likes / comments / ask buttons ---------- */
+:is(body.dark, .dark-mode) .product-detail-page .social-btn {
+  color: #f0c9a8 !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .social-btn:hover {
+  color: #e3b96f !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .social-action-count {
+  color: #d1d5db !important;
+}
+
+/* ---------- Comment input ---------- */
+:is(body.dark, .dark-mode) .inline-comment-input {
+  background: #1e1e1e !important;
+  color: #f3f4f6 !important;
+  border-color: #444 !important;
+}
+
+:is(body.dark, .dark-mode) .inline-comment-input::placeholder {
+  color: #9ca3af;
+}
+
 /* ---------- PRODUCT LOADING SCREEN (BLUEPRINT STYLE) ---------- */
 .product-loading-screen {
   position: relative;
