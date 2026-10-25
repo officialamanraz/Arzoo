@@ -178,7 +178,7 @@ const getbyidproduct = async (productId) => {
         const [productResults] = await db.execute(productQuery, [productId]);
 
         if (productResults.length === 0) {
-            console.warn(`[PRODUCT_SERVICE] ⚠️️ Product not found with ID: ${productId}`);
+            console.warn(`[PRODUCT_SERVICE] ⚠ Product not found with ID: ${productId}`);
             return null; 
         }
         const product = productResults[0];
@@ -264,6 +264,9 @@ const addProductToDB = async (productData) => {
         const parsedMrp = Number(mrp) || 0;
         // Automatically compute precise server-side discount percentage
         const computedDiscount = (parsedMrp > parsedPrice) ? Math.round(((parsedMrp - parsedPrice) / parsedMrp) * 100) : 0;
+        
+        // Ensure is_returnable is strictly 0 or 1
+        const safeIsReturnable = (is_returnable === true || is_returnable === '1' || is_returnable === 1) ? 1 : 0;
 
         const categoryQuery = 'SELECT category_id FROM categories WHERE category_id = ?';
         const [categoryResult] = await db.execute(categoryQuery, [category_id]);
@@ -320,7 +323,7 @@ const addProductToDB = async (productData) => {
           computedDiscount, // Server-computed accurate percentage
           dealer_base_price ? Number(dealer_base_price) : null,
           packaging_cost ? Number(packaging_cost) : null,
-          is_returnable !== undefined ? Number(is_returnable) : 1, 
+          safeIsReturnable, 
           dealer_id || null,
           producer_address || null,
           packer_address || null,
@@ -375,6 +378,9 @@ const updateProductInDB = async (product_id, updateData) => {
         const parsedPrice = Number(price) || 0;
         const parsedMrp = Number(mrp) || 0;
         const computedDiscount = (parsedMrp > parsedPrice) ? Math.round(((parsedMrp - parsedPrice) / parsedMrp) * 100) : 0;
+        
+        // Ensure is_returnable is strictly 0 or 1
+        const safeIsReturnable = (is_returnable === true || is_returnable === '1' || is_returnable === 1) ? 1 : 0;
 
         let updateQuery = `
           UPDATE products SET 
@@ -394,7 +400,7 @@ const updateProductInDB = async (product_id, updateData) => {
             computedDiscount, // Computed dynamically on update
             dealer_base_price ? Number(dealer_base_price) : null,
             packaging_cost ? Number(packaging_cost) : null,
-            is_returnable !== undefined ? Number(is_returnable) : 1,
+            safeIsReturnable,
             dealer_id || null,
             producer_address || null,
             packer_address || null,
