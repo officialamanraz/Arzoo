@@ -92,12 +92,26 @@ const getReviewsFromDB = async (product_id) => {
         const [reviews] = await db.execute(reviewsQuery, [product_id]);
 
         return {
-            stats: statsResult[0],
-            reviews: reviews.map(rev => ({
-                ...rev,
-                attributes: rev.attributes_json ? JSON.parse(rev.attributes_json) : [],
-                media: rev.media ? JSON.parse(rev.media) : []
-            }))
+            stats: statsResult[0] || {},
+            reviews: reviews.map(rev => {
+                let safeAttributes = [];
+                try {
+                    safeAttributes = rev.attributes_json ? JSON.parse(rev.attributes_json) : [];
+                    if (!Array.isArray(safeAttributes)) safeAttributes = [safeAttributes]; // Convert to array if string
+                } catch (e) {
+                    // Agar JSON parse fail ho, toh raw text ko array mein daal do
+                    safeAttributes = rev.attributes_json ? [rev.attributes_json] : [];
+                }
+
+                let safeMedia = [];
+                try { safeMedia = rev.media ? JSON.parse(rev.media) : []; } catch (e) {}
+
+                return {
+                    ...rev,
+                    attributes: safeAttributes,
+                    media: safeMedia
+                };
+            })
         };
     } catch (err) {
         console.error('[REVIEW_SERVICE] ❌ Error in getReviewsFromDB:', err.message);
@@ -166,11 +180,24 @@ const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortB
             totalReviews,
             currentPage: Number(page),
             totalPages: Math.ceil(totalReviews / limit),
-            reviews: reviews.map(rev => ({
-                ...rev,
-                attributes: rev.attributes_json ? JSON.parse(rev.attributes_json) : [],
-                media: rev.media ? JSON.parse(rev.media) : []
-            }))
+            reviews: reviews.map(rev => {
+                let safeAttributes = [];
+                try {
+                    safeAttributes = rev.attributes_json ? JSON.parse(rev.attributes_json) : [];
+                    if (!Array.isArray(safeAttributes)) safeAttributes = [safeAttributes]; 
+                } catch (e) {
+                    safeAttributes = rev.attributes_json ? [rev.attributes_json] : [];
+                }
+
+                let safeMedia = [];
+                try { safeMedia = rev.media ? JSON.parse(rev.media) : []; } catch (e) {}
+
+                return {
+                    ...rev,
+                    attributes: safeAttributes,
+                    media: safeMedia
+                };
+            })
         };
 
     } catch (err) {
