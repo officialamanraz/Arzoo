@@ -29,15 +29,26 @@ const addReviewInDB = async (product_id, user_id, rating, title, comment, attrib
         const review_id = reviewResult.insertId;
 
         // 3. Insert media if uploaded
+        // 3. Insert media if uploaded (🛡️ FIXED & SAFE)
         if (mediaFiles && mediaFiles.length > 0) {
-            const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
-            const mediaValues = mediaFiles.map(file => {
-                const isVideo = file.mimetype.startsWith('video/') ? 'video' : 'image';
-                return [review_id, isVideo, file.location || file.filename]; 
-            });
-            await db.query(insertMediaQuery, [mediaValues]);
-        }
+            const mediaValues = [];
+            
+            for (const file of mediaFiles) {
+                // Multer storage ke mutabiq sahi property pick karein
+                const mediaUrl = file.location || file.path || file.filename;
+                
+                if (mediaUrl) {
+                    const isVideo = file.mimetype && file.mimetype.startsWith('video/') ? 'video' : 'image';
+                    // Agar path absolute nahi hai ya relative storage path hai toh adjust kar sakte hain
+                    mediaValues.push([review_id, isVideo, mediaUrl]);
+                }
+            }
 
+            if (mediaValues.length > 0) {
+                const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
+                await db.query(insertMediaQuery, [mediaValues]);
+            }
+        }
         console.log(`[REVIEW_SERVICE] ✅ Review added successfully with ID: ${review_id}`);
         return review_id;
     } catch (err) {
@@ -186,13 +197,25 @@ const updateReviewInDB = async (review_id, user_id, rating, title, comment, attr
         `;
         await db.execute(updateQuery, [Number(rating), title || null, comment || null, attributes || null, review_id]);
 
+       // 3. Insert media if uploaded (🛡️ FIXED & SAFE)
         if (mediaFiles && mediaFiles.length > 0) {
-            const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
-            const mediaValues = mediaFiles.map(file => {
-                const isVideo = file.mimetype.startsWith('video/') ? 'video' : 'image';
-                return [review_id, isVideo, file.location || file.filename]; 
-            });
-            await db.query(insertMediaQuery, [mediaValues]);
+            const mediaValues = [];
+            
+            for (const file of mediaFiles) {
+                // Multer storage ke mutabiq sahi property pick karein
+                const mediaUrl = file.location || file.path || file.filename;
+                
+                if (mediaUrl) {
+                    const isVideo = file.mimetype && file.mimetype.startsWith('video/') ? 'video' : 'image';
+                    // Agar path absolute nahi hai ya relative storage path hai toh adjust kar sakte hain
+                    mediaValues.push([review_id, isVideo, mediaUrl]);
+                }
+            }
+
+            if (mediaValues.length > 0) {
+                const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
+                await db.query(insertMediaQuery, [mediaValues]);
+            }
         }
 
         console.log(`[REVIEW_SERVICE] ✅ Review ID: ${review_id} updated successfully.`);
