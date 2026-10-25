@@ -1,14 +1,13 @@
 const db = require('../DATABASE/mysql');
 
-// 🛡️ HELPER FUNCTION: Hamesha top par rahega taaki safely JSON parse kar sake.
-// Agar database mein kharab data bhi hoga toh yeh crash nahi hone dega.
 const parseSafeJsonArray = (val, fallbackAsSingleItem = false) => {
     if (!val) return [];
     if (Array.isArray(val)) return val;
     if (typeof val === 'string') {
         try {
             const parsed = JSON.parse(val);
-            return Array.isArray(parsed) ? parsed : [parsed];
+            if (!parsed) return [];
+            return Array.isArray(parsed) ? parsed.filter(Boolean) : [parsed];
         } catch (e) {
             return fallbackAsSingleItem ? [val] : [];
         }
@@ -19,7 +18,6 @@ const parseSafeJsonArray = (val, fallbackAsSingleItem = false) => {
 const addReviewInDB = async (product_id, user_id, rating, title, comment, attributes, mediaFiles) => {
     console.log(`[REVIEW_SERVICE] Adding review for Product ID: ${product_id} by User ID: ${user_id}`);
     try {
-        // 🌟 Verified buyer check with corrected table name 'orderitems'
         const verifyQuery = `
             SELECT o.order_id 
             FROM orders o
@@ -31,7 +29,6 @@ const addReviewInDB = async (product_id, user_id, rating, title, comment, attrib
         const is_verified_buyer = orderCheck.length > 0 ? 1 : 0;
         const order_id = orderCheck.length > 0 ? orderCheck[0].order_id : null;
 
-        // 2. Insert main review
         const insertQuery = `
             INSERT INTO product_reviews 
             (product_id, user_id, order_id, rating, title, comment, attributes_json, is_verified_buyer) 
@@ -44,14 +41,12 @@ const addReviewInDB = async (product_id, user_id, rating, title, comment, attrib
 
         const review_id = reviewResult.insertId;
 
-        // 3. Insert media if uploaded (🛡️ FIXED, CONSOLIDATED & SAFE)
         if (mediaFiles && mediaFiles.length > 0) {
             const mediaValues = [];
             for (const file of mediaFiles) {
-                // Check all possible Multer paths (local, S3, cloud, etc.)
                 const mediaUrl = file.url || file.location || file.filename || file.path;
                 if (mediaUrl) {
-                    const cleanUrl = String(mediaUrl).replace(/\\/g, '/'); // Windows path fix
+                    const cleanUrl = String(mediaUrl).replace(/\\/g, '/');
                     const isVideo = file.mimetype && file.mimetype.startsWith('video/') ? 'video' : 'image';
                     mediaValues.push([review_id, isVideo, cleanUrl]);
                 }
@@ -74,7 +69,6 @@ const addReviewInDB = async (product_id, user_id, rating, title, comment, attrib
 const getReviewsFromDB = async (product_id) => {
     console.log(`[REVIEW_SERVICE] Fetching reviews for Product ID: ${product_id}`);
     try {
-        // 1. Get Summary Stats
         const statsQuery = `
             SELECT 
                 COUNT(*) as totalReviews,
@@ -88,14 +82,13 @@ const getReviewsFromDB = async (product_id) => {
         `;
         const [statsResult] = await db.execute(statsQuery, [product_id]);
 
-        // 2. Get Detailed Reviews with Media
         const reviewsQuery = `
             SELECT 
                 pr.review_id, pr.rating, pr.title, pr.comment, pr.attributes_json, 
                 pr.is_verified_buyer, pr.helpful_votes, pr.created_at,
                 u.name as user_name,
                 (
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('type', rm.media_type, 'url', rm.media_url))
+                    SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT('type', rm.media_type, 'url', rm.media_url)), '[]')
                     FROM review_media rm WHERE rm.review_id = pr.review_id
                 ) as media
             FROM product_reviews pr
@@ -107,7 +100,6 @@ const getReviewsFromDB = async (product_id) => {
 
         return {
             stats: statsResult[0] || {},
-            // 🛡️ Safely mapped arrays for frontend
             reviews: reviews.map(rev => ({
                 ...rev,
                 attributes: parseSafeJsonArray(rev.attributes_json, true),
@@ -121,23 +113,19 @@ const getReviewsFromDB = async (product_id) => {
 };
 
 const incrementHelpfulCount = async (review_id) => {
-    console.log(`[REVIEW_SERVICE] Upvoting review ID: ${review_id}`);
     try {
         const updateQuery = `UPDATE product_reviews SET helpful_votes = helpful_votes + 1 WHERE review_id = ?`;
         await db.execute(updateQuery, [review_id]);
         return true;
     } catch (err) {
-        console.error('[REVIEW_SERVICE] ❌ Error in incrementHelpfulCount:', err.message);
         throw err;
     }
 };
 
 const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortBy = 'recent', filterRating = null, withMedia = false) => {
-    console.log(`[REVIEW_SERVICE] Fetching paginated reviews for Product ID: ${product_id} | Page: ${page}`);
     try {
         const offset = (page - 1) * limit;
         let queryParams = [product_id];
-        
         let baseCondition = `WHERE pr.product_id = ?`;
 
         if (filterRating) {
@@ -159,7 +147,7 @@ const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortB
                 pr.is_verified_buyer, pr.helpful_votes, pr.created_at,
                 u.name as user_name,
                 (
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('type', rm.media_type, 'url', rm.media_url))
+                    SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT('type', rm.media_type, 'url', rm.media_url)), '[]')
                     FROM review_media rm WHERE rm.review_id = pr.review_id
                 ) as media
             FROM product_reviews pr
@@ -181,29 +169,23 @@ const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortB
             totalReviews,
             currentPage: Number(page),
             totalPages: Math.ceil(totalReviews / limit),
-            // 🛡️ Safely mapped arrays for frontend
             reviews: reviews.map(rev => ({
                 ...rev,
                 attributes: parseSafeJsonArray(rev.attributes_json, true),
                 media: parseSafeJsonArray(rev.media, false).filter(m => m && m.url)
             }))
         };
-
     } catch (err) {
-        console.error('[REVIEW_SERVICE] ❌ Error in getPaginatedReviewsFromDB:', err.message);
         throw err;
     }
 };
 
 const updateReviewInDB = async (review_id, user_id, rating, title, comment, attributes, mediaFiles) => {
-    console.log(`[REVIEW_SERVICE] Updating Review ID: ${review_id} by User ID: ${user_id}`);
     try {
         const checkQuery = `SELECT review_id FROM product_reviews WHERE review_id = ? AND user_id = ?`;
         const [checkRes] = await db.execute(checkQuery, [review_id, user_id]);
         
-        if (checkRes.length === 0) {
-            throw new Error("UNAUTHORIZED_OR_NOT_FOUND");
-        }
+        if (checkRes.length === 0) throw new Error("UNAUTHORIZED_OR_NOT_FOUND");
 
         const updateQuery = `
             UPDATE product_reviews 
@@ -212,7 +194,6 @@ const updateReviewInDB = async (review_id, user_id, rating, title, comment, attr
         `;
         await db.execute(updateQuery, [Number(rating), title || null, comment || null, attributes || null, review_id]);
 
-       // 3. Insert new media if uploaded during update (🛡️ FIXED & SAFE)
         if (mediaFiles && mediaFiles.length > 0) {
             const mediaValues = [];
             for (const file of mediaFiles) {
@@ -223,38 +204,27 @@ const updateReviewInDB = async (review_id, user_id, rating, title, comment, attr
                     mediaValues.push([review_id, isVideo, cleanUrl]);
                 }
             }
-
             if (mediaValues.length > 0) {
                 const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
-                await db.query(insertMediaQuery, [mediaValues]);
+                await db.execute(insertMediaQuery, [mediaValues]);
             }
         }
-
-        console.log(`[REVIEW_SERVICE] ✅ Review ID: ${review_id} updated successfully.`);
         return true;
     } catch (err) {
-        console.error('[REVIEW_SERVICE] ❌ Error in updateReviewInDB:', err.message);
         throw err;
     }
 };
 
 const deleteReviewFromDB = async (review_id, user_id) => {
-    console.log(`[REVIEW_SERVICE] Deleting Review ID: ${review_id} by User ID: ${user_id}`);
     try {
         const checkQuery = `SELECT review_id FROM product_reviews WHERE review_id = ? AND user_id = ?`;
         const [checkRes] = await db.execute(checkQuery, [review_id, user_id]);
         
-        if (checkRes.length === 0) {
-            throw new Error("UNAUTHORIZED_OR_NOT_FOUND");
-        }
+        if (checkRes.length === 0) throw new Error("UNAUTHORIZED_OR_NOT_FOUND");
 
-        const deleteQuery = `DELETE FROM product_reviews WHERE review_id = ?`;
-        await db.execute(deleteQuery, [review_id]);
-
-        console.log(`[REVIEW_SERVICE] ✅ Review ID: ${review_id} deleted successfully.`);
+        await db.execute(`DELETE FROM product_reviews WHERE review_id = ?`, [review_id]);
         return true;
     } catch (err) {
-        console.error('[REVIEW_SERVICE] ❌ Error in deleteReviewFromDB:', err.message);
         throw err;
     }
 };
