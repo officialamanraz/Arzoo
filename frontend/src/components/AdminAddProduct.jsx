@@ -13,7 +13,7 @@ const emptyFormState = {
   description: '', baseColor: '', categoryId: '', subcategoryId: '',
   stockQty: '10', primaryColor: '', otherColor: '', borderType: '', pattern: '', craft: '',
   weave: '', zariType: '', blouse: '', borderMotifs: '', origin: '', fabric: '', khats: '',
-  weight: '', blouseLength: '', producer: '', maker: '', producer_address: '', packer_address: ''
+  weight: '', blouseLength: '', producer: '', maker: '', producer_address: '', packer_address: '',videoUrl:''
 };
 
 function AdminAddProduct() {
@@ -32,7 +32,7 @@ function AdminAddProduct() {
   const [isEditing, setIsEditing] = useState(!!editingProduct);
   const [editId, setEditId] = useState(editingProduct?.product_id || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [vidoeFile,setvidoeFile] = useState(null);
   useEffect(() => {
     if (editingProduct) {
       console.log('[ADMIN_ADD_PRODUCT] 📝 Editing mode active. Populating form with product ID:', editingProduct.product_id);
@@ -67,7 +67,8 @@ function AdminAddProduct() {
         producer: editingProduct.producer || '',
         maker: editingProduct.maker || '',
         producer_address: editingProduct.producer_address || '',
-        packer_address: editingProduct.packer_address || ''
+        packer_address: editingProduct.packer_address || '',
+        videoUrl:editingProduct.videoUrl || ''
       });
     }
   }, [editingProduct]);
@@ -145,6 +146,7 @@ function AdminAddProduct() {
     setMainImage(null);
     setExtraImages([]);
     setIsEditing(false);
+    setvidoeFile(null);
     setEditId(null);
   };
 
@@ -187,6 +189,11 @@ function AdminAddProduct() {
 
     if (mainImage) {
       formData.append('image', mainImage);
+    }
+    if (vidoeFile) {
+      formData.append('video', vidoeFile);
+    } else if (form.videoUrl) {
+       formData.append('videoUrl', form.videoUrl);
     }
 
     if (extraImages && extraImages.length > 0) {
@@ -445,6 +452,25 @@ function AdminAddProduct() {
                   className="admin-file-input"
                   accept="image/*"
                 />
+                <div className="responsive-grid-2 video-upload-container">
+  <div className="form-group">
+    <label className="video-upload-label">
+       Product Video (Optional)
+    </label>
+    <input
+      type="file"
+      onChange={(e) => setVideoFile(e.target.files[0])}
+      className="admin-file-input"
+      accept="video/mp4,video/webm,video/ogg"
+    />
+    <small className="edit-note">Max size: 50MB. Recommended format: MP4.</small>
+    {form.videoUrl && !vidoeFile && (
+      <small className="current-video-text">
+        Current video: {form.videoUrl.split('/').pop()}
+      </small>
+    )}
+  </div>
+</div>
                 <small className="edit-note">Hold Ctrl (or Cmd) to select multiple images.</small>
               </div>
             </div>
