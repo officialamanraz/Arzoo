@@ -9,37 +9,76 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const ProductReviewsWidget = ({ productId }) => {
     const navigate = useNavigate();
+    
+    // States for data and UI handling
     const [stats, setStats] = useState(null);
     const [reviews, setReviews] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
     const token = localStorage.getItem('token');
 
+    // 🛡️ Robust Fetching with Error Handling
     const fetchSummary = async () => {
+        if (!productId) return;
+        
+        setIsLoading(true);
+        setError(null);
+        
         try {
             const res = await fetch(`${API_BASE_URL}/api/reviews/product/${productId}`);
-            const data = await res.json();
-            if (data.success) {
-                setStats(data.stats);
-                setReviews(data.reviews.slice(0, 3)); // Only take top 3 for widget
+            
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
             }
-        } catch (error) {
-            console.error("Failed to fetch reviews:", error);
+            
+            const data = await res.json();
+            
+            if (data.success) {
+                setStats(data.stats || { totalReviews: 0, avgRating: 0 });
+                setReviews(Array.isArray(data.reviews) ? data.reviews.slice(0, 3) : []);
+            } else {
+                throw new Error(data.message || "Failed to load reviews");
+            }
+        } catch (err) {
+            console.error("[Widget] Error fetching reviews:", err);
+            // User-friendly error message, no developer jargon
+            setError("We couldn't load the reviews at this moment. Please try again later.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        if (productId) fetchSummary();
+        fetchSummary();
     }, [productId]);
 
+    // 🛡️ Safe Voting Logic
     const handleHelpful = async (reviewId) => {
+        if (!token) {
+            toast.error("Please log in to vote on reviews.");
+            return;
+        }
+
         try {
-            const res = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}/helpful`, { method: 'PUT' });
-            if (res.ok) {
-                toast.success("Marked as helpful!");
-                fetchSummary(); // Refresh counts
+            const res = await fetch(`${API_BASE_URL}/api/reviews/${reviewId}/helpful`, { 
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok && data.success) {
+                toast.success("Thank you for your feedback!");
+                fetchSummary(); // Refresh counts to show the new vote
+            } else {
+                toast.error(data.message || "Could not submit your vote.");
             }
         } catch (err) {
-            toast.error("Something went wrong");
+            toast.error("Network error. Please try again.");
         }
     };
 
@@ -49,10 +88,27 @@ const ProductReviewsWidget = ({ productId }) => {
         return 'badge-red';
     };
 
-    // Extract all media from reviews for the horizontal strip
-    const allMedia = reviews.flatMap(r => r.media || []);
+    // Extract all media safely
+    const allMedia = Array.isArray(reviews) ? reviews.flatMap(r => r.media || []) : [];
 
-    if (!stats) return <div className="reviews-widget-container">Loading reviews... (If stuck, check backend console for errors)</div>;
+    // UI STATES
+    if (isLoading) {
+        return (
+            <div className="reviews-widget-container" style={{ padding: '40px 20px', textAlign: 'center', color: '#777' }}>
+                Loading customer reviews...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="reviews-widget-container" style={{ padding: '40px 20px', textAlign: 'center', color: '#d32f2f' }}>
+                {error}
+            </div>
+        );
+    }
+
+    if (!stats) return null;
 
     return (
         <div className="reviews-widget-container">
@@ -74,8 +130,10 @@ const ProductReviewsWidget = ({ productId }) => {
 
                         <div className="rating-bars-container">
                             {[5, 4, 3, 2, 1].map(star => {
-                                const count = stats.breakdown[star];
+                                // 🛡️ FIXED: Correctly accessing database columns (stars5, stars4, etc.)
+                                const count = stats[`stars${star}`] || 0;
                                 const percent = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
+                                
                                 return (
                                     <div key={star} className="rating-bar-row">
                                         <span>{star} ★</span>
@@ -100,7 +158,11 @@ const ProductReviewsWidget = ({ productId }) => {
                                     {m.type === 'video' ? (
                                         <><video src={`${API_BASE_URL}${m.url}`} /><div className="play-indicator">▶</div></>
                                     ) : (
-                                        <img src={`${API_BASE_URL}${m.url}`} alt="Customer review" />
+                                        <img 
+                                            src={`${API_BASE_URL}${m.url}`} 
+                                            alt="Customer review" 
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                                        />
                                     )}
                                 </div>
                             ))}
@@ -120,7 +182,7 @@ const ProductReviewsWidget = ({ productId }) => {
                                 
                                 <p className="review-comment">{rev.comment}</p>
                                 
-                                {rev.attributes && rev.attributes.length > 0 && (
+                                {rev.attributes && Array.isArray(rev.attributes) && rev.attributes.length > 0 && (
                                     <div className="review-attributes">
                                         {rev.attributes.map((attr, i) => (
                                             <span key={i} className="attr-chip">{attr}</span>
@@ -136,9 +198,13 @@ const ProductReviewsWidget = ({ productId }) => {
                                                 <FaCheckCircle className="verified-icon" size={12}/> Certified Buyer
                                             </span>
                                         )}
-                                        <span>• {new Date(rev.created_at).toLocaleDateString()}</span>
+                                        <span>• {new Date(rev.created_at).toLocaleDateString('en-IN')}</span>
                                     </div>
-                                    <button className="helpful-btn" onClick={() => handleHelpful(rev.review_id)}>
+                                    <button 
+                                        className="helpful-btn" 
+                                        onClick={() => handleHelpful(rev.review_id)}
+                                        title="Mark as helpful"
+                                    >
                                         <FaThumbsUp size={12} /> {rev.helpful_votes > 0 && rev.helpful_votes}
                                     </button>
                                 </div>
@@ -153,7 +219,7 @@ const ProductReviewsWidget = ({ productId }) => {
                     )}
                 </>
             ) : (
-                <p style={{ color: '#777' }}>No reviews yet. Be the first to rate this product!</p>
+                <p style={{ color: '#777', padding: '10px 0' }}>No reviews yet. Be the first to rate this product!</p>
             )}
 
             {isModalOpen && (
