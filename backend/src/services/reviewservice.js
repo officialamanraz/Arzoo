@@ -3,11 +3,13 @@ const db = require('../DATABASE/mysql');
 const addReviewInDB = async (product_id, user_id, rating, title, comment, attributes, mediaFiles) => {
     console.log(`[REVIEW_SERVICE] Adding review for Product ID: ${product_id} by User ID: ${user_id}`);
     try {
-        // 1. Check if verified buyer
+        // 🌟 Verified buyer check with corrected table name 'orderitems'
         const verifyQuery = `
-            SELECT oi.order_id FROM order_items oi
-            JOIN orders o ON oi.order_id = o.order_id
-            WHERE o.user_id = ? AND oi.product_id = ? LIMIT 1
+            SELECT o.order_id 
+            FROM orders o
+            JOIN orderitems oi ON o.order_id = oi.order_id
+            WHERE o.user_id = ? AND oi.product_id = ? 
+            LIMIT 1
         `;
         const [orderCheck] = await db.execute(verifyQuery, [user_id, product_id]);
         const is_verified_buyer = orderCheck.length > 0 ? 1 : 0;
@@ -103,32 +105,28 @@ const incrementHelpfulCount = async (review_id) => {
         throw err;
     }
 };
+
 const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortBy = 'recent', filterRating = null, withMedia = false) => {
     console.log(`[REVIEW_SERVICE] Fetching paginated reviews for Product ID: ${product_id} | Page: ${page}`);
     try {
         const offset = (page - 1) * limit;
         let queryParams = [product_id];
         
-        // Base Query
         let baseCondition = `WHERE pr.product_id = ?`;
 
-        // Apply Filters
         if (filterRating) {
             baseCondition += ` AND pr.rating = ?`;
             queryParams.push(Number(filterRating));
         }
 
         if (withMedia === 'true' || withMedia === true) {
-            // Sirf wo reviews jinme media attach hai
             baseCondition += ` AND EXISTS (SELECT 1 FROM review_media rm WHERE rm.review_id = pr.review_id)`;
         }
 
-        // 1. Get Total Count for Pagination Logic
         const countQuery = `SELECT COUNT(*) as total FROM product_reviews pr ${baseCondition}`;
         const [countResult] = await db.execute(countQuery, queryParams);
         const totalReviews = countResult[0].total;
 
-        // 2. Get the actual paginated data
         let dataQuery = `
             SELECT 
                 pr.review_id, pr.rating, pr.title, pr.comment, pr.attributes_json, 
@@ -143,15 +141,12 @@ const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortB
             ${baseCondition}
         `;
 
-        // Apply Sorting
         if (sortBy === 'helpful') {
             dataQuery += ` ORDER BY pr.helpful_votes DESC, pr.created_at DESC`;
         } else {
-            // Default to 'recent'
             dataQuery += ` ORDER BY pr.created_at DESC`;
         }
 
-        // Apply Pagination
         dataQuery += ` LIMIT ? OFFSET ?`;
         queryParams.push(Number(limit), Number(offset));
 
@@ -173,11 +168,10 @@ const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortB
         throw err;
     }
 };
-// ✏️ UPDATE REVIEW IN DB
+
 const updateReviewInDB = async (review_id, user_id, rating, title, comment, attributes, mediaFiles) => {
     console.log(`[REVIEW_SERVICE] Updating Review ID: ${review_id} by User ID: ${user_id}`);
     try {
-        // Step 1: Verify Ownership (Check if this review actually belongs to the user)
         const checkQuery = `SELECT review_id FROM product_reviews WHERE review_id = ? AND user_id = ?`;
         const [checkRes] = await db.execute(checkQuery, [review_id, user_id]);
         
@@ -185,7 +179,6 @@ const updateReviewInDB = async (review_id, user_id, rating, title, comment, attr
             throw new Error("UNAUTHORIZED_OR_NOT_FOUND");
         }
 
-        // Step 2: Update Review Text and Rating
         const updateQuery = `
             UPDATE product_reviews 
             SET rating = ?, title = ?, comment = ?, attributes_json = ? 
@@ -193,7 +186,6 @@ const updateReviewInDB = async (review_id, user_id, rating, title, comment, attr
         `;
         await db.execute(updateQuery, [Number(rating), title || null, comment || null, attributes || null, review_id]);
 
-        // Step 3: Insert NEW media if the user uploaded more files during edit
         if (mediaFiles && mediaFiles.length > 0) {
             const insertMediaQuery = `INSERT INTO review_media (review_id, media_type, media_url) VALUES ?`;
             const mediaValues = mediaFiles.map(file => {
@@ -211,11 +203,9 @@ const updateReviewInDB = async (review_id, user_id, rating, title, comment, attr
     }
 };
 
-// 🗑️ DELETE REVIEW FROM DB
 const deleteReviewFromDB = async (review_id, user_id) => {
     console.log(`[REVIEW_SERVICE] Deleting Review ID: ${review_id} by User ID: ${user_id}`);
     try {
-        // Step 1: Verify Ownership
         const checkQuery = `SELECT review_id FROM product_reviews WHERE review_id = ? AND user_id = ?`;
         const [checkRes] = await db.execute(checkQuery, [review_id, user_id]);
         
@@ -223,9 +213,6 @@ const deleteReviewFromDB = async (review_id, user_id) => {
             throw new Error("UNAUTHORIZED_OR_NOT_FOUND");
         }
 
-        // Step 2: Delete Review. 
-        // Note: IF you added "ON DELETE CASCADE" in the database structure as suggested earlier, 
-        // this will automatically delete the linked photos/videos from the 'review_media' table as well.
         const deleteQuery = `DELETE FROM product_reviews WHERE review_id = ?`;
         await db.execute(deleteQuery, [review_id]);
 
@@ -237,6 +224,11 @@ const deleteReviewFromDB = async (review_id, user_id) => {
     }
 };
 
-// Don't forget to export them at the bottom:
-// module.exports = { addReviewInDB, getReviewsFromDB, incrementHelpfulCount, getPaginatedReviewsFromDB, updateReviewInDB, deleteReviewFromDB };
-module.exports = { addReviewInDB, getReviewsFromDB, incrementHelpfulCount,getPaginatedReviewsFromDB,updateReviewInDB,deleteReviewFromDB   };
+module.exports = { 
+    addReviewInDB, 
+    getReviewsFromDB, 
+    incrementHelpfulCount, 
+    getPaginatedReviewsFromDB, 
+    updateReviewInDB, 
+    deleteReviewFromDB 
+};
