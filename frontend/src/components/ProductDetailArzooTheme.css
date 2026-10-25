@@ -83,6 +83,13 @@
   border-radius: 999px !important;
 }
 
+/* 🌟 ADDED: Arzoo Theme Video Play Button */
+.product-detail-page .video-play-overlay-thumb {
+  background: rgba(92, 15, 42, 0.85) !important; /* Arzoo wine dark */
+  border: 1px solid rgba(216, 183, 122, 0.8) !important; /* Arzoo gold */
+  box-shadow: 0 4px 10px rgba(92, 15, 42, 0.2);
+}
+
 /* ---------------------------------------------------------
    PRODUCT INFORMATION
    --------------------------------------------------------- */

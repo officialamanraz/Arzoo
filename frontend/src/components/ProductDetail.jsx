@@ -35,12 +35,6 @@ const MFG_FIELDS = [
 
 /* =========================================================
    AMAZON-STYLE FULLSCREEN IMAGE VIEWER (touch devices)
-   - Pinch to zoom (focal point stays under the fingers)
-   - Double tap to zoom in / out at the tapped point
-   - Drag to pan while zoomed (limited to the image edges)
-   - Swipe left / right to change the image
-   - Drag down to close
-   - Thumbnails, image counter, Escape / arrow keys
    ========================================================= */
 
 const MIN_SCALE = 1;
@@ -100,8 +94,6 @@ function MobileImageZoom({
     return id;
   };
 
-  /* ---------- transform helpers ---------- */
-
   const applyTransform = useCallback((animate = false) => {
     const img = imgRef.current;
     if (!img) return;
@@ -125,7 +117,6 @@ function MobileImageZoom({
     return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
   };
 
-  // Point relative to the centre of the stage (the transform origin of the image)
   const toStagePoint = (clientX, clientY) => {
     const rect = stageRef.current.getBoundingClientRect();
     return { x: clientX - rect.left - rect.width / 2, y: clientY - rect.top - rect.height / 2 };
@@ -136,7 +127,6 @@ function MobileImageZoom({
     applyTransform(animate);
   }, [applyTransform]);
 
-  // Zoom to nextScale keeping the content under point p fixed
   const zoomAt = (p, nextScale, animate = false) => {
     const { scale, x, y } = transform.current;
     const target = clamp(nextScale, MIN_SCALE, MAX_SCALE);
@@ -145,8 +135,6 @@ function MobileImageZoom({
     transform.current = { scale: target, x: pan.x, y: pan.y };
     applyTransform(animate);
   };
-
-  /* ---------- navigation ---------- */
 
   const goTo = useCallback((next, dir) => {
     if (next < 0 || next > lastIndex || next === indexRef.current) return;
@@ -169,8 +157,6 @@ function MobileImageZoom({
   const closeViewer = useCallback(() => {
     if (onClose) onClose(indexRef.current);
   }, [onClose]);
-
-  /* ---------- gestures ---------- */
 
   const handlePointerDown = (e) => {
     if (isBusy.current) return;
@@ -238,7 +224,6 @@ function MobileImageZoom({
       g.prevTime = now;
     }
 
-    // Zoomed in: one finger pans the image
     if (transform.current.scale > MIN_SCALE + ZOOMED_THRESHOLD) {
       g.mode = 'pan';
       const pan = clampPan(transform.current.scale, g.baseX + dx, g.baseY + dy);
@@ -247,7 +232,6 @@ function MobileImageZoom({
       return;
     }
 
-    // Fit to screen: lock the drag to one axis (swipe or close)
     if (!g.axis && Math.hypot(dx, dy) > AXIS_LOCK_PX) {
       g.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       g.mode = 'drag';
@@ -278,7 +262,6 @@ function MobileImageZoom({
     const g = gesture.current;
     if (!g) return;
 
-    // One finger left after a pinch: continue as a pan from the current position
     if (pointers.current.size === 1) {
       const rest = [...pointers.current.values()][0];
       g.mode = 'pan';
@@ -295,7 +278,6 @@ function MobileImageZoom({
     const duration = performance.now() - g.startTime;
     gesture.current = null;
 
-    // Pinch ended: snap back to fit if almost fully zoomed out
     if (g.pinched) {
       if (transform.current.scale < SNAP_TO_FIT_SCALE) resetTransform(true);
       return;
@@ -307,7 +289,6 @@ function MobileImageZoom({
       return;
     }
 
-    // Tap / double tap
     const isTap = Math.hypot(dx, dy) < TAP_MOVE_TOLERANCE_PX && duration < TAP_MAX_DURATION_MS;
     if (isTap) {
       const now = performance.now();
@@ -323,7 +304,7 @@ function MobileImageZoom({
       return;
     }
 
-    if (transform.current.scale > MIN_SCALE + ZOOMED_THRESHOLD) return; // pan ended, keep the position
+    if (transform.current.scale > MIN_SCALE + ZOOMED_THRESHOLD) return;
 
     if (g.axis === 'x') {
       const stageWidth = stageRef.current.clientWidth;
@@ -353,9 +334,6 @@ function MobileImageZoom({
     if (transform.current.scale < SNAP_TO_FIT_SCALE) resetTransform(false);
   };
 
-  /* ---------- effects ---------- */
-
-  // New image: reset zoom and keep the active thumbnail visible
   useEffect(() => {
     resetTransform(false);
     setBackdrop(1);
@@ -363,14 +341,12 @@ function MobileImageZoom({
     if (thumb && thumb.scrollIntoView) thumb.scrollIntoView({ block: 'nearest', inline: 'center' });
   }, [index, resetTransform]);
 
-  // Lock page scroll while the viewer is open
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = previous; };
   }, []);
 
-  // Keyboard support
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') closeViewer();
@@ -381,12 +357,10 @@ function MobileImageZoom({
     return () => window.removeEventListener('keydown', onKey);
   }, [closeViewer, goTo]);
 
-  // Hide the hint after a short time and clear all timers on unmount
   useEffect(() => {
     const id = later(() => setShowHint(false), HINT_VISIBLE_MS);
     const pending = timers.current;
     return () => { clearTimeout(id); pending.forEach(clearTimeout); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleImageError = (e) => {
@@ -461,7 +435,7 @@ function ProductDetail({ currency, rates, language }) {
   
   // Gallery States
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const [mobileActiveIdx, setMobileActiveIdx] = useState(0); // Mobile slider dot tracker
+  const [mobileActiveIdx, setMobileActiveIdx] = useState(0); 
   
   const [quantity, setQuantity] = useState(1);
   const [translatedName, setTranslatedName] = useState("");
@@ -497,12 +471,9 @@ function ProductDetail({ currency, rates, language }) {
   const [mobileZoomOpen, setMobileZoomOpen] = useState(false);
   const mobileTrackRef = useRef(null);
 
-  // One cache-busting value per page visit. A new value on every render made the images
-  // reload each time any state changed (for example on every mouse move over the desktop zoom).
   const [assetVersion] = useState(() => Date.now());
   const token = localStorage.getItem('token');
 
-  // Close the zoom viewer and bring the swipe gallery to the image that was last viewed
   const handleZoomClose = (lastViewedIdx) => {
     setMobileZoomOpen(false);
     setMobileActiveIdx(lastViewedIdx);
@@ -519,14 +490,13 @@ function ProductDetail({ currency, rates, language }) {
     setZoomCoords({ x, y });
   };
 
-  // Mobile slider scroll tracker for dots
   const handleSliderScroll = (e) => {
     const scrollLeft = e.target.scrollLeft;
     const width = e.target.offsetWidth;
     const newIndex = Math.round(scrollLeft / width);
     if (newIndex !== mobileActiveIdx) {
       setMobileActiveIdx(newIndex);
-      console.log(`[UI_EVENT] 📱 Mobile slider swiped to image index: ${newIndex}`);
+      console.log(`[UI_EVENT] 📱 Mobile slider swiped to media index: ${newIndex}`);
     }
   };
 
@@ -561,12 +531,10 @@ function ProductDetail({ currency, rates, language }) {
         if (data && data.success && data.user) {
           const addr = data.user.address || data.user.city || data.user.pincode;
           setUserLocation(addr ? `Deliver to: ${addr}` : "Location not set");
-          console.log("[USER_DATA] 📍 Delivery location resolved:", addr);
         } else {
           setUserLocation("Location not set");
         }
       } catch (err) {
-        console.error("Error fetching user location:", err);
         setUserLocation("Location not set");
       }
     };
@@ -592,7 +560,6 @@ function ProductDetail({ currency, rates, language }) {
           setReviewStats(data.stats || {});
           setTotalReviewsCount(data.totalReviews || (data.reviews ? data.reviews.length : 0));
           setPreviewReviews(data.reviews || []);
-          console.log("[DATA_FETCH] ⭐ Reviews stats fetched");
         }
       } catch (err) {
         console.error("Error fetching review stats:", err);
@@ -612,8 +579,6 @@ function ProductDetail({ currency, rates, language }) {
           setSaree(prodResult.data);
           setTranslatedName(prodResult.data.name);
           setTranslatedDesc(prodResult.data.description);
-          console.log("🔍 [DATA_FETCH] Fetched Product Data:", prodResult.data.name);
-          console.log("🎨 [DATA_FETCH] Variants Array:", prodResult.data.variants);
         }
 
         const likesRes = await fetch(`${API_BASE_URL}/api/likes/${id}/like`, {
@@ -644,7 +609,6 @@ function ProductDetail({ currency, rates, language }) {
     if (!saree || !language || language === 'en') return;
     const fetchTranslations = async () => {
       setIsTranslating(true);
-      console.log(`[TRANSLATION] 🌐 Translating content to ${language}...`);
       try {
         const [nameRes, descRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/translate`, {
@@ -662,7 +626,6 @@ function ProductDetail({ currency, rates, language }) {
         const dData = await descRes.json();
         setTranslatedName(nData.translatedText || saree.name);
         setTranslatedDesc(dData.translatedText || saree.description);
-        console.log(`[TRANSLATION] ✅ Content translated successfully.`);
       } catch (err) {
         console.error("[ProductDetail] Translation error:", err);
       } finally {
@@ -686,7 +649,6 @@ function ProductDetail({ currency, rates, language }) {
 
   const handleToggleLike = async () => {
     if (!token) { toast.error("Please login to like this product!"); return; }
-    console.log(`[USER_ACTION] ❤️ Toggled like button`);
     const wasLiked = isLiked;
     setIsLiked(!wasLiked);
     setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
@@ -704,7 +666,6 @@ function ProductDetail({ currency, rates, language }) {
     e.preventDefault();
     if (!newComment.trim()) return;
     if (!token) { toast.error("Please login to post a comment!"); return; }
-    console.log(`[USER_ACTION] 💬 Submitting comment...`);
     setIsSubmittingComment(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/comments/${id}/comments`, {
@@ -717,7 +678,6 @@ function ProductDetail({ currency, rates, language }) {
         setComments(prev => [data.comment, ...prev]);
         setNewComment('');
         toast.success("Comment posted successfully!");
-        console.log(`[USER_ACTION] ✅ Comment posted successfully.`);
       } else {
         toast.error(data.message || "Failed to post comment.");
       }
@@ -739,7 +699,6 @@ function ProductDetail({ currency, rates, language }) {
   const handleAddToCart = async (sareeId) => {
     if (isOutOfStock) return;
     if (!token) { toast.error("Please login to add product to cart!"); return; }
-    console.log(`[USER_ACTION] 🛒 Adding to cart, Product ID: ${sareeId}, Qty: ${quantity}`);
     setIsAdding(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
@@ -749,7 +708,6 @@ function ProductDetail({ currency, rates, language }) {
       });
       if (response.ok) {
           toast.success(`Added ${quantity} item(s) to cart!`);
-          console.log(`[USER_ACTION] ✅ Added to cart successfully.`);
       } else toast.error("Could not add item to cart.");
     } catch (error) {
       toast.error("Could not add item to cart.");
@@ -760,7 +718,6 @@ function ProductDetail({ currency, rates, language }) {
 
   const handleBuyNow = () => {
     if (!saree || isOutOfStock) return;
-    console.log(`[USER_ACTION] 💳 Proceeding to Buy Now`);
     navigate('/add-address', {
       state: { buyNowProduct: { product_id: saree.product_id, name: saree.name, price: saree.price, quantity: quantity, image_url: saree.image_url } }
     });
@@ -768,8 +725,6 @@ function ProductDetail({ currency, rates, language }) {
 
  const handleWhatsAppInquiry = () => {
     if (!saree) return;
-    console.log(`[USER_ACTION] 📱 Redirecting to WhatsApp Inquiry`);
-    
     const pName = encodeURIComponent(saree.name);
     const pPrice = encodeURIComponent(`${currency} ${getConvertedPrice(saree.price)}`);
     const pImage = encodeURIComponent(resolveImage(saree.image_url));
@@ -808,12 +763,22 @@ if (!saree) {
   );
 }
 
-  const sliderImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 
+  // 🌟 AMAZON STYLE: Construct Unified Media Array (Images first, Video last)
+  const baseImages = saree?.images && Array.isArray(saree.images) && saree.images.length > 0 
     ? saree.images.map(img => resolveImage(img)) 
     : [resolveImage(saree?.image_url) || FALLBACK_IMAGE];
     
-  const currentImageUrl = sliderImages[activeImageIdx] || FALLBACK_IMAGE;
+  const mediaItems = baseImages.map(url => ({ type: 'image', url }));
+  if (saree?.video_url) {
+    console.log("[PRODUCT_DETAIL] 🎥 Video found, appending to thumbnail gallery.");
+    mediaItems.push({ 
+      type: 'video', 
+      url: resolveImage(saree.video_url), 
+      thumb: baseImages[0] // Use first image as thumbnail placeholder for video
+    });
+  }
 
+  const currentMedia = mediaItems[activeImageIdx] || mediaItems[0];
   const hasDifferentColors = saree?.variants?.some(v => v.color_name && v.color_name !== (saree?.color_name || saree?.base_color));
   const variantLabelText = hasDifferentColors ? "Different Color" : "Different Design";
 
@@ -827,95 +792,108 @@ if (!saree) {
             
             {/* 🖥️ DESKTOP VIEW: AMAZON STYLE (Vertical Thumbnails on Left) */}
             <div className="desktop-gallery-layout">
-              {sliderImages.length > 1 && (
+              {mediaItems.length > 1 && (
                 <div className="desktop-thumbnails">
-                  {sliderImages.map((img, idx) => (
-                    <img
-                      key={idx} src={img} alt={`Angle ${idx + 1}`} 
-                      className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
-                      onClick={() => { setActiveImageIdx(idx); console.log(`[UI_EVENT] 🖥️ Desktop gallery changed to image index: ${idx}`); }} 
-                      onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }} draggable="false"
-                    />
+                  {mediaItems.map((media, idx) => (
+                    <div key={idx} style={{ position: 'relative', width: '60px', height: '70px', flexShrink: 0 }}>
+                      <img
+                        src={media.type === 'video' ? media.thumb : media.url} 
+                        alt={`Media ${idx + 1}`} 
+                        className={`thumbnail ${activeImageIdx === idx ? 'thumbnail-active' : ''}`}
+                        onClick={() => { setActiveImageIdx(idx); console.log(`[UI_EVENT] 🖥️ Desktop gallery changed to media index: ${idx} (${media.type})`); }} 
+                        onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }} draggable="false"
+                      />
+                      {/* Play Icon overlay for video thumbnail */}
+                      {media.type === 'video' && <div className="video-play-overlay-thumb">▶</div>}
+                    </div>
                   ))}
                 </div>
               )}
               
               <div 
                 className="main-image-wrapper amazon-zoom-box desktop-main-image"
-                onMouseEnter={() => setIsZoomHovered(true)}
+                onMouseEnter={() => { if(currentMedia.type === 'image') setIsZoomHovered(true) }}
                 onMouseLeave={() => setIsZoomHovered(false)}
-                onMouseMove={handleImageMouseMove}
+                onMouseMove={currentMedia.type === 'image' ? handleImageMouseMove : undefined}
               >
-                <img
-                  src={currentImageUrl} 
-                  alt={saree.name} 
-                  className="main-image amazon-zoom-img"
-                  style={isZoomHovered ? {
-                    transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
-                    transform: 'scale(2.2)',
-                    cursor: 'crosshair'
-                  } : {
-                    transform: 'scale(1)',
-                    transformOrigin: 'center center'
-                  }}
-                  onError={(e) => { if (!e.currentTarget.src.includes(FALLBACK_IMAGE)) { e.currentTarget.src = FALLBACK_IMAGE; } }} 
-                  draggable="false"
-                />
+                {currentMedia.type === 'image' ? (
+                  <img
+                    src={currentMedia.url} 
+                    alt={saree.name} 
+                    className="main-image amazon-zoom-img"
+                    style={isZoomHovered ? {
+                      transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
+                      transform: 'scale(2.2)',
+                      cursor: 'crosshair'
+                    } : {
+                      transform: 'scale(1)',
+                      transformOrigin: 'center center'
+                    }}
+                    onError={(e) => { if (!e.currentTarget.src.includes(FALLBACK_IMAGE)) { e.currentTarget.src = FALLBACK_IMAGE; } }} 
+                    draggable="false"
+                  />
+                ) : (
+                  <video 
+                    src={currentMedia.url} 
+                    controls 
+                    autoPlay
+                    preload="metadata"
+                    className="desktop-main-video"
+                    poster={currentMedia.thumb}
+                  />
+                )}
+
                 {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
-                <div className="image-zoom-hint">{isZoomHovered ? "Zoomed" : "Hover to zoom"}</div>
+                {currentMedia.type === 'image' && <div className="image-zoom-hint">{isZoomHovered ? "Zoomed" : "Hover to zoom"}</div>}
               </div>
             </div>
-
-            {/* 🎥 PRODUCT VIDEO SHOWCASE (Only on Detail Page if available) */}
-            {saree.video_url && (
-              <div className="product-video-container" style={{ marginTop: '15px', width: '100%', borderRadius: '12px', overflow: 'hidden', background: '#000' }}>
-                <video 
-                  src={resolveImage(saree.video_url)} 
-                  controls 
-                  preload="metadata"
-                  style={{ width: '100%', height: 'auto', maxHeight: '450px', objectFit: 'contain', display: 'block' }}
-                  poster={currentImageUrl}
-                >
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-            )}
 
             {/* 📱 MOBILE VIEW: FLIPKART STYLE (Swipeable Slider + Tap to Zoom) */}
             <div className="mobile-gallery-slider" style={{ position: 'relative' }}>
               {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
               <div className="mobile-slider-track" ref={mobileTrackRef} onScroll={handleSliderScroll}>
-                {sliderImages.map((img, idx) => (
+                {mediaItems.map((media, idx) => (
                   <div 
                     className="mobile-slide-item" 
                     key={idx}
                     onClick={() => {
-                      setMobileActiveIdx(idx);
-                      setMobileZoomOpen(true);
+                      if (media.type === 'image') {
+                        setMobileActiveIdx(idx);
+                        setMobileZoomOpen(true);
+                      }
                     }}
                   >
-                    <img 
-                      src={img} 
-                      alt={`View ${idx + 1}`} 
-                      onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }} 
-                      draggable="false" 
-                    />
+                    {media.type === 'image' ? (
+                      <img 
+                        src={media.url} 
+                        alt={`View ${idx + 1}`} 
+                        onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }} 
+                        draggable="false" 
+                      />
+                    ) : (
+                      <video 
+                        src={media.url} 
+                        controls 
+                        preload="metadata"
+                        className="mobile-main-video"
+                        poster={media.thumb}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
 
-              {/* Tap to Zoom Hint on Mobile */}
               <div 
                 className="image-zoom-hint" 
-                style={{ pointerEvents: 'none', bottom: sliderImages.length > 1 ? '34px' : '12px' }}
+                style={{ pointerEvents: 'none', bottom: mediaItems.length > 1 ? '34px' : '12px' }}
               >
-                🔍 Tap image to zoom
+                {mediaItems[mobileActiveIdx]?.type === 'image' ? "🔍 Tap image to zoom" : ""}
               </div>
 
               {/* Pagination Dots */}
-              {sliderImages.length > 1 && (
+              {mediaItems.length > 1 && (
                 <div className="mobile-slider-dots">
-                  {sliderImages.map((_, idx) => (
+                  {mediaItems.map((_, idx) => (
                     <span key={idx} className={`dot ${mobileActiveIdx === idx ? 'active' : ''}`}></span>
                   ))}
                 </div>
@@ -966,7 +944,7 @@ if (!saree) {
               </div>
             )}
           </div>
-          {/* ARZOO SINGLE EMBROIDERY ACCENT */}
+          
           {/* RIGHT: INFO, PRICE, VARIANTS */}
           <div className="info-box">
             <h1 className="product-title">{isTranslating ? "Translating..." : translatedName}</h1>
@@ -1002,7 +980,6 @@ if (!saree) {
                         title={v.color_name || 'Variant'}
                         onClick={(e) => {
                            if(isVariantSoldOut) e.preventDefault(); 
-                           else console.log(`[USER_ACTION] 🔄 Navigating to variant ID: ${v.product_id}`);
                         }}
                       >
                         <div className="amazon-swatch-img-wrap">
@@ -1012,7 +989,6 @@ if (!saree) {
                             className="amazon-swatch-img"
                             onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                           />
-                          {/* Sold Out Overlay for Variant */}
                           {isVariantSoldOut && (
                             <div className="variant-out-overlay">
                               <span className="variant-out-text">Out of stock</span>
@@ -1090,7 +1066,7 @@ if (!saree) {
               <button 
                 type="button"
                 className="fk-details-toggle-btn" 
-                onClick={() => { setShowAllDetails(!showAllDetails); console.log(`[UI_EVENT] 📜 Toggled All Details panel: ${!showAllDetails}`); }}
+                onClick={() => { setShowAllDetails(!showAllDetails); }}
               >
                 All details
                 <span className="toggle-icon">{showAllDetails ? '▲' : '▼'}</span>
@@ -1149,7 +1125,7 @@ if (!saree) {
               <button
                 type="button"
                 className="fk-details-toggle-btn"
-                onClick={() => { setShowReviewsToggle((prev) => !prev); console.log(`[UI_EVENT] ⭐ Toggled Reviews panel`); }}
+                onClick={() => { setShowReviewsToggle((prev) => !prev); }}
                 aria-expanded={showReviewsToggle}
               >
                 <span>Ratings and reviews</span>
@@ -1217,7 +1193,7 @@ if (!saree) {
         </div>
       </div>
 
-      {/* RECOMMENDED SECTION (Arrows hidden, swipeable on mobile) */}
+      {/* RECOMMENDED SECTION */}
       <div className="full-width-review-section">
         <div className="review-inner-container">
           <div className="recommended-section-wrapper">
@@ -1225,11 +1201,12 @@ if (!saree) {
           </div>
         </div>
       </div>
-      {/* 🔍 AMAZON-STYLE FULLSCREEN IMAGE VIEWER (pinch, double tap, pan, swipe) */}
+      
+      {/* 🔍 AMAZON-STYLE FULLSCREEN IMAGE VIEWER (Only passed image array) */}
       {mobileZoomOpen && (
         <MobileImageZoom
-          images={sliderImages}
-          startIndex={mobileActiveIdx}
+          images={baseImages}
+          startIndex={mobileActiveIdx >= baseImages.length ? 0 : mobileActiveIdx}
           title={translatedName || saree.name}
           fallbackSrc={FALLBACK_IMAGE}
           onClose={handleZoomClose}
