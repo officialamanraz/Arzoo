@@ -379,7 +379,7 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color=?, primary_color=?, other_color=?, border_type=?, pattern=?, 
             craft=?, weave=?, zari_type=?, blouse=?, border_motifs=?, origin=?, 
             fabric=?, khats=?, weight=?, blouse_length=?, producer=?, maker=?,
-            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?,producer_address=?,packer_address=?,group_id=?,video_url=?
+            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?, producer_address=?, packer_address=?, group_id=?
         `;
         
         const values = [
@@ -393,10 +393,9 @@ const updateProductInDB = async (product_id, updateData) => {
             packaging_cost ? Number(packaging_cost) : null,
             is_returnable !== undefined ? Number(is_returnable) : 1,
             dealer_id || null,
-            producer_address ||null,
+            producer_address || null,
             packer_address || null,
-            group_id || null,
-            video_url || null,
+            group_id || null
         ];
 
         if (mainImage) {
@@ -405,14 +404,15 @@ const updateProductInDB = async (product_id, updateData) => {
             values.push(mainImage);
         }
 
-        updateQuery += ` WHERE product_id=?`;
-        values.push(Number(product_id));
-        if (video_url !== undefined) { 
+        if (video_url !== undefined && video_url !== null) { 
             console.log(`[PRODUCT_SERVICE] Updating video for product ID: ${product_id}`);
             updateQuery += `, video_url=?`;
             values.push(video_url);
         }
 
+        updateQuery += ` WHERE product_id=?`;
+        values.push(Number(product_id));
+        
         await db.execute(updateQuery, values);
         console.log(`[PRODUCT_SERVICE] ✅ Main product data updated successfully for ID: ${product_id}`);
         // ⚡ Clear Cache so updated details show immediately
