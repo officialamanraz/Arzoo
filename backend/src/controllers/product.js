@@ -8,7 +8,8 @@ const {
     addProductToDB,
     updateProductInDB,
     addimageindb,
-    deleteimageindb 
+    deleteimageindb,
+    deleteAllInventoryInDB
 } = require('../services/productservice');
 
 const imagekit = require('../../config/imagekit'); 
@@ -431,6 +432,24 @@ const getRecommendedProducts = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+const deleteAllInventory = async (req, res) => {
+    console.log(`[INVENTORY_CONTROLLER] Received request to wipe all inventory.`);
+    try {
+        const deletedCount = await deleteAllInventoryInDB();
+        
+        return res.status(200).json({
+            success: true,
+            message: `Successfully deleted all inventory items. Total removed: ${deletedCount}`,
+            deletedCount
+        });
+    } catch (err) {
+        console.error('[INVENTORY_CONTROLLER] ❌ Error deleting all inventory:', err.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to delete inventory. Please try again later.'
+        });
+    }
+};
 
 module.exports = {
   product,
@@ -442,5 +461,6 @@ module.exports = {
   getallproduct,
   addNewImagesToProduct,
   deleteSingleImage,
-  getRecommendedProducts
+  getRecommendedProducts,
+ deleteAllInventory
 };

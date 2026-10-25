@@ -468,6 +468,21 @@ const deleteimageindb = async(image_id) => {
         throw err;
     }
 };
+const db = require('../DATABASE/mysql'); // Adjust your database path as needed
+
+const deleteAllInventoryInDB = async () => {
+    console.log(`[INVENTORY_SERVICE] ⚠️ Request to delete ALL inventory items.`);
+    try {
+        const query = `DELETE FROM inventory`; // Adjust your table name if it's different (e.g., products, inventory_items)
+        const [result] = await db.execute(query);
+        
+        console.log(`[INVENTORY_SERVICE] ✅ Successfully deleted ${result.affectedRows} inventory items.`);
+        return result.affectedRows;
+    } catch (err) {
+        console.error('[INVENTORY_SERVICE] ❌ Error in deleteAllInventoryInDB:', err.message);
+        throw err;
+    }
+};
 
 module.exports = {
     productsearch,
@@ -479,5 +494,6 @@ module.exports = {
     addProductToDB,
     updateProductInDB,
     addimageindb,
-    deleteimageindb 
+    deleteimageindb,
+    deleteAllInventoryInDB
 };

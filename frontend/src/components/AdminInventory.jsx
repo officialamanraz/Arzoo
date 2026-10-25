@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getImageUrl } from '../getImageUrl'; // agar components/ folder se import kar rahe ho
+import toast from 'react-hot-toast';
+import { getImageUrl } from '../getImageUrl';
 import AdminNav from './AdminNav';
 import './AdminInventory.css';
 
@@ -10,7 +11,8 @@ function AdminInventory() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(''); // 🌟 Search State Add Ki Gayi
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -21,6 +23,7 @@ function AdminInventory() {
       if (result && result.data) setProducts(result.data);
     } catch (error) {
       console.error('Error fetching products:', error.message);
+      toast.error('Failed to load inventory.');
     } finally {
       setLoading(false);
     }
@@ -49,18 +52,57 @@ function AdminInventory() {
       });
 
       if (response.ok) {
+        toast.success('Product deleted successfully');
         fetchProducts();
       } else {
         const errorData = await response.json();
-        alert(`Delete failed: ${errorData.message}`);
+        toast.error(`Delete failed: ${errorData.message}`);
       }
     } catch (err) {
       console.error('Delete error:', err);
-      alert('Delete failed due to a network or server error.');
+      toast.error('Delete failed due to a network or server error.');
     }
   };
 
-  // 🌟 Filter Logic: Search by Name, ID, Group ID, or Color
+  // ⚠️ DELETE ALL INVENTORY HANDLER
+  const handleDeleteAllInventory = async () => {
+    const confirmFirst = window.confirm("⚠️ WARNING: Are you sure you want to delete ALL inventory items? This action cannot be undone!");
+    if (!confirmFirst) return;
+
+    const confirmSecond = window.prompt("Type 'DELETE ALL' to confirm this destructive action:");
+    if (confirmSecond !== "DELETE ALL") {
+      toast.error("Action cancelled. Confirmation text did not match.");
+      return;
+    }
+
+    setIsDeletingAll(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/inventory/delete-all`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success(data.message || "All inventory deleted successfully!");
+        setProducts([]); // Clear state immediately
+      } else {
+        toast.error(data.message || "Failed to clear inventory.");
+      }
+    } catch (err) {
+      console.error("Network error deleting inventory:", err);
+      toast.error("Network error. Please check your connection.");
+    } finally {
+      setIsDeletingAll(false);
+    }
+  };
+
+  // Filter Logic: Search by Name, ID, Group ID, or Color
   const filteredProducts = products.filter((product) => {
     const search = searchTerm.toLowerCase();
     return (
@@ -82,7 +124,7 @@ function AdminInventory() {
 
       <AdminNav />
 
-      {/* 🌟 Search Bar & Add Button Row */}
+      {/* Search Bar & Action Buttons Row */}
       <div className="inventory-actions">
         <input
           type="text"
@@ -91,12 +133,24 @@ function AdminInventory() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="inventory-search-input"
         />
-        <button
-          onClick={() => navigate('/admin/add-product')}
-          className="admin-submit-btn admin-add-new-btn"
-        >
-          ➕ Add New Product
-        </button>
+        <div className="inventory-btn-group">
+          <button
+            onClick={() => navigate('/admin/add-product')}
+            className="admin-submit-btn admin-add-new-btn"
+          >
+            + Add New Product
+          </button>
+          
+          {products.length > 0 && (
+            <button
+              onClick={handleDeleteAllInventory}
+              disabled={isDeletingAll}
+              className="admin-danger-btn admin-delete-all-btn"
+            >
+              {isDeletingAll ? 'Deleting All...' : '⚠️ Delete All Inventory'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="admin-list-glass admin-list-glass-full">

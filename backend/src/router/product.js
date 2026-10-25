@@ -15,7 +15,8 @@ const {
   product,
   addNewImagesToProduct,
   deleteSingleImage,
-  getRecommendedProducts
+  getRecommendedProducts,
+  deleteAllInventory
 } = require('../controllers/product');
 
 // =========================================================================
@@ -84,5 +85,5 @@ router.delete('/product/image/:image_id', verifyToken, verifyAdmin, (req, res, n
     console.log(`[ROUTER LOG] 🗑️ DELETE single image ID: ${req.params.image_id}`);
     next();
 }, deleteSingleImage);
-
+router.delete('/delete-all',deleteAllInventory);
 module.exports = router;
