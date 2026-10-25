@@ -85,7 +85,7 @@ const getReviewsFromDB = async (product_id) => {
                     FROM review_media rm WHERE rm.review_id = pr.review_id
                 ) as media
             FROM product_reviews pr
-            LEFT JOIN users u ON pr.user_id = u.id
+            LEFT JOIN users u ON pr.user_id = u.user_id 
             WHERE pr.product_id = ?
             ORDER BY pr.created_at DESC
         `;
@@ -148,10 +148,9 @@ const getPaginatedReviewsFromDB = async (product_id, page = 1, limit = 10, sortB
                     FROM review_media rm WHERE rm.review_id = pr.review_id
                 ) as media
             FROM product_reviews pr
-            LEFT JOIN users u ON pr.user_id = u.id
+            LEFT JOIN users u ON pr.user_id = u.user_id
             ${baseCondition}
         `;
-
         if (sortBy === 'helpful') {
             dataQuery += ` ORDER BY pr.helpful_votes DESC, pr.created_at DESC`;
         } else {
