@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaStar, FaCheckCircle, FaThumbsUp } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { getImageUrl } from '../getImageUrl';
-import './Reviews.css'; // Make sure this CSS file is linked!
+import './Reviews.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -13,18 +13,18 @@ const AllReviewsPage = () => {
     const navigate = useNavigate();
 
     const [reviews, setReviews] = useState([]);
+    const [stats, setStats] = useState(null); // Chart stats
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
 
-    // Flipkart-style Filters
     const [sortBy, setSortBy] = useState('recent');
     const [filterRating, setFilterRating] = useState('');
     const [withMedia, setWithMedia] = useState(false);
 
-    // 🛡️ Foolproof Media URL Resolver (Prevents 404 image crashes)
+    // Image Fallback safety
     const resolveMediaUrl = (url) => {
-        if (!url) return '';
+        if (!url || url === 'undefined') return '';
         const clean = String(url).replace(/\\/g, '/').trim();
         if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
         if (clean.startsWith('/uploads/') || clean.startsWith('uploads/')) {
@@ -55,21 +55,24 @@ const AllReviewsPage = () => {
             if (data.success) {
                 const incoming = Array.isArray(data.reviews) ? data.reviews : [];
                 if (currentPage === 1) {
-                    setReviews(incoming); // Replace on filter change
+                    setReviews(incoming);
                 } else {
-                    setReviews(prev => [...prev, ...incoming]); // Append on "Load More"
+                    setReviews(prev => [...prev, ...incoming]);
                 }
                 setTotalPages(data.totalPages || 1);
+                
+                // Chart Stats Bind
+                if (data.stats && data.stats.totalReviews !== undefined) {
+                    setStats(data.stats);
+                }
             }
         } catch (error) {
-            console.error("Error fetching all reviews:", error);
             toast.error("Failed to load reviews.");
         } finally {
             setLoading(false);
         }
     };
 
-    // Refetch when filters change
     useEffect(() => {
         setPage(1);
         fetchPaginatedReviews(1);
@@ -100,7 +103,6 @@ const AllReviewsPage = () => {
 
     return (
         <div className="all-reviews-page">
-            {/* Navigation Back */}
             <button
                 onClick={() => navigate(`/product/${productId}`)}
                 style={{ background: 'none', border: 'none', color: '#2874f0', cursor: 'pointer', marginBottom: '16px', fontWeight: '600', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -108,9 +110,34 @@ const AllReviewsPage = () => {
                 ❮ Back to Product
             </button>
 
-            <h2 style={{ marginBottom: '20px', fontSize: '22px', fontWeight: '600' }}>All Customer Reviews</h2>
+            <h2 style={{ marginBottom: '20px', fontSize: '22px', fontWeight: '600', textAlign: 'left' }}>All Customer Reviews</h2>
 
-            {/* 🌟 FLIPKART STYLE FILTERS */}
+            {/* 📊 CHART SECTION (Flipkart Style) */}
+            {stats && stats.totalReviews > 0 && (
+                <div className="fk-rating-summary-box">
+                    <div className="fk-overall-rating">
+                        <span className="rating-big-num">{Number(stats.avgRating).toFixed(1)} <FaStar size={24} /></span>
+                        <span className="rating-total-count">{stats.totalReviews} Ratings & Reviews</span>
+                    </div>
+                    <div className="fk-rating-bars">
+                        {[5, 4, 3, 2, 1].map((star) => {
+                            const count = stats[`stars${star}`] || 0;
+                            const percent = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
+                            return (
+                                <div key={star} className="fk-bar-row">
+                                    <span className="fk-bar-star">{star} <FaStar size={10} /></span>
+                                    <div className="fk-bar-track">
+                                        <div className={`fk-bar-fill fill-${star}`} style={{ width: `${percent}%` }}></div>
+                                    </div>
+                                    <span className="fk-bar-count">{count}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* FILTERS */}
             <div className="filters-row">
                 <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                     <option value="recent">Most Recent</option>
@@ -132,20 +159,18 @@ const AllReviewsPage = () => {
                 </label>
             </div>
 
-            {/* 🌟 REVIEWS FEED */}
+            {/* REVIEWS FEED */}
             {loading && page === 1 ? (
                 <p style={{ color: '#777', padding: '20px 0', textAlign: 'center' }}>Loading reviews...</p>
             ) : reviews.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px 20px', background: '#f9f9f9', borderRadius: '8px' }}>
                     <h3 style={{ color: '#555' }}>No reviews found</h3>
-                    <p style={{ color: '#777', fontSize: '14px' }}>Try changing your filters to see more reviews.</p>
                 </div>
             ) : (
                 <div className="review-feed">
                     {reviews.map(rev => (
                         <div key={rev.review_id} className="review-card">
                             
-                            {/* Rating Badge & Title */}
                             <div className="review-badge-row">
                                 <span className={`fk-rating-badge ${getBadgeClass(rev.rating)}`}>
                                     {rev.rating} <FaStar size={10} />
@@ -153,10 +178,8 @@ const AllReviewsPage = () => {
                                 <h4 className="review-title">{rev.title || 'Verified Purchase'}</h4>
                             </div>
 
-                            {/* Comment Text */}
                             <p className="review-comment">{rev.comment}</p>
 
-                            {/* Attribute Chips (Features Loved) */}
                             {Array.isArray(rev.attributes) && rev.attributes.length > 0 && (
                                 <div className="review-attributes">
                                     {rev.attributes.map((attr, i) => (
@@ -165,7 +188,6 @@ const AllReviewsPage = () => {
                                 </div>
                             )}
 
-                            {/* Customer Photos Strip */}
                             {Array.isArray(rev.media) && rev.media.length > 0 && (
                                 <div className="customer-photos-strip">
                                     {rev.media.map((m, idx) => (
@@ -176,7 +198,15 @@ const AllReviewsPage = () => {
                                                 <img
                                                     src={resolveMediaUrl(m.url)}
                                                     alt="Review attachment"
-                                                    onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+                                                    onError={(e) => {
+                                                        // Fallback path check
+                                                        if (!e.currentTarget.dataset.retried) {
+                                                            e.currentTarget.dataset.retried = 'true';
+                                                            e.currentTarget.src = `${API_BASE_URL}/${String(m.url).replace(/^\/+/, '')}`;
+                                                        } else {
+                                                            e.currentTarget.style.display = 'none';
+                                                        }
+                                                    }}
                                                 />
                                             )}
                                         </div>
@@ -184,7 +214,6 @@ const AllReviewsPage = () => {
                                 </div>
                             )}
 
-                            {/* Footer: User Info & Helpful Vote */}
                             <div className="review-footer">
                                 <div className="reviewer-info">
                                     <span>{rev.user_name || 'Customer'}</span>
@@ -206,17 +235,10 @@ const AllReviewsPage = () => {
                 </div>
             )}
 
-            {/* 🌟 LOAD MORE BUTTON */}
             {page < totalPages && (
                 <button
                     className="fk-standalone-reviews-btn"
-                    style={{ 
-                        border: '1px solid #e0e0e0', 
-                        borderRadius: '4px', 
-                        marginTop: '24px', 
-                        justifyContent: 'center',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)' 
-                    }}
+                    style={{ border: '1px solid #e0e0e0', borderRadius: '4px', marginTop: '24px', justifyContent: 'center' }}
                     onClick={() => {
                         const next = page + 1;
                         setPage(next);
