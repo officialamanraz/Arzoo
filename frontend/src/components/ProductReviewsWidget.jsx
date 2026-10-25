@@ -52,7 +52,7 @@ const ProductReviewsWidget = ({ productId }) => {
     // Extract all media from reviews for the horizontal strip
     const allMedia = reviews.flatMap(r => r.media || []);
 
-    if (!stats) return null;
+    if (!stats) return <div className="reviews-widget-container">Loading reviews... (If stuck, check backend console for errors)</div>;
 
     return (
         <div className="reviews-widget-container">
