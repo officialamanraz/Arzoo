@@ -120,7 +120,7 @@ const fetchAdminDealerDetailService = async (dealerId) => {
         // D. Calculate Sold Items Accountability Summary
         console.log(`[DEALER_SERVICE_DETAIL] 🧮 Calculating Sold Items Accountability Summary...`);
         
-        // 🌟 ERROR FIXED: Ab 'orders' table JOIN karke cancelled/refunded check lagaya gaya hai
+        // 🌟 ERROR FIXED: Updated 'o.order_status' to 'o.status' matching the actual database schema
         const [soldItemsResult] = await db.execute(
             `SELECT 
                 SUM(oi.quantity) as total_products_sold,
@@ -129,7 +129,7 @@ const fetchAdminDealerDetailService = async (dealerId) => {
              FROM orderitems oi
              INNER JOIN products p ON oi.product_id = p.product_id
              INNER JOIN orders o ON oi.order_id = o.order_id
-             WHERE p.dealer_id = ? AND o.order_status NOT IN ('cancelled', 'refunded')`,
+             WHERE p.dealer_id = ? AND o.status NOT IN ('cancelled', 'refunded')`,
             [dealerId]
         );
 
