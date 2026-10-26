@@ -468,7 +468,6 @@ const deleteimageindb = async(image_id) => {
         throw err;
     }
 };
-const db = require('../DATABASE/mysql'); // Adjust your database path as needed
 
 const deleteAllInventoryInDB = async () => {
     console.log(`[INVENTORY_SERVICE] ⚠️ Request to delete ALL inventory items.`);
