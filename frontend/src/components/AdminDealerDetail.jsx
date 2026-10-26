@@ -33,6 +33,7 @@ function AdminDealerDetail() {
 
   useEffect(() => {
     if (!id) {
+      console.error('[ADMIN_DEALER_DETAIL] ❌ Missing or invalid Dealer ID in parameters.');
       setErrorMessage('Invalid or missing Dealer ID in URL.');
       setLoading(false);
       return;
@@ -41,6 +42,7 @@ function AdminDealerDetail() {
   }, [id]);
 
   const fetchDealerDetails = async () => {
+    console.log(`[ADMIN_DEALER_DETAIL] 🔄 Fetching dealer profile details for ID: ${id}...`);
     try {
       const token = localStorage.getItem('token');
       const targetUrl = `${API_BASE_URL}/api/dealer/admin/dealer/${id}`;
@@ -49,13 +51,15 @@ function AdminDealerDetail() {
       });
       const res = await response.json();
       if (res && res.success) {
+        console.log('[ADMIN_DEALER_DETAIL] ✅ Successfully fetched dealer profile and financials.');
         setDealerData(res.data);
         setNewCommission(res.data?.dealer?.commission_percentage || 0);
       } else {
+        console.warn('[ADMIN_DEALER_DETAIL] ⚠️ Server returned failure:', res?.message);
         setErrorMessage(res?.message || 'Failed to fetch dealer profile from server.');
       }
     } catch (err) {
-      console.error('[ADMIN_DEALER_DETAIL] ❌ Error:', err);
+      console.error('[ADMIN_DEALER_DETAIL] ❌ Network/Server Exception:', err);
       setErrorMessage('Network connection error. Please check your backend server.');
     } finally {
       setLoading(false);
@@ -64,6 +68,7 @@ function AdminDealerDetail() {
 
   // 🚀 Handle Commission Update API Call
   const handleUpdateCommission = async () => {
+    console.log(`[ADMIN_DEALER_DETAIL] 🔄 Updating commission percentage to ${newCommission}% for dealer ID: ${id}`);
     try {
       setUpdatingCommission(true);
       const token = localStorage.getItem('token');
@@ -83,13 +88,15 @@ function AdminDealerDetail() {
 
       const res = await response.json();
       if (res && res.success) {
+        console.log('[ADMIN_DEALER_DETAIL] ✅ Commission successfully updated.');
         setIsEditingCommission(false);
         fetchDealerDetails(); // Refresh live calculations
       } else {
+        console.warn('[ADMIN_DEALER_DETAIL] ⚠️ Commission update failed:', res?.message);
         alert(res?.message || 'Failed to update commission.');
       }
     } catch (err) {
-      console.error('[UPDATE_COMMISSION] ❌ Error:', err);
+      console.error('[UPDATE_COMMISSION] ❌ Network/Server Exception:', err);
       alert('Failed to update commission due to network error.');
     } finally {
       setUpdatingCommission(false);
@@ -238,7 +245,7 @@ function AdminDealerDetail() {
             <h3 className="stat-val blue">{products.length}</h3>
           </div>
           <div className="stat-card">
-            <p className="stat-label">TOTAL INVENTORY (MRP)</p>
+            <p className="stat-label">TOTAL INVENTORY (SELLING PRICE)</p>
             <h3 className="stat-val dark">₹{Number(financial_summary.total_inventory_mrp || 0).toLocaleString('en-IN')}</h3>
           </div>
           <div className="stat-card">
@@ -320,8 +327,7 @@ function AdminDealerDetail() {
                 {currentProducts.map((prod, idx) => {
                   const price = Number(prod?.price || 0);
                   const dealerBase = Number(prod?.dealer_base_price || 0);
-                  const packagingCost = Number(prod?.packaging_cost || 0);
-                  const estAdminProfit = price - dealerBase - packagingCost;
+                  const estAdminProfit = price - dealerBase; // Updated per backend adjustments (packaging cost excluded from profit subtraction)
                   const isSold = prod.order_id && prod.order_id !== null && String(prod.order_id).toLowerCase() !== 'null';
                   const stockQty = Number(prod?.stock_qty || 0);
 

@@ -9,15 +9,12 @@ const {
     updateProductInDB,
     addimageindb,
     deleteimageindb,
-    deleteAllInventoryInDB
+    deleteAllInventoryInDB,
+    getDealerAndAdminFinancials
 } = require('../services/productservice');
 
 const imagekit = require('../../config/imagekit'); 
-const NodeCache = require("node-cache");
-
-// File: src/controllers/productcontroller.js (Top par)
 const myCache = require('../../config/cache');
-// (Aur purani line `const myCache = new NodeCache(...)` ko hata dena)
 
 // ==========================================
 // 🛡️ IMAGEKIT TIMEOUT WRAPPER (MAX 15 SECONDS)
@@ -63,11 +60,6 @@ const product = async (req, res) => {
 };
 
 // ==========================================
-// 2. GET PRODUCT BY ID
-// ==========================================
-// ... (Aapke baaki imports jo product.js mein the)
-
-// ==========================================
 // 2. GET PRODUCT BY ID (Cache Bypass/Debug Logging)
 // ==========================================
 const getProductById = async (req, res) => {
@@ -76,16 +68,13 @@ const getProductById = async (req, res) => {
         const cacheKey = `product_${productId}`;
         console.log(`[PRODUCT_CONTROLLER] 📥 Incoming GET request for product ID: ${productId}`);
 
-        // 1. Check if product exists in cache
         if (typeof myCache !== 'undefined' && myCache.has(cacheKey)) {
             console.log(`[PRODUCT_CONTROLLER] 📦 Serving product ID ${productId} from Cache`);
             const cachedData = myCache.get(cacheKey);
-            console.log(`[PRODUCT_CONTROLLER] 📤 Sending cached response with ${cachedData.variants?.length || 0} variants.`);
             return res.status(200).json({ success: true, data: cachedData });
         }
 
         console.log(`[PRODUCT_CONTROLLER] 🔄 Not in cache. Fetching fresh data from database...`);
-        // 2. If not in cache, fetch fresh from database
         const product = await getbyidproduct(productId);
 
         if (!product) {
@@ -93,13 +82,11 @@ const getProductById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
 
-        // 3. Save to cache for future requests
         if (typeof myCache !== 'undefined') {
             myCache.set(cacheKey, product, 300); // 5 minutes cache
             console.log(`[PRODUCT_CONTROLLER] 💾 Product data successfully cached.`);
         }
 
-        console.log(`[PRODUCT_CONTROLLER] 📤 Sending fresh product response with ${product.variants?.length || 0} variants.`);
         return res.status(200).json({ success: true, data: product });
     } catch (err) {
         console.error(`[PRODUCT_CONTROLLER] ❌ Error in getProductById:`, err.message);
@@ -107,7 +94,6 @@ const getProductById = async (req, res) => {
     }
 };
 
-// ... (baaki functions waise hi rahenge)
 // ==========================================
 // 3. ADD PRODUCT
 // ==========================================
@@ -126,9 +112,8 @@ const addproducts = async (req, res) => {
 
         let mainImage = null;
         let extraImagesUrls = [];
-        let videoUrl = req.body.vidoe_url || null;
+        let videoUrl = req.body.video_url || req.body.vidoe_url || null;
 
-        // 🚨 UPDATE: Handling upload.fields object instead of array
         if (req.files) {
             console.log(`[PRODUCT_CONTROLLER] Files attached in request.`);
             
@@ -143,10 +128,11 @@ const addproducts = async (req, res) => {
                 );
                 mainImage = uploadedMain.url;
             }
-if (req.files['video'] && req.files['video'].length > 0) {
+
+            // 2. Process Video
+            if (req.files['video'] && req.files['video'].length > 0) {
                 console.log(`[PRODUCT_CONTROLLER] Uploading Product Video...`);
                 const videoFile = req.files['video'][0];
-                // Note: ImageKit can handle video uploads just like images
                 const uploadedVideo = await uploadToImageKit(
                     videoFile.buffer,
                     `${Date.now()}-${videoFile.originalname}`,
@@ -154,7 +140,8 @@ if (req.files['video'] && req.files['video'].length > 0) {
                 );
                 videoUrl = uploadedVideo.url;
             }
-            // 2. Process Extra Gallery Images (Multiple Angles)
+
+            // 3. Process Extra Gallery Images
             if (req.files['extraImages'] && req.files['extraImages'].length > 0) {
                 const extraFiles = req.files['extraImages'];
                 console.log(`[PRODUCT_CONTROLLER] Uploading ${extraFiles.length} extra gallery images...`);
@@ -167,16 +154,26 @@ if (req.files['video'] && req.files['video'].length > 0) {
                 );
                 extraImagesUrls = uploadedExtras.map(uploaded => uploaded.url); 
             }
-        } else {
-            console.log('[PRODUCT_CONTROLLER] ℹ️ No files uploaded with this request.');
+        }
+
+        // Subcategory IDs safety parser (agar stringified FormData se aa raha ho)
+        let subcategoryIds = data.subcategory_ids;
+        if (typeof subcategoryIds === 'string') {
+            try {
+                subcategoryIds = JSON.parse(subcategoryIds);
+            } catch (e) {
+                subcategoryIds = subcategoryIds.split(',').map(s => Number(s.trim())).filter(Boolean);
+            }
         }
 
         const productData = {
             ...data,
+            subcategory_ids: subcategoryIds,
+            product_length: data.product_length || null,
             is_active: data.is_active ?? 1,
             mainImage,
             extraImagesUrls,
-            videoUrlvideo_url: videoUrl || data.videoUrl || null
+            video_url: videoUrl
         };
 
         const newProductId = await addProductToDB(productData);
@@ -197,6 +194,7 @@ if (req.files['video'] && req.files['video'].length > 0) {
         return res.status(500).json({ success: false, message: 'Database error', error: err.message });
     }
 };
+
 // ==========================================
 // 4. SEARCH PRODUCT
 // ==========================================
@@ -221,7 +219,7 @@ const searchproduct = async (req, res) => {
 };
 
 // ==========================================
-// 5. UPDATE PRODUCT (FIXED TO HANDLE NEW IMAGES)
+// 5. UPDATE PRODUCT
 // ==========================================
 const updateproduct = async (req, res) => {
   const product_id = req.params.id;
@@ -230,13 +228,11 @@ const updateproduct = async (req, res) => {
   try {
     let mainImage = null;
     let extraImagesUrls = [];
-    let videoUrl = undefined
+    let videoUrl = undefined;
 
-    // 🚨 UPDATE: Handling upload.fields object for updates
     if (req.files) {
         console.log(`[PRODUCT_CONTROLLER] Processing uploaded file(s) for update...`);
         
-        // 1. Agar admin ne nayi Main Image daali hai
         if (req.files['image'] && req.files['image'].length > 0) {
             console.log(`[PRODUCT_CONTROLLER] Updating Main Cover Image...`);
             const mainFile = req.files['image'][0];
@@ -247,7 +243,8 @@ const updateproduct = async (req, res) => {
             );
             mainImage = uploadedMain.url;
         }
-if (req.files['video'] && req.files['video'].length > 0) {
+
+        if (req.files['video'] && req.files['video'].length > 0) {
             console.log(`[PRODUCT_CONTROLLER] Updating Product Video...`);
             const videoFile = req.files['video'][0];
             const uploadedVideo = await uploadToImageKit(
@@ -257,7 +254,7 @@ if (req.files['video'] && req.files['video'].length > 0) {
             );
             videoUrl = uploadedVideo.url;
         }
-        // 2. Agar admin ne nayi Extra Images (Gallery) daali hain
+
         if (req.files['extraImages'] && req.files['extraImages'].length > 0) {
             const extraFiles = req.files['extraImages'];
             console.log(`[PRODUCT_CONTROLLER] Uploading ${extraFiles.length} NEW extra gallery images...`);
@@ -271,23 +268,36 @@ if (req.files['video'] && req.files['video'].length > 0) {
             extraImagesUrls = uploadedExtras.map(uploaded => uploaded.url);
         }
     }
-    if (req.body.videoUrl === '') {
+
+    if (req.body.video_url === '' || req.body.videoUrl === '') {
         videoUrl = null;
     }
 
-    // Update data object ready karo
+    let subcategoryIds = req.body.subcategory_ids;
+    if (typeof subcategoryIds === 'string') {
+        try {
+            subcategoryIds = JSON.parse(subcategoryIds);
+        } catch (e) {
+            subcategoryIds = subcategoryIds.split(',').map(s => Number(s.trim())).filter(Boolean);
+        }
+    }
+
     const updateData = {
         ...req.body,
+        subcategory_ids: subcategoryIds,
+        product_length: req.body.product_length,
         mainImage,
         extraImagesUrls,
-       video_url: videoUrl
+        video_url: videoUrl
     };
 
     await updateProductInDB(product_id, updateData);
 
-    // ⚡ Clear Cache so updated details show immediately
-    // myCache.del(`product_${product_id}`); // Uncomment if you are importing and using myCache in this file
-    console.log(`[PRODUCT_CONTROLLER] ⚡ Cache logic processed for product ID: ${product_id}`);
+    // ⚡ Cache clear karein taaki frontend turant naya data dekhe
+    if (typeof myCache !== 'undefined') {
+        myCache.del(`product_${product_id}`);
+        console.log(`[PRODUCT_CONTROLLER] ⚡ Cache cleared for product ID: ${product_id}`);
+    }
 
     console.log(`[PRODUCT_CONTROLLER] ✅ Update success -- product_id: ${product_id}`);
     return res.status(200).json({ success: true, message: 'Product details and images updated successfully' });
@@ -317,7 +327,9 @@ const deleteproduct = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Product not found' });
     }
     
-    myCache.del(`product_${product_id}`);
+    if (typeof myCache !== 'undefined') {
+        myCache.del(`product_${product_id}`);
+    }
     console.log(`[PRODUCT_CONTROLLER] ✅ Delete success -- product_id: ${product_id}`);
     return res.status(200).json({ success: true, message: 'Product and associated images successfully deleted.' });
   } catch (err) {
@@ -354,7 +366,7 @@ const getallproduct = async (req, res) => {
 // ==========================================
 const addNewImagesToProduct = async (req, res) => {
   const product_id = req.params.id;
-  console.log(`[PRODUCT_CONTROLLER] 📡 Adding new images to product ID: ${product_id}, Files count: ${req.files ? req.files.length : 0}`);
+  console.log(`[PRODUCT_CONTROLLER] 📡 Adding new images to product ID: ${product_id}`);
 
   if (!req.files || req.files.length === 0) {
     console.warn(`[PRODUCT_CONTROLLER] ⚠️ Add images failed: No files provided.`);
@@ -373,7 +385,9 @@ const addNewImagesToProduct = async (req, res) => {
     const imageUrls = uploadedImages.map(img => img.url);
     const result = await addimageindb(product_id, imageUrls);
     
-    myCache.del(`product_${product_id}`);
+    if (typeof myCache !== 'undefined') {
+        myCache.del(`product_${product_id}`);
+    }
     console.log(`[PRODUCT_CONTROLLER] ✅ ${result.affectedRows} image(s) successfully added to product ID: ${product_id}`);
     return res.status(201).json({ success: true, message: `${result.affectedRows} new image(s) successfully added.` });
   } catch (err) {
@@ -432,6 +446,10 @@ const getRecommendedProducts = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ==========================================
+// 11. DELETE ALL INVENTORY
+// ==========================================
 const deleteAllInventory = async (req, res) => {
     console.log(`[INVENTORY_CONTROLLER] Received request to wipe all inventory.`);
     try {
@@ -451,6 +469,29 @@ const deleteAllInventory = async (req, res) => {
     }
 };
 
+// ==========================================
+// 12. GET FINANCIAL & PROFIT SUMMARY
+// ==========================================
+const getFinancialSummary = async (req, res) => {
+    console.log(`[FINANCIAL_CONTROLLER] 📡 Fetching financial and profit summary`);
+    try {
+        const dealerId = req.query.dealer_id ? Number(req.query.dealer_id) : null;
+        const summary = await getDealerAndAdminFinancials(dealerId);
+
+        return res.status(200).json({
+            success: true,
+            data: summary
+        });
+    } catch (err) {
+        console.error('[FINANCIAL_CONTROLLER] ❌ Error getting financial summary:', err.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch financial calculations',
+            error: err.message
+        });
+    }
+};
+
 module.exports = {
   product,
   getProductById,
@@ -462,5 +503,6 @@ module.exports = {
   addNewImagesToProduct,
   deleteSingleImage,
   getRecommendedProducts,
- deleteAllInventory
+  deleteAllInventory,
+  getFinancialSummary
 };

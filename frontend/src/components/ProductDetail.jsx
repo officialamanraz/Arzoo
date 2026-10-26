@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { FaHeart, FaRegHeart, FaComment, FaWhatsapp } from 'react-icons/fa';
 
 import Recommended from "../components/Recommended";
-import ProductReviewsWidget from './ProductReviewsWidget'; // 🌟 Naya Review Widget Import kiya
+import ProductReviewsWidget from './ProductReviewsWidget'; 
 import './ProductDetail.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -12,6 +12,7 @@ const FALLBACK_IMAGE = "/saare_1.jpeg";
 
 const SPEC_FIELDS = [
   { key: 'fabric', label: 'Fabric/Material' },
+  { key: 'product_length', label: 'Product Length' }, // 🌟 Product Length added here
   { key: 'primary_color', label: 'Primary Color' },
   { key: 'other_color', label: 'Other Colors' },
   { key: 'pattern', label: 'Pattern' },
@@ -490,7 +491,6 @@ function ProductDetail({ currency, rates, language }) {
     const newIndex = Math.round(scrollLeft / width);
     if (newIndex !== mobileActiveIdx) {
       setMobileActiveIdx(newIndex);
-      console.log(`[UI_EVENT] 📱 Mobile slider swiped to media index: ${newIndex}`);
     }
   };
 
@@ -691,6 +691,14 @@ function ProductDetail({ currency, rates, language }) {
   const getConvertedPrice = (basePrice) => {
     if (currency === 'INR' || !rates || !rates[currency]) return basePrice;
     return (basePrice * rates[currency].rate).toFixed(2);
+  };
+
+  // 🌟 Resolve subcategories list to display inside specifications
+  const getSubcategoriesString = () => {
+    if (saree?.subcategory_details && Array.isArray(saree.subcategory_details) && saree.subcategory_details.length > 0) {
+      return saree.subcategory_details.map(s => s.name).filter(Boolean).join(', ');
+    }
+    return '';
   };
 
  if (loading) {
@@ -1032,6 +1040,14 @@ if (!saree) {
                       <div className="fk-spec-group">
                         <h4 className="fk-group-title">General</h4>
                         <div className="fk-grid-2-col">
+                          {/* 🌟 Subcategory Details Render inside Specifications */}
+                          {getSubcategoriesString() && (
+                            <div className="fk-grid-item">
+                              <span className="fk-label">Subcategories / Style</span>
+                              <span className="fk-value">{getSubcategoriesString()}</span>
+                            </div>
+                          )}
+
                           {SPEC_FIELDS.filter(f => saree[f.key] && saree[f.key] !== 'null').map((f, i) => (
                             <div key={i} className="fk-grid-item">
                               <span className="fk-label">{f.label}</span>
@@ -1067,7 +1083,7 @@ if (!saree) {
               )}
             </div>
 
-            {/* 🌟 NAYA REVIEW WIDGET YAHAN JOD DIYA GAYA HAI */}
+            {/* REVIEW WIDGET */}
             <ProductReviewsWidget productId={saree.product_id} />
 
           </div>

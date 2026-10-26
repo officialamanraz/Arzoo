@@ -1,6 +1,49 @@
 const db = require('../DATABASE/mysql');
 const { getFullImageUrl } = require('../utils/imageUtils');
 
+// 🛡️ Helper: Convert any format of subcategories into a clean JSON string for MySQL
+const formatSubcategoriesForDB = (val) => {
+    if (!val) return null;
+    if (Array.isArray(val)) {
+        const cleanArr = val.map(Number).filter(n => !isNaN(n) && n > 0);
+        return cleanArr.length > 0 ? JSON.stringify(cleanArr) : null;
+    }
+    if (typeof val === 'string') {
+        try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed)) {
+                const cleanArr = parsed.map(Number).filter(n => !isNaN(n) && n > 0);
+                return cleanArr.length > 0 ? JSON.stringify(cleanArr) : null;
+            }
+            if (!isNaN(Number(parsed)) && Number(parsed) > 0) {
+                return JSON.stringify([Number(parsed)]);
+            }
+        } catch (e) {
+            const parts = val.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
+            if (parts.length > 0) return JSON.stringify(parts);
+        }
+    }
+    if (typeof val === 'number' && val > 0) {
+        return JSON.stringify([val]);
+    }
+    return null;
+};
+
+// 🛡️ Helper: Parse JSON safely from DB response
+const parseSafeJson = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+        try {
+            const parsed = JSON.parse(val);
+            return Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+            return [];
+        }
+    }
+    return [];
+};
+
 const productsearch = async(keyword, minprice, maxprice) => {
     console.log(`[PRODUCT_SERVICE] Searching products with keyword: "${keyword}", min: ${minprice}, max: ${maxprice}`);
     try {
@@ -27,7 +70,7 @@ const productsearch = async(keyword, minprice, maxprice) => {
         
         return result.map(product => ({
             ...product,
-            discount_percentage: product.calculated_discount, // Override with real-time math
+            discount_percentage: product.calculated_discount,
             image_url: getFullImageUrl(product.image_url)
         }));
     } catch (err) {
@@ -71,9 +114,7 @@ const allproductget = async(minPrice, maxPrice, limit, offset) => {
             queryParams.push(minPrice, maxPrice);
         }
         
-        // 🌟 Yeh line yahan add karni hai taaki naye products sabse upar (first page par) aayein
         query += ` ORDER BY product_id DESC`;
-        
         query += ` LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
         const [results] = await db.execute(query, queryParams);
@@ -81,6 +122,8 @@ const allproductget = async(minPrice, maxPrice, limit, offset) => {
         
         return results.map(product => ({
             ...product,
+            product_length: product.product_length || '',
+            subcategory_ids: parseSafeJson(product.subcategory_ids),
             discount_percentage: product.calculated_discount,
             image_url: getFullImageUrl(product.image_url)
         }));
@@ -155,6 +198,8 @@ const getproduct = async() => {
         console.log(`[PRODUCT_SERVICE] ✅ Total raw products fetched: ${result.length}`);
         return result.map(product => ({
             ...product,
+            product_length: product.product_length || '',
+            subcategory_ids: parseSafeJson(product.subcategory_ids),
             discount_percentage: product.calculated_discount
         }));
     } catch (err) {
@@ -164,21 +209,33 @@ const getproduct = async() => {
     }
 };
 
-// ... (apka baki code)
-
 const getbyidproduct = async (productId) => {
     console.log(`[PRODUCT_SERVICE] 🔍 Fetching product details for ID: ${productId}`);
     try {
         const productQuery = `
-            SELECT *, 
-            IF(mrp > price, ROUND(((mrp - price) / mrp) * 100), 0) AS calculated_discount 
-            FROM products 
-            WHERE product_id = ?
+            SELECT 
+                p.*,
+                COALESCE(
+                    (
+                        SELECT JSON_ARRAYAGG(JSON_OBJECT('id', s.subcategory_id, 'name', s.name))
+                        FROM subcategories s
+                        WHERE (
+                            p.subcategory_ids IS NOT NULL 
+                            AND JSON_CONTAINS(p.subcategory_ids, CAST(s.subcategory_id AS JSON))
+                        )
+                        OR s.subcategory_id = p.subcategory_id
+                    ),
+                    '[]'
+                ) AS subcategory_details,
+                IF(p.mrp > p.price, ROUND(((p.mrp - p.price) / p.mrp) * 100), 0) AS calculated_discount 
+            FROM products p 
+            WHERE p.product_id = ?
+            LIMIT 1
         `;
         const [productResults] = await db.execute(productQuery, [productId]);
 
         if (productResults.length === 0) {
-            console.warn(`[PRODUCT_SERVICE] ⚠ Product not found with ID: ${productId}`);
+            console.warn(`[PRODUCT_SERVICE] ⚠️ Product not found with ID: ${productId}`);
             return null; 
         }
         const product = productResults[0];
@@ -187,6 +244,9 @@ const getbyidproduct = async (productId) => {
 
         product.discount_percentage = product.calculated_discount;
         product.color_name = product.base_color; 
+        product.product_length = product.product_length || '';
+        product.subcategory_ids = parseSafeJson(product.subcategory_ids);
+        product.subcategory_details = parseSafeJson(product.subcategory_details);
 
         // 1. Fetch Multiple Images
         const imagesQuery = `SELECT image_url FROM product_images WHERE product_id = ?`;
@@ -202,46 +262,30 @@ const getbyidproduct = async (productId) => {
         product.gallery_images = [...new Set(allImages)];
         product.image_url = getFullImageUrl(product.image_url);
 
-        // 🌟 2. ROBUST VARIANTS FETCH LOGIC
-// 🌟 2. ROBUST VARIANTS FETCH LOGIC (WITH DEEP DEBUGGING)
+        // 2. Variants fetch logic
         let variantResults = [];
-        
         if (product.group_id !== null && product.group_id !== undefined && String(product.group_id).trim() !== '') {
-            // TRIM() hata diya hai taaki direct raw value match ho
             const rawGroupId = product.group_id; 
             console.log(`[PRODUCT_SERVICE] 🔍 Executing variants query for group_id: ${rawGroupId} excluding product ID: ${productId}`);
             
-            // 🐛 DEBUG QUERY: Dekhte hain database mein is group_id se aakhir kitne products hain!
-            const debugQuery = `SELECT product_id, group_id, is_active, base_color FROM products WHERE group_id = ?`;
-            const [debugResults] = await db.execute(debugQuery, [rawGroupId]);
-            console.log(`[PRODUCT_SERVICE] 🐛 DEBUG - DB contains these products for group_id ${rawGroupId}:`, debugResults);
-
-            // 🌟 MAIN QUERY: Yahan se 'AND is_active = 1' hata diya hai taaki check kar sakein ki issue active/inactive ka toh nahi
             const variantsQuery = `
-                SELECT product_id, base_color AS color_name, image_url, is_active,stock_qty
+                SELECT product_id, base_color AS color_name, image_url, is_active, stock_qty
                 FROM products 
                 WHERE group_id = ? AND product_id != ?
             `;
             [variantResults] = await db.execute(variantsQuery, [rawGroupId, productId]);
-            
             console.log(`[PRODUCT_SERVICE] ✅ Variants query returned ${variantResults.length} row(s).`);
-            
-            if(variantResults.length === 0) {
-                console.warn(`[PRODUCT_SERVICE] ⚠️ No variants found. Please check your database table to ensure products 227, 228, 229 actually have group_id = ${rawGroupId}.`);
-            }
-        } else {
-            console.log(`[PRODUCT_SERVICE] ⚠️ Skipped variant search (Group ID is empty or null)`);
         }
 
-        // Map the final variants and filter active ones in JavaScript safely
         product.variants = variantResults
-            .filter(v => v.is_active === 1) // Sirf active products ko variants mein dikhayenge
+            .filter(v => v.is_active === 1)
             .map(v => ({
                 product_id: v.product_id,
                 color_name: v.color_name || 'Variant',
                 image_url: getFullImageUrl(v.image_url),
-                stock_qty:v.stock_qty
+                stock_qty: v.stock_qty
             }));
+
         return product;
     } catch (err) {
         console.error(`[PRODUCT_SERVICE] ❌ Error in getbyidproduct for ID ${productId}:`, err.message);
@@ -249,21 +293,20 @@ const getbyidproduct = async (productId) => {
     }
 };
 
-// ... (apka baki code)
 const addProductToDB = async (productData) => {
     console.log(`[PRODUCT_SERVICE] Attempting to add new product: "${productData?.name}"`);
     try {
         const {
-            name, price, description, base_color, category_id, stock_qty, is_active = 1, mainImage,video_url,
+            name, price, description, base_color, category_id, stock_qty, is_active = 1, mainImage, video_url,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id
+            extraImagesUrls, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id, producer_address, packer_address, group_id,
+            product_length, subcategory_ids
         } = productData;
 
         const parsedPrice = Number(price) || 0;
         const parsedMrp = Number(mrp) || 0;
         const computedDiscount = (parsedMrp > parsedPrice) ? Math.round(((parsedMrp - parsedPrice) / parsedMrp) * 100) : 0;
-        
         const safeIsReturnable = (is_returnable === true || is_returnable === '1' || is_returnable === 1) ? 1 : 0;
 
         const categoryQuery = 'SELECT category_id FROM categories WHERE category_id = ?';
@@ -282,16 +325,19 @@ const addProductToDB = async (productData) => {
             throw new Error('DUPLICATE_PRODUCT');
         }
 
+        // Clean & Format subcategories for JSON column
+        const subcatJson = formatSubcategoriesForDB(subcategory_ids);
+
         const insertProductQuery = `
           INSERT INTO products (
             name, price, description, base_color, category_id, stock_qty, is_active, image_url,
             primary_color, other_color, border_type, pattern, craft, weave, zari_type, 
             blouse, border_motifs, origin, fabric, khats, weight, blouse_length, producer, maker,
-            mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id,video_url
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            mrp, discount_percentage, dealer_base_price, packaging_cost, is_returnable, dealer_id, producer_address, packer_address, group_id, video_url,
+            product_length, subcategory_ids
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        // 🌟 FIX: Order is now matched EXACTLY line by line with the INSERT columns above.
         const values = [
           name, 
           parsedPrice, 
@@ -326,7 +372,9 @@ const addProductToDB = async (productData) => {
           producer_address || null,
           packer_address || null,
           group_id || null,
-          video_url || null  // 👈 video_url is now at the exact correct 34th position
+          video_url || null,
+          product_length || null,
+          subcatJson
         ];
 
         const [result] = await db.execute(insertProductQuery, values);
@@ -351,6 +399,7 @@ const addProductToDB = async (productData) => {
         throw err;
     }
 };
+
 const updateProductInDB = async (product_id, updateData) => {
     console.log(`[PRODUCT_SERVICE] Attempting to update product ID: ${product_id}`);
     try {
@@ -367,15 +416,16 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color, primary_color, other_color, border_type, pattern, 
             craft, weave, zari_type, blouse, border_motifs, origin, 
             fabric, khats, weight, blouse_length, producer, maker,
-            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id,producer_address,packer_address,group_id,video_url
+            extraImagesUrls, mainImage, mrp, dealer_base_price, packaging_cost, is_returnable, dealer_id, producer_address, packer_address, group_id, video_url,
+            product_length, subcategory_ids
         } = updateData;
 
         const parsedPrice = Number(price) || 0;
         const parsedMrp = Number(mrp) || 0;
         const computedDiscount = (parsedMrp > parsedPrice) ? Math.round(((parsedMrp - parsedPrice) / parsedMrp) * 100) : 0;
-        
-        // Ensure is_returnable is strictly 0 or 1
         const safeIsReturnable = (is_returnable === true || is_returnable === '1' || is_returnable === 1) ? 1 : 0;
+
+        const subcatJson = formatSubcategoriesForDB(subcategory_ids);
 
         let updateQuery = `
           UPDATE products SET 
@@ -383,7 +433,8 @@ const updateProductInDB = async (product_id, updateData) => {
             base_color=?, primary_color=?, other_color=?, border_type=?, pattern=?, 
             craft=?, weave=?, zari_type=?, blouse=?, border_motifs=?, origin=?, 
             fabric=?, khats=?, weight=?, blouse_length=?, producer=?, maker=?,
-            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?, producer_address=?, packer_address=?, group_id=?
+            mrp=?, discount_percentage=?, dealer_base_price=?, packaging_cost=?, is_returnable=?, dealer_id=?, producer_address=?, packer_address=?, group_id=?,
+            product_length=?, subcategory_ids=?
         `;
         
         const values = [
@@ -392,14 +443,16 @@ const updateProductInDB = async (product_id, updateData) => {
             craft || null, weave || null, zari_type || null, blouse || null, border_motifs || null, origin || null,
             fabric || null, khats || null, weight || null, blouse_length || null, producer || null, maker || null,
             parsedMrp ? parsedMrp : null,
-            computedDiscount, // Computed dynamically on update
+            computedDiscount,
             dealer_base_price ? Number(dealer_base_price) : null,
             packaging_cost ? Number(packaging_cost) : null,
             safeIsReturnable,
             dealer_id || null,
             producer_address || null,
             packer_address || null,
-            group_id || null
+            group_id || null,
+            product_length || null,
+            subcatJson
         ];
 
         if (mainImage) {
@@ -419,11 +472,12 @@ const updateProductInDB = async (product_id, updateData) => {
 
         await db.execute(updateQuery, values);
         console.log(`[PRODUCT_SERVICE] ✅ Main product data updated successfully for ID: ${product_id}`);
-        // ⚡ Clear Cache so updated details show immediately
-    if (typeof myCache !== 'undefined') {
-        myCache.del(`product_${product_id}`);
-        console.log(`[PRODUCT_CONTROLLER] ⚡ Cache cleared for product ID: ${product_id}`);
-    }
+        
+        if (typeof myCache !== 'undefined') {
+            myCache.del(`product_${product_id}`);
+            console.log(`[PRODUCT_CONTROLLER] ⚡ Cache cleared for product ID: ${product_id}`);
+        }
+
         if (extraImagesUrls && extraImagesUrls.length > 0) {
             console.log(`[PRODUCT_SERVICE] Adding ${extraImagesUrls.length} new extra images during update for product ID: ${product_id}`);
             const insertImagesQuery = `INSERT INTO product_images (product_id, image_url, is_primary) VALUES ?`;
@@ -471,31 +525,69 @@ const deleteimageindb = async(image_id) => {
 
 const deleteAllInventoryInDB = async () => {
     console.log(`[INVENTORY_SERVICE] ⚠️ Request to delete ALL inventory items.`);
-    
-    // Connection pool se ek single connection nikalna safe rehta hai transactions ke liye
     const connection = await db.getConnection();
-    
     try {
-        // 1. Disable Foreign Key Checks (Taaki reviews/orders se linked products delete ho sakein)
         await connection.query('SET FOREIGN_KEY_CHECKS = 0');
-        
-        // 2. Delete all records from the products table (Agar table ka naam alag hai, toh 'products' ko change karein)
         const [result] = await connection.query('DELETE FROM products');
-        
-        // 3. Re-enable Foreign Key Checks (Very Important)
         await connection.query('SET FOREIGN_KEY_CHECKS = 1');
-        
         connection.release();
-        
         console.log(`[INVENTORY_SERVICE] ✅ Successfully deleted ${result.affectedRows} items.`);
         return result.affectedRows;
-        
     } catch (err) {
-        // Error aane par bhi foreign key checks wapas on karna zaroori hai
         await connection.query('SET FOREIGN_KEY_CHECKS = 1');
         connection.release();
-        
         console.error('[INVENTORY_SERVICE] ❌ Error in deleteAllInventoryInDB:', err.message);
+        throw err;
+    }
+};
+
+// 📊 Calculation: Dealer Inventory, Product Sales, aur Admin Gross Profit
+const getDealerAndAdminFinancials = async (dealer_id = null) => {
+    try {
+        let inventoryQuery = `
+            SELECT 
+                COUNT(product_id) AS total_products,
+                COALESCE(SUM(stock_qty), 0) AS total_stock_units,
+                COALESCE(SUM(stock_qty * dealer_base_price), 0) AS total_dealer_inventory_cost,
+                COALESCE(SUM(stock_qty * price), 0) AS total_retail_inventory_value
+            FROM products
+            WHERE 1=1
+        `;
+        const inventoryParams = [];
+        if (dealer_id) {
+            inventoryQuery += ` AND dealer_id = ?`;
+            inventoryParams.push(dealer_id);
+        }
+        const [inventoryResult] = await db.execute(inventoryQuery, inventoryParams);
+
+        let salesQuery = `
+            SELECT 
+                COALESCE(SUM(oi.quantity), 0) AS total_units_sold,
+                COALESCE(SUM(oi.price * oi.quantity), 0) AS total_sales_amount,
+                COALESCE(SUM(p.dealer_base_price * oi.quantity), 0) AS total_dealer_payout,
+                COALESCE(SUM(p.packaging_cost * oi.quantity), 0) AS total_packaging_expense,
+                COALESCE(
+                    SUM((oi.price - (COALESCE(p.dealer_base_price, 0) + COALESCE(p.packaging_cost, 0))) * oi.quantity), 
+                    0
+                ) AS admin_profit
+            FROM order_items oi
+            INNER JOIN products p ON oi.product_id = p.product_id
+            INNER JOIN orders o ON oi.order_id = o.order_id
+            WHERE o.order_status NOT IN ('cancelled', 'refunded')
+        `;
+        const salesParams = [];
+        if (dealer_id) {
+            salesQuery += ` AND p.dealer_id = ?`;
+            salesParams.push(dealer_id);
+        }
+        const [salesResult] = await db.execute(salesQuery, salesParams);
+
+        return {
+            inventory: inventoryResult[0],
+            financials: salesResult[0]
+        };
+    } catch (err) {
+        console.error('[FINANCIAL_SERVICE] ❌ Error calculating dealer/admin financials:', err.message);
         throw err;
     }
 };
@@ -511,5 +603,6 @@ module.exports = {
     updateProductInDB,
     addimageindb,
     deleteimageindb,
-    deleteAllInventoryInDB
+    deleteAllInventoryInDB,
+    getDealerAndAdminFinancials
 };

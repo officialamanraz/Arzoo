@@ -647,3 +647,33 @@ body.dark .review-btn-cancel:hover { background: #262629; }
   .review-tags-container { gap: 6px; }
   .review-tag-btn { padding: 6px 10px; font-size: 0.75rem; }
 }
+.fk-rate-order-btn {
+    background-color: transparent;
+    color: #2874f0; /* Flipkart Blue */
+    border: 1px solid #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fk-rate-order-btn:hover {
+    background-color: #f5faff;
+    border-color: #2874f0;
+}
+
+/* Agar dark mode use kar rahe hain toh: */
+body.dark .fk-rate-order-btn {
+    color: #4da3ff;
+    border-color: #3f3f46;
+}
+body.dark .fk-rate-order-btn:hover {
+    background-color: #27272a;
+    border-color: #4da3ff;
+}

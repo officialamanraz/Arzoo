@@ -1,6 +1,33 @@
 const dealerService = require('../services/dealer.Service');
 const imagekit = require('../../config/imagekit'); 
 
+// ==========================================
+// 🛡️ IMAGEKIT TIMEOUT WRAPPER (MAX 15 SECONDS)
+// ==========================================
+const uploadToImageKit = async (fileBuffer, fileName, folderPath) => {
+    console.log(`[IMAGEKIT] Starting upload for file: ${fileName} to folder: ${folderPath}`);
+    const base64String = fileBuffer.toString("base64");
+
+    const uploadPromise = imagekit.files.upload({
+        file: base64String, 
+        fileName: fileName,
+        folder: folderPath,
+    });
+
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('IMAGEKIT_TIMEOUT')), 15000); 
+    });
+
+    try {
+        const result = await Promise.race([uploadPromise, timeoutPromise]);
+        console.log(`[IMAGEKIT] ✅ Upload success: ${result.url}`);
+        return result;
+    } catch (err) {
+        console.error(`[IMAGEKIT] ❌ Upload failed for ${fileName}:`, err.message);
+        throw err;
+    }
+};
+
 /**
  * ============================================================================
  * CONTROLLER 1: Handle Admin Request for Master Dealer Financial Report
@@ -15,7 +42,8 @@ const getBasicDealerList = async (req, res) => {
         return res.status(200).json({ success: true, dealers });
     } catch (error) {
         console.error('[DEALER_CONTROLLER] ❌ Server Exception in getBasicDealerList:', error.message);
-        return res.status(500).json({ success: false, message: 'Failed to fetch dealers.' });
+        console.error('[DEALER_CONTROLLER] Stack Trace:', error.stack);
+        return res.status(500).json({ success: false, message: 'Failed to fetch dealers', error: error.message });
     }
 };
 
@@ -27,6 +55,11 @@ const getBasicDealerList = async (req, res) => {
 const getAdminDealerDetail = async (req, res) => {
     const dealerId = req.params.id;
     console.log(`[DEALER_CONTROLLER] 🚀 HTTP GET request received for Admin Dealer Detail. ID: ${dealerId}`);
+
+    if (!dealerId || isNaN(dealerId)) {
+        console.warn(`[DEALER_CONTROLLER] ⚠️ Invalid Dealer ID provided: ${dealerId}`);
+        return res.status(400).json({ success: false, message: 'Invalid or missing Dealer ID.' });
+    }
 
     try {
         console.log(`[DEALER_CONTROLLER] 🔄 Calling fetchAdminDealerDetailService...`);
@@ -44,7 +77,8 @@ const getAdminDealerDetail = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(`[DEALER_CONTROLLER] ❌ Server Exception in getAdminDealerDetail:`, err.message);
+        console.error(`[DEALER_CONTROLLER] ❌ Server Exception in getAdminDealerDetail for ID ${dealerId}:`, err.message);
+        console.error('[DEALER_CONTROLLER] Stack Trace:', err.stack);
         return res.status(500).json({ 
             success: false, 
             message: 'Server error while fetching dealer details', 
@@ -72,16 +106,15 @@ const createNewDealer = async (req, res) => {
     try {
         let image_url = null;
  
-        // Upload the dealer's photo to ImageKit BEFORE inserting the row
+        // Upload the dealer's photo to ImageKit securely using timeout wrapper
         if (req.file) {
             console.log('[DEALER_CONTROLLER] 🔄 Uploading dealer image to ImageKit...');
-            const uploadResponse = await imagekit.files.upload({
-                file: req.file.buffer.toString('base64'),
-                fileName: `dealer_${Date.now()}-${req.file.originalname}`,
-                folder: '/arzoo-saree/dealers'
-            });
+            const uploadResponse = await uploadToImageKit(
+                req.file.buffer,
+                `dealer_${Date.now()}-${req.file.originalname}`,
+                '/arzoo-saree/dealers'
+            );
             image_url = uploadResponse.url;
-            console.log(`[DEALER_CONTROLLER] ✅ Image uploaded -- url: ${image_url}`);
         } else {
             console.log('[DEALER_CONTROLLER] ℹ️ No image file provided -- dealer will have no photo.');
         }
@@ -92,7 +125,7 @@ const createNewDealer = async (req, res) => {
         console.log('[DEALER_CONTROLLER] 🔄 Calling addDealerDB service...');
         const newDealerId = await dealerService.addDealerDB(dealerPayload);
  
-        console.log(`[DEALER_CONTROLLER] ✅ Response: Dealer created successfully.`);
+        console.log(`[DEALER_CONTROLLER] ✅ Response: Dealer created successfully. ID: ${newDealerId}`);
         return res.status(201).json({
             success: true,
             message: 'Dealer added successfully!',
@@ -100,10 +133,15 @@ const createNewDealer = async (req, res) => {
         });
     } catch (error) {
         console.error('[DEALER_CONTROLLER] ❌ Server Exception in createNewDealer:', error.message);
-        return res.status(500).json({
-            success: false,
-            message: error.message || 'Server error while adding new dealer.'
-        });
+        console.error('[DEALER_CONTROLLER] Stack Trace:', error.stack);
+
+        if (error.message === 'IMAGEKIT_TIMEOUT') {
+            return res.status(504).json({ success: false, message: 'Image upload took too long. Please try a smaller image.' });
+        }
+        if (error.message.includes('already exists')) {
+            return res.status(409).json({ success: false, message: error.message });
+        }
+        return res.status(500).json({ success: false, message: 'Server error while adding new dealer.', error: error.message });
     }
 };
 
@@ -119,7 +157,14 @@ const updateExistingDealer = async (req, res) => {
     console.log('[DEALER_CONTROLLER] 🖼️ New File received:', req.file ? req.file.originalname : 'none');
 
     const { name, email } = req.body;
+    
+    if (!dealerId || isNaN(dealerId)) {
+        console.warn(`[DEALER_CONTROLLER] ⚠️ Invalid Dealer ID provided: ${dealerId}`);
+        return res.status(400).json({ success: false, message: 'Invalid or missing Dealer ID.' });
+    }
+
     if (!name || !email) {
+        console.warn('[DEALER_CONTROLLER] ⚠️ Validation Failed: Name and Email are required.');
         return res.status(400).json({ success: false, message: 'Dealer Name and Email are required.' });
     }
 
@@ -128,28 +173,34 @@ const updateExistingDealer = async (req, res) => {
 
         if (req.file) {
             console.log('[DEALER_CONTROLLER] 🔄 Uploading new dealer image to ImageKit...');
-            const uploadResponse = await imagekit.files.upload({
-                file: req.file.buffer.toString('base64'),
-                fileName: `dealer_update_${Date.now()}-${req.file.originalname}`,
-                folder: '/arzoo-saree/dealers'
-            });
+            const uploadResponse = await uploadToImageKit(
+                req.file.buffer,
+                `dealer_update_${Date.now()}-${req.file.originalname}`,
+                '/arzoo-saree/dealers'
+            );
             image_url = uploadResponse.url;
-            console.log(`[DEALER_CONTROLLER] ✅ New Image uploaded -- url: ${image_url}`);
         }
 
         const dealerPayload = { ...req.body, image_url };
         await dealerService.updateDealerDB(dealerId, dealerPayload);
 
+        console.log(`[DEALER_CONTROLLER] ✅ Response: Dealer ID ${dealerId} updated successfully.`);
         return res.status(200).json({
             success: true,
             message: 'Dealer updated successfully!'
         });
     } catch (error) {
-        console.error('[DEALER_CONTROLLER] ❌ Server Exception in updateExistingDealer:', error.message);
-        return res.status(500).json({
-            success: false,
-            message: error.message || 'Server error while updating dealer.'
-        });
+        console.error(`[DEALER_CONTROLLER] ❌ Server Exception in updateExistingDealer for ID ${dealerId}:`, error.message);
+        console.error('[DEALER_CONTROLLER] Stack Trace:', error.stack);
+
+        if (error.message === 'IMAGEKIT_TIMEOUT') {
+            return res.status(504).json({ success: false, message: 'Image upload timeout. Please try again.' });
+        }
+        if (error.message.includes('not found')) {
+            return res.status(404).json({ success: false, message: error.message });
+        }
+
+        return res.status(500).json({ success: false, message: 'Server error while updating dealer.', error: error.message });
     }
 };
 

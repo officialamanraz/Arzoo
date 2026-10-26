@@ -81,7 +81,6 @@
   flex-wrap: wrap;
 }
 
-/* GLITCH FIX FOR DEALER NAME & INFO */
 .dealer-name {
   margin: 0 0 8px 0;
   font-size: 26px !important;
@@ -286,28 +285,35 @@
 
 .dealer-filter-controls {
   display: flex;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.dealer-search-input {
-  padding: 10px 14px;
+.dealer-search-input,
+.dealer-select-box {
+  height: 42px;
+  padding: 0 14px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  min-width: 220px;
   outline: none;
+  font-size: 14px;
+  line-height: normal;
+  box-sizing: border-box;
+  background: #fff;
   transition: border 0.3s;
 }
-.dealer-search-input:focus {
+
+.dealer-search-input {
+  min-width: 220px;
+}
+
+.dealer-search-input:focus,
+.dealer-select-box:focus {
   border-color: #3b82f6;
 }
 
 .dealer-select-box {
-  padding: 10px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  outline: none;
   cursor: pointer;
 }
 
@@ -528,180 +534,73 @@
 }
 
 /* =========================================================
-   DARK MODE: ADMIN DEALER DETAILS & INVENTORY
+   DARK MODE SUPPORT: ADMIN DEALER DETAILS & INVENTORY
    ========================================================= */
-body.dark .dealer-profile-card,
-body.dark .stat-card,
-body.dark .dealer-prod-card {
-  background: #1c1c1e !important;
-  border-color: #333336 !important;
-}
-
-body.dark .dealer-name,
-body.dark .section-title,
-body.dark .dealer-prod-title,
-body.dark .text-dark {
-  color: #f8fafc !important;
-}
-
-body.dark .dealer-meta,
-body.dark .stat-label,
-body.dark .prod-category,
-body.dark .p-row {
-  color: #94a3b8 !important;
-}
-
-body.dark .dealer-meta code,
-body.dark .dealer-commission-tag {
-  background: #27272a !important;
-  color: #cbd5e1 !important;
-  border-color: #3f3f46 !important;
-}
-
-body.dark .dealer-search-input,
-body.dark .dealer-select-box {
-  background: #27272a !important;
-  color: #f8fafc !important;
-  border-color: #3f3f46 !important;
-}
-
-body.dark .dealer-prod-img-wrapper {
-  background: #121212 !important;
-}
-
-body.dark .dealer-prod-body {
-  background: #1c1c1e !important;
-}
-
-body.dark .prod-financial-breakdown {
-  background: #27272a !important;
-  border-color: #3f3f46 !important;
-}
-
-body.dark .p-row.admin-margin {
-  border-top-color: #3f3f46 !important;
-}
-
-body.dark .stat-card-green {
-  background: rgba(22, 163, 74, 0.1) !important;
-  border-color: rgba(22, 163, 74, 0.2) !important;
-}
-
-body.dark .stat-val.dark {
-  color: #f8fafc !important;
-}
-
-body.dark .dealer-no-products {
-  background: #1c1c1e !important;
-  border-color: #333336 !important;
-}
-/* =========================================
-   FIXED DARK MODE OVERRIDES FOR DEALER PAGES
-   ========================================= */
-
-.dark .dealer-profile-card,
-.dark .stat-card,
-.dark .dealer-prod-card,
-[data-theme='dark'] .dealer-profile-card,
-[data-theme='dark'] .stat-card,
-[data-theme='dark'] .dealer-prod-card {
+:is(body.dark, .dark, [data-theme='dark']) .dealer-profile-card,
+:is(body.dark, .dark, [data-theme='dark']) .stat-card,
+:is(body.dark, .dark, [data-theme='dark']) .dealer-prod-card {
   background-color: #1e1e1e !important;
   border-color: #333333 !important;
   color: #f8fafc !important;
 }
 
-.dark .dealer-name,
-.dark .section-title,
-.dark .dealer-prod-title,
-.dark .text-dark,
-[data-theme='dark'] .dealer-name,
-[data-theme='dark'] .section-title,
-[data-theme='dark'] .dealer-prod-title,
-[data-theme='dark'] .text-dark {
+:is(body.dark, .dark, [data-theme='dark']) .dealer-name,
+:is(body.dark, .dark, [data-theme='dark']) .section-title,
+:is(body.dark, .dark, [data-theme='dark']) .dealer-prod-title,
+:is(body.dark, .dark, [data-theme='dark']) .text-dark {
   color: #ffffff !important;
 }
 
-.dark .dealer-meta,
-.dark .stat-label,
-.dark .prod-category,
-.dark .p-row,
-[data-theme='dark'] .dealer-meta,
-[data-theme='dark'] .stat-label,
-[data-theme='dark'] .prod-category,
-[data-theme='dark'] .p-row {
+:is(body.dark, .dark, [data-theme='dark']) .dealer-meta,
+:is(body.dark, .dark, [data-theme='dark']) .stat-label,
+:is(body.dark, .dark, [data-theme='dark']) .prod-category,
+:is(body.dark, .dark, [data-theme='dark']) .p-row {
   color: #94a3b8 !important;
 }
 
-.dark .dealer-meta code,
-.dark .dealer-commission-tag,
-[data-theme='dark'] .dealer-meta code,
-[data-theme='dark'] .dealer-commission-tag {
+:is(body.dark, .dark, [data-theme='dark']) .dealer-meta code,
+:is(body.dark, .dark, [data-theme='dark']) .dealer-commission-tag {
   background-color: #2a2a2a !important;
   color: #cbd5e1 !important;
   border-color: #444444 !important;
 }
 
-.dark .dealer-prod-body,
-.dark .prod-financial-breakdown,
-[data-theme='dark'] .dealer-prod-body,
-[data-theme='dark'] .prod-financial-breakdown {
+:is(body.dark, .dark, [data-theme='dark']) .dealer-filter-controls select.dealer-select-box,
+:is(body.dark, .dark, [data-theme='dark']) .dealer-filter-controls input.dealer-search-input {
+  background-color: #27272a !important;
+  color: #f8fafc !important;
+  border-color: #3f3f46 !important;
+}
+
+:is(body.dark, .dark, [data-theme='dark']) .dealer-filter-controls select.dealer-select-box option {
+  background-color: #1c1c1e !important;
+  color: #f8fafc !important;
+}
+
+:is(body.dark, .dark, [data-theme='dark']) .dealer-prod-img-wrapper {
+  background: #121212 !important;
+}
+
+:is(body.dark, .dark, [data-theme='dark']) .dealer-prod-body,
+:is(body.dark, .dark, [data-theme='dark']) .prod-financial-breakdown {
   background-color: #1e1e1e !important;
   border-color: #333333 !important;
 }
-/* =========================================
-   FIX FOR CATEGORY FILTER BUTTONS & DROPDOWNS IN DARK MODE
-   ========================================= */
 
-body.dark .dealer-filter-controls select,
-body.dark .dealer-filter-controls input,
-body.dark select.dealer-select-box,
-[data-theme='dark'] .dealer-filter-controls select,
-[data-theme='dark'] .dealer-filter-controls input,
-[data-theme='dark'] select.dealer-select-box {
-  background-color: #27272a !important;
-  color: #f8fafc !important;
-  border-color: #3f3f46 !important;
+:is(body.dark, .dark, [data-theme='dark']) .p-row.admin-margin {
+  border-top-color: #3f3f46 !important;
 }
 
-/* Fix dropdown option list items in dark mode */
-body.dark .dealer-filter-controls select option,
-[data-theme='dark'] .dealer-filter-controls select option {
-  background-color: #1c1c1e !important;
+:is(body.dark, .dark, [data-theme='dark']) .stat-card-green {
+  background: rgba(22, 163, 74, 0.1) !important;
+  border-color: rgba(22, 163, 74, 0.2) !important;
+}
+
+:is(body.dark, .dark, [data-theme='dark']) .stat-val.dark {
   color: #f8fafc !important;
 }
-/* =========================================
-   PERFECT ALIGNMENT & DARK MODE FOR CATEGORY SELECTS
-   ========================================= */
 
-.dealer-filter-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.dealer-filter-controls select.dealer-select-box,
-.dealer-filter-controls input.dealer-search-input {
-  height: 42px;
-  padding: 0 14px;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  font-size: 14px;
-  line-height: normal;
-}
-
-body.dark .dealer-filter-controls select.dealer-select-box,
-body.dark .dealer-filter-controls input.dealer-search-input,
-[data-theme='dark'] .dealer-filter-controls select.dealer-select-box,
-[data-theme='dark'] .dealer-filter-controls input.dealer-search-input {
-  background-color: #27272a !important;
-  color: #f8fafc !important;
-  border-color: #3f3f46 !important;
-}
-
-body.dark .dealer-filter-controls select.dealer-select-box option,
-[data-theme='dark'] .dealer-filter-controls select.dealer-select-box option {
-  background-color: #1c1c1e !important;
-  color: #f8fafc !important;
+:is(body.dark, .dark, [data-theme='dark']) .dealer-no-products {
+  background: #1c1c1e !important;
+  border-color: #333336 !important;
 }
