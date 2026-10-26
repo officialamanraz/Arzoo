@@ -471,13 +471,30 @@ const deleteimageindb = async(image_id) => {
 
 const deleteAllInventoryInDB = async () => {
     console.log(`[INVENTORY_SERVICE] ⚠️ Request to delete ALL inventory items.`);
+    
+    // Connection pool se ek single connection nikalna safe rehta hai transactions ke liye
+    const connection = await db.getConnection();
+    
     try {
-        const query = `DELETE FROM inventory`; // Adjust your table name if it's different (e.g., products, inventory_items)
-        const [result] = await db.execute(query);
+        // 1. Disable Foreign Key Checks (Taaki reviews/orders se linked products delete ho sakein)
+        await connection.query('SET FOREIGN_KEY_CHECKS = 0');
         
-        console.log(`[INVENTORY_SERVICE] ✅ Successfully deleted ${result.affectedRows} inventory items.`);
+        // 2. Delete all records from the products table (Agar table ka naam alag hai, toh 'products' ko change karein)
+        const [result] = await connection.query('DELETE FROM products');
+        
+        // 3. Re-enable Foreign Key Checks (Very Important)
+        await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+        
+        connection.release();
+        
+        console.log(`[INVENTORY_SERVICE] ✅ Successfully deleted ${result.affectedRows} items.`);
         return result.affectedRows;
+        
     } catch (err) {
+        // Error aane par bhi foreign key checks wapas on karna zaroori hai
+        await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+        connection.release();
+        
         console.error('[INVENTORY_SERVICE] ❌ Error in deleteAllInventoryInDB:', err.message);
         throw err;
     }
