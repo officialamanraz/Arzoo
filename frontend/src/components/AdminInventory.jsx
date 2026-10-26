@@ -78,7 +78,7 @@ function AdminInventory() {
     setIsDeletingAll(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/inventory/delete-all`, {
+      const response = await fetch(`${API_BASE_URL}/api/products/delete-all`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
