@@ -7,7 +7,8 @@ const {
   getcategory,
   Addsubcategory,
   getProductsBySubcategory,
-  getSubcategoriesByCategory
+  getSubcategoriesByCategory,
+  getCategoryCards
 } = require('../controllers/category');
 
 // ==========================================

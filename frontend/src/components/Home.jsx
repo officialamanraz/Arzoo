@@ -4,7 +4,7 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { uiTranslations } from '../languages';
 import HeroBanner from './HeroBanner';
 import './Home.css';
-import CategoryCards from './CategoryCards';
+import CategoryCards from './product';
 function Home({ 
   sarees, loading, error, currentPage, setCurrentPage, 
   keyword, categoryName, subcategoryName, 
