@@ -362,12 +362,6 @@ const getDetailedOrderById = async (orderId) => {
     }
 };
 
-// ==========================================
-// 7. GET ORDER SUMMARY DATA (CART SUMMARY FIX)
-// ==========================================
-// ==========================================
-// 7. GET ORDER SUMMARY DATA (CART SUMMARY FIX)
-// ==========================================
 const getOrderSummaryData = async (userId, addressId) => {
     console.log(`[ORDER_SERVICE] 🗄️ Fetching Order Summary for User ID: ${userId}`);
     try {
@@ -381,7 +375,7 @@ const getOrderSummaryData = async (userId, addressId) => {
             addressData = addrRows.length > 0 ? addrRows[0] : null;
         }
 
-        // 🌟 FIX: Pull Exact DB Values directly from `products` table
+        // 🌟 Pulling exact MRP and discount fields from products table
         const [cartItems] = await db.execute(
             `SELECT c.cart_id, c.quantity, p.product_id, p.name AS product_name, 
                     p.price AS unit_price, p.mrp, p.discount_percentage, p.image_url,
@@ -400,15 +394,10 @@ const getOrderSummaryData = async (userId, addressId) => {
             const unitPrice = Number(item.unit_price) || 0;
             const qty = Number(item.quantity) || 1;
             
-            // 🌟 FIX: Strictly use DB MRP and Discount Percentage without arbitrary fallbacks
-            let mrp = Number(item.mrp) || unitPrice; 
+            // Explicitly map MRP and Discount Percentage from DB
+            let mrp = Number(item.mrp) && Number(item.mrp) > unitPrice ? Number(item.mrp) : unitPrice;
             let discountPercent = Number(item.discount_percentage) || 0;
 
-            if (mrp <= unitPrice) {
-                mrp = unitPrice;
-                discountPercent = 0;
-            }
-            
             subtotal += (unitPrice * qty);
             totalMrp += (mrp * qty);
 
@@ -421,6 +410,7 @@ const getOrderSummaryData = async (userId, addressId) => {
                 seller_name: item.seller_name || 'Arzoo Saree',
                 estimated_delivery: deliveryDate.toISOString(),
                 mrp: mrp,
+                unit_price: unitPrice,
                 discount_percentage: discountPercent
             };
         });
@@ -445,7 +435,6 @@ const getOrderSummaryData = async (userId, addressId) => {
         throw err;
     }
 };
-
 // ==========================================
 // 8. GET DELIVERED ORDER HISTORY
 // ==========================================

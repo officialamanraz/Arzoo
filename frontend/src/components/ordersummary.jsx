@@ -57,7 +57,7 @@ export default function OrderSummary({ language }) {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
-        // 1. Agar Direct Buy Now se aaye hain
+        // 1. Direct Buy Now Flow
         if (buyNowProduct) {
           const addrRes = await fetch(`${API_BASE_URL}/api/addresses/${addressId}`, { headers });
           const addrData = await addrRes.json();
@@ -66,16 +66,8 @@ export default function OrderSummary({ language }) {
           }
 
           const unitPrice = Number(buyNowProduct.price || buyNowProduct.unit_price || 0);
-          
-          // 🌟 FIX: Pull exact values from database properties cleanly
-          let mrp = Number(buyNowProduct.mrp) || unitPrice; 
+          let mrp = Number(buyNowProduct.mrp) && Number(buyNowProduct.mrp) > unitPrice ? Number(buyNowProduct.mrp) : unitPrice;
           let discountPercent = Number(buyNowProduct.discount_percentage) || 0;
-
-          if (mrp <= unitPrice) {
-             mrp = unitPrice;
-             discountPercent = 0;
-          }
-          
           const qty = Number(buyNowProduct.quantity || 1);
 
           const buyItem = {
@@ -93,15 +85,17 @@ export default function OrderSummary({ language }) {
           
           const sub = unitPrice * qty;
           const totMrp = mrp * qty;
+          const discount = Math.max(0, totMrp - sub);
+
           setPricing({
             total_mrp: totMrp,
-            total_discount: Math.max(0, totMrp - sub),
+            total_discount: discount,
             delivery_charge: sub > 500 ? 0 : 50,
             subtotal: sub,
             total_payable: sub + (sub > 500 ? 0 : 50)
           });
         } 
-        // 2. Normal Cart Checkout: CALLING THE SUMMARY API
+        // 2. Normal Cart Summary Flow
         else {
           const res = await fetch(`${API_BASE_URL}/api/orders/summary?address_id=${addressId}`, { headers });
           const data = await res.json();
@@ -198,48 +192,54 @@ export default function OrderSummary({ language }) {
             {cartItems.length === 0 ? (
               <p className="empty-cart-text">{t('cartEmpty')}</p>
             ) : (
-              cartItems.map((item, index) => (
-                <div key={item.product_id || index} className={`cart-item-row ${index !== cartItems.length - 1 ? 'border-bottom' : ''}`}>
-                  <div className="cart-item-details">
-                    
-                    <div className="cart-item-img-container">
-                      <img 
-                        src={extractImage(item)} 
-                        alt={item.product_name || item.name} 
-                        className="cart-item-img"
-                        onError={(e) => { e.target.src = "/saare_1.jpeg"; }} 
-                      />
-                    </div>
+              cartItems.map((item, index) => {
+                const unitPrice = Number(item.unit_price || item.price || 0);
+                const mrp = Number(item.mrp || 0);
+                const hasDiscount = mrp > unitPrice;
 
-                    <div className="cart-item-info">
-                      <h4>{item.product_name || item.name}</h4>
-                      <span className="cart-item-qty">Qty: {item.quantity || 1}</span>
+                return (
+                  <div key={item.product_id || index} className={`cart-item-row ${index !== cartItems.length - 1 ? 'border-bottom' : ''}`}>
+                    <div className="cart-item-details">
                       
-                      <div className="item-pricing-row">
-                        <span className="cart-item-final-price">
-                          ₹{(Number(item.unit_price) * (item.quantity || 1)).toLocaleString('en-IN')}
-                        </span>
+                      <div className="cart-item-img-container">
+                        <img 
+                          src={extractImage(item)} 
+                          alt={item.product_name || item.name} 
+                          className="cart-item-img"
+                          onError={(e) => { e.target.src = "/saare_1.jpeg"; }} 
+                        />
+                      </div>
+
+                      <div className="cart-item-info">
+                        <h4>{item.product_name || item.name}</h4>
+                        <span className="cart-item-qty">Qty: {item.quantity || 1}</span>
                         
-                        {Number(item.mrp) > Number(item.unit_price) && (
-                          <>
-                            <span className="cart-item-mrp">
-                              ₹{(Number(item.mrp) * (item.quantity || 1)).toLocaleString('en-IN')}
-                            </span>
-                            <span className="cart-item-discount-tag">
-                              {item.discount_percentage}% OFF
-                            </span>
-                          </>
-                        )}
+                        <div className="item-pricing-row">
+                          <span className="cart-item-final-price">
+                            ₹{(unitPrice * (item.quantity || 1)).toLocaleString('en-IN')}
+                          </span>
+                          
+                          {hasDiscount && (
+                            <>
+                              <span className="cart-item-mrp">
+                                ₹{(mrp * (item.quantity || 1)).toLocaleString('en-IN')}
+                              </span>
+                              <span className="cart-item-discount-tag">
+                                {item.discount_percentage}% OFF
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="cart-item-delivery">
+                          Delivery by <strong>{formatDeliveryDate(item.estimated_delivery)}</strong>
+                        </div>
                       </div>
 
-                      <div className="cart-item-delivery">
-                        Delivery by <strong>{formatDeliveryDate(item.estimated_delivery)}</strong>
-                      </div>
                     </div>
-
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
