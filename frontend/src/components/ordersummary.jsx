@@ -67,7 +67,7 @@ export default function OrderSummary({ language }) {
 
           const unitPrice = Number(buyNowProduct.price || buyNowProduct.unit_price || 0);
           
-          // 🌟 FIX: Pull exact values instead of multiplying
+          // 🌟 FIX: Pull exact values from database properties cleanly
           let mrp = Number(buyNowProduct.mrp) || unitPrice; 
           let discountPercent = Number(buyNowProduct.discount_percentage) || 0;
 
@@ -96,12 +96,12 @@ export default function OrderSummary({ language }) {
           setPricing({
             total_mrp: totMrp,
             total_discount: Math.max(0, totMrp - sub),
-            delivery_charge: 0,
+            delivery_charge: sub > 500 ? 0 : 50,
             subtotal: sub,
-            total_payable: sub
+            total_payable: sub + (sub > 500 ? 0 : 50)
           });
         } 
-        // 2. Normal Cart Checkout: CALLING THE NEW SUMMARY API
+        // 2. Normal Cart Checkout: CALLING THE SUMMARY API
         else {
           const res = await fetch(`${API_BASE_URL}/api/orders/summary?address_id=${addressId}`, { headers });
           const data = await res.json();

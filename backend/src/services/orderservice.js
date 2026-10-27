@@ -365,6 +365,9 @@ const getDetailedOrderById = async (orderId) => {
 // ==========================================
 // 7. GET ORDER SUMMARY DATA (CART SUMMARY FIX)
 // ==========================================
+// ==========================================
+// 7. GET ORDER SUMMARY DATA (CART SUMMARY FIX)
+// ==========================================
 const getOrderSummaryData = async (userId, addressId) => {
     console.log(`[ORDER_SERVICE] 🗄️ Fetching Order Summary for User ID: ${userId}`);
     try {
@@ -397,7 +400,7 @@ const getOrderSummaryData = async (userId, addressId) => {
             const unitPrice = Number(item.unit_price) || 0;
             const qty = Number(item.quantity) || 1;
             
-            // 🌟 FIX: Strictly use DB MRP and Discount Percentage
+            // 🌟 FIX: Strictly use DB MRP and Discount Percentage without arbitrary fallbacks
             let mrp = Number(item.mrp) || unitPrice; 
             let discountPercent = Number(item.discount_percentage) || 0;
 
