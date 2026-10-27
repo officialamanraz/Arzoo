@@ -59,7 +59,6 @@ export default function OrderSummary({ language }) {
 
         // 1. Agar Direct Buy Now se aaye hain
         if (buyNowProduct) {
-          // Address fetch alag se address table se
           const addrRes = await fetch(`${API_BASE_URL}/api/addresses/${addressId}`, { headers });
           const addrData = await addrRes.json();
           if (addrData.success) {
@@ -67,8 +66,16 @@ export default function OrderSummary({ language }) {
           }
 
           const unitPrice = Number(buyNowProduct.price || buyNowProduct.unit_price || 0);
-          const mrp = Number(buyNowProduct.mrp && buyNowProduct.mrp > unitPrice ? buyNowProduct.mrp : Math.round(unitPrice * 1.4));
-          const discountPercent = buyNowProduct.discount_percentage || Math.round(((mrp - unitPrice) / mrp) * 100);
+          
+          // 🌟 FIX: Pull exact values instead of multiplying
+          let mrp = Number(buyNowProduct.mrp) || unitPrice; 
+          let discountPercent = Number(buyNowProduct.discount_percentage) || 0;
+
+          if (mrp <= unitPrice) {
+             mrp = unitPrice;
+             discountPercent = 0;
+          }
+          
           const qty = Number(buyNowProduct.quantity || 1);
 
           const buyItem = {
@@ -170,7 +177,6 @@ export default function OrderSummary({ language }) {
       <div className="summary-content-wrapper">
         <div className="summary-left-pane">
 
-          {/* Delivery Address Card */}
           {address && (
             <div className="summary-card">
               <div className="card-header">
@@ -188,7 +194,6 @@ export default function OrderSummary({ language }) {
             </div>
           )}
 
-          {/* Products List Card */}
           <div className="summary-card no-padding">
             {cartItems.length === 0 ? (
               <p className="empty-cart-text">{t('cartEmpty')}</p>
@@ -210,7 +215,6 @@ export default function OrderSummary({ language }) {
                       <h4>{item.product_name || item.name}</h4>
                       <span className="cart-item-qty">Qty: {item.quantity || 1}</span>
                       
-                      {/* Price, MRP, and Discount Percentage */}
                       <div className="item-pricing-row">
                         <span className="cart-item-final-price">
                           ₹{(Number(item.unit_price) * (item.quantity || 1)).toLocaleString('en-IN')}
@@ -228,7 +232,6 @@ export default function OrderSummary({ language }) {
                         )}
                       </div>
 
-                      {/* Delivery Date */}
                       <div className="cart-item-delivery">
                         Delivery by <strong>{formatDeliveryDate(item.estimated_delivery)}</strong>
                       </div>
@@ -241,7 +244,6 @@ export default function OrderSummary({ language }) {
           </div>
         </div>
 
-        {/* Right Pane Price Summary */}
         <div className="summary-right-pane">
           <div className="summary-card">
             <h3 className="price-details-header">PRICE DETAILS</h3>
