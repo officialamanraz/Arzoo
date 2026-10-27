@@ -57,58 +57,26 @@ export default function OrderSummary({ language }) {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
-        // 1. Direct Buy Now Flow
+        // 🌟 NO FRONTEND CALCULATION. ALWAYS CALL THE API.
+        let apiUrl = `${API_BASE_URL}/api/orders/summary?address_id=${addressId}`;
+        
         if (buyNowProduct) {
-          const addrRes = await fetch(`${API_BASE_URL}/api/addresses/${addressId}`, { headers });
-          const addrData = await addrRes.json();
-          if (addrData.success) {
-            setAddress(addrData.address);
+          const pId = buyNowProduct.product_id || buyNowProduct.id;
+          const pQty = buyNowProduct.quantity || 1;
+          apiUrl += `&buy_now_product_id=${pId}&buy_now_qty=${pQty}`;
+        }
+
+        const res = await fetch(apiUrl, { headers });
+        const data = await res.json();
+
+        if (data.success && data.data) {
+          setAddress(data.data.address);
+          setCartItems(data.data.items || []);
+          if (data.data.pricing) {
+            setPricing(data.data.pricing);
           }
-
-          const unitPrice = Number(buyNowProduct.price || buyNowProduct.unit_price || 0);
-          let mrp = Number(buyNowProduct.mrp) && Number(buyNowProduct.mrp) > unitPrice ? Number(buyNowProduct.mrp) : unitPrice;
-          let discountPercent = Number(buyNowProduct.discount_percentage) || 0;
-          const qty = Number(buyNowProduct.quantity || 1);
-
-          const buyItem = {
-            ...buyNowProduct,
-            product_id: buyNowProduct.product_id || buyNowProduct.id,
-            product_name: buyNowProduct.product_name || buyNowProduct.name,
-            unit_price: unitPrice,
-            mrp: mrp,
-            discount_percentage: discountPercent,
-            estimated_delivery: buyNowProduct.estimated_delivery || null,
-            quantity: qty
-          };
-
-          setCartItems([buyItem]);
-          
-          const sub = unitPrice * qty;
-          const totMrp = mrp * qty;
-          const discount = Math.max(0, totMrp - sub);
-
-          setPricing({
-            total_mrp: totMrp,
-            total_discount: discount,
-            delivery_charge: sub > 500 ? 0 : 50,
-            subtotal: sub,
-            total_payable: sub + (sub > 500 ? 0 : 50)
-          });
-        } 
-        // 2. Normal Cart Summary Flow
-        else {
-          const res = await fetch(`${API_BASE_URL}/api/orders/summary?address_id=${addressId}`, { headers });
-          const data = await res.json();
-
-          if (data.success && data.data) {
-            setAddress(data.data.address);
-            setCartItems(data.data.items || []);
-            if (data.data.pricing) {
-              setPricing(data.data.pricing);
-            }
-          } else {
-            toast.error(data.message || 'Failed to load order summary');
-          }
+        } else {
+          toast.error(data.message || 'Failed to load order summary');
         }
       } catch (err) {
         console.error('[ORDER_SUMMARY] Fetch error:', err);
@@ -126,7 +94,7 @@ export default function OrderSummary({ language }) {
       state: { 
         addressId, 
         totalAmount: pricing.total_payable || pricing.subtotal,
-        buyNowProduct
+        buyNowProduct // Keep passing it forward so /payment knows if it's a direct buy
       }
     });
   };

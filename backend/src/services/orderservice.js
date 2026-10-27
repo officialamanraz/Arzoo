@@ -362,8 +362,11 @@ const getDetailedOrderById = async (orderId) => {
     }
 };
 
-const getOrderSummaryData = async (userId, addressId) => {
-    console.log(`[ORDER_SERVICE] 🗄️ Fetching Order Summary for User ID: ${userId}`);
+// ==========================================
+// 7. GET ORDER SUMMARY DATA (CART & BUY NOW)
+// ==========================================
+const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, buyNowQty = 1) => {
+    console.log(`[ORDER_SERVICE] 🗄️ Fetching Order Summary (BuyNow: ${buyNowProductId || 'No'})`);
     try {
         let addressData = null;
         if (addressId && addressId !== 'undefined') {
@@ -375,17 +378,34 @@ const getOrderSummaryData = async (userId, addressId) => {
             addressData = addrRows.length > 0 ? addrRows[0] : null;
         }
 
-        // 🌟 Pulling exact MRP and discount fields from products table
-        const [cartItems] = await db.execute(
-            `SELECT c.cart_id, c.quantity, p.product_id, p.name AS product_name, 
-                    p.price AS unit_price, p.mrp, p.discount_percentage, p.image_url,
-                    d.name AS seller_name
-             FROM cart c
-             INNER JOIN products p ON c.product_id = p.product_id
-             LEFT JOIN dealers d ON p.dealer_id = d.dealer_id
-             WHERE c.user_id = ?`,
-            [userId]
-        );
+        let cartItems = [];
+        
+        if (buyNowProductId) {
+            // 🌟 FETCH EXACT DATABASE VALUES FOR DIRECT "BUY NOW"
+            const [buyNowRows] = await db.execute(
+                `SELECT p.product_id, p.name AS product_name, 
+                        p.price AS unit_price, p.mrp, p.discount_percentage, p.image_url,
+                        d.name AS seller_name, ? AS quantity
+                 FROM products p
+                 LEFT JOIN dealers d ON p.dealer_id = d.dealer_id
+                 WHERE p.product_id = ?`,
+                [Number(buyNowQty) || 1, buyNowProductId]
+            );
+            cartItems = buyNowRows;
+        } else {
+            // 🌟 FETCH CART VALUES
+            const [cartRows] = await db.execute(
+                `SELECT c.cart_id, c.quantity, p.product_id, p.name AS product_name, 
+                        p.price AS unit_price, p.mrp, p.discount_percentage, p.image_url,
+                        d.name AS seller_name
+                 FROM cart c
+                 INNER JOIN products p ON c.product_id = p.product_id
+                 LEFT JOIN dealers d ON p.dealer_id = d.dealer_id
+                 WHERE c.user_id = ?`,
+                [userId]
+            );
+            cartItems = cartRows;
+        }
 
         let subtotal = 0;
         let totalMrp = 0;
@@ -394,10 +414,14 @@ const getOrderSummaryData = async (userId, addressId) => {
             const unitPrice = Number(item.unit_price) || 0;
             const qty = Number(item.quantity) || 1;
             
-            // Explicitly map MRP and Discount Percentage from DB
-            let mrp = Number(item.mrp) && Number(item.mrp) > unitPrice ? Number(item.mrp) : unitPrice;
+            let mrp = Number(item.mrp) || unitPrice; 
             let discountPercent = Number(item.discount_percentage) || 0;
 
+            if (mrp <= unitPrice) {
+                mrp = unitPrice;
+                discountPercent = 0;
+            }
+            
             subtotal += (unitPrice * qty);
             totalMrp += (mrp * qty);
 
