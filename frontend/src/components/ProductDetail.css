@@ -955,3 +955,67 @@
 .dark-mode .amazon-variant-label, body.dark .amazon-variant-label { color: #e5e7eb; }
 .dark-mode .variant-out-overlay, body.dark .variant-out-overlay { background: rgba(0, 0, 0, 0.75); }
 .dark-mode .variant-out-text, body.dark .variant-out-text { background: rgba(0, 0, 0, 0.95); color: #ef4444; }
+/* =========================================================
+   VARIANT SWATCHES - BIGGER IMAGE + PRICE UNDER EACH
+   Paste at the END of ProductDetailArzooTheme.css.
+   Change only --swatch-w to make the images bigger or smaller.
+   ========================================================= */
+.product-detail-page .amazon-variants-container {
+  --swatch-w: 88px;
+}
+
+.product-detail-page .amazon-swatch-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+
+.product-detail-page .amazon-swatch-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: var(--swatch-w) !important;
+  height: auto !important;
+  min-width: 0 !important;
+  padding: 4px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  text-decoration: none !important;
+}
+
+.product-detail-page .amazon-swatch-img-wrap {
+  position: relative !important;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.product-detail-page .amazon-swatch-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.product-detail-page .info-box .amazon-swatch-price {
+  margin-top: 6px;
+  max-width: 100%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere; /* a long price wraps to a second line instead of sticking out */
+  color: var(--arzoo-wine, #7d1638) !important;
+}
+
+:is(body.dark, .dark-mode) .product-detail-page .info-box .amazon-swatch-price {
+  color: #e3b96f !important;
+}
+
+@media (min-width: 769px) {
+  .product-detail-page .amazon-variants-container {
+    --swatch-w: 104px;
+  }
+}

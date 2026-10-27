@@ -4,7 +4,7 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { uiTranslations } from '../languages';
 import HeroBanner from './HeroBanner';
 import './Home.css';
-
+import CategoryCards from './CategoryCards';
 function Home({ 
   sarees, loading, error, currentPage, setCurrentPage, 
   keyword, categoryName, subcategoryName, 
@@ -76,7 +76,8 @@ function Home({
   return (
     <div className="home-container">
       <HeroBanner />
-      
+      {/* Amazon/Flipkart-style Category Rail */}
+    <CategoryCards isDark={isDark} />
       <div className="hero-subtitle-wrapper">
         <div className="hero-text-overlay">
           {t('heroText')}

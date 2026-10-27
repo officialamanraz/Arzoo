@@ -57,7 +57,6 @@ export default function OrderSummary({ language }) {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
-        // 🌟 NO FRONTEND CALCULATION. ALWAYS CALL THE API.
         let apiUrl = `${API_BASE_URL}/api/orders/summary?address_id=${addressId}`;
         
         if (buyNowProduct) {
@@ -94,7 +93,7 @@ export default function OrderSummary({ language }) {
       state: { 
         addressId, 
         totalAmount: pricing.total_payable || pricing.subtotal,
-        buyNowProduct // Keep passing it forward so /payment knows if it's a direct buy
+        buyNowProduct
       }
     });
   };

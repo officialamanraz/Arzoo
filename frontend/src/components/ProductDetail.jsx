@@ -952,6 +952,9 @@ if (!saree) {
                             </div>
                           )}
                         </div>
+                        {v.price !== undefined && v.price !== null && (
+                          <span className="amazon-swatch-price">{currency} {getConvertedPrice(v.price)}</span>
+                        )}
                       </Link>
                     );
                   })}
