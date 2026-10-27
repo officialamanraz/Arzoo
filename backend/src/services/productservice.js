@@ -217,7 +217,7 @@ const getbyidproduct = async (productId) => {
                 p.*,
                 COALESCE(
                     (
-                        SELECT JSON_ARRAYAGG(JSON_OBJECT('id', s.subcategory_id, 'name', s.name))
+                        SELECT JSON_ARRAYAGG(JSON_OBJECT('id', s.subcategory_id, 'name', s.subcategory_name))
                         FROM subcategories s
                         WHERE (
                             p.subcategory_ids IS NOT NULL 
@@ -560,20 +560,21 @@ const getDealerAndAdminFinancials = async (dealer_id = null) => {
         }
         const [inventoryResult] = await db.execute(inventoryQuery, inventoryParams);
 
+        // 🌟 FIX: Updated table names ('orderitems' instead of 'order_items') & column ('status' instead of 'order_status')
         let salesQuery = `
             SELECT 
                 COALESCE(SUM(oi.quantity), 0) AS total_units_sold,
-                COALESCE(SUM(oi.price * oi.quantity), 0) AS total_sales_amount,
+                COALESCE(SUM(oi.unit_price * oi.quantity), 0) AS total_sales_amount,
                 COALESCE(SUM(p.dealer_base_price * oi.quantity), 0) AS total_dealer_payout,
                 COALESCE(SUM(p.packaging_cost * oi.quantity), 0) AS total_packaging_expense,
                 COALESCE(
-                    SUM((oi.price - (COALESCE(p.dealer_base_price, 0) + COALESCE(p.packaging_cost, 0))) * oi.quantity), 
+                    SUM((oi.unit_price - (COALESCE(p.dealer_base_price, 0) + COALESCE(p.packaging_cost, 0))) * oi.quantity), 
                     0
                 ) AS admin_profit
-            FROM order_items oi
+            FROM orderitems oi
             INNER JOIN products p ON oi.product_id = p.product_id
             INNER JOIN orders o ON oi.order_id = o.order_id
-            WHERE o.order_status NOT IN ('cancelled', 'refunded')
+            WHERE o.status NOT IN ('cancelled', 'refunded')
         `;
         const salesParams = [];
         if (dealer_id) {
