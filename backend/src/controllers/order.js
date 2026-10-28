@@ -193,9 +193,12 @@ const getSingleOrderAdmin = async (req, res) => {
 };
 const getOrderSummary = async (req, res, next) => {
     try {
-        // Extract user ID from your token middleware (usually req.user.user_id or req.userId)
         const userId = req.user?.user_id || req.user?.id; 
         const addressId = req.query.address_id;
+        
+        // 🌟 FIX: Extract Buy Now parameters from the request URL
+        const buyNowProductId = req.query.buy_now_product_id;
+        const buyNowQty = req.query.buy_now_qty || 1;
 
         if (!userId) {
             return res.status(401).json({ success: false, message: 'Unauthorized access' });
@@ -203,7 +206,8 @@ const getOrderSummary = async (req, res, next) => {
 
         console.log(`[CONTROLLER] 📋 Fetching Order Summary for User: ${userId}`);
         
-        const summaryData = await getOrderSummaryData(userId, addressId);
+        // 🌟 FIX: Pass the Buy Now parameters to the service function
+        const summaryData = await getOrderSummaryData(userId, addressId, buyNowProductId, buyNowQty);
 
         res.status(200).json({
             success: true,

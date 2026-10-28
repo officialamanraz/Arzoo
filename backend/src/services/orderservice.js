@@ -3,7 +3,12 @@ const { getFullImageUrl } = require('../utils/imageUtils');
 const razorpayInstance = require('../../config/razorpay');
 const myCache = require('../../config/cache'); 
 const crypto = require('crypto')
-
+const ORDER_SETTINGS = {
+    DELIVERY_DAYS: 5,
+    DEFAULT_SELLER_NAME: 'Arzoo Saree',
+    CURRENCY_CODE: 'INR',
+    LOCALE: 'en-IN'
+};
 // ==========================================
 // 1. GET ALL ORDERS FOR ADMIN
 // ==========================================
