@@ -87,7 +87,7 @@ function UserOrders() {
     }
   };
 
-  // The bill is built on the backend from the database (GET /api/orders/:orderId/invoice); here we only open it
+  // The bill is built on the backend from the database (GET /api/orders/invoice/:orderId); here we only open it
   const handleDownloadInvoice = async (order) => {
     console.log(`[USER_ORDERS] 📄 Opening bill for Order ID: ${order.order_id}`);
     const billWindow = window.open('', '_blank');
@@ -99,7 +99,7 @@ function UserOrders() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/orders/${order.order_id}/invoice`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/invoice/${order.order_id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error(`Bill request failed (${response.status})`);
