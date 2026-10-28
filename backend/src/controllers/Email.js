@@ -1,5 +1,5 @@
 // File: src/controllers/Email.js
-const { sendEmailService, sendInvoiceEmail } = require('../services/emailService');
+const { sendEmailService, sendInvoiceEmail,getInvoiceHtml } = require('../services/emailService');
 
 const APP_NAME = process.env.APP_NAME || 'Arzoo Saree';
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -68,5 +68,24 @@ const triggerInvoiceEmail = (order_id) => {
     console.error(`[EMAIL] Invoice email failed -- order_id: ${order_id}:`, err.message)
   );
 };
+const getInvoice = async (req, res) => {
+    const userId = req.user.id;
+    const orderId = parseInt(req.params.orderId, 10);
+ 
+    if (isNaN(orderId) || orderId <= 0) {
+        return res.status(400).json({ success: false, message: 'A valid order id is required.' });
+    }
+ 
+    try {
+        const html = await getInvoiceHtml(userId, orderId);
+        if (!html) {
+            return res.status(404).json({ success: false, message: 'Order not found.' });
+        }
+        return res.status(200).type('html').send(html);
+    } catch (error) {
+        console.error(`[INVOICE] Failed to build bill for order ${orderId}:`, error.message);
+        return res.status(500).json({ success: false, message: 'Could not generate the bill.' });
+    }
+};
 
-module.exports = { sendContactEmail, triggerInvoiceEmail };
+module.exports = { sendContactEmail, triggerInvoiceEmail,getInvoice };

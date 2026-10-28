@@ -87,11 +87,32 @@ function UserOrders() {
     }
   };
 
-  // 🗑️ Huge HTML Bill Builder removed! We now just redirect to a separate invoice handler page.
-  const handleDownloadInvoice = (order) => {
-    console.log(`[USER_ORDERS] 📄 Opening external invoice page for Order ID: ${order.order_id}`);
-    // Navigate to the new component/file that fetches and renders the bill
-    window.open(`/invoice/${order.order_id}`, '_blank');
+  // The bill is built on the backend from the database (GET /api/orders/:orderId/invoice); here we only open it
+  const handleDownloadInvoice = async (order) => {
+    console.log(`[USER_ORDERS] 📄 Opening bill for Order ID: ${order.order_id}`);
+    const billWindow = window.open('', '_blank');
+    if (!billWindow) {
+      toast.error('Please allow pop-ups to open the bill.');
+      return;
+    }
+    billWindow.document.write('<p style="font-family:sans-serif;padding:24px">Preparing your bill...</p>');
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/orders/${order.order_id}/invoice`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error(`Bill request failed (${response.status})`);
+
+      const html = await response.text();
+      billWindow.document.open();
+      billWindow.document.write(html);
+      billWindow.document.close();
+    } catch (err) {
+      console.error('[USER_ORDERS] ❌ Bill error:', err);
+      billWindow.close();
+      toast.error('Could not open the bill. Please try again.');
+    }
   };
 
   const formatDate = (dateString) => {

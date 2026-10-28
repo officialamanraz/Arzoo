@@ -10,7 +10,7 @@ const { getOrderTracking } = require('../controllers/tracking');
 const { courierWebhookController } = require('../controllers/webhook');
 const { getCart } = require('../controllers/cart');
 const { verifyToken, verifyAdmin } = require('../middleware/authmiddleware');
-
+const {getInvoice} = require('../controllers/Email')
 const { 
     getadminorder, 
     getmyorders, 
@@ -132,4 +132,5 @@ router.post('/webhook/courier', (req, res, next) => {
     courierWebhookController(req, res, next);
 });
 
+router.get(':/orderId/invoice',verifyToken,getInvoice)
 module.exports = router;

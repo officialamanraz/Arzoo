@@ -6,7 +6,7 @@ const API_BASE_URL = process.env.VITE_API_URL || "https://arzoo-abjn.onrender.co
 // 🌐 1. Free WhatsApp Notification Function (Directly included)
 const sendFreeWhatsAppNotification = async (message) => {
     // Apna phone number country code ke sath dalein (jaise: 919876543210 bina '+' ke)
-    const phoneNumber = "YOUR_PHONE_NUMBER"; 
+    const phoneNumber = "919530060288"; 
     // Jo API key aapko WhatsApp par mili hai wo yahan dalein
     const apiKey = "YOUR_CALLMEBOT_API_KEY"; 
 
