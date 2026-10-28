@@ -66,6 +66,8 @@ const emptyFormState = {
   fabric: '',
   khats: '',
   weight: '',
+  pallu: '',          // 🌟 Naya pallu field
+  palluDesign: '',
   producer: '',
   maker: '',
   producer_address: '',
@@ -139,6 +141,8 @@ function AdminAddProduct() {
         productLength: editingProduct.product_length || '',
         borderMotifs: editingProduct.border_motifs || '',
         origin: editingProduct.origin || '',
+        pallu: editingProduct.pallu || '',                    // 🌟 Edit mode ke liye
+        palluDesign: editingProduct.pallu_design || '',
         fabric: editingProduct.fabric || '',
         khats: editingProduct.khats || '',
         weight: editingProduct.weight || '',
@@ -401,7 +405,9 @@ function AdminAddProduct() {
     formData.append('zari_type', form.zariType);
     formData.append('blouse', form.blouse);
     formData.append('blouse_length', form.blouseLength);
-    formData.append('product_length', form.productLength); // 🌟 New column
+    formData.append('product_length', form.productLength);
+    formData.append('pallu', form.pallu);                 // 🌟 Backend par bhejne ke liye
+    formData.append('pallu_design', form.palluDesign);// 🌟 New column
     formData.append('border_motifs', form.borderMotifs);
     formData.append('origin', form.origin);
     formData.append('fabric', form.fabric);
@@ -771,6 +777,27 @@ function AdminAddProduct() {
                 />
               </div>
             </div>
+            <div className="form-group">
+                <label>Pallu</label>
+                <input
+                  type="text"
+                  value={form.pallu}
+                  onChange={handleFieldChange('pallu')}
+                  className="admin-input"
+                  placeholder="e.g. Rich Brocade Pallu"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Pallu Design</label>
+                <input
+                  type="text"
+                  value={form.palluDesign}
+                  onChange={handleFieldChange('palluDesign')}
+                  className="admin-input"
+                  placeholder="e.g. Peacock & Floral Motifs"
+                />
+              </div>
 
             <div className="responsive-grid-2">
               <div className="form-group">
