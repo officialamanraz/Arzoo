@@ -227,7 +227,7 @@ useEffect(() => {
       fetchMode = "subcategory-filter";
     }
 else if (selectedCategory) {
-      url = `${API_BASE_URL}/api/products/category/${selectedCategory}`;
+      url = `${API_BASE_URL}/api/products/category/${selectedCategory}?page=${currentPage}&limit=500`; 
       fetchMode = "category-filter";
     }
     else if (minprice && maxprice) {
