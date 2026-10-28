@@ -105,7 +105,7 @@ useEffect(() => {
   }
 }, [location.search]);
 
-  // 🚀 Component Lifecycle Log
+  // 🚀 Component Lifecycle 
   useEffect(() => {
     console.log("[APP] 🚀 Root App component successfully mounted with Dealer & Admin routes.");
   }, []);
