@@ -95,8 +95,13 @@ function Home({
             <h3 className="pulse-text">{t('loading')}</h3>
           </div>
         ) : !displayedSarees || displayedSarees.length === 0 ? (
-          <div className="empty-state">
-            <h3>{t('noSarees')}</h3>
+          <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--white)', borderRadius: '12px', marginTop: '20px' }}>
+            <h3 style={{ fontSize: '22px', color: 'var(--text-dark)', marginBottom: '10px' }}>
+              We will soon upload new products here!
+            </h3>
+            <p style={{ color: 'var(--text-light)', fontSize: '15px' }}>
+              Currently, there are no sarees available in this collection. Please check back later.
+            </p>
           </div>
         ) : (
           <>
