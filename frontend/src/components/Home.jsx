@@ -21,7 +21,7 @@ function Home({
     return uiTranslations[currentLang]?.[key] || uiTranslations['en'][key];
   };
 
-  const ITEMS_PER_PAGE = 100;
+  const ITEMS_PER_PAGE = 12;
   
   const displayedSarees = sarees && sarees.length > ITEMS_PER_PAGE 
     ? sarees.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)

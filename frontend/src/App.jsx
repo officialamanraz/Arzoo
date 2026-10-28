@@ -227,8 +227,8 @@ useEffect(() => {
       fetchMode = "subcategory-filter";
     }
 else if (selectedCategory) {
-      // 🌟 FIX 1: Point to the new Category API route
-      url = `${API_BASE_URL}/api/categories/${selectedCategory}/products`; 
+      // 🌟 FIX: Ab frontend automatically category ke click par page=1 aur page=2 pass karega
+      url = `${API_BASE_URL}/api/categories/${selectedCategory}/products?page=${currentPage}&limit=12`; 
       fetchMode = "category-filter";
     }
     else if (minprice && maxprice) {

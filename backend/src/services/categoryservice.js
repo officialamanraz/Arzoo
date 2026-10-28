@@ -217,19 +217,28 @@ const getCategoryCardsFromDB = async () => {
 };
 
 // 🌟 NEW FUNCTION: Fetch products using the main category_id
-const getProductsByCategoryFromDB = async (raw_category_id) => {
+// 🌟 NAYA FUNCTION WITH PAGINATION
+const getProductsByCategoryFromDB = async (raw_category_id, page = 1, limit = 12) => {
     try {
         const category_id = parseInt(raw_category_id, 10);
         if (isNaN(category_id) || category_id <= 0) {
-            return { category_name: 'Products', products: [] };
+            return { category_name: 'Products', products: [], total: 0, totalPages: 0 };
         }
 
-        // Get category name for the frontend title
         const [catRows] = await db.execute('SELECT name FROM categories WHERE category_id = ?', [category_id]);
         const category_name = catRows.length > 0 ? catRows[0].name : 'Products';
 
-        // Get products matching the main category
-        const [products] = await db.execute('SELECT * FROM products WHERE category_id = ?', [category_id]);
+        // 🌟 1. Total products count karna pagination ke liye
+        const [countRows] = await db.execute('SELECT COUNT(*) as total FROM products WHERE category_id = ?', [category_id]);
+        const total = countRows[0].total;
+        const totalPages = Math.ceil(total / limit);
+
+        // 🌟 2. Skip karne wale items (offset) calculate karna
+        const offset = (page - 1) * limit;
+
+        // 🌟 3. Sirf us page ke 12 items DB se nikalna
+        const query = `SELECT * FROM products WHERE category_id = ? LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
+        const [products] = await db.execute(query, [category_id]);
 
         const formattedProducts = products.map((product) => ({
             ...product,
@@ -238,7 +247,9 @@ const getProductsByCategoryFromDB = async (raw_category_id) => {
 
         return {
             category_name,
-            products: formattedProducts
+            products: formattedProducts,
+            total,
+            totalPages // Frontend ko page button banane me madad karega
         };
     } catch (error) {
         console.error('[CATEGORY_SERVICE] Error in getProductsByCategoryFromDB:', error);

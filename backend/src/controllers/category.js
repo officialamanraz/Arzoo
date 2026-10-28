@@ -225,19 +225,24 @@ const getCategoryCards = async (req, res) => {
 const getProductsByCategory = async (req, res) => {
   console.log('\n--- [CONTROLLER: getProductsByCategory START] ---');
   const rawCategoryId = req.params?.category_id || req.query?.category_id;
+  
+  // 🌟 Frontend se bheja gaya page aur limit nikalna
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 12;
 
   if (!rawCategoryId || rawCategoryId === 'undefined') {
     return res.status(400).json({ success: false, message: 'Valid category_id required.' });
   }
 
   try {
-    const { category_name, products } = await getProductsByCategoryFromDB(rawCategoryId);
-    console.log(`[CATEGORY] Returning ${products.length} products for ${category_name}.`);
+    const { category_name, products, total, totalPages } = await getProductsByCategoryFromDB(rawCategoryId, page, limit);
     
     return res.status(200).json({
       success: true,
       category_name,
       total_found: products.length,
+      total,       // Frontend ko pages count karne ke liye chahiye
+      totalPages,  // Frontend ko pages count karne ke liye chahiye
       data: products
     });
   } catch (error) {
