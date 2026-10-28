@@ -21,42 +21,37 @@ function CategoryCards({ onCategorySelect, isDark = false }) {
           setCategories(result.data);
         }
       } catch (err) {
-        console.error('[CATEGORY_CARDS] Error fetching category cards:', err);
+        console.error('[CATEGORY_CARDS] Fetch error:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
     fetchCategories();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   const handleCardClick = (catId, catName) => {
     if (onCategorySelect) {
       onCategorySelect(String(catId), catName);
     } else {
+      // Home page par bhejega filter ke sath
       navigate(`/?category=${catId}&categoryName=${encodeURIComponent(catName)}#product`);
     }
   };
 
-  if (!loading && categories.length === 0) {
-    return null;
-  }
+  if (!loading && categories.length === 0) return null;
 
   return (
     <section className={`category-showcase-section ${isDark ? 'dark-theme' : ''}`}>
       <div className="category-header-wrap">
-        <div>
-          <h2 className="category-header-title">Curated Collections</h2>
-          <span className="category-header-subtitle">Select a fabric to explore traditional designs</span>
-        </div>
+        <h2 className="category-header-title">Curated Collections</h2>
+        <span className="category-header-subtitle">Select a fabric to explore traditional designs</span>
       </div>
 
       <div className="category-strip-track">
         {loading
-          ? Array.from({ length: 5 }).map((_, index) => (
+          ? Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="cat-card-item">
                 <div className="cat-skeleton" />
                 <div className="cat-text-skeleton" />
@@ -68,7 +63,6 @@ function CategoryCards({ onCategorySelect, isDark = false }) {
                 key={cat.category_id}
                 className="cat-card-item"
                 onClick={() => handleCardClick(cat.category_id, cat.name)}
-                title={`Explore ${cat.name}`}
               >
                 <div className="cat-img-box">
                   <div className="cat-inner-circle">
@@ -76,9 +70,7 @@ function CategoryCards({ onCategorySelect, isDark = false }) {
                       src={cat.category_image || '/saare_1.jpeg'}
                       alt={cat.name}
                       className="cat-thumb-img"
-                      onError={(e) => {
-                        e.target.src = '/saare_1.jpeg';
-                      }}
+                      onError={(e) => { e.target.src = '/saare_1.jpeg'; }}
                     />
                   </div>
                 </div>

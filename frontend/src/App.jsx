@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useLocation } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from 'react-hot-toast';
 // 🚨 FIX 1: Imported pure Vanilla Lenis instead of the broken React wrapper
@@ -36,6 +36,8 @@ import AdminRoute from "./components/AdminRoute";
 import Profile from './components/Profile';
 import ReviewsPage from './components/ReviewsPage';
 import orderhistory from './components/DeliveredOrderHistory'
+// ✅ CORRECT (Uppercase PascalCase)
+import CategoryCards from './components/product' // Your renamed file
 import './components/newthemeofhomepage.css';
 import './components/ArzooGlobalTheme.css';
 import './components/ProductDetailArzooTheme.css';
@@ -80,6 +82,28 @@ function App() {
     const savedTheme = localStorage.getItem("theme");
     return savedTheme === "dark";
   });
+  const location = useLocation();
+
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const catId = params.get('category');
+  const catName = params.get('categoryName');
+  const subId = params.get('subcategory');
+
+  if (catId) {
+    setSelectedCategory(catId);
+    setSelectedCategoryName(catName || "Selected Category");
+    setSelectedSubcategory("");
+    setSelectedSubcategoryName("");
+    setSearchKeyword("");
+    setCurrentPage(1);
+  } else if (subId) {
+    setSelectedSubcategory(subId);
+    setSelectedCategory("");
+    setSearchKeyword("");
+    setCurrentPage(1);
+  }
+}, [location.search]);
 
   // 🚀 Component Lifecycle Log
   useEffect(() => {
@@ -362,6 +386,15 @@ useEffect(() => {
       <Route path="/cart" element={<CartPage />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
+      // ✅ CORRECT (Matches the Navbar's /products link)
+<Route 
+  path="/products" 
+  element={
+    <div style={{ minHeight: '80vh', padding: '20px 4%' }}>
+      <CategoryCards isDark={isDark} />
+    </div>
+  } 
+/>
       <Route path="/delivered-history" element={<DeliveredOrderHistory />} />
       {/* =========================================
          AUTHENTICATION & USER PROFILE ROUTES

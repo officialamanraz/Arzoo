@@ -4,14 +4,11 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { uiTranslations } from '../languages';
 import HeroBanner from './HeroBanner';
 import './Home.css';
-import CategoryCards from './product';
 
 function Home({ 
-  isDark = false, // 👈 Added here so isDark is defined and safe
   sarees, loading, error, currentPage, setCurrentPage, 
   keyword, categoryName, subcategoryName, 
-  currency, rates, language, totalPages = 1,
-  onCategorySelect
+  currency, rates, language, totalPages = 1 
 }) {
 
   const getConvertedPrice = (basePrice) => {
@@ -80,9 +77,6 @@ function Home({
     <div className="home-container">
       <HeroBanner />
       
-      {/* Category Rail Component */}
-      <CategoryCards isDark={isDark} onCategorySelect={onCategorySelect} />
-
       <div className="hero-subtitle-wrapper">
         <div className="hero-text-overlay">
           {t('heroText')}
@@ -118,6 +112,7 @@ function Home({
 
                 return (
                   <Link to={`/product/${sareeId}`} className="product-card" key={sareeId}>
+                    
                     <div className="product-image-container">
                       <img
                         src={finalImageUrl}
@@ -150,6 +145,7 @@ function Home({
                         )}
                       </div>
                     </div>
+                    
                   </Link>
                 );
               })}

@@ -365,6 +365,9 @@ const getDetailedOrderById = async (orderId) => {
 // ==========================================
 // 7. GET ORDER SUMMARY DATA (CART & BUY NOW)
 // ==========================================
+// ==========================================
+// 7. GET ORDER SUMMARY DATA (CART & BUY NOW)
+// ==========================================
 const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, buyNowQty = 1) => {
     console.log(`[ORDER_SERVICE] 🗄️ Fetching Order Summary (BuyNow: ${buyNowProductId || 'No'})`);
     try {
@@ -377,6 +380,24 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
             );
             addressData = addrRows.length > 0 ? addrRows[0] : null;
         }
+
+        // 🚚 Delivery days come from the shipping_zones table, by the state of the chosen address.
+        // If the state is not found (or no address yet) the 'Default' row is used.
+        const [zoneRows] = await db.execute(
+            `SELECT min_days, max_days
+             FROM shipping_zones
+             WHERE LOWER(TRIM(state_name)) = LOWER(TRIM(?)) OR state_name = 'Default'
+             ORDER BY (state_name = 'Default') ASC
+             LIMIT 1`,
+            [(addressData && addressData.state) || '']
+        );
+        const maxDays = zoneRows.length > 0 ? Number(zoneRows[0].max_days) : ORDER_SETTINGS.DELIVERY_DAYS;
+        const minDays = zoneRows.length > 0 ? Number(zoneRows[0].min_days) : maxDays;
+
+        const minDeliveryDate = new Date();
+        minDeliveryDate.setDate(minDeliveryDate.getDate() + minDays);
+        const maxDeliveryDate = new Date();
+        maxDeliveryDate.setDate(maxDeliveryDate.getDate() + maxDays);
 
         let cartItems = [];
         
@@ -425,14 +446,12 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
             subtotal += (unitPrice * qty);
             totalMrp += (mrp * qty);
 
-            const deliveryDate = new Date();
-            deliveryDate.setDate(deliveryDate.getDate() + 5);
-
             return {
                 ...item,
                 image_url: getFullImageUrl(item.image_url),
-                seller_name: item.seller_name || 'Arzoo Saree',
-                estimated_delivery: deliveryDate.toISOString(),
+                seller_name: item.seller_name || ORDER_SETTINGS.DEFAULT_SELLER_NAME,
+                estimated_delivery_min: minDeliveryDate.toISOString(),
+                estimated_delivery: maxDeliveryDate.toISOString(),
                 mrp: mrp,
                 unit_price: unitPrice,
                 discount_percentage: discountPercent
@@ -440,7 +459,8 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
         });
 
         const totalDiscount = Math.max(0, totalMrp - subtotal);
-        const deliveryCharge = subtotal > 500 ? 0 : 50; 
+        // Delivery is free on every product for now
+        const deliveryCharge = 0;
         const totalPayable = subtotal + deliveryCharge;
 
         return {
@@ -452,6 +472,13 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
                 delivery_charge: deliveryCharge,
                 subtotal: subtotal,
                 total_payable: totalPayable
+            },
+            // Currency / locale / delivery days for the screen, so the frontend does not type them
+            meta: {
+                currency_code: ORDER_SETTINGS.CURRENCY_CODE,
+                locale: ORDER_SETTINGS.LOCALE,
+                delivery_min_days: minDays,
+                delivery_days: maxDays
             }
         };
     } catch (err) {
