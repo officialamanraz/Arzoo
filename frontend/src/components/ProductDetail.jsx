@@ -920,40 +920,73 @@ if (!saree) {
             </div>
 
             {saree.variants && saree.variants.length > 0 && (
-              <div className="amazon-variants-container">
-                <div className="amazon-variant-label">
+              <div className="vsw-container">
+                {/* Self-contained styles for this block only (new class names, so no theme rule can shrink it) */}
+                <style>{`
+                  .vsw-container { margin: 18px 0; padding-top: 14px; border-top: 1px solid rgba(184, 137, 67, 0.25); --vsw-w: 110px; }
+                  .vsw-label { margin-bottom: 12px; font-size: 0.95rem; font-weight: 700; color: var(--arzoo-wine-dark, #5c0f2a); }
+                  .vsw-label strong { font-weight: 800; }
+                  .vsw-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+                  .vsw-card { display: flex; flex-direction: column; align-items: center; width: var(--vsw-w); padding: 6px; box-sizing: border-box; text-decoration: none; background: #fffaf3; border: 2px solid rgba(184, 137, 67, 0.24); border-radius: 10px; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s; }
+                  .vsw-card:hover { border-color: var(--arzoo-wine, #7d1638); box-shadow: 0 4px 12px rgba(92, 15, 42, 0.14); transform: translateY(-2px); }
+                  .vsw-card.vsw-active { border-color: var(--arzoo-wine, #7d1638); box-shadow: 0 0 0 2px rgba(125, 22, 56, 0.18); }
+                  .vsw-card.vsw-soldout { cursor: not-allowed; opacity: 0.75; }
+                  .vsw-card.vsw-soldout:hover { transform: none; box-shadow: none; }
+                  .vsw-img-wrap { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 6px; overflow: hidden; background: #f3ebe0; }
+                  .vsw-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+                  .vsw-out { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.7); }
+                  .vsw-out span { padding: 2px 6px; font-size: 0.68rem; font-weight: 700; text-align: center; color: #b00020; background: #fff; border-radius: 4px; }
+                  .vsw-price { margin-top: 8px; max-width: 100%; font-size: 0.86rem; font-weight: 800; line-height: 1.2; text-align: center; overflow-wrap: anywhere; color: var(--arzoo-wine, #7d1638); }
+                  .vsw-mrp { margin-top: 2px; font-size: 0.72rem; text-decoration: line-through; color: #8a7f78; }
+                  :is(body.dark, .dark-mode) .vsw-label { color: #f1e4d3; }
+                  :is(body.dark, .dark-mode) .vsw-card { background: #2a2025; border-color: rgba(227, 185, 111, 0.3); }
+                  :is(body.dark, .dark-mode) .vsw-card:hover, :is(body.dark, .dark-mode) .vsw-card.vsw-active { border-color: #e3b96f; }
+                  :is(body.dark, .dark-mode) .vsw-price { color: #e3b96f; }
+                  :is(body.dark, .dark-mode) .vsw-mrp { color: #a89c94; }
+                  :is(body.dark, .dark-mode) .vsw-out { background: rgba(0, 0, 0, 0.6); }
+                  @media (max-width: 768px) { .vsw-container { --vsw-w: 96px; } .vsw-grid { gap: 10px; } }
+                `}</style>
+
+                <div className="vsw-label">
                   {variantLabelText}: <strong>{saree.color_name || saree.base_color || 'Default'}</strong>
                 </div>
-                <div className="amazon-swatch-grid">
+                <div className="vsw-grid">
                   {saree.variants.map((v) => {
                     const isActive = v.product_id === saree.product_id;
                     const isVariantSoldOut = (v.stock_qty !== undefined && v.stock_qty <= 0) || v.is_active === 0;
+                    // The open product already has its price, so the active card never shows an empty price
+                    const variantPrice = v.price ?? (isActive ? saree.price : null);
+                    const variantMrp = v.mrp ?? (isActive ? saree.mrp : null);
+                    const hasVariantPrice = variantPrice !== null && variantPrice !== undefined && variantPrice !== '';
 
                     return (
-                      <Link 
-                        key={v.product_id} 
-                        to={isVariantSoldOut ? '#' : `/product/${v.product_id}`} 
-                        className={`amazon-swatch-item ${isActive ? 'active' : ''} ${isVariantSoldOut ? 'sold-out-variant' : ''}`}
+                      <Link
+                        key={v.product_id}
+                        to={isVariantSoldOut ? '#' : `/product/${v.product_id}`}
+                        className={`vsw-card ${isActive ? 'vsw-active' : ''} ${isVariantSoldOut ? 'vsw-soldout' : ''}`}
                         title={v.color_name || 'Variant'}
                         onClick={(e) => {
-                           if(isVariantSoldOut) e.preventDefault(); 
+                          if (isVariantSoldOut) e.preventDefault();
                         }}
                       >
-                        <div className="amazon-swatch-img-wrap">
-                          <img 
-                            src={resolveImage(v.image_url || FALLBACK_IMAGE)} 
-                            alt={v.color_name || 'variant'} 
-                            className="amazon-swatch-img"
+                        <div className="vsw-img-wrap">
+                          <img
+                            src={resolveImage(v.image_url || FALLBACK_IMAGE)}
+                            alt={v.color_name || 'variant'}
+                            className="vsw-img"
                             onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                           />
                           {isVariantSoldOut && (
-                            <div className="variant-out-overlay">
-                              <span className="variant-out-text">Out of stock</span>
-                            </div>
+                            <div className="vsw-out"><span>Out of stock</span></div>
                           )}
                         </div>
-                        {v.price !== undefined && v.price !== null && (
-                          <span className="amazon-swatch-price">{currency} {getConvertedPrice(v.price)}</span>
+                        {hasVariantPrice && (
+                          <>
+                            <span className="vsw-price">{currency} {getConvertedPrice(variantPrice)}</span>
+                            {variantMrp && Number(variantMrp) > Number(variantPrice) && (
+                              <span className="vsw-mrp">{currency} {getConvertedPrice(variantMrp)}</span>
+                            )}
+                          </>
                         )}
                       </Link>
                     );
