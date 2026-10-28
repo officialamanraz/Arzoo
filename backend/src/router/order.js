@@ -132,5 +132,5 @@ router.post('/webhook/courier', (req, res, next) => {
     courierWebhookController(req, res, next);
 });
 
-router.get(':/orderId/invoice',verifyToken,getInvoice)
+router.get('/invoice/:orderId',verifyToken,getInvoice)
 module.exports = router;
