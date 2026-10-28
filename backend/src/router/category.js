@@ -8,7 +8,8 @@ const {
   Addsubcategory,
   getProductsBySubcategory,
   getSubcategoriesByCategory,
-  getCategoryCards
+  getCategoryCards,
+  getProductsByCategory
 } = require('../controllers/category');
 
 // ==========================================
@@ -54,4 +55,5 @@ router.get('/get-subcategories/:category_id', getSubcategoriesByCategory);
 
 // Fetch categories formatted as visual cards with images
 router.get('/products', getCategoryCards);
+router.get('/:category_id/products', getProductsByCategory)
 module.exports = router;

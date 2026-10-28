@@ -4,7 +4,8 @@ const {
   Addsubcategorybydb,
   getProductsBySubcategoryFromDB,
   getSubcategoriesByCategoryFromDB,
-  getCategoryCardsFromDB
+  getCategoryCardsFromDB,
+  getProductsByCategoryFromDB
 } = require('../services/categoryservice');
 
 // ==========================================
@@ -218,12 +219,40 @@ const getCategoryCards = async (req, res) => {
     });
   }
 };
+// Don't forget to add getProductsByCategoryFromDB to your require() at the top of the file!
 
+// 🌟 NEW CONTROLLER: Handle category product requests
+const getProductsByCategory = async (req, res) => {
+  console.log('\n--- [CONTROLLER: getProductsByCategory START] ---');
+  const rawCategoryId = req.params?.category_id || req.query?.category_id;
+
+  if (!rawCategoryId || rawCategoryId === 'undefined') {
+    return res.status(400).json({ success: false, message: 'Valid category_id required.' });
+  }
+
+  try {
+    const { category_name, products } = await getProductsByCategoryFromDB(rawCategoryId);
+    console.log(`[CATEGORY] Returning ${products.length} products for ${category_name}.`);
+    
+    return res.status(200).json({
+      success: true,
+      category_name,
+      total_found: products.length,
+      data: products
+    });
+  } catch (error) {
+    console.error(`[CATEGORY] Fetch error:`, error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve products.', error: error.message });
+  }
+};
+
+// Ensure you add it to the exports at the very bottom!
 module.exports = {
   Addcategory,
   getcategory,
   Addsubcategory,
   getProductsBySubcategory,
   getSubcategoriesByCategory,
-  getCategoryCards
+  getCategoryCards,
+  getProductsByCategory // 👈 ADDED HERE
 };

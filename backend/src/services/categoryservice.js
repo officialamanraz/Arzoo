@@ -215,11 +215,44 @@ const getCategoryCardsFromDB = async () => {
         throw error;
     }
 };
+
+// 🌟 NEW FUNCTION: Fetch products using the main category_id
+const getProductsByCategoryFromDB = async (raw_category_id) => {
+    try {
+        const category_id = parseInt(raw_category_id, 10);
+        if (isNaN(category_id) || category_id <= 0) {
+            return { category_name: 'Products', products: [] };
+        }
+
+        // Get category name for the frontend title
+        const [catRows] = await db.execute('SELECT name FROM categories WHERE category_id = ?', [category_id]);
+        const category_name = catRows.length > 0 ? catRows[0].name : 'Products';
+
+        // Get products matching the main category
+        const [products] = await db.execute('SELECT * FROM products WHERE category_id = ?', [category_id]);
+
+        const formattedProducts = products.map((product) => ({
+            ...product,
+            image_url: typeof getFullImageUrl === 'function' ? getFullImageUrl(product.image_url || '') : (product.image_url || '')
+        }));
+
+        return {
+            category_name,
+            products: formattedProducts
+        };
+    } catch (error) {
+        console.error('[CATEGORY_SERVICE] Error in getProductsByCategoryFromDB:', error);
+        throw error;
+    }
+};
+
+// Ensure you add it to the exports at the very bottom!
 module.exports = {
     Addcategoryindb,
     getcategorybydb,
     Addsubcategorybydb,
     getProductsBySubcategoryFromDB,
     getSubcategoriesByCategoryFromDB,
-    getCategoryCardsFromDB
+    getCategoryCardsFromDB,
+    getProductsByCategoryFromDB // 👈 ADDED HERE
 };

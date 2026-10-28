@@ -227,7 +227,8 @@ useEffect(() => {
       fetchMode = "subcategory-filter";
     }
 else if (selectedCategory) {
-      url = `${API_BASE_URL}/api/products/category/${selectedCategory}?page=${currentPage}&limit=500`; 
+      // 🌟 FIX 1: Point to the new Category API route
+      url = `${API_BASE_URL}/api/categories/${selectedCategory}/products`; 
       fetchMode = "category-filter";
     }
     else if (minprice && maxprice) {
@@ -276,7 +277,17 @@ else if (selectedCategory) {
           }
 
           setLoading(false);
-          console.log(`[APP] ✅ Successfully loaded ${finalData.length} products.`);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error(`[APP] ❌ Error fetching sarees -- mode: ${fetchMode}:`, err);
+          setError("Failed to load products. Please check the backend connection.");
+          
+          // 🌟 FIX 2: Clear the products array so empty categories (like Silk) don't show old products!
+          setSarees([]); 
+          
+          setLoading(false);
         }
       })
       .catch((err) => {
