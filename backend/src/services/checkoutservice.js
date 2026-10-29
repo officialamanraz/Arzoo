@@ -244,11 +244,9 @@
 // module.exports = { processCheckoutInDB };
 
 const db = require('../DATABASE/mysql');
-// ⚡ Import cache instance
 const myCache = require('../../config/cache');
 
 const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMethod, tracking_ref, customEmail) => {
-    // 🚨 Block COD completely
     if (paymentMethod === 'cod') {
         throw new Error('Cash on Delivery has been completely disabled. Please choose Online Payment.');
     }
@@ -292,22 +290,25 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         estimatedDeliveryDateObj.setDate(estimatedDeliveryDateObj.getDate() + maxDays);
         const estimatedDeliverySQL = estimatedDeliveryDateObj.toISOString().split('T')[0];
 
-        // 4. PROCESS CART / BUY NOW
+        // 4. PROCESS CART / BUY NOW (c.name removed to avoid unknown column error)
         let cartItems = [];
         const isBuyNow = buyNowProduct && buyNowProduct.product_id;
 
         if (isBuyNow) {
             const [productRows] = await connection.execute(
-                `SELECT p.product_id, p.name AS product_name, p.price AS unit_price, p.hsn_code, p.dealer_base_price, p.packaging_cost, c.name AS category_name
-                 FROM products p WHERE p.product_id = ?`,
+                `SELECT p.product_id, p.name AS product_name, p.price AS unit_price, p.hsn_code, p.dealer_base_price, p.packaging_cost
+                 FROM products p 
+                 WHERE p.product_id = ?`,
                 [buyNowProduct.product_id]
             );
             if (productRows.length === 0) throw new Error('PRODUCT_NOT_FOUND');
             cartItems = [{ ...productRows[0], quantity: buyNowProduct.quantity || 1 }];
         } else {
             const [rows] = await connection.execute(
-                `SELECT cart.product_id, cart.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code, p.dealer_base_price, p.packaging_cost, c.name AS category_name
-                 FROM cart INNER JOIN products p ON cart.product_id = p.product_id WHERE cart.user_id = ?`,
+                `SELECT cart.product_id, cart.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code, p.dealer_base_price, p.packaging_cost
+                 FROM cart 
+                 INNER JOIN products p ON cart.product_id = p.product_id 
+                 WHERE cart.user_id = ?`,
                 [user_id]
             );
             cartItems = rows;
@@ -329,11 +330,11 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         const totalAmount = subtotal; 
         const dynamicPaymentId = `ORD-${Date.now()}`;
         
-        // Accurate Razorpay Fee Math (2% + 18% GST)
+        // Razorpay Gateway Fee: 2% Flat + 18% GST (total 2.36%)
         const gatewayFee = (totalAmount * 0.02) * 1.18;
         const netAdminProfit = totalAmount - totalLockedDealerPayout - totalPackagingCost - gatewayFee;
 
-        // 6. CREATE ORDER (Staged as Unpaid)
+        // 6. CREATE ORDER
         const [orderResult] = await connection.execute(
             `INSERT INTO orders
                 (user_id, total_amount, status, payment_id, payment_method, payment_status,
@@ -343,12 +344,12 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         );
         const newOrderId = orderResult.insertId;
 
-        // 7. INVOICE UPDATE
+        // 7. INVOICE NUMBER UPDATE
         const invoiceYear = new Date().getFullYear();
         const invoiceNumber = `KW-${invoiceYear}-${String(newOrderId).padStart(6, '0')}`;
         await connection.execute(`UPDATE orders SET invoice_number = ? WHERE order_id = ?`, [invoiceNumber, newOrderId]);
 
-        // 8. INSERT ORDER ITEMS (🚨 NOTICE: STOCK DEDUCTION REMOVED FROM HERE)
+        // 8. INSERT ORDER ITEMS
         for (const item of cartItems) {
             const itemDealerPayout = item.quantity * Number(item.dealer_base_price);
             await connection.execute(
@@ -368,7 +369,6 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         // 10. COMMIT TRANSACTION
         await connection.commit();
         
-        // Ensure all possible ID variables are returned so frontend doesn't crash
         return {
             newOrderId,
             order_id: newOrderId,
