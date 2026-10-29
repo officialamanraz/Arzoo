@@ -155,14 +155,12 @@ function AddressForm() {
 
   return (
     <div className="address-page">
-      {/* Header */}
       <div className="address-header">
         <div className="header-inner">
           <button onClick={() => navigate(-1)} className="back-btn">←</button>
           <h2>Add delivery address</h2>
         </div>
 
-        {/* Stepper */}
         <div className="stepper-container">
           <Step number={1} label="Address" active />
           <StepLine />
@@ -172,7 +170,6 @@ function AddressForm() {
         </div>
       </div>
 
-      {/* Form Container */}
       <div className="address-form-container">
         <FieldInput 
           label="Full Name *" 
@@ -318,7 +315,7 @@ function FieldInput({ label, name, placeholder, value, onChange, onBlur, error, 
         name={name} 
         placeholder={placeholder} 
         value={value} 
-        onChange={onChange} 
+        onChange={handleChange} 
         onBlur={onBlur} 
         maxLength={maxLength} 
         className={`form-input ${error ? 'input-error' : ''}`} 
