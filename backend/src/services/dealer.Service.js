@@ -69,7 +69,7 @@ const fetchAdminDealerDetailService = async (dealerId) => {
         );
 
         // C. Calculate Unsold Inventory Summary (Based on Stock)
-        let total_inventory_mrp = 0; // Keeping variable name same so frontend doesn't break, but it will hold Selling Price sum now
+        let total_inventory_mrp = 0; 
         let total_dealer_base_value = 0;
         let total_potential_admin_profit = 0;
 
@@ -78,23 +78,6 @@ const fetchAdminDealerDetailService = async (dealerId) => {
             const sellingPrice = Number(prod.price || 0);
             const packing = Number(prod.packaging_cost || 0);
             
-            // =========================================================
-            // 🛑 PURANA SYSTEM (COMMENTED OUT FOR FUTURE REFERENCE)
-            // =========================================================
-            /*
-            const dealerCommission = Number(dealer.commission_percentage || 0);
-            const mrpToUse = (prod.mrp && Number(prod.mrp) > 0) ? Number(prod.mrp) : sellingPrice;
-            
-            let effectiveDealerBase = 0;
-            if (sellingPrice > 0) {
-                effectiveDealerBase = sellingPrice * (100 - dealerCommission) / 100;
-            }
-            const effectiveAdminProfit = sellingPrice - effectiveDealerBase - packing;
-            */
-
-            // =========================================================
-            // ✅ NAYA SYSTEM (DIRECT DB VALUES)
-            // =========================================================
             // 1. Dealer Base sidha database wale column se lenge
             const effectiveDealerBase = Number(prod.dealer_base_price || 0);
             
@@ -120,7 +103,6 @@ const fetchAdminDealerDetailService = async (dealerId) => {
         // D. Calculate Sold Items Accountability Summary
         console.log(`[DEALER_SERVICE_DETAIL] 🧮 Calculating Sold Items Accountability Summary...`);
         
-        // 🌟 ERROR FIXED: Updated 'o.order_status' to 'o.status' matching the actual database schema
         const [soldItemsResult] = await db.execute(
             `SELECT 
                 SUM(oi.quantity) as total_products_sold,
@@ -138,10 +120,13 @@ const fetchAdminDealerDetailService = async (dealerId) => {
         const total_revenue_sold = Number(soldData.total_revenue_sold || 0);
         const total_sold_dealer_payout = Number(soldData.total_sold_dealer_payout || 0);
         
-        // 🌟 NAYA SYSTEM: Net profit se packaging cost deduction hata diya gaya hai.
+        // 🌟 NEW REQUIREMENT: Calculate Razorpay Gateway Fee Cut (2% + 18% GST = 2.36%) based on total selling price.
+        const total_gateway_fees_cut = (total_revenue_sold * 0.02) * 1.18;
+
+        // Note: As requested, the gateway fee is NOT deducted from the profit variable here.
         const total_net_profit_sold = total_revenue_sold - total_sold_dealer_payout;
 
-        console.log(`[DEALER_SERVICE_DETAIL] ✅ Sold Summary -> Sold Qty: ${total_products_sold}, Revenue: ₹${total_revenue_sold}, Payout: ₹${total_sold_dealer_payout}, Profit: ₹${total_net_profit_sold}`);
+        console.log(`[DEALER_SERVICE_DETAIL] ✅ Sold Summary -> Sold Qty: ${total_products_sold}, Revenue: ₹${total_revenue_sold}, Payout: ₹${total_sold_dealer_payout}, Razorpay Cut: ₹${total_gateway_fees_cut}, Gross Profit: ₹${total_net_profit_sold}`);
 
         return {
             dealer,
@@ -155,7 +140,8 @@ const fetchAdminDealerDetailService = async (dealerId) => {
                 total_products_sold,
                 total_revenue_sold,
                 total_sold_dealer_payout,
-                total_net_profit_sold
+                total_net_profit_sold,
+                total_gateway_fees_cut // Passed to frontend to display
             }
         };
     } catch (err) {

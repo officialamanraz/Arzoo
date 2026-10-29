@@ -197,7 +197,6 @@ function AdminDealerDetail() {
             <div className="dealer-status-container">
               <span className={`dealer-status-badge ${dealer.status || 'pending'}`}>{dealer.status || 'unknown'}</span>
               
-              {/* 🌟 Editable Default Commission Tag */}
               <div className="dealer-commission-edit-wrapper">
                 <span className="dealer-commission-tag">Default Commission:</span>
                 {isEditingCommission ? (
@@ -273,6 +272,13 @@ function AdminDealerDetail() {
             <p className="stat-label">TOTAL SOLD DEALER PAYOUT</p>
             <h3 className="stat-val orange">₹{Number(sold_summary.total_sold_dealer_payout || 0).toLocaleString('en-IN')}</h3>
           </div>
+          {/* ✅ Naya Razorpay Fee Cut Card */}
+          <div className="stat-card" style={{ borderLeft: '4px solid #c53030' }}>
+            <p className="stat-label" style={{ color: '#c53030' }}>RAZORPAY GATEWAY FEE</p>
+            <h3 className="stat-val" style={{ color: '#c53030' }}>
+              - ₹{Number(sold_summary.total_gateway_fees_cut || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+            </h3>
+          </div>
           <div className="stat-card stat-card-green">
             <p className="stat-label green-text">TOTAL NET PROFIT (SOLD)</p>
             <h3 className="stat-val green">+ ₹{Number(sold_summary.total_net_profit_sold || 0).toLocaleString('en-IN')}</h3>
@@ -327,7 +333,7 @@ function AdminDealerDetail() {
                 {currentProducts.map((prod, idx) => {
                   const price = Number(prod?.price || 0);
                   const dealerBase = Number(prod?.dealer_base_price || 0);
-                  const estAdminProfit = price - dealerBase; // Updated per backend adjustments (packaging cost excluded from profit subtraction)
+                  const estAdminProfit = price - dealerBase; 
                   const isSold = prod.order_id && prod.order_id !== null && String(prod.order_id).toLowerCase() !== 'null';
                   const stockQty = Number(prod?.stock_qty || 0);
 

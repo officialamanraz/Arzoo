@@ -11,7 +11,9 @@ const Checkout = () => {
     const location = useLocation();
 
     const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.state || {};
-    const [paymentMethod, setPaymentMethod] = useState('cod'); 
+    
+    // ✅ Changed default to 'online' since COD is disabled
+    const [paymentMethod, setPaymentMethod] = useState('online'); 
     const [loading, setLoading] = useState(false);
     const [fallbackAddressId, setFallbackAddressId] = useState(null);
 
@@ -85,7 +87,8 @@ const Checkout = () => {
 
             const data = await res.json();
 
-            if (!data.success) {
+            // Handle backend errors safely
+            if (res.status !== 200 || (data.success === false)) {
                 toast.error(data.message || data.error || 'Checkout failed.');
                 setLoading(false);
                 return;
@@ -93,11 +96,12 @@ const Checkout = () => {
 
             if (paymentMethod === 'cod') {
                 sessionStorage.removeItem('tracking_ref');
-                toast.success(`Order Placed Successfully! Order ID: ${data.orderId}`);
+                toast.success(`Order Placed Successfully! Order ID: ${data.newOrderId || data.orderId}`);
                 navigate('/');
                 setLoading(false);
             } else {
-                await startRazorpayPayment(data.order_id, data.orderId, token);
+                // ✅ FIXED: Passing data.newOrderId to match the new backend structure
+                await startRazorpayPayment(data.newOrderId, data.newOrderId, token);
             }
 
         } catch (err) {
@@ -136,7 +140,7 @@ const Checkout = () => {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
                 amount: razorpayData.amount,
                 currency: razorpayData.currency,
-                name: "Royal Heritage",
+                name: "Arzoo Saree", // Updated to your brand name
                 description: "Purchase Checkout",
                 order_id: razorpayData.razorpay_order_id,
 
@@ -201,25 +205,9 @@ const Checkout = () => {
                 <div className="checkout-step step-active">
                     <div className="step-content">
                         
+                        {/* COD SECTION COMMENTED OUT FOR FUTURE USE */}
                         {/* <div className={`payment-method-card ${paymentMethod === 'cod' ? 'payment-selected' : ''}`} style={{ opacity: isKotaDoriya ? 0.6 : 1 }}>
-                            <label className="payment-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isKotaDoriya ? 'not-allowed' : 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="paymentMethod"
-                                    checked={paymentMethod === 'cod'}
-                                    onChange={() => setPaymentMethod('cod')}
-                                    disabled={loading || isKotaDoriya}
-                                    className="payment-radio"
-                                />
-                                <FaMoneyBillWave color="#2f855a" size={18} />
-                                <span className="payment-name">Cash on Delivery (COD)</span>
-                            </label>
-                            <p className="payment-desc">Pay the delivery agent in cash when your order arrives.</p>
-                            {isKotaDoriya && (
-                                <p style={{ color: '#b3261e', fontSize: '0.82rem', marginTop: '6px', fontWeight: '600' }}>
-                                    *COD is not available for Kota Doriya Sarees. Please choose online payment.
-                                </p>
-                            )}
+                            ...
                         </div> */}
 
                         <div className={`payment-method-card ${paymentMethod === 'online' ? 'payment-selected' : ''}`}>

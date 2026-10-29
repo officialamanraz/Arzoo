@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaCreditCard } from 'react-icons/fa';
+import { FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
 import './Payment.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -12,6 +12,8 @@ export default function PaymentPage() {
 
   const { addressId, totalAmount, buyNowProduct, customerEmail } = location.state || {};
 
+  // ✅ Defaulted strictly to online payment since COD is disabled in the backend.
+  const [paymentMethod, setPaymentMethod] = useState('online'); 
   const [placingOrder, setPlacingOrder] = useState(false);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function PaymentPage() {
             if (verifyData.success) {
               sessionStorage.removeItem('tracking_ref');
               toast.success(`Payment Successful! Order ID: ${displayOrderId}`);
-              navigate(`/track-order/${displayOrderId}`);
+              navigate(`/track-order/${displayOrderId}`); // Navigate to track order on success
             } else {
               toast.error('Payment verification failed.');
             }
@@ -108,7 +110,7 @@ export default function PaymentPage() {
       const storedTrackingRef = sessionStorage.getItem('tracking_ref') || null;
       const payload = {
         addressId,
-        paymentMethod: 'online', // Strictly locked to online
+        paymentMethod: paymentMethod, // Always 'online' currently
         ...(buyNowProduct && { buyNowProduct }),
         tracking_ref: storedTrackingRef,
         customerEmail
@@ -131,8 +133,8 @@ export default function PaymentPage() {
         return;
       }
 
-      // Directly start Razorpay payment
-      await startRazorpayPayment(data.order_id, data.orderId, token);
+      // ✅ FIXED: Passing data.newOrderId to match the new backend structure
+      await startRazorpayPayment(data.newOrderId, data.newOrderId, token);
       
     } catch (err) {
       console.error('[PaymentPage] Checkout error:', err);
@@ -161,24 +163,28 @@ export default function PaymentPage() {
           <div className="payment-card">
             <h3 className="section-title">PAYMENT METHOD</h3>
 
-            {/* ONLY Online Payment Option Rendered */}
+            {/* Online Payment */}
             <div
-              className="payment-method-box selected"
+              className={`payment-method-box ${paymentMethod === 'online' ? 'selected' : ''}`}
+              onClick={() => setPaymentMethod('online')}
               style={{
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
                 padding: '14px',
                 borderRadius: '8px',
-                border: '2px solid #741434',
-                background: '#fdf5eb',
+                border: paymentMethod === 'online' ? '2px solid #741434' : '1px solid #e2e8f0',
+                background: paymentMethod === 'online' ? '#fdf5eb' : '#fff',
                 marginBottom: '14px'
               }}
             >
               <input
                 type="radio"
-                checked={true}
-                readOnly
+                name="paymentMethod"
+                value="online"
+                checked={paymentMethod === 'online'}
+                onChange={() => setPaymentMethod('online')}
                 className="payment-radio"
               />
               <FaCreditCard size={22} color="#741434" />
@@ -187,22 +193,47 @@ export default function PaymentPage() {
                   Pay Online (UPI, Cards, Netbanking)
                 </p>
                 <p style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
-                  100% Secure payment via Razorpay.
+                  Secure payment via Razorpay.
                 </p>
               </div>
             </div>
-            
-            <div style={{
-              padding: '10px 14px',
-              backgroundColor: '#f8f9fa',
-              borderLeft: '4px solid #718096',
-              borderRadius: '4px',
-              color: '#4a5568',
-              fontSize: '0.85rem'
-            }}>
-              ℹ️ <strong>Note:</strong> We currently only accept prepaid online orders to ensure secure and fast delivery.
-            </div>
-            
+
+            {/* Cash On Delivery (COMMENTED OUT FOR FUTURE USE) */}
+            {/* 
+            <div
+              className={`payment-method-box ${paymentMethod === 'cod' ? 'selected' : ''}`}
+              onClick={() => setPaymentMethod('cod')}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px',
+                borderRadius: '8px',
+                border: paymentMethod === 'cod' ? '2px solid #2f855a' : '1px solid #e2e8f0',
+                background: paymentMethod === 'cod' ? '#f0fff4' : '#fff',
+              }}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="cod"
+                checked={paymentMethod === 'cod'}
+                onChange={() => setPaymentMethod('cod')}
+                className="payment-radio"
+              />
+              <FaMoneyBillWave size={22} color='#2f855a' />
+              <div>
+                <p style={{ fontWeight: 600, margin: 0, color: '#1a202c' }}>
+                  Cash on Delivery (COD)
+                </p>
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '2px 0 0' }}>
+                  Pay the delivery agent in cash when your order arrives.
+                </p>
+              </div>
+            </div> 
+            */}
+
           </div>
         </div>
 
