@@ -136,7 +136,7 @@ const Checkout = () => {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
                 amount: razorpayData.amount,
                 currency: razorpayData.currency,
-                name: "Arzoo Saree",
+                name: "Royal Heritage",
                 description: "Purchase Checkout",
                 order_id: razorpayData.razorpay_order_id,
 
@@ -201,7 +201,7 @@ const Checkout = () => {
                 <div className="checkout-step step-active">
                     <div className="step-content">
                         
-                        <div className={`payment-method-card ${paymentMethod === 'cod' ? 'payment-selected' : ''}`} style={{ opacity: isKotaDoriya ? 0.6 : 1 }}>
+                        {/* <div className={`payment-method-card ${paymentMethod === 'cod' ? 'payment-selected' : ''}`} style={{ opacity: isKotaDoriya ? 0.6 : 1 }}>
                             <label className="payment-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isKotaDoriya ? 'not-allowed' : 'pointer' }}>
                                 <input
                                     type="radio"
@@ -220,7 +220,7 @@ const Checkout = () => {
                                     *COD is not available for Kota Doriya Sarees. Please choose online payment.
                                 </p>
                             )}
-                        </div>
+                        </div> */}
 
                         <div className={`payment-method-card ${paymentMethod === 'online' ? 'payment-selected' : ''}`}>
                             <label className="payment-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
