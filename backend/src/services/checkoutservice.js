@@ -384,11 +384,14 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         );
 
         // 10. COMMIT TRANSACTION
+// 10. COMMIT TRANSACTION PERMANENTLY
         await connection.commit();
-        console.log(`[CHECKOUT] 🎉 Stage 1 Complete: Order ${newOrderId} staged for payment.`);
+        console.log(`[CHECKOUT] 🎉 Transaction committed successfully for Order ID: ${newOrderId}`);
         
         return {
-            newOrderId, // Frontend is expecting newOrderId
+            newOrderId,
+            order_id: newOrderId,
+            orderId: newOrderId,
             dynamicPaymentId,
             method
         };

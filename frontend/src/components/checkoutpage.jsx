@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
+import { FaCreditCard } from 'react-icons/fa';
 import './Checkout.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -12,20 +12,10 @@ const Checkout = () => {
 
     const { buyNowProduct, addressId: passedAddressId, customerEmail } = location.state || {};
     
-    // ✅ Changed default to 'online' since COD is disabled
+    // ✅ Default to 'online' since COD is disabled
     const [paymentMethod, setPaymentMethod] = useState('online'); 
     const [loading, setLoading] = useState(false);
     const [fallbackAddressId, setFallbackAddressId] = useState(null);
-
-    // 🛑 Check if buy-now or cart product contains "Kota Doriya"
-    const isKotaDoriya = buyNowProduct && buyNowProduct.name && buyNowProduct.name.toLowerCase().includes('kota doriya');
-
-    // Automatically switch payment method to 'online' if COD is blocked for Kota Doriya
-    useEffect(() => {
-        if (isKotaDoriya && paymentMethod === 'cod') {
-            setPaymentMethod('online');
-        }
-    }, [isKotaDoriya, paymentMethod]);
 
     useEffect(() => {
         if (!passedAddressId) {
@@ -86,23 +76,27 @@ const Checkout = () => {
             });
 
             const data = await res.json();
+            console.log('[CHECKOUT RESPONSE DATA]:', data);
 
-            // Handle backend errors safely
-            if (res.status !== 200 || (data.success === false)) {
+            // Safety check for false response
+            if (!data.success && data.success !== undefined) {
                 toast.error(data.message || data.error || 'Checkout failed.');
                 setLoading(false);
                 return;
             }
 
-            if (paymentMethod === 'cod') {
-                sessionStorage.removeItem('tracking_ref');
-                toast.success(`Order Placed Successfully! Order ID: ${data.newOrderId || data.orderId}`);
-                navigate('/');
+            // ✅ BULLETPROOF FALLBACK: Checks all possible ways backend might send the order ID
+            const internalOrderId = data.newOrderId || data.order_id || data.orderId || data.data?.newOrderId || data.data?.order_id;
+
+            if (!internalOrderId) {
+                console.error('❌ Could not find valid order ID in response:', data);
+                toast.error('Order creation failed: Missing Order ID from server.');
                 setLoading(false);
-            } else {
-                // ✅ FIXED: Passing data.newOrderId to match the new backend structure
-                await startRazorpayPayment(data.newOrderId, data.newOrderId, token);
+                return;
             }
+
+            // Since payment method is only online now, directly call Razorpay with valid ID
+            await startRazorpayPayment(internalOrderId, internalOrderId, token);
 
         } catch (err) {
             console.error('[CHECKOUT] Order error:', err);
@@ -140,7 +134,7 @@ const Checkout = () => {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
                 amount: razorpayData.amount,
                 currency: razorpayData.currency,
-                name: "Arzoo Saree", // Updated to your brand name
+                name: "Arzoo Saree",
                 description: "Purchase Checkout",
                 order_id: razorpayData.razorpay_order_id,
 
@@ -197,7 +191,6 @@ const Checkout = () => {
     return (
         <div className="checkout-page">
             <div className="checkout-container">
-                
                 <div className="payment-header">
                     <h2>Select Payment Method</h2>
                 </div>
@@ -205,11 +198,6 @@ const Checkout = () => {
                 <div className="checkout-step step-active">
                     <div className="step-content">
                         
-                        {/* COD SECTION COMMENTED OUT FOR FUTURE USE */}
-                        {/* <div className={`payment-method-card ${paymentMethod === 'cod' ? 'payment-selected' : ''}`} style={{ opacity: isKotaDoriya ? 0.6 : 1 }}>
-                            ...
-                        </div> */}
-
                         <div className={`payment-method-card ${paymentMethod === 'online' ? 'payment-selected' : ''}`}>
                             <label className="payment-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                 <input
@@ -232,7 +220,7 @@ const Checkout = () => {
                                 disabled={loading}
                                 className="btn-primary btn-large"
                             >
-                                {loading ? 'Processing...' : (paymentMethod === 'cod' ? 'Place Order (COD)' : 'Proceed to Pay')}
+                                {loading ? 'Processing...' : 'Proceed to Pay'}
                             </button>
                         </div>
 
