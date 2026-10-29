@@ -315,7 +315,7 @@ function FieldInput({ label, name, placeholder, value, onChange, onBlur, error, 
         name={name} 
         placeholder={placeholder} 
         value={value} 
-        onChange={handleChange} 
+        onChange={onChange} 
         onBlur={onBlur} 
         maxLength={maxLength} 
         className={`form-input ${error ? 'input-error' : ''}`} 
