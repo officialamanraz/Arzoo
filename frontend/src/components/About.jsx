@@ -45,39 +45,42 @@ const About = () => {
       </div>
 
       {/* =========================================
-          PROFILE 2: PRODUCER & BUSINESS PARTNER
+          PROFILE 2: AMIR ALI (PRODUCER & BUSINESS PARTNER)
           ========================================= */}
-      <div className="about-container" style={{ marginTop: '60px' }}>
-        <div className="about-image-col">
-          <div className="about-quote-mark-top">“</div>
+      <div 
+        className="about-container" 
+        style={{ 
+          marginTop: '80px', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          textAlign: 'center',
+          gap: '20px'
+        }}
+      >
+        <div className="about-image-col" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
           <div className="about-image-frame">
             {/* 🌟 Change this src to the actual image file name in your public folder */}
             <img
               src="/partner-image.jpeg" 
-              alt="Partner Name"
+              alt="Amir Ali"
             />
           </div>
         </div>
 
-        <div className="about-text-col">
-          <div className="about-founder-row">
+        <div className="about-text-col" style={{ width: '100%', padding: '0 15px', marginTop: '15px' }}>
+          <div className="about-founder-row" style={{ justifyContent: 'center' }}>
             <h3>
-              {/* 🌟 Change Partner Name here */}
-              Partner Name, <span className="about-founder-role">Producer & Business Partner</span>
+              Amir Ali, <span className="about-founder-role">Producer & Business Partner</span>
             </h3>
-            <div className="about-founder-divider"></div>
           </div>
+          
+          <div className="about-founder-divider" style={{ margin: '15px auto 25px auto' }}></div>
 
-          <p className="about-quote-text">
-            {/* 🌟 Change the description text here */}
-            Add the partner's description or quote here. For example: "I bring years of traditional handloom expertise to the table, ensuring every saree is woven with authenticity and rich cultural heritage."
+          <p className="about-quote-text" style={{ maxWidth: '850px', margin: '0 auto', fontSize: '1.1rem', lineHeight: '1.8' }}>
+            "I am a producer and business partner of this website. We are masters of handloom, and we teach our knowledge of handloom to new workers to craft the finest products, so our lovely customers never have to complain about the product. We are trustworthy."
           </p>
 
-          <div className="about-quote-mark-bottom">
-            <span>”</span>
-          </div>
-
-          <div className="about-cta-row">
+          <div className="about-cta-row" style={{ justifyContent: 'center', marginTop: '35px' }}>
             <Link to="/contact" className="about-cta-btn">
               Get in Touch
             </Link>

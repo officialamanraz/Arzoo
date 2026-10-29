@@ -12,7 +12,7 @@ const FALLBACK_IMAGE = "/saare_1.jpeg";
 
 const SPEC_FIELDS = [
   { key: 'fabric', label: 'Fabric/Material' },
-  { key: 'product_length', label: 'Product Length' }, // 🌟 Product Length added here
+  { key: 'product_length', label: 'Product Length' },
   { key: 'primary_color', label: 'Primary Color' },
   { key: 'other_color', label: 'Other Colors' },
   { key: 'pattern', label: 'Pattern' },
@@ -433,6 +433,7 @@ function ProductDetail({ currency, rates, language }) {
   const [saree, setSaree] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false); // 🌟 Added Admin state check
   
   // Gallery States
   const [activeImageIdx, setActiveImageIdx] = useState(0);
@@ -503,6 +504,7 @@ function ProductDetail({ currency, rates, language }) {
     const fetchUserAddress = async () => {
       if (!token) {
         setUserLocation("Location not set");
+        setIsAdmin(false);
         return;
       }
       try {
@@ -513,6 +515,13 @@ function ProductDetail({ currency, rates, language }) {
         if (data && data.success && data.user) {
           const addr = data.user.address || data.user.city || data.user.pincode;
           setUserLocation(addr ? `Deliver to: ${addr}` : "Location not set");
+          
+          // 🌟 Verify if the logged-in user is an Admin
+          if (data.user.role === 'admin' || data.user.is_admin === 1 || data.user.is_admin === true) {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
         } else {
           setUserLocation("Location not set");
         }
@@ -693,7 +702,6 @@ function ProductDetail({ currency, rates, language }) {
     return (basePrice * rates[currency].rate).toFixed(2);
   };
 
-  // 🌟 Resolve subcategories list to display inside specifications
   const getSubcategoriesString = () => {
     if (saree?.subcategory_details && Array.isArray(saree.subcategory_details) && saree.subcategory_details.length > 0) {
       return saree.subcategory_details.map(s => s.name).filter(Boolean).join(', ');
@@ -747,10 +755,7 @@ if (!saree) {
       <div className="main-container">
         <div className="details-container">
           
-          {/* LEFT: GALLERY, ZOOM & SOCIAL ACTIONS */}
           <div className="gallery-section">
-            
-            {/* 🖥️ DESKTOP VIEW: AMAZON STYLE */}
             <div className="desktop-gallery-layout">
               {mediaItems.length > 1 && (
                 <div className="desktop-thumbnails">
@@ -807,7 +812,6 @@ if (!saree) {
               </div>
             </div>
 
-            {/* 📱 MOBILE VIEW: FLIPKART STYLE */}
             <div className="mobile-gallery-slider" style={{ position: 'relative' }}>
               {isOutOfStock && <span className="sold-out-badge">Sold Out</span>}
               <div className="mobile-slider-track" ref={mobileTrackRef} onScroll={handleSliderScroll}>
@@ -858,7 +862,6 @@ if (!saree) {
               )}
             </div>
 
-            {/* Social Action Bar */}
             <div className="social-action-bar">
               <div className="social-action-item">
                 <button type="button" className={`social-btn ${isLiked ? 'liked' : ''}`} onClick={handleToggleLike} aria-label="Like product">
@@ -903,7 +906,6 @@ if (!saree) {
             )}
           </div>
           
-          {/* RIGHT: INFO, PRICE, VARIANTS */}
           <div className="info-box">
             <h1 className="product-title">{isTranslating ? "Translating..." : translatedName}</h1>
             
@@ -921,7 +923,6 @@ if (!saree) {
 
             {saree.variants && saree.variants.length > 0 && (
               <div className="vsw-container">
-                {/* Self-contained styles for this block only (new class names, so no theme rule can shrink it) */}
                 <style>{`
                   .vsw-container { margin: 18px 0; padding-top: 14px; border-top: 1px solid rgba(184, 137, 67, 0.25); --vsw-w: 110px; }
                   .vsw-label { margin-bottom: 12px; font-size: 0.95rem; font-weight: 700; color: var(--arzoo-wine-dark, #5c0f2a); }
@@ -954,7 +955,6 @@ if (!saree) {
                   {saree.variants.map((v) => {
                     const isActive = v.product_id === saree.product_id;
                     const isVariantSoldOut = (v.stock_qty !== undefined && v.stock_qty <= 0) || v.is_active === 0;
-                    // The open product already has its price, so the active card never shows an empty price
                     const variantPrice = v.price ?? (isActive ? saree.price : null);
                     const variantMrp = v.mrp ?? (isActive ? saree.mrp : null);
                     const hasVariantPrice = variantPrice !== null && variantPrice !== undefined && variantPrice !== '';
@@ -1024,9 +1024,10 @@ if (!saree) {
               </div>
             </div>
 
+            {/* 🌟 THIS BADGE LOGIC HAS BEEN UPDATED */}
             <div className="badges-row">
               <span className={`stock-badge ${isOutOfStock ? 'out-of-stock' : 'in-stock'}`}>
-                {isOutOfStock ? 'Sold Out' : stockQty ? `In Stock (${stockQty} left)` : 'In Stock'}
+                {isOutOfStock ? 'Sold Out' : (isAdmin && stockQty) ? `In Stock (${stockQty} left)` : 'In Stock'}
               </span>
             </div>
 
@@ -1052,7 +1053,6 @@ if (!saree) {
               </button>
             </div>
 
-            {/* ALL DETAILS SECTION */}
             <div className="fk-all-details-container">
               <button 
                 type="button"
@@ -1076,7 +1076,6 @@ if (!saree) {
                       <div className="fk-spec-group">
                         <h4 className="fk-group-title">General</h4>
                         <div className="fk-grid-2-col">
-                          {/* 🌟 Subcategory Details Render inside Specifications */}
                           {getSubcategoriesString() && (
                             <div className="fk-grid-item">
                               <span className="fk-label">Subcategories / Style</span>
@@ -1119,14 +1118,12 @@ if (!saree) {
               )}
             </div>
 
-            {/* REVIEW WIDGET */}
             <ProductReviewsWidget productId={saree.product_id} />
 
           </div>
         </div>
       </div>
 
-      {/* RECOMMENDED SECTION */}
       <div className="full-width-review-section">
         <div className="review-inner-container">
           <div className="recommended-section-wrapper">
