@@ -1,237 +1,228 @@
-const db = require('../DATABASE/mysql');
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
-const { getFullImageUrl } = require('../utils/imageUtils'); 
-const BCRYPT_SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
+const { BrevoClient } = require('@getbrevo/brevo');
+const { 
+  registerUserService, 
+  loginuser, 
+  forgotpassword, 
+  resetpassword, 
+  DuplicateEmailError,
+  updateProfile,
+  getUserById
+} = require('../services/authservice');
+const imagekit = require('../../config/imagekit'); 
 
-class DuplicateEmailError extends Error {
-  constructor(email) {
-    super(`Email already exists: ${email}`);
-    this.name = 'DuplicateEmailError';
-  }
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
 }
 
-const registerUserService = async ({ name, email, password, phone, fullFormattedAddress, profile_image }) => {
-  console.log(`[AUTH-SERVICE] Checking if email already exists: ${email}`);
-  const [existingUsers] = await db.execute(
-    'SELECT user_id FROM users WHERE email = ?',
-    [email]
-  );
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const APP_NAME = process.env.APP_NAME || 'Arzoo Saree';
+const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;
+const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || process.env.GMAIL_USER;
+const MIN_PASSWORD_LENGTH = Number(process.env.MIN_PASSWORD_LENGTH) || 6;
+const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.RESET_TOKEN_EXPIRY_MINUTES) || 15; // 15 mins for OTP
 
-  if (existingUsers.length > 0) {
-    console.warn(`[AUTH-SERVICE] Registration failed -- email already exists: ${email}`);
-    throw new DuplicateEmailError(email);
+if (!JWT_SECRET) console.error('[AUTH-CTRL] CRITICAL: Missing JWT_SECRET environment variable.');
+
+const brevoClient = new BrevoClient({
+  apiKey: process.env.BREVO_API_KEY,
+});
+
+const sendEmail = async ({ to, subject, html }) => {
+  try {
+    const response = await brevoClient.transactionalEmails.sendTransacEmail({
+      subject,
+      htmlContent: html,
+      sender: { name: EMAIL_FROM_NAME, email: EMAIL_FROM_ADDRESS },
+      to: [{ email: to }],
+    });
+    return response;
+  } catch (error) {
+    console.error(`[AUTH-EMAIL] Delivery failure for ${to}:`, error.message);
+    throw error;
   }
-  
-  const finalImageUrl = profile_image || null; 
-  const hashedPassword = bcrypt.hashSync(password, BCRYPT_SALT_ROUNDS);
-
-  const [insertResult] = await db.execute(
-    'INSERT INTO users (name, email, password_hash, phone, address, role, profile_image) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [name, email, hashedPassword, phone, fullFormattedAddress, 'user', finalImageUrl]
-  );
-
-  console.log(`[AUTH-SERVICE] User successfully registered -- user_id: ${insertResult.insertId}`);
-
-  return {
-    insertId: insertResult.insertId,
-    name,
-    profile_image: finalImageUrl 
-  };
 };
 
-const forgotpassword = async ({ email, token, expiry }) => {
-  console.log(`[AUTH-SERVICE] Processing forgot password for: ${email}`);
-  const [users] = await db.execute('SELECT user_id FROM users WHERE email = ?', [email]);
-  
-  if (users.length === 0) {
-    console.log(`[AUTH-SERVICE] Forgot-password — no account found for ${email} (hidden for security)`);
-    return { found: false };
-  }
-
-  await db.execute(
-    'UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE email = ?',
-    [token, expiry, email]
-  );
- 
-  console.log(`[AUTH-SERVICE] Reset token saved securely for ${email}`);
-  return { found: true };
+const generateToken = (userId, role) => {
+  return jwt.sign({ id: userId, role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 };
 
-const resetpassword = async (token, newPassword) => {
-  console.log(`[AUTH-SERVICE] Validating reset token...`);
+// ==========================================
+// REGISTER
+// ==========================================
+const registerUser = async (req, res) => {
+  try {
+    const { name, email, password, phone, state, city, fullAddress } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ success: false, message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.` });
+    }
+   
+    // 🌟 FIX: Normalize email to prevent trailing space/case sensitivity login bugs
+    const normalizedEmail = email.trim().toLowerCase();
+    const fullFormattedAddress = [fullAddress, city, state].filter(Boolean).join(', ');
+   
+    let profile_image = null;
+    if (req.file) {
+      const fileBase64 = req.file.buffer.toString('base64');
+      const uploadResponse = await imagekit.files.upload({
+        file: fileBase64,
+        fileName: `profile_reg_${Date.now()}`,
+        folder: "/arzoo-saree/profile-images"
+      });
+      profile_image = uploadResponse.url;
+    }
+
+    const { insertId } = await registerUserService({
+      name,
+      email: normalizedEmail,
+      password,
+      phone,
+      fullFormattedAddress,
+      profile_image
+    });
+   
+    const token = generateToken(insertId, 'user');
+    return res.status(201).json({ success: true, message: 'Account created successfully!', token, user: { id: insertId, name, role: 'user', profile_image } });
+
+  } catch (error) {
+    if (error instanceof DuplicateEmailError) return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+    return res.status(500).json({ success: false, message: 'Server error while creating account.', error: error.message });
+  }
+};
+
+// ==========================================
+// LOGIN
+// ==========================================
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password are required.' });
+
+  // 🌟 FIX: Normalize email to match the sanitized database record
+  const normalizedEmail = email.trim().toLowerCase();
+
+  try {
+    const user = await loginuser(normalizedEmail, password);
+    const token = generateToken(user.user_id, user.role);
+
+    return res.status(200).json({
+      success: true, message: 'Login successful!', token,
+      user: { id: user.user_id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    if (error.message === 'INVALID_CREDENTIALS') return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    if (error.message === 'NO_PASSWORD_SET') return res.status(500).json({ success: false, message: 'Account configuration error.' });
+    return res.status(500).json({ success: false, message: 'Server error during login.', error: error.message });
+  }
+};
+
+// ==========================================
+// FORGOT PASSWORD (OTP FLOW)
+// ==========================================
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ success: false, message: 'Email is required.' });
+  
+  const normalizedEmail = email.trim().toLowerCase();
+  
+  try {
+    // 🌟 Generate 6-Digit OTP instead of Hex token
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
+    
+    const { found } = await forgotpassword({ email: normalizedEmail, token: otp, expiry });
+    
+    if (found) {
+      await sendEmail({
+        to: normalizedEmail,
+        subject: `${APP_NAME} - Password Reset OTP`,
+        html: `<div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+                 <h2>Password Reset Request</h2>
+                 <p>Your One-Time Password (OTP) to reset your password is:</p>
+                 <h1 style="font-size: 32px; letter-spacing: 4px; color: #7d1638; background: #fdf5eb; padding: 10px; border-radius: 5px; display: inline-block;">${otp}</h1>
+                 <p>This OTP is valid for ${RESET_TOKEN_EXPIRY_MINUTES} minutes.</p>
+                 <p>If you didn't request this, please ignore this email.</p>
+               </div>`,
+      });
+    }
+    // Always return success to prevent email enumeration attacks
+    return res.status(200).json({ success: true, message: 'If that email exists, an OTP has been sent.' });
+  } catch (error) {
+    console.error(`[AUTH-CTRL] OTP exception for ${email}:`, error.message);
+    return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
+  }
+};
+
+// ==========================================
+// RESET PASSWORD (OTP FLOW)
+// ==========================================
+const resetpassword = async (email, otp, newPassword) => {
+  console.log(`[AUTH-SERVICE] Validating OTP for: ${email}`);
+  
+  // 🌟 Check that the OTP matches the specific email
   const [users] = await db.execute(
-    'SELECT user_id FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()',
-    [token]
+    'SELECT user_id FROM users WHERE email = ? AND reset_token = ? AND reset_token_expiry > NOW()',
+    [email, otp]
   );
   
   if (users.length === 0) {
-    console.warn('[AUTH-SERVICE] Reset-password failed — token invalid or expired');
+    console.warn('[AUTH-SERVICE] Reset-password failed — OTP invalid or expired');
     return { found: false };
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
 
+  // Clear the OTP once used
   await db.execute(
-    'UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE reset_token = ?',
-    [hashedPassword, token]
+    'UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE email = ?',
+    [hashedPassword, email]
   );
   
   console.log(`[AUTH-SERVICE] Password reset successful for user_id: ${users[0].user_id}`);
   return { found: true };
 };
 
-const loginuser = async (email, password) => {
-  console.log(`[AUTH-SERVICE] Querying database for login email: ${email}`);
-  const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
-
-  if (users.length === 0) {
-    console.warn(`[AUTH-SERVICE] Login failed — account not found for ${email}`);
-    throw new Error('INVALID_CREDENTIALS');
-  }
-
-  const user = users[0];
-  
-  if (!user.password_hash) {
-    console.error(`[AUTH-SERVICE] Login failed — user ${user.user_id} has no password_hash configured`);
-    throw new Error('NO_PASSWORD_SET');
-  }
-
-  const isMatch = await bcrypt.compare(password, user.password_hash);
-  
-  if (!isMatch) {
-    console.warn(`[AUTH-SERVICE] Login failed — password mismatch for ${email}`);
-    throw new Error('INVALID_CREDENTIALS');
-  }
-
-  delete user.password_hash;
-  console.log(`[AUTH-SERVICE] Authentication passed for user_id: ${user.user_id}`);
-  return user;
-};
-
-const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
-
-const updateProfile = async (userId, updateData, profile_image) => {
-    const { name, email, username, phone, currentPassword, newPassword } = updateData;
-
-    console.log(`\n[PROFILE-SERVICE] 🔍 Update initiated for User ID: ${userId}`);
-    console.log(`[PROFILE-SERVICE] 📦 Received updateData:`, { name, email, username, phone, hasPassword: !!newPassword, hasImage: !!profile_image });
-
-    if (username && !USERNAME_REGEX.test(username)) {
-        console.warn(`[PROFILE-SERVICE] ⚠️ Validation failed: Invalid username format.`);
-        throw new Error('Invalid username. Use only letters, numbers, and underscores (3-30 characters).');
-    }
-
-    if (email || username) {
-        console.log(`[PROFILE-SERVICE] 🔍 Checking uniqueness constraints for email/username...`);
-        const checkQuery = `
-            SELECT email, username FROM users 
-            WHERE (email = ? OR username = ?) AND user_id != ?
-        `;
-        const [existing] = await db.execute(checkQuery, [email || '', username || '', userId]);
+// Profile Update & Get (Unchanged functionality)
+const updateUserProfile = async (req, res) => {
+    try {
+        const userId = req.user.user_id || req.user.id;
+        if (!userId) return res.status(400).json({ success: false, message: 'Invalid authentication token context.' });
         
-        if (existing.length > 0) {
-            const conflict = existing[0];
-            if (conflict.email === email && email) {
-                throw new Error('This email is already in use.');
-            }
-            if (conflict.username === username && username) {
-                throw new Error('This username is already taken.');
-            }
-        }
-    }
-
-    let hashedPassword = null;
-    if (newPassword) {
-        console.log(`[PROFILE-SERVICE] 🔒 Password update requested. Verifying current password...`);
-        if (!currentPassword) {
-            throw new Error('Current password is required to set a new password.');
-        }
-
-        const [users] = await db.execute('SELECT password_hash FROM users WHERE user_id = ?', [userId]);
-        if (users.length === 0) throw new Error('User not found.');
-
-        const isMatch = await bcrypt.compare(currentPassword, users[0].password_hash);
-        if (!isMatch) {
-            console.warn(`[PROFILE-SERVICE] ⚠️ Verification failed: Incorrect current password.`);
-            throw new Error('Incorrect current password.');
-        }
-
-        const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
-        hashedPassword = await bcrypt.hash(newPassword, salt);
-        console.log(`[PROFILE-SERVICE] ✅ New password successfully hashed.`);
-    }
-
-    const updateFields = [];
-    const updateValues = [];
-
-    // 🌟 Safely push only defined values to prevent SQL "Bind parameters must not contain undefined" error
-    if (name !== undefined && name !== null) { updateFields.push('name = ?'); updateValues.push(name); }
-    if (email !== undefined && email !== null) { updateFields.push('email = ?'); updateValues.push(email); }
-    if (username !== undefined && username !== null) { updateFields.push('username = ?'); updateValues.push(username); }
-    if (phone !== undefined && phone !== null) { updateFields.push('phone = ?'); updateValues.push(phone); } 
-    if (profile_image !== undefined && profile_image !== null) { updateFields.push('profile_image = ?'); updateValues.push(profile_image); }
-    if (hashedPassword !== undefined && hashedPassword !== null) { updateFields.push('password_hash = ?'); updateValues.push(hashedPassword); }
-
-    if (updateFields.length === 0) {
-        console.log(`[PROFILE-SERVICE] ⚠️ No changes provided. Returning current user profile.`);
-        const [user] = await db.execute(
-            'SELECT user_id, name, email, username, phone, profile_image, role FROM users WHERE user_id = ?', 
-            [userId]
-        );
-        if (user.length === 0) throw new Error('User not found.');
-        return {
-            ...user[0],
-            profile_image: getFullImageUrl(user[0].profile_image) 
+        const updateData = {
+            name: req.body.name, email: req.body.email ? req.body.email.trim().toLowerCase() : undefined,
+            username: req.body.username, phone: req.body.phone,
+            currentPassword: req.body.currentPassword, newPassword: req.body.newPassword
         };
+
+        let profile_image = null;
+        if (req.file) {
+            const fileBase64 = req.file.buffer.toString('base64');
+            const uploadResponse = await imagekit.files.upload({
+                file: fileBase64, fileName: `profile_${userId}_${Date.now()}`, folder: "/arzoo-saree/profile-images"
+            });
+            profile_image = uploadResponse.url; 
+        }
+        const updatedUser = await updateProfile(userId, updateData, profile_image);
+        return res.status(200).json({ success: true, message: 'Profile updated successfully.', user: updatedUser });
+    } catch (error) {
+        return res.status(400).json({ success: false, message: error.message || 'Failed to update user profile.' });
     }
-
-    updateValues.push(userId);
-    const updateQuery = `UPDATE users SET ${updateFields.join(', ')} WHERE user_id = ?`;
-
-    console.log(`[PROFILE-SERVICE] 🚀 Executing dynamic update query:`, updateQuery);
-    console.log(`[PROFILE-SERVICE] 📌 With bind values:`, updateValues);
-    
-    const [result] = await db.execute(updateQuery, updateValues);
-    console.log(`[PROFILE-SERVICE] ✅ Successfully updated ${result.affectedRows} row(s).`);
-
-    const [updatedUser] = await db.execute(
-        'SELECT user_id, name, email, username, phone, profile_image, role FROM users WHERE user_id = ?', 
-        [userId]
-    );
-
-    if (updatedUser.length === 0) throw new Error('User not found after update.');
-
-    return {
-        ...updatedUser[0],
-        profile_image: getFullImageUrl(updatedUser[0].profile_image)
-    };
 };
-const getUserById = async (userId) => {
-  console.log(`[AUTH-SERVICE] Fetching user profile for user_id: ${userId}`);
-  const [users] = await db.execute(
-    'SELECT user_id, name, email, username, phone, address, profile_image, role FROM users WHERE user_id = ?',
-    [userId]
-  );
 
-  if (users.length === 0) {
-    console.warn(`[AUTH-SERVICE] User not found for user_id: ${userId}`);
-    throw new Error('USER_NOT_FOUND');
+const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user?.user_id || req.user?.id || req.user?.userId;
+    if (!userId) return res.status(400).json({ success: false, message: "Invalid token payload: User ID missing" });
+    const user = await getUserById(userId);
+    return res.status(200).json({ success: true, user });
+  } catch (err) {
+    if (err.message === 'USER_NOT_FOUND') return res.status(404).json({ success: false, message: "User not found" });
+    return res.status(500).json({ success: false, message: err.message });
   }
+};
 
-  const user = users[0];
-  console.log(`[AUTH-SERVICE] User profile fetched successfully for user_id: ${userId}`);
-  return {
-    ...user,
-    profile_image: getFullImageUrl(user.profile_image)
-  };
-};
-module.exports = { 
-  registerUserService, 
-  DuplicateEmailError, 
-  forgotpassword, 
-  resetpassword, 
-  loginuser, 
-  updateProfile,
-  getUserById
-};
+module.exports = { registerUser, loginUser, forgotPassword, resetPassword, updateUserProfile, getUserProfile };
