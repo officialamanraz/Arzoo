@@ -4,7 +4,8 @@ const { BrevoClient } = require('@getbrevo/brevo');
 const { 
   registerUserService, 
   loginuser, 
-  forgotpassword, 
+  forgotpassword,
+  verifyotp,          // 🌟 NAYA: Verify OTP import kiya gaya hai
   resetpassword, 
   DuplicateEmailError,
   updateProfile,
@@ -21,12 +22,10 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const APP_NAME = process.env.APP_NAME || 'Arzoo Saree';
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;
 const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || process.env.GMAIL_USER;
-const FRONTEND_URL = process.env.FRONTEND_URL;
 const MIN_PASSWORD_LENGTH = Number(process.env.MIN_PASSWORD_LENGTH) || 6;
-const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.RESET_TOKEN_EXPIRY_MINUTES) || 60;
+const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.RESET_TOKEN_EXPIRY_MINUTES) || 15; // 15 mins for OTP
 
 if (!JWT_SECRET) console.error('[AUTH-CTRL] CRITICAL: Missing JWT_SECRET environment variable.');
-if (!FRONTEND_URL) console.error('[AUTH-CTRL] WARNING: Missing FRONTEND_URL — reset links will break.');
 
 const brevoClient = new BrevoClient({
   apiKey: process.env.BREVO_API_KEY,
@@ -75,6 +74,7 @@ const registerUser = async (req, res) => {
       });
     }
    
+    const normalizedEmail = email.trim().toLowerCase();
     const fullFormattedAddress = [fullAddress, city, state].filter(Boolean).join(', ');
    
     let profile_image = null;
@@ -91,7 +91,7 @@ const registerUser = async (req, res) => {
 
     const { insertId } = await registerUserService({
       name,
-      email,
+      email: normalizedEmail,
       password,
       phone,
       fullFormattedAddress,
@@ -125,8 +125,10 @@ const loginUser = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Email and password are required.' });
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
+
   try {
-    const user = await loginuser(email, password);
+    const user = await loginuser(normalizedEmail, password);
     const token = generateToken(user.user_id, user.role);
     console.log(`[AUTH-CTRL] Login verified successfully for user_id: ${user.user_id}`);
 
@@ -153,6 +155,9 @@ const loginUser = async (req, res) => {
   }
 };
 
+// ==========================================
+// 🌟 YAHAN CHANGE HUA HAI: FORGOT PASSWORD (OTP BANAYEGA)
+// ==========================================
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
   console.log(`[AUTH-CTRL] Password recovery triggered for email: ${email}`);
@@ -161,45 +166,66 @@ const forgotPassword = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Email is required.' });
   }
   
+  const normalizedEmail = email.trim().toLowerCase();
+  
   try {
-    const token = crypto.randomBytes(32).toString('hex');
+    // 🌟 LINK HAT GAYA, SIRF 6-DIGIT OTP BANEGA
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
-    const { found } = await forgotpassword({ email, token, expiry });
+    const { found } = await forgotpassword({ email: normalizedEmail, token: otp, expiry });
     
     if (found) {
-      const resetLink = `${FRONTEND_URL}/reset-password/${token}`;
       await sendEmail({
-        to: email,
-        subject: `Reset your ${APP_NAME} password`,
-        html: `<p>Click below to reset your password. This link expires in ${RESET_TOKEN_EXPIRY_MINUTES} minutes.</p>
-               <a href="${resetLink}">${resetLink}</a>`,
+        to: normalizedEmail,
+        subject: `${APP_NAME} - Password Reset OTP`,
+        html: `<div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+                 <h2>Password Reset Request</h2>
+                 <p>Your One-Time Password (OTP) to reset your password is:</p>
+                 <h1 style="font-size: 32px; letter-spacing: 4px; color: #7d1638; background: #fdf5eb; padding: 10px; border-radius: 5px; display: inline-block;">${otp}</h1>
+                 <p>This OTP is valid for ${RESET_TOKEN_EXPIRY_MINUTES} minutes.</p>
+                 <p>If you didn't request this, please ignore this email.</p>
+               </div>`,
       });
     }
-    return res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    return res.status(200).json({ success: true, message: 'If that email exists, an OTP has been sent.' });
   } catch (error) {
     console.error(`[AUTH-CTRL] Forgot password exception for ${email}:`, error.message);
     return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
   }
 };
 
+// ==========================================
+// 🌟 YAHAN CHANGE HUA HAI: RESET PASSWORD (2 STEPS: VERIFY OR RESET)
+// ==========================================
 const resetPassword = async (req, res) => {
-  const { token } = req.params;
-  const { newPassword } = req.body;
-  console.log(`[AUTH-CTRL] Password reset verification sequence started...`);
+  const { email, otp, newPassword, action } = req.body;
+  console.log(`[AUTH-CTRL] Password reset sequence started for: ${email}, action: ${action}`);
 
-  if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
-    return res.status(400).json({
-      success: false,
-      message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
-    });
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: 'Email and OTP are required.' });
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
+
   try {
-    const { found } = await resetpassword(token, newPassword);
-    if (!found) {
-      return res.status(404).json({ success: false, message: 'Invalid or expired password reset token.' });
+    if (action === 'verify') {
+      const { found } = await verifyotp(normalizedEmail, otp.trim());
+      if (!found) {
+        return res.status(400).json({ success: false, message: 'Invalid or expired OTP.' });
+      }
+      return res.status(200).json({ success: true, message: 'OTP verified successfully.' });
+      
+    } else if (action === 'reset') {
+      if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
+        return res.status(400).json({ success: false, message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` });
+      }
+
+      const { found } = await resetpassword(normalizedEmail, otp.trim(), newPassword);
+      if (!found) {
+        return res.status(404).json({ success: false, message: 'Invalid or expired password reset OTP.' });
+      }
+      return res.status(200).json({ success: true, message: 'Password reset successfully. You can now log in.' });
     }
-    return res.status(200).json({ success: true, message: 'Password reset successfully. You can now log in.' });
   } catch (error) {
     console.error('[AUTH-CTRL] Reset password exception:', error.message);
     return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
@@ -257,7 +283,6 @@ const updateUserProfile = async (req, res) => {
 
 const getUserProfile = async (req, res) => {
   try {
-    // Safely extract user ID regardless of token payload property name
     const userId = req.user?.user_id || req.user?.id || req.user?.userId;
     console.log(`[AUTH-CONTROLLER] 📥 Fetching profile for resolved user_id:`, userId);
 

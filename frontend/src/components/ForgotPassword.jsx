@@ -13,6 +13,8 @@ function ForgotPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(`[ForgotPassword] Submitting reset request for email: ${email}`);
+    
     setIsSubmitting(true);
     setMessage('');
     setIsError(false);
@@ -25,15 +27,17 @@ function ForgotPassword() {
       });
 
       const data = await res.json();
+      console.log('[ForgotPassword] Server response:', data);
 
       if (res.ok) {
-        // Automatically move to OTP screen, passing the email via state
+        // 🌟 NAYA: Success hone par directly OTP page par bhejo
         navigate('/reset-password', { state: { email: email } });
       } else {
         setIsError(true);
         setMessage(data.message || 'Something went wrong.');
       }
     } catch (err) {
+      console.error('[ForgotPassword] Request error:', err);
       setIsError(true);
       setMessage('Could not reach the server. Please try again later.');
     } finally {
@@ -58,19 +62,25 @@ function ForgotPassword() {
 
           <input
             type="email"
-            placeholder="Email Address"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             className="auth-input"
           />
           
-          <button type="submit" disabled={isSubmitting} className="auth-submit-btn">
-            {isSubmitting ? 'Sending OTP...' : 'Send OTP'}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="auth-submit-btn"
+          >
+            {isSubmitting ? 'Sending...' : 'Send Reset OTP'}
           </button>
 
           <div className="back-to-login">
-            <Link to="/login" className="login-link">Back to Login</Link>
+            <Link to="/login" className="login-link">
+              Back to Login
+            </Link>
           </div>
         </form>
       </div>
