@@ -22,7 +22,7 @@ router.post('/forgot-password', (req, res, next) => {
 }, forgotPassword);
 
 // 2. Reset Password Route
-router.post('/reset-password/:token', (req, res, next) => {
+router.post('/reset-password', (req, res, next) => {
   console.log(`[AUTH-ROUTE] 📥 POST /reset-password/:token hit with token:`, req.params.token);
   next();
 }, resetPassword);
