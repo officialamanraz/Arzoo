@@ -244,10 +244,11 @@
 // module.exports = { processCheckoutInDB };
 
 const db = require('../DATABASE/mysql');
+// ⚡ Import cache instance
 const myCache = require('../../config/cache');
 
 const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMethod, tracking_ref, customEmail) => {
-    
+    // 🚨 Block COD completely
     if (paymentMethod === 'cod') {
         throw new Error('Cash on Delivery has been completely disabled. Please choose Online Payment.');
     }
@@ -255,13 +256,12 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
     const method = 'online'; 
     const sourcevisiter = tracking_ref ?? null;
     
-    console.log(`[CHECKOUT] 🚀 Starting checkout process for User ID: ${user_id}, Method: ${method}`);
+    console.log(`[CHECKOUT] 🚀 Starting checkout process for User ID: ${user_id}`);
     
     const connection = await db.getConnection();
     
     try {
         await connection.beginTransaction();
-        console.log(`[CHECKOUT] 🔒 Database transaction started successfully.`);
 
         // 1. FETCH ADDRESS
         const [addressRows] = await connection.execute(
@@ -270,9 +270,7 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
             [addressId, user_id]
         );
 
-        if (addressRows.length === 0) {
-            throw new Error('ADDRESS_NOT_FOUND');
-        }
+        if (addressRows.length === 0) throw new Error('ADDRESS_NOT_FOUND');
         const addr = addressRows[0];
         const shippingAddressLine = `${addr.house_no}, ${addr.road_area}${addr.landmark ? ', ' + addr.landmark : ''}`;
         const shippingAddressFull = `${shippingAddressLine}, ${addr.city}, ${addr.state} - ${addr.pincode}, Phone: ${addr.phone}`;
@@ -280,19 +278,13 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         // 2. FETCH USER EMAIL
         let customerEmail = customEmail;
         if (!customerEmail) {
-            const [userRows] = await connection.execute(
-                `SELECT email FROM users WHERE user_id = ?`,
-                [user_id]
-            );
+            const [userRows] = await connection.execute(`SELECT email FROM users WHERE user_id = ?`, [user_id]);
             if (userRows.length === 0) throw new Error('USER_NOT_FOUND');
             customerEmail = userRows[0].email;
         }
 
         // 3. SHIPPING ZONE LOOKUP
-        const [zoneRows] = await connection.execute(
-            `SELECT min_days, max_days FROM shipping_zones WHERE state_name = ?`,
-            [addr.state]
-        );
+        const [zoneRows] = await connection.execute(`SELECT min_days, max_days FROM shipping_zones WHERE state_name = ?`, [addr.state]);
         const defaultMaxDays = Number(process.env.DEFAULT_DELIVERY_DAYS) || 7;
         const maxDays = zoneRows.length > 0 ? zoneRows[0].max_days : defaultMaxDays;
         
@@ -307,33 +299,23 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         if (isBuyNow) {
             const [productRows] = await connection.execute(
                 `SELECT p.product_id, p.name AS product_name, p.price AS unit_price, p.hsn_code, p.dealer_base_price, p.packaging_cost, c.name AS category_name
-                 FROM products p
-                 LEFT JOIN categories c ON p.category_id = c.category_id
-                 WHERE p.product_id = ?`,
+                 FROM products p WHERE p.product_id = ?`,
                 [buyNowProduct.product_id]
             );
             if (productRows.length === 0) throw new Error('PRODUCT_NOT_FOUND');
-            cartItems = [{
-                ...productRows[0],
-                quantity: buyNowProduct.quantity || 1
-            }];
+            cartItems = [{ ...productRows[0], quantity: buyNowProduct.quantity || 1 }];
         } else {
             const [rows] = await connection.execute(
                 `SELECT cart.product_id, cart.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code, p.dealer_base_price, p.packaging_cost, c.name AS category_name
-                 FROM cart
-                 INNER JOIN products p ON cart.product_id = p.product_id
-                 LEFT JOIN categories c ON p.category_id = c.category_id
-                 WHERE cart.user_id = ?`,
+                 FROM cart INNER JOIN products p ON cart.product_id = p.product_id WHERE cart.user_id = ?`,
                 [user_id]
             );
             cartItems = rows;
         }
 
-        if (cartItems.length === 0) {
-            throw new Error('CART_EMPTY');
-        }
+        if (cartItems.length === 0) throw new Error('CART_EMPTY');
 
-        // 5. 💰 PRICING & ACCURATE PROFIT CALCULATION (INCLUDING RAZORPAY FEES)
+        // 5. PRICING & RAZORPAY PROFIT CALCULATION
         let subtotal = 0;
         let totalLockedDealerPayout = 0;
         let totalPackagingCost = 0;
@@ -346,27 +328,27 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
 
         const totalAmount = subtotal; 
         const dynamicPaymentId = `ORD-${Date.now()}`;
-
-        // Accurate Razorpay Gateway Fee: 2% Flat + 18% GST on the fee = 2.36% Total Cut
-        const gatewayFee = (totalAmount * 0.02) * 1.18; 
+        
+        // Accurate Razorpay Fee Math (2% + 18% GST)
+        const gatewayFee = (totalAmount * 0.02) * 1.18;
         const netAdminProfit = totalAmount - totalLockedDealerPayout - totalPackagingCost - gatewayFee;
 
-        // 6. CREATE INITIAL ORDER (UNPAID)
+        // 6. CREATE ORDER (Staged as Unpaid)
         const [orderResult] = await connection.execute(
             `INSERT INTO orders
                 (user_id, total_amount, status, payment_id, payment_method, payment_status,
                  shipping_address, customer_email, address_id, subtotal, estimated_delivery, tracking_ref, gateway_fee, net_admin_profit)
              VALUES (?, ?, 'pending', ?, ?, 'unpaid', ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, totalAmount, 'pending', method, shippingAddressFull, customerEmail, addressId, subtotal, estimatedDeliverySQL, sourcevisiter, gatewayFee, netAdminProfit]
+            [user_id, totalAmount, dynamicPaymentId, method, shippingAddressFull, customerEmail, addressId, subtotal, estimatedDeliverySQL, sourcevisiter, gatewayFee, netAdminProfit]
         );
         const newOrderId = orderResult.insertId;
 
-        // 7. INVOICE NUMBER UPDATE
+        // 7. INVOICE UPDATE
         const invoiceYear = new Date().getFullYear();
         const invoiceNumber = `KW-${invoiceYear}-${String(newOrderId).padStart(6, '0')}`;
         await connection.execute(`UPDATE orders SET invoice_number = ? WHERE order_id = ?`, [invoiceNumber, newOrderId]);
 
-        // 8. INSERT ORDER ITEMS (🚨 CART IS NOT CLEARED & STOCK IS NOT MINUSED YET)
+        // 8. INSERT ORDER ITEMS (🚨 NOTICE: STOCK DEDUCTION REMOVED FROM HERE)
         for (const item of cartItems) {
             const itemDealerPayout = item.quantity * Number(item.dealer_base_price);
             await connection.execute(
@@ -379,15 +361,14 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         // 9. ORDER TRACKING LOG
         await connection.execute(
             `INSERT INTO order_tracking (order_id, status, status_message)
-             VALUES (?, 'Order Placed', 'Your order is pending payment verification.')`,
+             VALUES (?, 'Order Placed', 'Your order has been received and is pending verification.')`,
             [newOrderId]
         );
 
         // 10. COMMIT TRANSACTION
-// 10. COMMIT TRANSACTION PERMANENTLY
         await connection.commit();
-        console.log(`[CHECKOUT] 🎉 Transaction committed successfully for Order ID: ${newOrderId}`);
         
+        // Ensure all possible ID variables are returned so frontend doesn't crash
         return {
             newOrderId,
             order_id: newOrderId,
@@ -397,7 +378,6 @@ const processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMet
         };
 
     } catch (error) {
-        console.error(`[CHECKOUT] ❌ Checkout failed, rolling back.`, error.message);
         await connection.rollback();
         throw error;
     } finally {

@@ -2,13 +2,15 @@ const db = require('../DATABASE/mysql');
 const { getFullImageUrl } = require('../utils/imageUtils');
 const razorpayInstance = require('../../config/razorpay');
 const myCache = require('../../config/cache'); 
-const crypto = require('crypto')
+const crypto = require('crypto');
+
 const ORDER_SETTINGS = {
     DELIVERY_DAYS: 5,
     DEFAULT_SELLER_NAME: 'Arzoo Saree',
     CURRENCY_CODE: 'INR',
     LOCALE: 'en-IN'
 };
+
 // ==========================================
 // 1. GET ALL ORDERS FOR ADMIN
 // ==========================================
@@ -67,11 +69,12 @@ const updatestatusinDB = async (orderId, status) => {
 };
 
 // ==========================================
-// 3. GET MY ORDERS (USER SIDE)
+// 3. GET MY ORDERS (USER SIDE) - FIXED TO HIDE UNPAID ORDERS
 // ==========================================
 const getmyorderfromdb = async (user_id) => {
     console.log(`[ORDER_SERVICE] 🗄️ Fetching orders for User ID: ${user_id}`);
     try {
+        // 🌟 FIX: Added `AND o.payment_status != 'unpaid'` to hide abandoned orders
         const [ordersData] = await db.execute(
             `SELECT o.*, 
                     a.full_name AS delivery_name,
@@ -84,22 +87,23 @@ const getmyorderfromdb = async (user_id) => {
                     a.pincode
              FROM orders o
              LEFT JOIN addresses a ON o.address_id = a.address_id
-             WHERE o.user_id = ? 
+             WHERE o.user_id = ? AND o.payment_status != 'unpaid'
              ORDER BY o.ordered_at DESC`,
             [user_id]
         );
         
         if (ordersData.length === 0) {
-            console.log(`[ORDER_SERVICE] ℹ️ No orders found for User ID: ${user_id}`);
+            console.log(`[ORDER_SERVICE] ℹ️ No paid orders found for User ID: ${user_id}`);
             return { orders: [], items: [] };        
         }
         
+        // 🌟 FIX: Also filter order items so we don't fetch unnecessary data
         const [itemsData] = await db.execute(
             `SELECT oi.*, p.name, p.image_url, p.mrp, p.discount_percentage
              FROM orderitems oi
              INNER JOIN products p ON oi.product_id = p.product_id
              INNER JOIN orders o ON oi.order_id = o.order_id
-             WHERE o.user_id = ?`,
+             WHERE o.user_id = ? AND o.payment_status != 'unpaid'`,
             [user_id]
         );
         
@@ -108,7 +112,7 @@ const getmyorderfromdb = async (user_id) => {
             image_url: getFullImageUrl(item.image_url)
         }));
         
-        console.log(`[ORDER_SERVICE] ✅ User Orders fetched: ${ordersData.length} orders found.`);
+        console.log(`[ORDER_SERVICE] ✅ User Orders fetched: ${ordersData.length} valid orders found.`);
         return {
             orders: ordersData,
             items: formattedItems 
@@ -370,9 +374,6 @@ const getDetailedOrderById = async (orderId) => {
 // ==========================================
 // 7. GET ORDER SUMMARY DATA (CART & BUY NOW)
 // ==========================================
-// ==========================================
-// 7. GET ORDER SUMMARY DATA (CART & BUY NOW)
-// ==========================================
 const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, buyNowQty = 1) => {
     console.log(`[ORDER_SERVICE] 🗄️ Fetching Order Summary (BuyNow: ${buyNowProductId || 'No'})`);
     try {
@@ -386,8 +387,6 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
             addressData = addrRows.length > 0 ? addrRows[0] : null;
         }
 
-        // 🚚 Delivery days come from the shipping_zones table, by the state of the chosen address.
-        // If the state is not found (or no address yet) the 'Default' row is used.
         const [zoneRows] = await db.execute(
             `SELECT min_days, max_days
              FROM shipping_zones
@@ -407,7 +406,6 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
         let cartItems = [];
         
         if (buyNowProductId) {
-            // 🌟 FETCH EXACT DATABASE VALUES FOR DIRECT "BUY NOW"
             const [buyNowRows] = await db.execute(
                 `SELECT p.product_id, p.name AS product_name, 
                         p.price AS unit_price, p.mrp, p.discount_percentage, p.image_url,
@@ -419,7 +417,6 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
             );
             cartItems = buyNowRows;
         } else {
-            // 🌟 FETCH CART VALUES
             const [cartRows] = await db.execute(
                 `SELECT c.cart_id, c.quantity, p.product_id, p.name AS product_name, 
                         p.price AS unit_price, p.mrp, p.discount_percentage, p.image_url,
@@ -464,7 +461,6 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
         });
 
         const totalDiscount = Math.max(0, totalMrp - subtotal);
-        // Delivery is free on every product for now
         const deliveryCharge = 0;
         const totalPayable = subtotal + deliveryCharge;
 
@@ -478,7 +474,6 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
                 subtotal: subtotal,
                 total_payable: totalPayable
             },
-            // Currency / locale / delivery days for the screen, so the frontend does not type them
             meta: {
                 currency_code: ORDER_SETTINGS.CURRENCY_CODE,
                 locale: ORDER_SETTINGS.LOCALE,
@@ -491,6 +486,7 @@ const getOrderSummaryData = async (userId, addressId, buyNowProductId = null, bu
         throw err;
     }
 };
+
 // ==========================================
 // 8. GET DELIVERED ORDER HISTORY
 // ==========================================
