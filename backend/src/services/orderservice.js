@@ -325,10 +325,20 @@ const getDetailedOrderById = async (orderId) => {
         let totalDealerPayout = 0;
 
         const formattedItems = itemsResult[0].map(item => {
-            const itemTotal = Number(item.unit_price) * Number(item.quantity);
-            const dealerGets = Number(item.locked_dealer_payout); 
+            const sellingPrice = Number(item.unit_price) * Number(item.quantity);
+            const dealerBase = Number(item.dealer_base_price || 0) * Number(item.quantity);
+            const packingCost = Number(item.packaging_cost || 0) * Number(item.quantity);
             
-            totalDealerPayout += dealerGets;
+            // Razorpay 2.4% cut on selling price
+            const razorpayFee = (sellingPrice * 0.024);
+            
+            // Net profit after deductions
+            const remainingNetProfit = sellingPrice - (razorpayFee + packingCost + dealerBase);
+            const adminShare = remainingNetProfit > 0 ? remainingNetProfit / 2 : 0;
+            const dealerProfitShare = remainingNetProfit > 0 ? remainingNetProfit / 2 : 0;
+            const totalDealerGets = dealerBase + dealerProfitShare;
+
+            totalDealerPayout += totalDealerGets;
 
             return {
                 ...item,
@@ -338,8 +348,14 @@ const getDetailedOrderById = async (orderId) => {
                     subcategory: item.subcategory_name || 'N/A'
                 },
                 financials: {
-                    total_item_price: itemTotal,
-                    dealer_payout: dealerGets
+                    selling_price: sellingPrice.toFixed(2),
+                    razorpay_fee_cut: razorpayFee.toFixed(2),
+                    packaging_cut: packingCost.toFixed(2),
+                    dealer_base_price: dealerBase.toFixed(2),
+                    net_remaining_profit: remainingNetProfit.toFixed(2),
+                    admin_profit_50: adminShare.toFixed(2),
+                    dealer_profit_50: dealerProfitShare.toFixed(2),
+                    dealer_payout: totalDealerGets.toFixed(2)
                 },
                 dealer_info: {
                     id: item.dealer_id,

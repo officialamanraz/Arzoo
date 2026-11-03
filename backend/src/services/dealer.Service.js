@@ -76,26 +76,39 @@ const fetchAdminDealerDetailService = async (dealerId) => {
         const formattedProducts = products.map((prod) => {
             const stockQty = Number(prod.stock_qty || 0);
             const sellingPrice = Number(prod.price || 0);
-            const packing = Number(prod.packaging_cost || 0);
+            const packingCost = Number(prod.packaging_cost || 0);
+            const dealerBase = Number(prod.dealer_base_price || 0);
             
-            // 1. Dealer Base sidha database wale column se lenge
-            const effectiveDealerBase = Number(prod.dealer_base_price || 0);
+            // 1. Razorpay Fee: 2% + 18% GST = 2.36% (or standard 2.4%)
+            const razorpayFee = (sellingPrice * 0.024);
             
-            // 2. Admin profit sidha margin hoga (Selling Price - Base Price). Packaging ignore kar diya hai profit deduction se.
-            const effectiveAdminProfit = sellingPrice - effectiveDealerBase;
+            // 2. Net Remaining Profit
+            const remainingNetProfit = sellingPrice - (razorpayFee + packingCost + dealerBase);
+            
+            // 3. 50-50 Profit Split
+            const adminShare = remainingNetProfit > 0 ? remainingNetProfit / 2 : 0;
+            const dealerProfitShare = remainingNetProfit > 0 ? remainingNetProfit / 2 : 0;
 
             if (stockQty > 0) {
-                // Total Inventory mein ab 'Selling Price' jodenge taaki total hisaab match ho
                 total_inventory_mrp += (sellingPrice * stockQty); 
-                total_dealer_base_value += (effectiveDealerBase * stockQty);
-                total_potential_admin_profit += (effectiveAdminProfit * stockQty);
+                total_dealer_base_value += (dealerBase * stockQty);
+                total_potential_admin_profit += (adminShare * stockQty);
             }
 
             return {
                 ...prod,
-                dealer_base_price: effectiveDealerBase,
-                admin_profit: effectiveAdminProfit,  // Pass to frontend for product card display
-                packaging_cost: packing,             // Passing just for display info
+                dealer_base_price: dealerBase,
+                packaging_cost: packingCost,
+                breakdown: {
+                    selling_price: sellingPrice.toFixed(2),
+                    razorpay_fee_cut: razorpayFee.toFixed(2),
+                    packaging_cut: packingCost.toFixed(2),
+                    base_price_cut: dealerBase.toFixed(2),
+                    net_remaining_profit: remainingNetProfit.toFixed(2),
+                    admin_profit_50: adminShare.toFixed(2),
+                    dealer_profit_50: dealerProfitShare.toFixed(2),
+                    total_dealer_payout: (dealerBase + dealerProfitShare).toFixed(2)
+                },
                 image_url: getFullImageUrl(prod.image_url) 
             };
         });

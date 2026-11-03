@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const path = require('path');
+
 
 // 🚨 Added 'deleteReview' to the import list
 const { addReview, 
@@ -8,7 +8,7 @@ const { addReview,
     getAllProductReviews,
     markHelpful,
     editReview,     // 👈 Imported new controller
-    deleteReview } = require(path.join(__dirname, '../controllers/review'));
+    deleteReview } = require('../controllers/review');
 const { verifyToken } = require("../middleware/authmiddleware"); 
 const upload = require("../middleware/uploads"); 
 

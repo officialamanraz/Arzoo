@@ -215,7 +215,9 @@ app.get('/api/products-raw', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-
+app.get('/', (req, res) => {
+    res.send('Backend Server is Running Successfully!');
+});
 app.post('/data', async (req, res) => {
   const dataArray = req.body;
   if (!Array.isArray(dataArray)) {
