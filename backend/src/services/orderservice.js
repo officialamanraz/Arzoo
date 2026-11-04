@@ -548,71 +548,112 @@ const getDeliveredOrderHistory = async (userId) => {
     }
 };
 
-const getAllUserOrdersService = async () => {
+const getAllUserOrdersListService = async () => {
   const query = `
     SELECT 
-      o.id AS order_id,
+      o.order_id,
       o.total_amount,
-      o.payment_id,
-      o.order_status,
-      o.tracking_number,
-      o.shipping_address AS checkout_address,
-      o.created_at AS order_date,
-      u.id AS user_id,
+      o.status AS order_status,
+      u.user_id,
       u.name AS user_name,
-      u.email AS user_email,
-      u.profile_image,
-      u.address AS profile_address,
-      oi.id AS order_item_id,
-      oi.quantity,
-      oi.price AS item_price,
-      p.id AS product_id,
-      p.name AS product_name,
+      oi.product_id,
+      oi.product_name,
       p.image_url AS product_image
     FROM orders o
-    JOIN users u ON o.user_id = u.id
-    JOIN order_items oi ON o.id = oi.order_id
-    JOIN products p ON oi.product_id = p.id
-    ORDER BY o.created_at DESC
+    LEFT JOIN users u ON o.user_id = u.user_id
+    LEFT JOIN orderitems oi ON o.order_id = oi.order_id
+    LEFT JOIN products p ON oi.product_id = p.product_id
+    ORDER BY o.order_id DESC
   `;
 
   const [rows] = await db.promise().query(query);
 
-  // Group items by order_id so the frontend gets clean nested cards
   const ordersMap = new Map();
 
   for (const row of rows) {
     if (!ordersMap.has(row.order_id)) {
       ordersMap.set(row.order_id, {
         order_id: row.order_id,
-        order_status: row.order_status || 'Processing',
-        tracking_number: row.tracking_number || null,
+        order_status: row.order_status || 'pending',
         total_amount: row.total_amount,
-        payment_id: row.payment_id,
-        order_date: row.order_date,
         user: {
-          id: row.user_id,
-          name: row.user_name,
-          email: row.user_email,
-          profile_image: row.profile_image,
-          profile_address: row.profile_address,
-          checkout_address: row.checkout_address
+          name: row.user_name || 'Customer'
         },
-        items: []
+        items: [] // Frontend needs items[0] for the cover image
       });
     }
 
-    ordersMap.get(row.order_id).items.push({
-      item_id: row.order_item_id,
+    // Only push the first item to save memory on the list page
+    const currentOrder = ordersMap.get(row.order_id);
+    if (currentOrder.items.length === 0) {
+      currentOrder.items.push({
+        product_name: row.product_name,
+        product_image: row.product_image
+      });
+    }
+  }
+
+  return Array.from(ordersMap.values());
+};
+
+// ========================================================
+// 2. FOR DETAIL PAGE: Fetch Single Order with Full Details
+// ========================================================
+const getSingleOrderDetailService = async (orderId) => {
+  const query = `
+    SELECT 
+      o.order_id,
+      o.total_amount,
+      o.payment_id,
+      o.status AS order_status,
+      o.tracking_ref AS tracking_number,
+      o.shipping_address AS checkout_address,
+      o.ordered_at AS order_date,
+      u.user_id,
+      u.name AS user_name,
+      u.email AS user_email,
+      u.address AS profile_address,
+      oi.quantity,
+      oi.unit_price AS item_price,
+      p.product_id,
+      p.name AS product_name,
+      p.image_url AS product_image
+    FROM orders o
+    LEFT JOIN users u ON o.user_id = u.user_id
+    LEFT JOIN orderitems oi ON o.order_id = oi.order_id
+    LEFT JOIN products p ON oi.product_id = p.product_id
+    WHERE o.order_id = ?
+  `;
+
+  const [rows] = await db.promise().query(query, [orderId]);
+
+  if (rows.length === 0) return null;
+
+  // Structure the single order object
+  const orderDetail = {
+    order_id: rows[0].order_id,
+    order_status: rows[0].order_status || 'pending',
+    tracking_number: rows[0].tracking_number || null,
+    total_amount: rows[0].total_amount,
+    payment_id: rows[0].payment_id,
+    order_date: rows[0].order_date,
+    user: {
+      id: rows[0].user_id,
+      name: rows[0].user_name,
+      email: rows[0].user_email,
+      profile_address: rows[0].profile_address,
+      checkout_address: rows[0].checkout_address
+    },
+    items: rows.map(row => ({
       product_id: row.product_id,
       product_name: row.product_name,
       product_image: row.product_image,
       quantity: row.quantity,
       price: row.item_price
-    });
-  }
+    }))
+  };
 
-  return Array.from(ordersMap.values());
+  return orderDetail;
 };
 
 module.exports = {
@@ -624,5 +665,6 @@ module.exports = {
     getDetailedOrderById,
     getOrderSummaryData,
     getDeliveredOrderHistory,
-    getAllUserOrdersService
+    getAllUserOrdersListService,
+  getSingleOrderDetailService
 };

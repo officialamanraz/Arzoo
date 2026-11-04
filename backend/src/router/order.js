@@ -23,7 +23,8 @@ const {
 //   verifyDeliveryOtpController,
 //   markDeliveryAttemptFailedController
 getDeliveredOrderHistoryController,
-getUserOrdersController
+getAllUserOrdersController, 
+  getSingleOrderController
 } = require('../controllers/order'); 
 
 // ==========================================
@@ -134,5 +135,8 @@ router.post('/webhook/courier', (req, res, next) => {
 });
 
 router.get('/invoice/:orderId',verifyToken,getInvoice)
-router.get('/userorders',verifyAdmin,getUserOrdersController);
+router.get('/userorders',verifyAdmin, getAllUserOrdersController);
+
+// 2. Route for Detail Page View (Requires the :id parameter)
+router.get('/user-orders/:id', /* verifyAdmin, */ getSingleOrderController);
 module.exports = router;

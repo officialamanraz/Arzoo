@@ -11,7 +11,8 @@ const {
     // markDeliveryAttemptFailed,
     // verifyDeliveryOtp
     getDeliveredOrderHistory,
-    getAllUserOrdersService
+    getAllUserOrdersListService, 
+  getSingleOrderDetailService
 } = require('../services/orderservice'); 
 
 // ==========================================
@@ -337,21 +338,37 @@ const getDeliveredOrderHistoryController = async (req, res) => {
     }
 };
 
-const getUserOrdersController = async (req, res) => {
+const getAllUserOrdersController = async (req, res) => {
   try {
-    const orders = await getAllUserOrdersService();
+    const orders = await getAllUserOrdersListService();
     return res.status(200).json({
       success: true,
       count: orders.length,
       data: orders
     });
   } catch (error) {
-    console.error('Error fetching user orders:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error while fetching user orders',
-      error: error.message
+    console.error('Error fetching orders list:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// 2. Controller for Detail Page
+const getSingleOrderController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const orderDetails = await getSingleOrderDetailService(id);
+    
+    if (!orderDetails) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: orderDetails
     });
+  } catch (error) {
+    console.error(`Error fetching order detail for ID ${req.params.id}:`, error);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -367,5 +384,6 @@ module.exports = {
     // markDeliveryAttemptFailedController,
     // verifyDeliveryOtpController
      getDeliveredOrderHistoryController,
-     getUserOrdersController
+     getAllUserOrdersController,
+  getSingleOrderController
 };
