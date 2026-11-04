@@ -3034,119 +3034,6 @@ var require_cart2 = __commonJS({
   }
 });
 
-// src/services/checkoutservice.js
-var require_checkoutservice = __commonJS({
-  "src/services/checkoutservice.js"(exports2, module2) {
-    var db2 = require_mysql();
-    var myCache2 = require_cache();
-    var processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMethod, tracking_ref, customEmail) => {
-      if (paymentMethod === "cod") {
-        throw new Error("Cash on Delivery has been completely disabled. Please choose Online Payment.");
-      }
-      const method = "online";
-      const sourcevisiter = tracking_ref ?? null;
-      console.log(`[CHECKOUT] \u{1F680} Starting checkout process for User ID: ${user_id}`);
-      const connection = await db2.getConnection();
-      try {
-        await connection.beginTransaction();
-        const [addressRows] = await connection.execute(
-          `SELECT full_name, phone, house_no, road_area, landmark, city, state, pincode
-             FROM addresses WHERE address_id = ? AND user_id = ?`,
-          [addressId, user_id]
-        );
-        if (addressRows.length === 0) throw new Error("ADDRESS_NOT_FOUND");
-        const addr = addressRows[0];
-        const shippingAddressLine = `${addr.house_no}, ${addr.road_area}${addr.landmark ? ", " + addr.landmark : ""}`;
-        const shippingAddressFull = `${shippingAddressLine}, ${addr.city}, ${addr.state} - ${addr.pincode}, Phone: ${addr.phone}`;
-        let customerEmail = customEmail;
-        if (!customerEmail) {
-          const [userRows] = await connection.execute(`SELECT email FROM users WHERE user_id = ?`, [user_id]);
-          if (userRows.length === 0) throw new Error("USER_NOT_FOUND");
-          customerEmail = userRows[0].email;
-        }
-        const [zoneRows] = await connection.execute(`SELECT min_days, max_days FROM shipping_zones WHERE state_name = ?`, [addr.state]);
-        const defaultMaxDays = Number(process.env.DEFAULT_DELIVERY_DAYS) || 7;
-        const maxDays = zoneRows.length > 0 ? zoneRows[0].max_days : defaultMaxDays;
-        const estimatedDeliveryDateObj = /* @__PURE__ */ new Date();
-        estimatedDeliveryDateObj.setDate(estimatedDeliveryDateObj.getDate() + maxDays);
-        const estimatedDeliverySQL = estimatedDeliveryDateObj.toISOString().split("T")[0];
-        let cartItems = [];
-        const isBuyNow = buyNowProduct && buyNowProduct.product_id;
-        if (isBuyNow) {
-          const [productRows] = await connection.execute(
-            `SELECT p.product_id, p.name AS product_name, p.price AS unit_price, p.hsn_code, p.dealer_base_price, p.packaging_cost
-                 FROM products p 
-                 WHERE p.product_id = ?`,
-            [buyNowProduct.product_id]
-          );
-          if (productRows.length === 0) throw new Error("PRODUCT_NOT_FOUND");
-          cartItems = [{ ...productRows[0], quantity: buyNowProduct.quantity || 1 }];
-        } else {
-          const [rows] = await connection.execute(
-            `SELECT cart.product_id, cart.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code, p.dealer_base_price, p.packaging_cost
-                 FROM cart 
-                 INNER JOIN products p ON cart.product_id = p.product_id 
-                 WHERE cart.user_id = ?`,
-            [user_id]
-          );
-          cartItems = rows;
-        }
-        if (cartItems.length === 0) throw new Error("CART_EMPTY");
-        let subtotal = 0;
-        let totalLockedDealerPayout = 0;
-        let totalPackagingCost = 0;
-        for (const item of cartItems) {
-          subtotal += item.quantity * Number(item.unit_price);
-          totalLockedDealerPayout += item.quantity * Number(item.dealer_base_price);
-          totalPackagingCost += item.quantity * Number(item.packaging_cost);
-        }
-        const totalAmount = subtotal;
-        const dynamicPaymentId = `ORD-${Date.now()}`;
-        const gatewayFee = totalAmount * 0.02 * 1.18;
-        const netAdminProfit = totalAmount - totalLockedDealerPayout - totalPackagingCost - gatewayFee;
-        const [orderResult] = await connection.execute(
-          `INSERT INTO orders
-                (user_id, total_amount, status, payment_id, payment_method, payment_status,
-                 shipping_address, customer_email, address_id, subtotal, estimated_delivery, tracking_ref, gateway_fee, net_admin_profit)
-             VALUES (?, ?, 'pending', ?, ?, 'unpaid', ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [user_id, totalAmount, dynamicPaymentId, method, shippingAddressFull, customerEmail, addressId, subtotal, estimatedDeliverySQL, sourcevisiter, gatewayFee, netAdminProfit]
-        );
-        const newOrderId = orderResult.insertId;
-        const invoiceYear = (/* @__PURE__ */ new Date()).getFullYear();
-        const invoiceNumber = `KW-${invoiceYear}-${String(newOrderId).padStart(6, "0")}`;
-        await connection.execute(`UPDATE orders SET invoice_number = ? WHERE order_id = ?`, [invoiceNumber, newOrderId]);
-        for (const item of cartItems) {
-          const itemDealerPayout = item.quantity * Number(item.dealer_base_price);
-          await connection.execute(
-            `INSERT INTO orderitems (order_id, product_id, product_name, quantity, unit_price, hsn_code, discount, locked_dealer_payout)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [newOrderId, item.product_id, item.product_name, item.quantity, item.unit_price, item.hsn_code || "N/A", 0, itemDealerPayout]
-          );
-        }
-        await connection.execute(
-          `INSERT INTO order_tracking (order_id, status, status_message)
-             VALUES (?, 'Order Placed', 'Your order has been received and is pending verification.')`,
-          [newOrderId]
-        );
-        await connection.commit();
-        return {
-          newOrderId,
-          order_id: newOrderId,
-          orderId: newOrderId,
-          dynamicPaymentId,
-          method
-        };
-      } catch (error) {
-        await connection.rollback();
-        throw error;
-      } finally {
-        connection.release();
-      }
-    };
-    module2.exports = { processCheckoutInDB };
-  }
-});
-
 // src/services/emailService.js
 var require_emailService = __commonJS({
   "src/services/emailService.js"(exports2, module2) {
@@ -3211,9 +3098,6 @@ var require_emailService = __commonJS({
         );
         console.log(`[EMAIL STEP 4] Found ${itemRows.length} item(s) for this order.`);
         const storeName = process.env.STORE_NAME || "Arzoo Saree";
-        const supportEmail = process.env.GMAIL_USER;
-        const supportPhone = process.env.SUPPORT_PHONE || "";
-        console.log(`[EMAIL STEP 5] Checking Env Vars -> SENDER_EMAIL: ${supportEmail ? "CONFIGURED" : "MISSING"}`);
         let simpleItemsList = "";
         for (const item of itemRows) {
           simpleItemsList += `
@@ -3262,22 +3146,97 @@ var require_emailService = __commonJS({
             </div>
         </body>
         </html>`;
-        console.log(`[EMAIL STEP 6] HTML generated. Dispatching to Nodemailer...`);
         const info = await sendEmailService({
           to: targetEmail,
           subject: `Order Confirmed! #${order.payment_id || order.order_id} - ${storeName}`,
           html: emailHtmlTemplate
         });
         console.log(`[EMAIL SUCCESS] Email dispatched successfully! Message ID: ${info?.messageId}`);
-        console.log(`--- [EMAIL END] ---
-`);
       } catch (error) {
         console.error(`
 [EMAIL CRITICAL ERROR] Process failed for Order ID: ${order_id}`);
         console.error(`[EMAIL CRITICAL ERROR DETAILS]:`, error.message);
-        console.error(error);
-        console.error(`--- [EMAIL END WITH ERROR] ---
-`);
+      }
+    };
+    var sendAdminOrderAlert = async (order_id) => {
+      try {
+        const [orderRows] = await db2.execute(`
+            SELECT o.*, a.full_name, a.city, a.state
+            FROM orders o
+            LEFT JOIN addresses a ON o.address_id = a.address_id
+            WHERE o.order_id = ?
+        `, [order_id]);
+        if (!orderRows.length) return;
+        const order = orderRows[0];
+        const adminEmails = process.env.ADMIN_EMAILS;
+        if (!adminEmails) return;
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 2px solid #ad3764; border-radius: 8px;">
+                <h2 style="color: #ad3764;">\u{1F6A8} New Order Received!</h2>
+                <p><strong>Order ID:</strong> #${order.order_id}</p>
+                <p><strong>Amount:</strong> \u20B9${order.total_amount}</p>
+                <p><strong>Payment Method:</strong> ${order.payment_method}</p>
+                <p><strong>Customer Name:</strong> ${order.full_name}</p>
+                <p><strong>Location:</strong> ${order.city}, ${order.state}</p>
+                <br>
+                <a href="https://royal-heritage.in/admin" style="background-color: #ad3764; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Admin Panel</a>
+            </div>
+        `;
+        await sendEmailService({
+          to: adminEmails,
+          subject: `New Order Alert! #${order.order_id} - \u20B9${order.total_amount}`,
+          html
+        });
+      } catch (error) {
+        console.error(`[EMAIL ERROR] Admin alert failed:`, error.message);
+      }
+    };
+    var sendStatusUpdateEmail = async (order_id, status, customMessage = "", tracking_number = "") => {
+      try {
+        const [orderRows] = await db2.execute(`
+            SELECT o.*, u.email as user_email, a.full_name 
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.user_id
+            LEFT JOIN addresses a ON o.address_id = a.address_id
+            WHERE o.order_id = ?
+        `, [order_id]);
+        if (!orderRows.length) return;
+        const order = orderRows[0];
+        const targetEmail = order.customer_email || order.user_email;
+        if (!targetEmail) return;
+        let defaultMessage = `Your order status has been updated to <strong>${status}</strong>.`;
+        if (status.toLowerCase() === "shipped") {
+          defaultMessage = `Great news! Your order has been shipped and is on its way to you.`;
+        } else if (status.toLowerCase() === "delivered") {
+          defaultMessage = `Your order has been delivered successfully. Thank you for shopping with Arzoo Saree!`;
+        } else if (status.toLowerCase() === "processing") {
+          defaultMessage = `We are currently processing your order and getting it ready for shipment.`;
+        }
+        const finalMessage = customMessage && customMessage.trim() !== "" ? customMessage : defaultMessage;
+        let trackingHtml = "";
+        if (tracking_number && tracking_number.trim() !== "") {
+          trackingHtml = `
+            <div style="background-color: #f1f8f5; border-left: 4px solid #0f6b3a; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; color: #0f6b3a; font-size: 16px;"><strong>Tracking Number / AWB:</strong> <br><span style="font-size: 18px;">${tracking_number}</span></p>
+            </div>`;
+        }
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #eaeaea; border-radius: 8px;">
+                <h2 style="color: #ad3764; margin-top: 0;">Order Update - #${order.order_id}</h2>
+                <p style="font-size: 16px; color: #333;">Hi ${order.full_name},</p>
+                <p style="font-size: 15px; line-height: 1.6; color: #444;">${finalMessage}</p>
+                ${trackingHtml}
+                <p style="margin-top: 30px; font-size: 14px; color: #888;">Warm Regards,<br>Arzoo Team</p>
+            </div>
+        `;
+        await sendEmailService({
+          to: targetEmail,
+          subject: `Update on your Arzoo Order #${order.order_id}`,
+          html
+        });
+        console.log(`[EMAIL SUCCESS] Status update email sent for Order #${order_id}`);
+      } catch (error) {
+        console.error(`[EMAIL ERROR] Status update failed:`, error.message);
       }
     };
     var BILL_SETTINGS = {
@@ -3557,7 +3516,6 @@ var require_emailService = __commonJS({
     </div>
   </div>
   <script>
-    // Open every toggle when printing, so the product details are on the paper too
     window.addEventListener('beforeprint', function () {
       document.querySelectorAll('details').forEach(function (d) { d.open = true; });
     });
@@ -3570,14 +3528,194 @@ var require_emailService = __commonJS({
       if (!data) return null;
       return buildInvoiceHtml(data);
     };
-    module2.exports = { sendEmailService, sendInvoiceEmail, getInvoiceHtml };
+    module2.exports = {
+      sendEmailService,
+      sendInvoiceEmail,
+      getInvoiceHtml,
+      sendAdminOrderAlert,
+      sendStatusUpdateEmail
+    };
+  }
+});
+
+// src/services/checkoutservice.js
+var require_checkoutservice = __commonJS({
+  "src/services/checkoutservice.js"(exports2, module2) {
+    var db2 = require_mysql();
+    var myCache2 = require_cache();
+    var { sendInvoiceEmail, sendAdminOrderAlert } = require_emailService();
+    var processCheckoutInDB = async (user_id, addressId, buyNowProduct, paymentMethod, tracking_ref, customEmail) => {
+      if (paymentMethod === "cod") {
+        throw new Error("Cash on Delivery has been completely disabled. Please choose Online Payment.");
+      }
+      const method = "online";
+      const sourcevisiter = tracking_ref ?? null;
+      console.log(`[CHECKOUT] \u{1F680} Starting checkout process for User ID: ${user_id}, Method: ${method}`);
+      const connection = await db2.getConnection();
+      try {
+        await connection.beginTransaction();
+        console.log(`[CHECKOUT] \u{1F512} Database transaction started successfully.`);
+        console.log(`[CHECKOUT] \u{1F4CD} Fetching address ID: ${addressId} for user: ${user_id}...`);
+        const [addressRows] = await connection.execute(
+          `SELECT full_name, phone, house_no, road_area, landmark, city, state, pincode
+             FROM addresses WHERE address_id = ? AND user_id = ?`,
+          [addressId, user_id]
+        );
+        if (addressRows.length === 0) {
+          console.error(`[CHECKOUT] \u274C Address ID ${addressId} not found for user ${user_id}.`);
+          throw new Error("ADDRESS_NOT_FOUND");
+        }
+        const addr = addressRows[0];
+        const shippingAddressLine = `${addr.house_no}, ${addr.road_area}${addr.landmark ? ", " + addr.landmark : ""}`;
+        const shippingAddressFull = `${shippingAddressLine}, ${addr.city}, ${addr.state} - ${addr.pincode}, Phone: ${addr.phone}`;
+        console.log(`[CHECKOUT] \u2705 Address fetched successfully.`);
+        let customerEmail = customEmail;
+        if (!customerEmail) {
+          console.log(`[CHECKOUT] \u{1F4E7} Fetching email for User ID: ${user_id}...`);
+          const [userRows] = await connection.execute(
+            `SELECT email FROM users WHERE user_id = ?`,
+            [user_id]
+          );
+          if (userRows.length === 0) {
+            console.error(`[CHECKOUT] \u274C User ID ${user_id} not found.`);
+            throw new Error("USER_NOT_FOUND");
+          }
+          customerEmail = userRows[0].email;
+        }
+        console.log(`[CHECKOUT] \u2705 Customer Email resolved: ${customerEmail}`);
+        console.log(`[CHECKOUT] \u{1F69A} Checking shipping zone for state: ${addr.state}...`);
+        const [zoneRows] = await connection.execute(
+          `SELECT min_days, max_days FROM shipping_zones WHERE state_name = ?`,
+          [addr.state]
+        );
+        const defaultMaxDays = Number(process.env.DEFAULT_DELIVERY_DAYS) || 7;
+        const maxDays = zoneRows.length > 0 ? zoneRows[0].max_days : defaultMaxDays;
+        const estimatedDeliveryDateObj = /* @__PURE__ */ new Date();
+        estimatedDeliveryDateObj.setDate(estimatedDeliveryDateObj.getDate() + maxDays);
+        const estimatedDeliverySQL = estimatedDeliveryDateObj.toISOString().split("T")[0];
+        console.log(`[CHECKOUT] \u2705 Estimated delivery calculated: ${estimatedDeliverySQL}`);
+        let cartItems = [];
+        const isBuyNow = buyNowProduct && buyNowProduct.product_id;
+        if (isBuyNow) {
+          console.log(`[CHECKOUT] \u{1F6CD}\uFE0F Processing 'Buy Now' for Product ID: ${buyNowProduct.product_id}`);
+          const [productRows] = await connection.execute(
+            `SELECT p.product_id, p.name AS product_name, p.price AS unit_price, p.hsn_code, p.dealer_base_price, p.packaging_cost
+                 FROM products p
+                 WHERE p.product_id = ?`,
+            [buyNowProduct.product_id]
+          );
+          if (productRows.length === 0) {
+            console.error(`[CHECKOUT] \u274C Buy Now Product ID ${buyNowProduct.product_id} not found.`);
+            throw new Error("PRODUCT_NOT_FOUND");
+          }
+          cartItems = [{
+            ...productRows[0],
+            quantity: buyNowProduct.quantity || 1
+          }];
+        } else {
+          console.log(`[CHECKOUT] \u{1F6D2} Fetching cart items for User ID: ${user_id}`);
+          const [rows] = await connection.execute(
+            `SELECT cart.product_id, cart.quantity, p.price AS unit_price, p.name AS product_name, p.hsn_code, p.dealer_base_price, p.packaging_cost
+                 FROM cart
+                 INNER JOIN products p ON cart.product_id = p.product_id
+                 WHERE cart.user_id = ?`,
+            [user_id]
+          );
+          cartItems = rows;
+        }
+        if (cartItems.length === 0) {
+          console.warn(`[CHECKOUT] \u26A0\uFE0F Cart is empty for User ID: ${user_id}`);
+          throw new Error("CART_EMPTY");
+        }
+        console.log(`[CHECKOUT] \u2705 Cart items loaded: ${cartItems.length} item(s) found.`);
+        let subtotal = 0;
+        let totalLockedDealerPayout = 0;
+        let totalPackagingCost = 0;
+        for (const item of cartItems) {
+          const itemTotal = item.quantity * Number(item.unit_price);
+          const itemDealerCost = item.quantity * Number(item.dealer_base_price);
+          const itemPackaging = item.quantity * Number(item.packaging_cost);
+          subtotal += itemTotal;
+          totalLockedDealerPayout += itemDealerCost;
+          totalPackagingCost += itemPackaging;
+          console.log(`[CHECKOUT_MATH] Item: ${item.product_name} | Qty: ${item.quantity} | Price: \u20B9${item.unit_price} | Dealer Base: \u20B9${item.dealer_base_price}`);
+        }
+        const totalAmount = subtotal;
+        const dynamicPaymentId = `ORD-${Date.now()}`;
+        const gatewayFee = totalAmount * 0.02 * 1.18;
+        const netAdminProfit = totalAmount - totalLockedDealerPayout - totalPackagingCost - gatewayFee;
+        console.log(`[CHECKOUT_SUMMARY] \u{1F4CA} Total: \u20B9${totalAmount} | Dealer Payout: \u20B9${totalLockedDealerPayout} | Packaging: \u20B9${totalPackagingCost} | Net Profit: \u20B9${netAdminProfit}`);
+        console.log(`[CHECKOUT] \u{1F4DD} Inserting main order into database...`);
+        const [orderResult] = await connection.execute(
+          `INSERT INTO orders
+                (user_id, total_amount, status, payment_id, payment_method, payment_status,
+                 shipping_address, customer_email, address_id, subtotal, estimated_delivery, tracking_ref, gateway_fee, net_admin_profit)
+             VALUES (?, ?, 'pending', ?, ?, 'unpaid', ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [user_id, totalAmount, dynamicPaymentId, method, shippingAddressFull, customerEmail, addressId, subtotal, estimatedDeliverySQL, sourcevisiter, gatewayFee, netAdminProfit]
+        );
+        const newOrderId = orderResult.insertId;
+        console.log(`[CHECKOUT] \u2705 Order created successfully with Order ID: ${newOrderId}`);
+        const invoiceYear = (/* @__PURE__ */ new Date()).getFullYear();
+        const invoiceNumber = `KW-${invoiceYear}-${String(newOrderId).padStart(6, "0")}`;
+        await connection.execute(`UPDATE orders SET invoice_number = ? WHERE order_id = ?`, [invoiceNumber, newOrderId]);
+        console.log(`[CHECKOUT] \u{1F4C4} Invoice number generated: ${invoiceNumber}`);
+        console.log(`[CHECKOUT] \u{1F4E6} Inserting order items and updating stock...`);
+        for (const item of cartItems) {
+          const itemDealerPayout = item.quantity * Number(item.dealer_base_price);
+          console.log(`\u{1F50D} DEBUG ITEM -> Product ID: ${item.product_id}, Quantity: ${item.quantity}`);
+          await connection.execute(
+            `INSERT INTO orderitems (order_id, product_id, product_name, quantity, unit_price, hsn_code, discount, locked_dealer_payout)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [newOrderId, item.product_id, item.product_name, item.quantity, item.unit_price, item.hsn_code || "N/A", 0, itemDealerPayout]
+          );
+          const [updateResult] = await connection.execute(
+            `UPDATE products SET stock_qty = GREATEST(0, stock_qty - ?) WHERE product_id = ?`,
+            [item.quantity, item.product_id]
+          );
+          console.log(`\u{1F4CA} UPDATE RESULT (Affected Rows): ${updateResult.affectedRows}`);
+          if (myCache2) {
+            myCache2.del(`product_${item.product_id}`);
+            console.log(`[CHECKOUT] \u{1F9F9} Cache cleared for product ID: ${item.product_id}`);
+          }
+        }
+        console.log(`[CHECKOUT] \u{1F4CC} Inserting initial order tracking status...`);
+        await connection.execute(
+          `INSERT INTO order_tracking (order_id, status, status_message)
+             VALUES (?, 'Order Placed', 'Your order has been received and is pending verification.')`,
+          [newOrderId]
+        );
+        if (!isBuyNow) {
+          console.log(`[CHECKOUT] \u{1F5D1}\uFE0F Clearing cart for User ID: ${user_id}...`);
+          await connection.execute("DELETE FROM cart WHERE user_id = ?", [user_id]);
+        }
+        await connection.commit();
+        console.log(`[CHECKOUT] \u{1F389} Transaction committed successfully for Order ID: ${newOrderId}`);
+        sendInvoiceEmail(newOrderId).catch((err) => console.error("[CRITICAL] Invoice email failed:", err));
+        sendAdminOrderAlert(newOrderId).catch((err) => console.error("[CRITICAL] Admin alert email failed:", err));
+        return {
+          newOrderId,
+          order_id: newOrderId,
+          orderId: newOrderId,
+          dynamicPaymentId,
+          method
+        };
+      } catch (error) {
+        console.error(`[CHECKOUT] \u274C Checkout failed, rolling back transaction. Error:`, error.message);
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+        console.log(`[CHECKOUT] \u{1F50C} Database connection released.`);
+      }
+    };
+    module2.exports = { processCheckoutInDB };
   }
 });
 
 // src/controllers/Email.js
 var require_Email = __commonJS({
   "src/controllers/Email.js"(exports2, module2) {
-    var { sendEmailService, sendInvoiceEmail, getInvoiceHtml } = require_emailService();
+    var { sendEmailService, sendInvoiceEmail, getInvoiceHtml, sendAdminOrderAlert, sendStatusUpdateEmail } = require_emailService();
     var APP_NAME = process.env.APP_NAME || "Arzoo Saree";
     var isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     var sendContactEmail = async (req, res) => {
@@ -3621,6 +3759,24 @@ var require_Email = __commonJS({
         (err) => console.error(`[EMAIL] Invoice email failed -- order_id: ${order_id}:`, err.message)
       );
     };
+    var triggerAdminOrderAlert = (order_id) => {
+      return sendAdminOrderAlert(order_id).catch(
+        (err) => console.error(`[EMAIL] Admin alert email failed -- order_id: ${order_id}:`, err.message)
+      );
+    };
+    var sendOrderStatusEmail = async (req, res) => {
+      const { order_id, status, customMessage, tracking_number } = req.body;
+      if (!order_id || !status) {
+        return res.status(400).json({ success: false, message: "Order ID and Status are required." });
+      }
+      try {
+        await sendStatusUpdateEmail(order_id, status, customMessage, tracking_number);
+        return res.status(200).json({ success: true, message: "Status email sent successfully." });
+      } catch (error) {
+        console.error(`[EMAIL] Status update email failed:`, error.message);
+        return res.status(500).json({ success: false, message: "Failed to send status email." });
+      }
+    };
     var getInvoice = async (req, res) => {
       const userId = req.user.id;
       const orderId = parseInt(req.params.orderId, 10);
@@ -3638,7 +3794,13 @@ var require_Email = __commonJS({
         return res.status(500).json({ success: false, message: "Could not generate the bill." });
       }
     };
-    module2.exports = { sendContactEmail, triggerInvoiceEmail, getInvoice };
+    module2.exports = {
+      sendContactEmail,
+      triggerInvoiceEmail,
+      triggerAdminOrderAlert,
+      getInvoice,
+      sendOrderStatusEmail
+    };
   }
 });
 
@@ -3646,7 +3808,7 @@ var require_Email = __commonJS({
 var require_checkout = __commonJS({
   "src/controllers/checkout.js"(exports2, module2) {
     var { processCheckoutInDB } = require_checkoutservice();
-    var { triggerInvoiceEmail } = require_Email();
+    var { triggerInvoiceEmail, triggerAdminOrderAlert } = require_Email();
     var processCheckout = async (req, res) => {
       const user_id = req.user.id;
       const { addressId, buyNowProduct, paymentMethod, tracking_ref } = req.body;
@@ -3661,6 +3823,9 @@ var require_checkout = __commonJS({
           console.log(`[CHECKOUT_CONTROLLER] \u{1F4C4} COD order detected. Triggering invoice email for Order ID: ${result.newOrderId}...`);
           triggerInvoiceEmail(result.newOrderId).catch(
             (err) => console.error(`[CHECKOUT_CONTROLLER] \u274C Background Invoice Email Failed -- Order ID: ${result.newOrderId}:`, err.message)
+          );
+          triggerAdminOrderAlert(result.newOrderId).catch(
+            (err) => console.error(`[CHECKOUT_CONTROLLER] \u274C Background Admin Alert Failed -- Order ID: ${result.newOrderId}:`, err.message)
           );
         }
         console.log(`[CHECKOUT_CONTROLLER] \u2705 Checkout successful -- Internal Order ID: ${result.newOrderId}`);
@@ -3677,7 +3842,7 @@ var require_checkout = __commonJS({
         if (error.message === "USER_NOT_FOUND") return res.status(404).json({ success: false, message: "User account not found." });
         if (error.message === "PRODUCT_NOT_FOUND") return res.status(404).json({ success: false, message: "Buy-now product not found." });
         if (error.message === "CART_EMPTY") return res.status(400).json({ success: false, message: "Your cart is empty." });
-        if (error.message === "COD option is not available for this product." || error.message === "COD_NOT_ALLOWED_FOR_KOTA_DORIYA") {
+        if (error.message === "COD option is not available for this product." || error.message === "COD_NOT_ALLOWED_FOR_KOTA_DORIYA" || error.message === "Cash on Delivery has been completely disabled. Please choose Online Payment.") {
           return res.status(400).json({
             success: false,
             message: "COD option is not available for this product."
@@ -4261,6 +4426,99 @@ var require_orderservice = __commonJS({
         throw err;
       }
     };
+    var getAllUserOrdersListService = async () => {
+      const query = `
+    SELECT 
+      o.order_id,
+      o.total_amount,
+      o.status AS order_status,
+      u.user_id,
+      u.name AS user_name,
+      oi.product_id,
+      oi.product_name,
+      p.image_url AS product_image
+    FROM orders o
+    LEFT JOIN users u ON o.user_id = u.user_id
+    LEFT JOIN orderitems oi ON o.order_id = oi.order_id
+    LEFT JOIN products p ON oi.product_id = p.product_id
+    ORDER BY o.order_id DESC
+  `;
+      const [rows] = await db2.promise().query(query);
+      const ordersMap = /* @__PURE__ */ new Map();
+      for (const row of rows) {
+        if (!ordersMap.has(row.order_id)) {
+          ordersMap.set(row.order_id, {
+            order_id: row.order_id,
+            order_status: row.order_status || "pending",
+            total_amount: row.total_amount,
+            user: {
+              name: row.user_name || "Customer"
+            },
+            items: []
+            // Frontend needs items[0] for the cover image
+          });
+        }
+        const currentOrder = ordersMap.get(row.order_id);
+        if (currentOrder.items.length === 0) {
+          currentOrder.items.push({
+            product_name: row.product_name,
+            product_image: row.product_image
+          });
+        }
+      }
+      return Array.from(ordersMap.values());
+    };
+    var getSingleOrderDetailService = async (orderId) => {
+      const query = `
+    SELECT 
+      o.order_id,
+      o.total_amount,
+      o.payment_id,
+      o.status AS order_status,
+      o.tracking_ref AS tracking_number,
+      o.shipping_address AS checkout_address,
+      o.ordered_at AS order_date,
+      u.user_id,
+      u.name AS user_name,
+      u.email AS user_email,
+      u.address AS profile_address,
+      oi.quantity,
+      oi.unit_price AS item_price,
+      p.product_id,
+      p.name AS product_name,
+      p.image_url AS product_image
+    FROM orders o
+    LEFT JOIN users u ON o.user_id = u.user_id
+    LEFT JOIN orderitems oi ON o.order_id = oi.order_id
+    LEFT JOIN products p ON oi.product_id = p.product_id
+    WHERE o.order_id = ?
+  `;
+      const [rows] = await db2.promise().query(query, [orderId]);
+      if (rows.length === 0) return null;
+      const orderDetail = {
+        order_id: rows[0].order_id,
+        order_status: rows[0].order_status || "pending",
+        tracking_number: rows[0].tracking_number || null,
+        total_amount: rows[0].total_amount,
+        payment_id: rows[0].payment_id,
+        order_date: rows[0].order_date,
+        user: {
+          id: rows[0].user_id,
+          name: rows[0].user_name,
+          email: rows[0].user_email,
+          profile_address: rows[0].profile_address,
+          checkout_address: rows[0].checkout_address
+        },
+        items: rows.map((row) => ({
+          product_id: row.product_id,
+          product_name: row.product_name,
+          product_image: row.product_image,
+          quantity: row.quantity,
+          price: row.item_price
+        }))
+      };
+      return orderDetail;
+    };
     module2.exports = {
       adminorder,
       updatestatusinDB,
@@ -4269,7 +4527,9 @@ var require_orderservice = __commonJS({
       ordercencel,
       getDetailedOrderById,
       getOrderSummaryData,
-      getDeliveredOrderHistory
+      getDeliveredOrderHistory,
+      getAllUserOrdersListService,
+      getSingleOrderDetailService
     };
   }
 });
@@ -4288,7 +4548,9 @@ var require_order = __commonJS({
       // markOutForDelivery,
       // markDeliveryAttemptFailed,
       // verifyDeliveryOtp
-      getDeliveredOrderHistory
+      getDeliveredOrderHistory,
+      getAllUserOrdersListService,
+      getSingleOrderDetailService
     } = require_orderservice();
     var getadminorder = async (req, res) => {
       console.log("[ORDER_CONTROLLER] \u{1F4E1} Admin requested all orders list.");
@@ -4451,6 +4713,35 @@ var require_order = __commonJS({
         return res.status(500).json({ success: false, message: "Failed to fetch order history" });
       }
     };
+    var getAllUserOrdersController = async (req, res) => {
+      try {
+        const orders = await getAllUserOrdersListService();
+        return res.status(200).json({
+          success: true,
+          count: orders.length,
+          data: orders
+        });
+      } catch (error) {
+        console.error("Error fetching orders list:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
+      }
+    };
+    var getSingleOrderController = async (req, res) => {
+      try {
+        const { id } = req.params;
+        const orderDetails = await getSingleOrderDetailService(id);
+        if (!orderDetails) {
+          return res.status(404).json({ success: false, message: "Order not found" });
+        }
+        return res.status(200).json({
+          success: true,
+          data: orderDetails
+        });
+      } catch (error) {
+        console.error(`Error fetching order detail for ID ${req.params.id}:`, error);
+        return res.status(500).json({ success: false, message: "Server error" });
+      }
+    };
     module2.exports = {
       getadminorder,
       updateOrderStatus,
@@ -4462,7 +4753,9 @@ var require_order = __commonJS({
       // markOutForDeliveryController,
       // markDeliveryAttemptFailedController,
       // verifyDeliveryOtpController
-      getDeliveredOrderHistoryController
+      getDeliveredOrderHistoryController,
+      getAllUserOrdersController,
+      getSingleOrderController
     };
   }
 });
@@ -4489,7 +4782,9 @@ var require_order2 = __commonJS({
       //     markOutForDeliveryController,
       //   verifyDeliveryOtpController,
       //   markDeliveryAttemptFailedController
-      getDeliveredOrderHistoryController
+      getDeliveredOrderHistoryController,
+      getAllUserOrdersController,
+      getSingleOrderController
     } = require_order();
     router.get("/summary", verifyToken, (req, res, next) => {
       console.log(`[ORDER_ROUTES] \u{1F4CB} Route Triggered: GET /summary by User`);
@@ -4549,6 +4844,12 @@ var require_order2 = __commonJS({
       courierWebhookController(req, res, next);
     });
     router.get("/invoice/:orderId", verifyToken, getInvoice);
+    router.get("/userorders", verifyAdmin, getAllUserOrdersController);
+    router.get(
+      "/user-orders/:id",
+      /* verifyAdmin, */
+      getSingleOrderController
+    );
     module2.exports = router;
   }
 });
@@ -5405,8 +5706,9 @@ var require_Email2 = __commonJS({
   "src/router/Email.js"(exports2, module2) {
     var express2 = require("express");
     var router = express2.Router();
-    var { sendContactEmail } = require_Email();
+    var { sendContactEmail, sendOrderStatusEmail } = require_Email();
     router.post("/", sendContactEmail);
+    router.post("/order-status", sendOrderStatusEmail);
     module2.exports = router;
   }
 });
