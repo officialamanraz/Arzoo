@@ -19,14 +19,15 @@ const AdminOrders = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token'); 
+      const token = localStorage.getItem('token') || localStorage.getItem('adminToken'); // Ensure we grab the right token
       const response = await axios.get(`${API_BASE_URL}/api/orders/userorders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log("Orders List Response:", response.data); // Add this to debug!
       setOrders(response.data.data);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      console.error("Error fetching orders:", error.response?.data || error.message);
       setLoading(false);
     }
   };

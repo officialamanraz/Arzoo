@@ -20,19 +20,21 @@ const AdminOrderDetail = () => {
     fetchSpecificOrder();
   }, [id]);
 
-  const fetchSpecificOrder = async () => {
+const fetchSpecificOrder = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      // Fetching all orders and finding the specific one (Simplest approach for now)
-      const response = await axios.get(`${API_BASE_URL}/api/orders/user-orders`, {
+      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      
+      // FIX: Calling the EXACT route you made in the backend (with the hyphen!)
+      const response = await axios.get(`${API_BASE_URL}/api/orders/user-orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const foundOrder = response.data.data.find(o => String(o.order_id) === String(id));
-      setOrder(foundOrder);
+      
+      console.log("Single Order Detail Response:", response.data); // Add this to debug!
+      setOrder(response.data.data);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching order detail:", error);
+      console.error("Error fetching order detail:", error.response?.data || error.message);
       setLoading(false);
     }
   };
