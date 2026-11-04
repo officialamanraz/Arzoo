@@ -20,7 +20,7 @@ const AdminOrders = () => {
   const fetchOrders = async () => {
     try {
       // Assuming your backend URL is set up
-      const response = await axios.get('/api/orders/user-orders');
+      const response = await axios.get('/api/orders/userorders');
       setOrders(response.data.data);
       setLoading(false);
     } catch (error) {
