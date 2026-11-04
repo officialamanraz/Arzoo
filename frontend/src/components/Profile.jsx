@@ -238,6 +238,13 @@ const Profile = () => {
           <li onClick={() => navigate('/my-orders')}>My Orders</li>
           <li onClick={handleLogout} className="logout-btn">Log Out</li>
         </ul>
+        <ul className="profile-menu">
+          <li className="active">Login & Security</li>
+          <li onClick={() => navigate('/my-orders')}>My Orders</li>
+          {/* NEW BUTTON ADDED HERE */}
+          <li onClick={() => navigate('/delivered-history')}>Past Orders (Wardrobe)</li>
+          <li onClick={handleLogout} className="logout-btn">Log Out</li>
+        </ul>
       </div>
 
       {/* CONTENT AREA */}
