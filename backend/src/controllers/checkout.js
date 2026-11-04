@@ -1,6 +1,6 @@
 // File: src/controllers/checkoutController.js
 const { processCheckoutInDB } = require('../services/checkoutservice'); 
-const { triggerInvoiceEmail } = require('../controllers/Email');
+const { triggerInvoiceEmail, triggerAdminOrderAlert } = require('../controllers/Email');
 
 const processCheckout = async (req, res) => {
     const user_id = req.user.id;
@@ -23,6 +23,9 @@ const processCheckout = async (req, res) => {
             triggerInvoiceEmail(result.newOrderId).catch(err =>
                 console.error(`[CHECKOUT_CONTROLLER] ❌ Background Invoice Email Failed -- Order ID: ${result.newOrderId}:`, err.message)
             );
+            triggerAdminOrderAlert(result.newOrderId).catch(err =>
+                console.error(`[CHECKOUT_CONTROLLER] ❌ Background Admin Alert Failed -- Order ID: ${result.newOrderId}:`, err.message)
+            );
         }
 
         console.log(`[CHECKOUT_CONTROLLER] ✅ Checkout successful -- Internal Order ID: ${result.newOrderId}`);
@@ -42,15 +45,13 @@ const processCheckout = async (req, res) => {
         if (error.message === 'PRODUCT_NOT_FOUND') return res.status(404).json({ success: false, message: 'Buy-now product not found.' });
         if (error.message === 'CART_EMPTY') return res.status(400).json({ success: false, message: 'Your cart is empty.' });
         
-        // 🔥 YAHAN UPDATE KIYA HAI: Ab exact naya error message match karega aur usko hi bhejega
-        if (error.message === 'COD option is not available for this product.' || error.message === 'COD_NOT_ALLOWED_FOR_KOTA_DORIYA') {
+        if (error.message === 'COD option is not available for this product.' || error.message === 'COD_NOT_ALLOWED_FOR_KOTA_DORIYA' || error.message === 'Cash on Delivery has been completely disabled. Please choose Online Payment.') {
             return res.status(400).json({ 
                 success: false, 
                 message: 'COD option is not available for this product.' 
             });
         }
         
-        // Agar koi aur error aata hai, toh original error message bhejein bajaye generic error ke
         return res.status(500).json({ success: false, message: error.message || 'Checkout failed, please try again.' });
     }
 };

@@ -548,6 +548,73 @@ const getDeliveredOrderHistory = async (userId) => {
     }
 };
 
+const getAllUserOrdersService = async () => {
+  const query = `
+    SELECT 
+      o.id AS order_id,
+      o.total_amount,
+      o.payment_id,
+      o.order_status,
+      o.tracking_number,
+      o.shipping_address AS checkout_address,
+      o.created_at AS order_date,
+      u.id AS user_id,
+      u.name AS user_name,
+      u.email AS user_email,
+      u.profile_image,
+      u.address AS profile_address,
+      oi.id AS order_item_id,
+      oi.quantity,
+      oi.price AS item_price,
+      p.id AS product_id,
+      p.name AS product_name,
+      p.image_url AS product_image
+    FROM orders o
+    JOIN users u ON o.user_id = u.id
+    JOIN order_items oi ON o.id = oi.order_id
+    JOIN products p ON oi.product_id = p.id
+    ORDER BY o.created_at DESC
+  `;
+
+  const [rows] = await db.promise().query(query);
+
+  // Group items by order_id so the frontend gets clean nested cards
+  const ordersMap = new Map();
+
+  for (const row of rows) {
+    if (!ordersMap.has(row.order_id)) {
+      ordersMap.set(row.order_id, {
+        order_id: row.order_id,
+        order_status: row.order_status || 'Processing',
+        tracking_number: row.tracking_number || null,
+        total_amount: row.total_amount,
+        payment_id: row.payment_id,
+        order_date: row.order_date,
+        user: {
+          id: row.user_id,
+          name: row.user_name,
+          email: row.user_email,
+          profile_image: row.profile_image,
+          profile_address: row.profile_address,
+          checkout_address: row.checkout_address
+        },
+        items: []
+      });
+    }
+
+    ordersMap.get(row.order_id).items.push({
+      item_id: row.order_item_id,
+      product_id: row.product_id,
+      product_name: row.product_name,
+      product_image: row.product_image,
+      quantity: row.quantity,
+      price: row.item_price
+    });
+  }
+
+  return Array.from(ordersMap.values());
+};
+
 module.exports = {
     adminorder,
     updatestatusinDB,
@@ -556,5 +623,6 @@ module.exports = {
     ordercencel,
     getDetailedOrderById,
     getOrderSummaryData,
-    getDeliveredOrderHistory
+    getDeliveredOrderHistory,
+    getAllUserOrdersService
 };

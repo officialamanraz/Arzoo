@@ -10,7 +10,8 @@ const {
     // markOutForDelivery,
     // markDeliveryAttemptFailed,
     // verifyDeliveryOtp
-    getDeliveredOrderHistory
+    getDeliveredOrderHistory,
+    getAllUserOrdersService
 } = require('../services/orderservice'); 
 
 // ==========================================
@@ -335,6 +336,25 @@ const getDeliveredOrderHistoryController = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Failed to fetch order history' });
     }
 };
+
+const getUserOrdersController = async (req, res) => {
+  try {
+    const orders = await getAllUserOrdersService();
+    return res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders
+    });
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching user orders',
+      error: error.message
+    });
+  }
+};
+
 module.exports = { 
     getadminorder, 
     updateOrderStatus, 
@@ -346,5 +366,6 @@ module.exports = {
     // markOutForDeliveryController,
     // markDeliveryAttemptFailedController,
     // verifyDeliveryOtpController
-     getDeliveredOrderHistoryController 
+     getDeliveredOrderHistoryController,
+     getUserOrdersController
 };

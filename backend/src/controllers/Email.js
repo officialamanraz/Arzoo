@@ -1,12 +1,11 @@
 // File: src/controllers/Email.js
-const { sendEmailService, sendInvoiceEmail,getInvoiceHtml } = require('../services/emailService');
+const { sendEmailService, sendInvoiceEmail, getInvoiceHtml, sendAdminOrderAlert, sendStatusUpdateEmail } = require('../services/emailService');
 
 const APP_NAME = process.env.APP_NAME || 'Arzoo Saree';
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 // ==========================================
-// CONTACT FORM -- reached via HTTP (POST /api/contact), triggered by the
-// user's browser submitting the form.
+// CONTACT FORM
 // ==========================================
 const sendContactEmail = async (req, res) => {
   const { name, email, message } = req.body;
@@ -53,21 +52,45 @@ const sendContactEmail = async (req, res) => {
 };
 
 // ==========================================
-// ORDER CONFIRMATION -- NOT reached via HTTP. This is a plain function,
-// called directly (in-process) by checkout.controller.js after an order
-// is placed, and by webhook.controller.js / verifyPayment.service.js
-// after an online payment is confirmed.
-//
-// It's kept here (not called straight from emailService.js by those
-// controllers) so every outgoing email in the app is triggered through
-// this one file -- contact form and order confirmations both -- even
-// though only the contact form actually arrives over HTTP.
+// ORDER CONFIRMATION WRAPPER
 // ==========================================
 const triggerInvoiceEmail = (order_id) => {
   return sendInvoiceEmail(order_id).catch(err =>
     console.error(`[EMAIL] Invoice email failed -- order_id: ${order_id}:`, err.message)
   );
 };
+
+// ==========================================
+// ADMIN ALERT WRAPPER
+// ==========================================
+const triggerAdminOrderAlert = (order_id) => {
+  return sendAdminOrderAlert(order_id).catch(err =>
+    console.error(`[EMAIL] Admin alert email failed -- order_id: ${order_id}:`, err.message)
+  );
+};
+
+// ==========================================
+// HTTP ENDPOINT: UPDATE STATUS EMAIL
+// ==========================================
+const sendOrderStatusEmail = async (req, res) => {
+    const { order_id, status, customMessage, tracking_number } = req.body;
+    
+    if (!order_id || !status) {
+        return res.status(400).json({ success: false, message: 'Order ID and Status are required.' });
+    }
+
+    try {
+        await sendStatusUpdateEmail(order_id, status, customMessage, tracking_number);
+        return res.status(200).json({ success: true, message: 'Status email sent successfully.' });
+    } catch (error) {
+        console.error(`[EMAIL] Status update email failed:`, error.message);
+        return res.status(500).json({ success: false, message: 'Failed to send status email.' });
+    }
+};
+
+// ==========================================
+// GET INVOICE HTML
+// ==========================================
 const getInvoice = async (req, res) => {
     const userId = req.user.id;
     const orderId = parseInt(req.params.orderId, 10);
@@ -88,4 +111,10 @@ const getInvoice = async (req, res) => {
     }
 };
 
-module.exports = { sendContactEmail, triggerInvoiceEmail,getInvoice };
+module.exports = { 
+    sendContactEmail, 
+    triggerInvoiceEmail, 
+    triggerAdminOrderAlert, 
+    getInvoice, 
+    sendOrderStatusEmail 
+};

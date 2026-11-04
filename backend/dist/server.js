@@ -4073,9 +4073,15 @@ var require_orderservice = __commonJS({
         ]);
         let totalDealerPayout = 0;
         const formattedItems = itemsResult[0].map((item) => {
-          const itemTotal = Number(item.unit_price) * Number(item.quantity);
-          const dealerGets = Number(item.locked_dealer_payout);
-          totalDealerPayout += dealerGets;
+          const sellingPrice = Number(item.unit_price) * Number(item.quantity);
+          const dealerBase = Number(item.dealer_base_price || 0) * Number(item.quantity);
+          const packingCost = Number(item.packaging_cost || 0) * Number(item.quantity);
+          const razorpayFee = sellingPrice * 0.024;
+          const remainingNetProfit = sellingPrice - (razorpayFee + packingCost + dealerBase);
+          const adminShare = remainingNetProfit > 0 ? remainingNetProfit / 2 : 0;
+          const dealerProfitShare = remainingNetProfit > 0 ? remainingNetProfit / 2 : 0;
+          const totalDealerGets = dealerBase + dealerProfitShare;
+          totalDealerPayout += totalDealerGets;
           return {
             ...item,
             image_url: getFullImageUrl(item.product_image),
@@ -4084,8 +4090,14 @@ var require_orderservice = __commonJS({
               subcategory: item.subcategory_name || "N/A"
             },
             financials: {
-              total_item_price: itemTotal,
-              dealer_payout: dealerGets
+              selling_price: sellingPrice.toFixed(2),
+              razorpay_fee_cut: razorpayFee.toFixed(2),
+              packaging_cut: packingCost.toFixed(2),
+              dealer_base_price: dealerBase.toFixed(2),
+              net_remaining_profit: remainingNetProfit.toFixed(2),
+              admin_profit_50: adminShare.toFixed(2),
+              dealer_profit_50: dealerProfitShare.toFixed(2),
+              dealer_payout: totalDealerGets.toFixed(2)
             },
             dealer_info: {
               id: item.dealer_id,
@@ -6164,21 +6176,31 @@ var require_dealer_Service = __commonJS({
         const formattedProducts = products.map((prod) => {
           const stockQty = Number(prod.stock_qty || 0);
           const sellingPrice = Number(prod.price || 0);
-          const packing = Number(prod.packaging_cost || 0);
-          const effectiveDealerBase = Number(prod.dealer_base_price || 0);
-          const effectiveAdminProfit = sellingPrice - effectiveDealerBase;
+          const packingCost = Number(prod.packaging_cost || 0);
+          const dealerBase = Number(prod.dealer_base_price || 0);
+          const razorpayFee = sellingPrice * 0.024;
+          const remainingNetProfit = sellingPrice - (razorpayFee + packingCost + dealerBase);
+          const adminShare = remainingNetProfit > 0 ? remainingNetProfit / 2 : 0;
+          const dealerProfitShare = remainingNetProfit > 0 ? remainingNetProfit / 2 : 0;
           if (stockQty > 0) {
             total_inventory_mrp += sellingPrice * stockQty;
-            total_dealer_base_value += effectiveDealerBase * stockQty;
-            total_potential_admin_profit += effectiveAdminProfit * stockQty;
+            total_dealer_base_value += dealerBase * stockQty;
+            total_potential_admin_profit += adminShare * stockQty;
           }
           return {
             ...prod,
-            dealer_base_price: effectiveDealerBase,
-            admin_profit: effectiveAdminProfit,
-            // Pass to frontend for product card display
-            packaging_cost: packing,
-            // Passing just for display info
+            dealer_base_price: dealerBase,
+            packaging_cost: packingCost,
+            breakdown: {
+              selling_price: sellingPrice.toFixed(2),
+              razorpay_fee_cut: razorpayFee.toFixed(2),
+              packaging_cut: packingCost.toFixed(2),
+              base_price_cut: dealerBase.toFixed(2),
+              net_remaining_profit: remainingNetProfit.toFixed(2),
+              admin_profit_50: adminShare.toFixed(2),
+              dealer_profit_50: dealerProfitShare.toFixed(2),
+              total_dealer_payout: (dealerBase + dealerProfitShare).toFixed(2)
+            },
             image_url: getFullImageUrl(prod.image_url)
           };
         });
@@ -6636,6 +6658,9 @@ app.get("/api/products-raw", async (req, res) => {
     console.error("[SERVER] /api/products-raw error:", err.message);
     return res.status(500).json({ error: err.message });
   }
+});
+app.get("/", (req, res) => {
+  res.send("Backend Server is Running Successfully!");
 });
 app.post("/data", async (req, res) => {
   const dataArray = req.body;

@@ -23,6 +23,7 @@ const {
 //   verifyDeliveryOtpController,
 //   markDeliveryAttemptFailedController
 getDeliveredOrderHistoryController,
+getUserOrdersController
 } = require('../controllers/order'); 
 
 // ==========================================
@@ -133,4 +134,5 @@ router.post('/webhook/courier', (req, res, next) => {
 });
 
 router.get('/invoice/:orderId',verifyToken,getInvoice)
+router.get('/userorders',verifyAdmin,getUserOrdersController);
 module.exports = router;

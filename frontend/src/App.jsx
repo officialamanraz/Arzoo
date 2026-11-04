@@ -35,7 +35,7 @@ import Contact from './components/contact';
 import AdminRoute from "./components/AdminRoute";
 import Profile from './components/Profile';
 import ReviewsPage from './components/ReviewsPage';
-import orderhistory from './components/DeliveredOrderHistory'
+import adminusersoders from './components/Adminusersorders'
 // ✅ CORRECT (Uppercase PascalCase)
 import CategoryCards from './components/product' // Your renamed file
 import './components/newthemeofhomepage.css';
@@ -530,6 +530,7 @@ else if (selectedCategory) {
           </AdminRoute>
         }
       />
+    <Route path="/admin/userorders" element={<AdminRoute></AdminRoute>} />
 
       {/* =========================================
          ADMIN DEALER MANAGEMENT ROUTES

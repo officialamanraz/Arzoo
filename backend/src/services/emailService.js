@@ -31,14 +31,12 @@ const sendEmailService = ({ to, subject, html }) => {
 };
 
 // ==========================================
-// ORDER CONFIRMATION EMAIL 
-// (Function kept named 'sendInvoiceEmail' so controllers don't break)
+// 1. ORDER CONFIRMATION EMAIL (TO CUSTOMER)
 // ==========================================
 const sendInvoiceEmail = async (order_id) => {
     console.log(`\n--- [EMAIL START] Attempting to send email for Order ID: ${order_id} ---`);
 
     try {
-        // 1. Fetch Order Data
         console.log(`[EMAIL STEP 1] Fetching order data from DB...`);
         const [orderRows] = await db.execute(
             `SELECT o.*, u.email as user_email, a.full_name, a.phone, a.city, a.state, a.pincode, a.house_no, a.road_area, a.landmark
@@ -59,7 +57,6 @@ const sendInvoiceEmail = async (order_id) => {
         const order = orderRows[0];
         console.log(`[EMAIL STEP 2] Order Details Fetched -> user_id: ${order.user_id}, customer_email: ${order.customer_email}, user_email: ${order.user_email}`);
         
-        // 2. Determine Target Email
         const targetEmail = order.customer_email || order.user_email || order.email;
         console.log(`[EMAIL STEP 3] Final Target Email Determined: ${targetEmail}`);
 
@@ -68,7 +65,6 @@ const sendInvoiceEmail = async (order_id) => {
             return; 
         }
 
-        // 3. Fetch Items
         console.log(`[EMAIL STEP 4] Fetching order items...`);
         const [itemRows] = await db.execute(
             `SELECT product_name, quantity, unit_price
@@ -78,11 +74,7 @@ const sendInvoiceEmail = async (order_id) => {
         console.log(`[EMAIL STEP 4] Found ${itemRows.length} item(s) for this order.`);
 
         const storeName = process.env.STORE_NAME || 'Arzoo Saree';
-        const supportEmail = process.env.GMAIL_USER;
-        const supportPhone = process.env.SUPPORT_PHONE || '';
         
-        console.log(`[EMAIL STEP 5] Checking Env Vars -> SENDER_EMAIL: ${supportEmail ? 'CONFIGURED' : 'MISSING'}`);
-
         let simpleItemsList = '';
         for (const item of itemRows) {
             simpleItemsList += `
@@ -101,7 +93,6 @@ const sendInvoiceEmail = async (order_id) => {
             ? 'has been paid securely online.' 
             : 'will be paid via Cash on Delivery.';
 
-        // HTML Template (Same as before)
         const emailHtmlTemplate = `
         <!DOCTYPE html>
         <html lang="en">
@@ -137,9 +128,6 @@ const sendInvoiceEmail = async (order_id) => {
         </body>
         </html>`;
 
-        console.log(`[EMAIL STEP 6] HTML generated. Dispatching to Nodemailer...`);
-
-        // 4. Send Email via Promise
         const info = await sendEmailService({
             to: targetEmail,
             subject: `Order Confirmed! #${order.payment_id || order.order_id} - ${storeName}`,
@@ -147,18 +135,113 @@ const sendInvoiceEmail = async (order_id) => {
         });
 
         console.log(`[EMAIL SUCCESS] Email dispatched successfully! Message ID: ${info?.messageId}`);
-        console.log(`--- [EMAIL END] ---\n`);
 
     } catch (error) {
         console.error(`\n[EMAIL CRITICAL ERROR] Process failed for Order ID: ${order_id}`);
         console.error(`[EMAIL CRITICAL ERROR DETAILS]:`, error.message);
-        console.error(error); // Pura error print hoga yahan
-        console.error(`--- [EMAIL END WITH ERROR] ---\n`);
     }
 };
 
 // ==========================================
-// BILL SETTINGS (website name is fixed for now, everything else comes from the database)
+// 2. NEW ORDER ALERT EMAIL (TO ADMINS)
+// ==========================================
+const sendAdminOrderAlert = async (order_id) => {
+    try {
+        const [orderRows] = await db.execute(`
+            SELECT o.*, a.full_name, a.city, a.state
+            FROM orders o
+            LEFT JOIN addresses a ON o.address_id = a.address_id
+            WHERE o.order_id = ?
+        `, [order_id]);
+        
+        if (!orderRows.length) return;
+        const order = orderRows[0];
+        const adminEmails = process.env.ADMIN_EMAILS; 
+        if (!adminEmails) return;
+
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 2px solid #ad3764; border-radius: 8px;">
+                <h2 style="color: #ad3764;">🚨 New Order Received!</h2>
+                <p><strong>Order ID:</strong> #${order.order_id}</p>
+                <p><strong>Amount:</strong> ₹${order.total_amount}</p>
+                <p><strong>Payment Method:</strong> ${order.payment_method}</p>
+                <p><strong>Customer Name:</strong> ${order.full_name}</p>
+                <p><strong>Location:</strong> ${order.city}, ${order.state}</p>
+                <br>
+                <a href="https://royal-heritage.in/admin" style="background-color: #ad3764; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Admin Panel</a>
+            </div>
+        `;
+
+        await sendEmailService({
+            to: adminEmails,
+            subject: `New Order Alert! #${order.order_id} - ₹${order.total_amount}`,
+            html
+        });
+    } catch (error) {
+        console.error(`[EMAIL ERROR] Admin alert failed:`, error.message);
+    }
+};
+
+// ==========================================
+// 3. ORDER STATUS UPDATE EMAIL (TO CUSTOMER) WITH CUSTOM MESSAGE & TRACKING
+// ==========================================
+const sendStatusUpdateEmail = async (order_id, status, customMessage = '', tracking_number = '') => {
+    try {
+        const [orderRows] = await db.execute(`
+            SELECT o.*, u.email as user_email, a.full_name 
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.user_id
+            LEFT JOIN addresses a ON o.address_id = a.address_id
+            WHERE o.order_id = ?
+        `, [order_id]);
+        
+        if (!orderRows.length) return;
+        const order = orderRows[0];
+        const targetEmail = order.customer_email || order.user_email;
+        if (!targetEmail) return;
+
+        let defaultMessage = `Your order status has been updated to <strong>${status}</strong>.`;
+        if (status.toLowerCase() === 'shipped') {
+            defaultMessage = `Great news! Your order has been shipped and is on its way to you.`;
+        } else if (status.toLowerCase() === 'delivered') {
+            defaultMessage = `Your order has been delivered successfully. Thank you for shopping with Arzoo Saree!`;
+        } else if (status.toLowerCase() === 'processing') {
+            defaultMessage = `We are currently processing your order and getting it ready for shipment.`;
+        }
+
+        const finalMessage = (customMessage && customMessage.trim() !== '') ? customMessage : defaultMessage;
+
+        let trackingHtml = '';
+        if (tracking_number && tracking_number.trim() !== '') {
+            trackingHtml = `
+            <div style="background-color: #f1f8f5; border-left: 4px solid #0f6b3a; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; color: #0f6b3a; font-size: 16px;"><strong>Tracking Number / AWB:</strong> <br><span style="font-size: 18px;">${tracking_number}</span></p>
+            </div>`;
+        }
+
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #eaeaea; border-radius: 8px;">
+                <h2 style="color: #ad3764; margin-top: 0;">Order Update - #${order.order_id}</h2>
+                <p style="font-size: 16px; color: #333;">Hi ${order.full_name},</p>
+                <p style="font-size: 15px; line-height: 1.6; color: #444;">${finalMessage}</p>
+                ${trackingHtml}
+                <p style="margin-top: 30px; font-size: 14px; color: #888;">Warm Regards,<br>Arzoo Team</p>
+            </div>
+        `;
+
+        await sendEmailService({
+            to: targetEmail,
+            subject: `Update on your Arzoo Order #${order.order_id}`,
+            html
+        });
+        console.log(`[EMAIL SUCCESS] Status update email sent for Order #${order_id}`);
+    } catch (error) {
+        console.error(`[EMAIL ERROR] Status update failed:`, error.message);
+    }
+};
+
+// ==========================================
+// BILL SETTINGS & ORIGINAL HTML BILL GENERATOR (100% INTACT)
 // ==========================================
 const BILL_SETTINGS = {
     SITE_NAME: 'Arzoo Saree',
@@ -167,7 +250,6 @@ const BILL_SETTINGS = {
     FALLBACK_IMAGE: '/saare_1.jpeg'
 };
 
-// Same fields the product detail page shows inside "All details"
 const SPEC_FIELDS = [
     { key: 'fabric', label: 'Fabric/Material' },
     { key: 'product_length', label: 'Product Length' },
@@ -194,7 +276,6 @@ const moneyFormatter = new Intl.NumberFormat(BILL_SETTINGS.LOCALE, {
 
 const money = (value) => moneyFormatter.format(Number(value) || 0);
 
-// Everything that comes from the database goes through this before it enters the HTML
 const esc = (value) => String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -213,9 +294,6 @@ const formatDate = (value, withTime = false) => {
     });
 };
 
-// ==========================================
-// 1. FETCH ALL BILL DATA FROM THE DATABASE
-// ==========================================
 const getInvoiceData = async (userId, orderId) => {
     const [orderRows] = await db.execute(
         `SELECT o.*, u.name AS user_name, u.email AS user_email,
@@ -230,7 +308,6 @@ const getInvoiceData = async (userId, orderId) => {
     if (orderRows.length === 0) return null;
     const order = orderRows[0];
 
-    // p.* first, then uniquely named order columns, so nothing from products can overwrite the ordered quantity/price
     const [itemRows] = await db.execute(
         `SELECT p.*,
                 c.name AS category_name,
@@ -251,7 +328,6 @@ const getInvoiceData = async (userId, orderId) => {
         [orderId]
     );
 
-    // Delivery date saved on the order; if it is missing, use the shipping zone of the address state
     let deliveryDate = order.estimated_delivery || null;
     if (!deliveryDate) {
         const [zoneRows] = await db.execute(
@@ -270,9 +346,6 @@ const getInvoiceData = async (userId, orderId) => {
     return { order, items: itemRows, deliveryDate };
 };
 
-// ==========================================
-// 2. SMALL HTML BUILDERS
-// ==========================================
 const infoRow = (label, value) =>
     hasValue(value) ? `<div class="info-item"><span class="info-label">${esc(label)}</span><span class="info-value">${esc(value)}</span></div>` : '';
 
@@ -342,9 +415,6 @@ const buildItemHtml = (item) => {
       </div>`;
 };
 
-// ==========================================
-// 3. BUILD THE COMPLETE BILL (HTML)
-// ==========================================
 const buildInvoiceHtml = ({ order, items, deliveryDate }) => {
     let itemsTotal = 0;
     let mrpTotal = 0;
@@ -356,7 +426,7 @@ const buildInvoiceHtml = ({ order, items, deliveryDate }) => {
         mrpTotal += mrp * qty;
     });
     const totalDiscount = Math.max(0, mrpTotal - itemsTotal);
-    const deliveryCharge = 0; // delivery is free on every bill
+    const deliveryCharge = 0; 
     const grandTotal = itemsTotal + deliveryCharge;
 
     const invoiceNumber = order.invoice_number || order.payment_id || `ORD-${order.order_id}`;
@@ -472,7 +542,6 @@ const buildInvoiceHtml = ({ order, items, deliveryDate }) => {
     </div>
   </div>
   <script>
-    // Open every toggle when printing, so the product details are on the paper too
     window.addEventListener('beforeprint', function () {
       document.querySelectorAll('details').forEach(function (d) { d.open = true; });
     });
@@ -481,13 +550,19 @@ const buildInvoiceHtml = ({ order, items, deliveryDate }) => {
 </html>`;
 };
 
-// ==========================================
-// 4. PUBLIC FUNCTION: BILL HTML FOR ONE ORDER (null if the order is not this user's)
-// ==========================================
 const getInvoiceHtml = async (userId, orderId) => {
     const data = await getInvoiceData(userId, orderId);
     if (!data) return null;
     return buildInvoiceHtml(data);
 };
 
-module.exports = { sendEmailService, sendInvoiceEmail, getInvoiceHtml };
+// ==========================================
+// EXPORTING ALL SERVICES TOGETHER
+// ==========================================
+module.exports = { 
+    sendEmailService, 
+    sendInvoiceEmail, 
+    getInvoiceHtml, 
+    sendAdminOrderAlert, 
+    sendStatusUpdateEmail 
+};

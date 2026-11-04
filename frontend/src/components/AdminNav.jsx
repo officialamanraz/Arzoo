@@ -9,7 +9,8 @@ const adminLinks = [
   { path: '/admin/orders', label: '📦 Orders' },
   { path: '/admin/dealers', label: '🤝 Dealers' },
   { path: '/admin/banners', label: '🖼️ Banners' },
-  { path: '/admin/add-dealer', label: '➕ Add Dealer' }, // 👈 NEW LINK
+  { path: '/admin/add-dealer', label: '➕ Add Dealer' },
+  {path: '/admin/userorders', label: 'usersoders'} // 👈 NEW LINK
 ];
 
 function AdminNav() {
