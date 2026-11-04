@@ -232,12 +232,6 @@ const Profile = () => {
           <h3>{user.name || 'User'}</h3>
           <p>{user.email}</p>
         </div>
-        
-        <ul className="profile-menu">
-          <li className="active">Login & Security</li>
-          <li onClick={() => navigate('/my-orders')}>My Orders</li>
-          <li onClick={handleLogout} className="logout-btn">Log Out</li>
-        </ul>
         <ul className="profile-menu">
           <li className="active">Login & Security</li>
           <li onClick={() => navigate('/my-orders')}>My Orders</li>
