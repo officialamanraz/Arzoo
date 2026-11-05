@@ -149,6 +149,7 @@ function Navbar({
           <Link to="/" className="nav-logo">
             Arzoo Saree
           </Link>
+          <img src="/logo.png" alt="Arzoo Saree Logo" className="nav-logo" />
 
           <div className="nav-links">
             {navLinks.map((link, index) => (
