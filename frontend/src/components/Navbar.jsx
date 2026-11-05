@@ -145,15 +145,15 @@ function Navbar({
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </button>
-
-          <Link to="/" className="nav-logo">
-            Arzoo 
-          </Link>
-          <img 
+             <img 
   src="/logo.png" 
   alt="Arzoo Saree Logo" 
   style={{ height: '70px', width: 'auto', objectFit: 'contain' }} 
 />
+
+          <Link to="/" className="nav-logo">
+            Arzoo 
+          </Link>
 
           <div className="nav-links">
             {navLinks.map((link, index) => (
