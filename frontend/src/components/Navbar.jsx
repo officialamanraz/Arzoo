@@ -147,9 +147,13 @@ function Navbar({
           </button>
 
           <Link to="/" className="nav-logo">
-            Arzoo Saree
+            Arzoo 
           </Link>
-          <img src="/logo.png" alt="Arzoo Saree Logo" className="nav-logo" />
+          <img 
+  src="/logo.png" 
+  alt="Arzoo Saree Logo" 
+  style={{ height: '70px', width: 'auto', objectFit: 'contain' }} 
+/>
 
           <div className="nav-links">
             {navLinks.map((link, index) => (
