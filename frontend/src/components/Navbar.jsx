@@ -145,14 +145,15 @@ function Navbar({
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </button>
-             <img 
-  src="/logo.png" 
-  alt="Arzoo Saree Logo" 
-  style={{ height: '70px', width: 'auto', objectFit: 'contain' }} 
-/>
-
-          <Link to="/" className="nav-logo">
-            Arzoo 
+          
+          {/* ✅ UPDATED LOGO & BRAND SECTION: Image first, Word second, no diamond */}
+          <Link to="/" className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <img 
+              src="/logo.png" 
+              alt="Arzoo Saree Logo" 
+              style={{ height: '45px', width: 'auto', objectFit: 'contain' }} 
+            />
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#ad3764' }}>Arzoo</span>
           </Link>
 
           <div className="nav-links">
