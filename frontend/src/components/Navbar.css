@@ -692,3 +692,63 @@ body.dark .mrp-price,
 body.dark .original-mrp {
   color: #94a3b8 !important;
 }
+/* 1. Diamond icon ko poori tarah hatayein */
+.nav-logo::before,
+.nav-left::before,
+.menu-btn::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* 2. Left side ko flex container banayein */
+.nav-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  position: relative !important;
+}
+
+/* 3. Logo aur Text ka wrapper (overlap khatam karne ke liye) */
+.nav-logo {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  text-decoration: none !important;
+  position: static !important; /* Absolute positioning hatayega */
+  width: auto !important;      /* Fixed width hatayega */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 4. Logo Image: Perfect round shape (taaki square white box na dikhe) */
+.nav-logo-img {
+  height: 42px !important;
+  width: 42px !important;
+  border-radius: 50% !important; /* Square corners cut karke circle banayega */
+  object-fit: cover !important;
+  display: block !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 5. Brand Text "Arzoo" */
+.nav-brand-text {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #ad3764 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+/* Dark mode ke liye text color */
+.dark-theme .nav-brand-text {
+  color: #f7d6e0 !important;
+}
+
+/* 6. Nav Links (Home, Products etc.) ko aage shift karein */
+.nav-links {
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px !important;
+  margin-left: 15px !important; /* Arzoo text se doori */
+  position: static !important;
+}
