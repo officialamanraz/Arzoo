@@ -137,8 +137,8 @@ function Navbar({
       <nav className={`navbar ${isDark ? 'dark-theme' : ''}`}>
 
         {/* LEFT SIDE */}
-        <div className="nav-left" style={{ display: 'flex', alignItems: 'center' }}>
-          <button className="menu-btn" onClick={openSidebar} aria-label="Open menu" style={{ marginRight: '15px' }}>
+        <div className="nav-left">
+          <button className="menu-btn" onClick={openSidebar} aria-label="Open menu">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -146,20 +146,17 @@ function Navbar({
             </svg>
           </button>
           
-          {/* ✅ LOGO & BRAND SECTION: Fixed Overlap with marginRight and whiteSpace */}
-          <Link to="/" className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginRight: '40px' }}>
+          {/* LOGO & BRAND SECTION */}
+          <Link to="/" className="nav-logo">
             <img 
               src="/logo.png" 
               alt="Arzoo Saree Logo" 
-              style={{ height: '45px', width: '45px', borderRadius: '50%', objectFit: 'cover' }} 
+              className="nav-logo-img" 
             />
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#ad3764', whiteSpace: 'nowrap' }}>
-              Arzoo
-            </span>
+            <span className="nav-brand-text">Arzoo</span>
           </Link>
 
-          {/* NAV LINKS: Flex lagakar proper spacing di hai */}
-          <div className="nav-links" style={{ display: 'flex', gap: '20px' }}>
+          <div className="nav-links">
             {navLinks.map((link, index) => (
               <Link key={index} to={link.path} className="nav-link">
                 {link.title}
@@ -272,9 +269,7 @@ function Navbar({
         </div>
       </nav>
 
-      {/* =========================================================
-         MOBILE BOTTOM NAVIGATION BAR (Visible on screens < 768px)
-         ========================================================= */}
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
       <div className={`mobile-bottom-nav ${isDark ? 'dark-theme' : ''}`}>
         <Link to="/" className="mobile-nav-item">
           <span className="mobile-nav-icon">🏠</span>

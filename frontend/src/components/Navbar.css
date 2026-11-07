@@ -57,20 +57,42 @@
   background: rgba(179, 38, 30, 0.1);
 }
 
+/* LOGO & BRAND TEXT (Desktop Overlap Fix) */
 .nav-logo {
-  font-size: 22px;
-  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   text-decoration: none;
-  color: var(--primary);
-  letter-spacing: 0.5px;
+  margin-right: 30px; /* Pushes nav-links away to prevent overlap */
+}
+
+.nav-logo-img {
+  height: 45px;
+  width: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.nav-brand-text {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ad3764;
   white-space: nowrap;
+}
+
+/* REMOVE DIAMOND ICON GLOBALLY */
+.nav-logo::before, .nav-logo::after,
+.nav-brand-text::before, .nav-brand-text::after,
+.nav-left::before, .nav-left::after,
+.menu-btn::after {
+  content: none !important;
+  display: none !important;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
   gap: 18px;
-  margin-left: 10px;
 }
 
 .nav-link {
@@ -406,9 +428,6 @@
   border-radius: 3px;
 }
 
-/* =======================================
-   AGGRESSIVE SIDEBAR OVERFLOW FIX
-   ======================================= */
 .sidebar-section {
   padding: 0 20px;
   margin-bottom: 18px;
@@ -538,75 +557,94 @@
   }
 }
 
-/* Mobile phones (under 768px) */
+/* ==============================================================
+   MOBILE VIEW (Single Line: Hamburger | Logo | Search | Theme)
+   ============================================================== */
 @media (max-width: 768px) {
   .desktop-utility {
     display: none !important;
   }
 
-  /* ================= 1. TOP NAVBAR ALIGNMENT FIX ================= */
-  .navbar {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    padding: 8px 12px !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    gap: 10px 0 !important; /* Top row aur search row ke beech gap */
+  .nav-links {
+    display: none !important;
   }
 
-  /* Menu aur Logo ko ekdam Left mein fix karo */
+  /* Force everything on ONE single line */
+  .navbar {
+    display: flex !important;
+    flex-wrap: nowrap !important; 
+    padding: 10px 12px !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  /* Hamburger & Logo */
   .nav-left {
     display: flex !important;
-    align-items: center !important;
-    flex: 0 0 auto !important; 
-    gap: 12px !important;
+    flex: 0 0 auto !important;
+    gap: 8px !important;
+    margin: 0 !important;
   }
 
   .nav-logo {
-    font-size: 20px !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin-right: 0 !important; /* Overrides desktop margin */
+    gap: 5px !important;
   }
 
-  .menu-btn {
-    padding: 0 !important;
-    margin: 0 !important;
+  .nav-logo-img {
+    height: 32px !important;
+    width: 32px !important;
   }
 
-  /* Theme Toggle (Moon) aur Cart ko ekdam Right mein fix karo */
-  .nav-right {
-    display: flex !important;
-    align-items: center !important;
-    flex: 0 0 auto !important;
-    order: 2 !important; /* Same line as nav-left */
-    margin: 0 !important;
+  .nav-brand-text {
+    font-size: 18px !important;
   }
 
-  /* ================= 2. SEARCH BAR RESIZE (SMALLER) ================= */
+  /* Search Bar (takes up available middle space) */
   .nav-center {
+    flex: 1 1 auto !important; 
+    max-width: none !important;
+    margin: 0 5px !important;
     display: flex !important;
-    flex: 0 0 100% !important; /* Force to full width on the NEXT line */
-    order: 3 !important; 
-    max-width: 100% !important;
   }
 
   .search-container {
-    height: 36px !important; /* Height kam kar di */
+    height: 36px !important;
     width: 100% !important;
     border-radius: 6px !important;
   }
 
   .search-input {
-    padding: 4px 12px !important;
+    padding: 4px 10px !important;
     font-size: 13px !important;
   }
 
   .search-btn {
-    padding: 0 16px !important;
+    padding: 0 12px !important;
     font-size: 13px !important;
   }
 
-  /* ================= 3. BOTTOM NAV BAR BRUTE-FORCE VISIBILITY ================= */
+  /* Right Side: Only Theme Toggle Visible */
+  .nav-right {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .nav-right > *:not(.theme-toggle) {
+    display: none !important;
+  }
+
+  .theme-toggle {
+    font-size: 18px !important;
+    padding: 4px !important;
+    margin: 0 !important;
+  }
+
+  /* Bottom Nav */
   .mobile-bottom-nav {
     display: flex !important;
     position: fixed !important;
@@ -617,14 +655,10 @@
     height: 60px !important;
     background-color: var(--white, #ffffff) !important;
     border-top: 1px solid var(--border, #e0e0e0) !important;
-    z-index: 2147483647 !important; /* ABSOLUTE MAXIMUM Z-INDEX */
+    z-index: 2147483647 !important;
     justify-content: space-around !important;
     align-items: center !important;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.15) !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    transform: none !important;
-    pointer-events: auto !important;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05) !important;
   }
 
   .mobile-nav-item {
@@ -639,14 +673,14 @@
   }
 
   .mobile-nav-icon {
-    font-size: 22px !important;
+    font-size: 20px !important;
   }
 
-  /* Body ko thoda upar push karo taaki content Bottom Nav ke peeche na chhupe */
   body {
     padding-bottom: 70px !important;
   }
 }
+
 /* Small phones */
 @media (max-width: 400px) {
   .side-sidebar {
@@ -692,63 +726,6 @@ body.dark .mrp-price,
 body.dark .original-mrp {
   color: #94a3b8 !important;
 }
-/* 1. Diamond icon ko poori tarah hatayein */
-.nav-logo::before,
-.nav-left::before,
-.menu-btn::after {
-  content: none !important;
-  display: none !important;
-}
-
-/* 2. Left side ko flex container banayein */
-.nav-left {
-  display: flex !important;
-  align-items: center !important;
-  gap: 16px !important;
-  position: relative !important;
-}
-
-/* 3. Logo aur Text ka wrapper (overlap khatam karne ke liye) */
-.nav-logo {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  text-decoration: none !important;
-  position: static !important; /* Absolute positioning hatayega */
-  width: auto !important;      /* Fixed width hatayega */
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* 4. Logo Image: Perfect round shape (taaki square white box na dikhe) */
-.nav-logo-img {
-  height: 42px !important;
-  width: 42px !important;
-  border-radius: 50% !important; /* Square corners cut karke circle banayega */
-  object-fit: cover !important;
-  display: block !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-/* 5. Brand Text "Arzoo" */
-.nav-brand-text {
-  font-size: 24px !important;
-  font-weight: 700 !important;
-  color: #ad3764 !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-}
-
-/* Dark mode ke liye text color */
 .dark-theme .nav-brand-text {
   color: #f7d6e0 !important;
-}
-
-/* 6. Nav Links (Home, Products etc.) ko aage shift karein */
-.nav-links {
-  display: flex !important;
-  align-items: center !important;
-  gap: 20px !important;
-  margin-left: 15px !important; /* Arzoo text se doori */
-  position: static !important;
 }
