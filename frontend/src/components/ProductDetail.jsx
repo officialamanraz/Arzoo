@@ -1031,9 +1031,16 @@ if (!saree) {
               </span>
             </div>
 
-            <div className="policy-note">
-              <strong>Note:</strong> Not returnable. If you buy it by mistake, cancel in the time of pending.
-            </div>
+            {/* ⚠️ HIGH-VISIBILITY STRICT NON-RETURNABLE & NON-REFUNDABLE NOTICE */}
+<div className="policy-note strict-alert-box">
+  <div className="alert-badge-row">
+    <span className="alert-icon">⚠️</span>
+    <strong className="alert-heading">STRICT POLICY: NON-RETURNABLE &amp; NON-REFUNDABLE</strong>
+  </div>
+  <p className="alert-text">
+    This product is <strong>strictly non-returnable</strong>. Please review your order carefully before purchasing. Even if purchased by mistake, <strong>no returns, cancellations, or money back / refunds will be provided</strong> under any circumstances once the order is placed.
+  </p>
+</div>
 
             <div className="quantity-selector-container">
               <span className="qty-label">Quantity:</span>

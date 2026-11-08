@@ -39,6 +39,7 @@ import Adminusersoders from './components/Adminusersorders'
 import AdminusersOrderDetail from './components/AdminusersOrderDetail';
 import AdminAnalytics from "./components/AdminAnalytics";
 import AnalyticsTracker from './components/AnalyticsTracker';
+import ContentProtection from './components/ContentProtection';
 // ✅ CORRECT (Uppercase PascalCase)
 import CategoryCards from './components/product' // Your renamed file
 import './components/newthemeofhomepage.css';
@@ -337,6 +338,7 @@ else if (selectedCategory) {
  return (
   <>
   <AnalyticsTracker />
+  <ContentProtection />
     {/* Notifications */}
     <Toaster position="top-center" reverseOrder={false} />
 
