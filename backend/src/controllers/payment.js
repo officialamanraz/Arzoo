@@ -1,8 +1,4 @@
-const { verifyPaymentbydb } = require('../services/paymentservice'); // adjust path
-
-// Called from PaymentPage.jsx AFTER checkout.controller.js already created
-// the order row (with paymentMethod: 'online', payment_status: 'unpaid').
-// Frontend sends the real DB order_id (returned by processCheckout as `order_id`).
+const { verifyPaymentbydb } = require('../services/paymentservice');
 
 const verifyPayment = async (req, res) => {
     try {
@@ -24,8 +20,7 @@ const verifyPayment = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: "Payment verification failed",
-            error: error.message
+            message: "Payment verification failed"
         });
     }
 };

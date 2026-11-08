@@ -5,7 +5,7 @@ const {
   registerUserService, 
   loginuser, 
   forgotpassword,
-  verifyotp,          // 🌟 NAYA: Verify OTP import kiya gaya hai
+  verifyotp,          
   resetpassword, 
   DuplicateEmailError,
   updateProfile,
@@ -23,7 +23,7 @@ const APP_NAME = process.env.APP_NAME || 'Arzoo Saree';
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;
 const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || process.env.GMAIL_USER;
 const MIN_PASSWORD_LENGTH = Number(process.env.MIN_PASSWORD_LENGTH) || 6;
-const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.RESET_TOKEN_EXPIRY_MINUTES) || 15; // 15 mins for OTP
+const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.RESET_TOKEN_EXPIRY_MINUTES) || 15; 
 
 if (!JWT_SECRET) console.error('[AUTH-CTRL] CRITICAL: Missing JWT_SECRET environment variable.');
 
@@ -32,7 +32,6 @@ const brevoClient = new BrevoClient({
 });
 
 const sendEmail = async ({ to, subject, html }) => {
-  console.log(`[AUTH-EMAIL] Dispatching transactional email to: ${to} | Subject: "${subject}"`);
   try {
     const response = await brevoClient.transactionalEmails.sendTransacEmail({
       subject,
@@ -40,7 +39,6 @@ const sendEmail = async ({ to, subject, html }) => {
       sender: { name: EMAIL_FROM_NAME, email: EMAIL_FROM_ADDRESS },
       to: [{ email: to }],
     });
-    console.log(`[AUTH-EMAIL] Successfully delivered email to ${to}`);
     return response;
   } catch (error) {
     console.error(`[AUTH-EMAIL] Delivery failure for ${to}:`, error.message);
@@ -61,7 +59,6 @@ const registerUser = async (req, res) => {
     }
 
     const { name, email, password, phone, state, city, fullAddress } = req.body;
-    console.log(`[AUTH-CTRL] Registration request received for email: ${email}`);
    
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
@@ -79,7 +76,6 @@ const registerUser = async (req, res) => {
    
     let profile_image = null;
     if (req.file) {
-      console.log(`[AUTH-CTRL] Processing profile image upload via ImageKit...`);
       const fileBase64 = req.file.buffer.toString('base64');
       const uploadResponse = await imagekit.files.upload({
         file: fileBase64,
@@ -99,7 +95,6 @@ const registerUser = async (req, res) => {
     });
    
     const token = generateToken(insertId, 'user');
-    console.log(`[AUTH-CTRL] Registration complete — assigned token to user_id: ${insertId}`);
    
     return res.status(201).json({
       success: true,
@@ -112,14 +107,12 @@ const registerUser = async (req, res) => {
     if (error instanceof DuplicateEmailError) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
     }
-    console.error(`[AUTH-CTRL] Registration exception:`, error.message);
-    return res.status(500).json({ success: false, message: 'Server error while creating account.', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error while creating account.' });
   }
 };
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
-  console.log(`[AUTH-CTRL] Login invocation for email: ${email}`);
 
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'Email and password are required.' });
@@ -130,7 +123,6 @@ const loginUser = async (req, res) => {
   try {
     const user = await loginuser(normalizedEmail, password);
     const token = generateToken(user.user_id, user.role);
-    console.log(`[AUTH-CTRL] Login verified successfully for user_id: ${user.user_id}`);
 
     return res.status(200).json({
       success: true,
@@ -144,23 +136,18 @@ const loginUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(`[AUTH-CTRL] Login rejected for ${email}:`, error.message);
     if (error.message === 'INVALID_CREDENTIALS') {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
     if (error.message === 'NO_PASSWORD_SET') {
       return res.status(500).json({ success: false, message: 'Account configuration error. Please reset your password.' });
     }
-    return res.status(500).json({ success: false, message: 'Server error during login.', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error during login.' });
   }
 };
 
-// ==========================================
-// 🌟 YAHAN CHANGE HUA HAI: FORGOT PASSWORD (OTP BANAYEGA)
-// ==========================================
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
-  console.log(`[AUTH-CTRL] Password recovery triggered for email: ${email}`);
   
   if (!email) {
     return res.status(400).json({ success: false, message: 'Email is required.' });
@@ -169,7 +156,6 @@ const forgotPassword = async (req, res) => {
   const normalizedEmail = email.trim().toLowerCase();
   
   try {
-    // 🌟 LINK HAT GAYA, SIRF 6-DIGIT OTP BANEGA
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
     const { found } = await forgotpassword({ email: normalizedEmail, token: otp, expiry });
@@ -189,17 +175,12 @@ const forgotPassword = async (req, res) => {
     }
     return res.status(200).json({ success: true, message: 'If that email exists, an OTP has been sent.' });
   } catch (error) {
-    console.error(`[AUTH-CTRL] Forgot password exception for ${email}:`, error.message);
-    return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error.' });
   }
 };
 
-// ==========================================
-// 🌟 YAHAN CHANGE HUA HAI: RESET PASSWORD (2 STEPS: VERIFY OR RESET)
-// ==========================================
 const resetPassword = async (req, res) => {
   const { email, otp, newPassword, action } = req.body;
-  console.log(`[AUTH-CTRL] Password reset sequence started for: ${email}, action: ${action}`);
 
   if (!email || !otp) {
     return res.status(400).json({ success: false, message: 'Email and OTP are required.' });
@@ -227,8 +208,7 @@ const resetPassword = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Password reset successfully. You can now log in.' });
     }
   } catch (error) {
-    console.error('[AUTH-CTRL] Reset password exception:', error.message);
-    return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error.' });
   }
 };
 
@@ -237,11 +217,8 @@ const updateUserProfile = async (req, res) => {
         const userId = req.user.user_id || req.user.id;
         
         if (!userId) {
-            console.error('[AUTH-CTRL] Critical: User ID missing from security token payload!');
             return res.status(400).json({ success: false, message: 'Invalid authentication token context.' });
         }
-
-        console.log(`[AUTH-CTRL] Profile update pipeline triggered for User ID: ${userId}`);
 
         const updateData = {
             name: req.body.name,
@@ -254,7 +231,6 @@ const updateUserProfile = async (req, res) => {
 
         let profile_image = null;
         if (req.file) {
-            console.log(`[AUTH-CTRL] Uploading new profile image asset via ImageKit...`);
             const fileBase64 = req.file.buffer.toString('base64');
             const uploadResponse = await imagekit.files.upload({
                 file: fileBase64,
@@ -273,7 +249,6 @@ const updateUserProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[AUTH-CTRL] Profile update error:', error.message);
         return res.status(400).json({
             success: false,
             message: error.message || 'Failed to update user profile.'
@@ -284,22 +259,18 @@ const updateUserProfile = async (req, res) => {
 const getUserProfile = async (req, res) => {
   try {
     const userId = req.user?.user_id || req.user?.id || req.user?.userId;
-    console.log(`[AUTH-CONTROLLER] 📥 Fetching profile for resolved user_id:`, userId);
 
     if (!userId) {
-      console.warn(`[AUTH-CONTROLLER] ⚠️ User ID is undefined in token payload:`, req.user);
       return res.status(400).json({ success: false, message: "Invalid token payload: User ID missing" });
     }
 
     const user = await getUserById(userId);
-    console.log(`[AUTH-CONTROLLER] 📤 Profile successfully fetched for user_id:`, userId);
     return res.status(200).json({ success: true, user });
   } catch (err) {
-    console.error(`[AUTH-CONTROLLER] ❌ Error fetching profile:`, err.message);
     if (err.message === 'USER_NOT_FOUND') {
       return res.status(404).json({ success: false, message: "User not found" });
     }
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 

@@ -10,6 +10,33 @@ const ORDER_SETTINGS = {
     CURRENCY_CODE: 'INR',
     LOCALE: 'en-IN'
 };
+const sanitizeCustomerItem = (item) => {
+    if (!item) return null;
+    const safeItem = { ...item };
+    delete safeItem.dealer_base_price;
+    delete safeItem.packaging_cost;
+    delete safeItem.locked_dealer_payout;
+    delete safeItem.financials;
+    delete safeItem.dealer_info;
+    delete safeItem.dealer_id;
+    return safeItem;
+};
+
+// Yeh function order mese admin profit aur internal IDs hide karega
+const sanitizeCustomerOrder = (order) => {
+    if (!order) return null;
+    const safeOrder = { ...order };
+    delete safeOrder.gateway_fee;
+    delete safeOrder.net_admin_profit;
+    delete safeOrder.financial_summary;
+    delete safeOrder.dealer_transfers;
+    delete safeOrder.tracking_ref;
+    delete safeOrder.razorpay_order_id;
+    // Extra safety measure
+    delete safeOrder.password_hash;
+    delete safeOrder.reset_token;
+    return safeOrder;
+};
 
 // ==========================================
 // 1. GET ALL ORDERS FOR ADMIN
