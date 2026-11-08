@@ -10,7 +10,7 @@ const adminLinks = [
   { path: '/admin/dealers', label: '🤝 Dealers' },
   { path: '/admin/banners', label: '🖼️ Banners' },
   { path: '/admin/add-dealer', label: '➕ Add Dealer' },
-  {path: '/admin/userorders', label: 'usersoders'} // 👈 NEW LINK
+  { path: '/admin/userorders', label: '👥 User Orders' }
 ];
 
 function AdminNav() {
@@ -20,7 +20,7 @@ function AdminNav() {
     <div className="admin-nav-wrapper">
       <div className="admin-nav">
         {adminLinks.map((link) => {
-          // Smart active check: Exact match for dashboard/others, startsWith for sub-routes
+          // Exact match for /admin (Dashboard), startsWith for sub-routes
           const isActive = link.path === '/admin' 
             ? location.pathname === '/admin' 
             : location.pathname.startsWith(link.path);

@@ -37,6 +37,7 @@ import Profile from './components/Profile';
 import ReviewsPage from './components/ReviewsPage';
 import Adminusersoders from './components/Adminusersorders'
 import AdminusersOrderDetail from './components/AdminusersOrderDetail';
+import AdminAnalytics from "./components/AdminAnalytics";
 // ✅ CORRECT (Uppercase PascalCase)
 import CategoryCards from './components/product' // Your renamed file
 import './components/newthemeofhomepage.css';
@@ -481,6 +482,7 @@ else if (selectedCategory) {
           </AdminRoute>
         }
       />
+      <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics/></AdminRoute>}/>
 
       <Route
         path="/admin/inventory"
@@ -553,6 +555,7 @@ else if (selectedCategory) {
           </AdminRoute>
         }
       />
+      
 
       <Route
         path="/admin/dealer/:id"
