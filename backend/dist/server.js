@@ -1144,6 +1144,316 @@ var require_auth2 = __commonJS({
   }
 });
 
+// src/services/analyticsService.js
+var require_analyticsService = __commonJS({
+  "src/services/analyticsService.js"(exports2, module2) {
+    var db2 = require_mysql();
+    var initOrUpdateSessionInDB = async ({
+      sessionId,
+      visitorUuid,
+      userId = null,
+      deviceType = "desktop",
+      browser = "Unknown",
+      os = "Unknown",
+      ipAddress = null,
+      referrer = "",
+      landingPage = "/"
+    }) => {
+      const query = `
+        INSERT INTO visitor_sessions 
+            (session_id, visitor_uuid, user_id, device_type, browser, os, ip_address, referrer, landing_page, is_active, last_active_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW())
+        ON DUPLICATE KEY UPDATE 
+            user_id = COALESCE(?, user_id),
+            is_active = 1,
+            last_active_at = NOW()
+    `;
+      await db2.execute(query, [
+        sessionId,
+        visitorUuid,
+        userId,
+        deviceType,
+        browser,
+        os,
+        ipAddress,
+        referrer,
+        landingPage,
+        userId
+      ]);
+      return { sessionId };
+    };
+    var recordPageViewInDB = async ({ sessionId, pagePath, pageTitle = "", productId = null }) => {
+      const query = `
+        INSERT INTO page_views (session_id, page_path, page_title, product_id, entered_at)
+        VALUES (?, ?, ?, ?, NOW())
+    `;
+      const [result] = await db2.execute(query, [sessionId, pagePath, pageTitle, productId]);
+      return result.insertId;
+    };
+    var processHeartbeatInDB = async ({ sessionId, viewId = null, incrementSec = 25 }) => {
+      await db2.execute(
+        `UPDATE visitor_sessions 
+         SET total_duration_sec = total_duration_sec + ?, 
+             last_active_at = NOW(), 
+             is_active = 1 
+         WHERE session_id = ?`,
+        [incrementSec, sessionId]
+      );
+      if (viewId) {
+        await db2.execute(
+          `UPDATE page_views 
+             SET time_spent_sec = time_spent_sec + ?,
+                 exited_at = NOW()
+             WHERE view_id = ?`,
+          [incrementSec, viewId]
+        );
+      }
+    };
+    var markSessionExitInDB = async ({ sessionId, viewId = null, finalPageTimeSec = 0 }) => {
+      await db2.execute(
+        `UPDATE visitor_sessions 
+         SET is_active = 0, last_active_at = NOW() 
+         WHERE session_id = ?`,
+        [sessionId]
+      );
+      if (viewId && finalPageTimeSec > 0) {
+        await db2.execute(
+          `UPDATE page_views 
+             SET time_spent_sec = time_spent_sec + ?, exited_at = NOW() 
+             WHERE view_id = ?`,
+          [finalPageTimeSec, viewId]
+        );
+      }
+    };
+    var recordAnalyticsEventInDB = async ({ sessionId, eventName, eventCategory = "engagement", metadata = {} }) => {
+      const query = `
+        INSERT INTO analytics_events (session_id, event_name, event_category, metadata)
+        VALUES (?, ?, ?, ?)
+    `;
+      await db2.execute(query, [sessionId, eventName, eventCategory, JSON.stringify(metadata)]);
+    };
+    var getAdminLiveAnalytics = async () => {
+      const [activeVisitors] = await db2.execute(`
+        SELECT 
+            vs.session_id,
+            vs.visitor_uuid,
+            COALESCE(u.name, 'Guest') AS user_name,
+            u.email AS user_email,
+            vs.device_type,
+            vs.browser,
+            vs.os,
+            vs.landing_page,
+            vs.total_duration_sec,
+            vs.last_active_at,
+            (SELECT page_path FROM page_views WHERE session_id = vs.session_id ORDER BY view_id DESC LIMIT 1) AS current_page
+        FROM visitor_sessions vs
+        LEFT JOIN users u ON vs.user_id = u.user_id
+        WHERE vs.last_active_at >= NOW() - INTERVAL 3 MINUTE
+        ORDER BY vs.last_active_at DESC
+    `);
+      const [summary] = await db2.execute(`
+        SELECT 
+            COUNT(DISTINCT session_id) AS total_sessions_today,
+            COUNT(DISTINCT visitor_uuid) AS unique_visitors_today,
+            COALESCE(ROUND(AVG(total_duration_sec)), 0) AS avg_duration_sec
+        FROM visitor_sessions
+        WHERE DATE(started_at) = CURDATE()
+    `);
+      const [topPages] = await db2.execute(`
+        SELECT 
+            page_path, 
+            COUNT(*) AS total_views, 
+            COALESCE(ROUND(AVG(time_spent_sec)), 0) AS avg_time_spent
+        FROM page_views
+        WHERE DATE(entered_at) = CURDATE()
+        GROUP BY page_path
+        ORDER BY total_views DESC
+        LIMIT 5
+    `);
+      const [trendData] = await db2.execute(`
+        SELECT 
+            DATE_FORMAT(entered_at, '%l%p') as time,
+            COUNT(DISTINCT session_id) as visitors,
+            COUNT(*) as pageViews
+        FROM page_views
+        WHERE entered_at >= NOW() - INTERVAL 12 HOUR
+        GROUP BY HOUR(entered_at), DATE_FORMAT(entered_at, '%l%p')
+        ORDER BY HOUR(entered_at) ASC
+    `);
+      return {
+        activeNowCount: activeVisitors.length,
+        activeVisitors,
+        todaySummary: summary[0] || {},
+        topPages,
+        trendData
+      };
+    };
+    module2.exports = {
+      initOrUpdateSessionInDB,
+      recordPageViewInDB,
+      processHeartbeatInDB,
+      markSessionExitInDB,
+      recordAnalyticsEventInDB,
+      getAdminLiveAnalytics
+    };
+  }
+});
+
+// src/controllers/analytics.js
+var require_analytics = __commonJS({
+  "src/controllers/analytics.js"(exports2, module2) {
+    var {
+      initOrUpdateSessionInDB,
+      recordPageViewInDB,
+      processHeartbeatInDB,
+      markSessionExitInDB,
+      recordAnalyticsEventInDB,
+      getAdminLiveAnalytics
+    } = require_analyticsService();
+    var parseUserAgent = (ua = "") => {
+      let deviceType = "desktop";
+      if (/tablet|ipad|playbook|silk/i.test(ua)) deviceType = "tablet";
+      else if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(ua)) deviceType = "mobile";
+      let browser = "Other";
+      if (/chrome|crios/i.test(ua) && !/edge|opr\//i.test(ua)) browser = "Chrome";
+      else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = "Safari";
+      else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
+      else if (/edge/i.test(ua)) browser = "Edge";
+      return { deviceType, browser };
+    };
+    var startSession = async (req, res) => {
+      try {
+        const { sessionId, visitorUuid, landingPage, referrer } = req.body;
+        const userId = req.user?.id || req.user?.user_id || null;
+        const ipAddress = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket.remoteAddress;
+        const { deviceType, browser } = parseUserAgent(req.headers["user-agent"]);
+        if (!sessionId || !visitorUuid) {
+          return res.status(400).json({ success: false, message: "Missing session identifiers" });
+        }
+        await initOrUpdateSessionInDB({
+          sessionId,
+          visitorUuid,
+          userId,
+          deviceType,
+          browser,
+          ipAddress,
+          referrer,
+          landingPage
+        });
+        return res.status(200).json({ success: true, sessionId });
+      } catch (err) {
+        console.error("[ANALYTICS_CTRL] startSession error:", err.message);
+        return res.status(500).json({ success: false });
+      }
+    };
+    var trackPageView = async (req, res) => {
+      try {
+        const { sessionId, pagePath, pageTitle, productId } = req.body;
+        if (!sessionId || !pagePath) {
+          return res.status(400).json({ success: false, message: "sessionId and pagePath required" });
+        }
+        const viewId = await recordPageViewInDB({
+          sessionId,
+          pagePath,
+          pageTitle,
+          productId: productId ? Number(productId) : null
+        });
+        return res.status(200).json({ success: true, viewId });
+      } catch (err) {
+        console.error("[ANALYTICS_CTRL] trackPageView error:", err.message);
+        return res.status(500).json({ success: false });
+      }
+    };
+    var heartbeat = async (req, res) => {
+      try {
+        const { sessionId, viewId, incrementSec } = req.body;
+        if (!sessionId) return res.status(400).json({ success: false });
+        await processHeartbeatInDB({
+          sessionId,
+          viewId: viewId ? Number(viewId) : null,
+          incrementSec: Number(incrementSec) || 25
+        });
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        return res.status(500).json({ success: false });
+      }
+    };
+    var trackExit = async (req, res) => {
+      try {
+        let data = req.body;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+            data = {};
+          }
+        }
+        const { sessionId, viewId, finalPageTimeSec } = data;
+        if (sessionId) {
+          await markSessionExitInDB({
+            sessionId,
+            viewId: viewId ? Number(viewId) : null,
+            finalPageTimeSec: Number(finalPageTimeSec) || 0
+          });
+        }
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        return res.status(500).json({ success: false });
+      }
+    };
+    var trackEvent = async (req, res) => {
+      try {
+        const { sessionId, eventName, eventCategory, metadata } = req.body;
+        if (!sessionId || !eventName) return res.status(400).json({ success: false });
+        await recordAnalyticsEventInDB({ sessionId, eventName, eventCategory, metadata });
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        return res.status(500).json({ success: false });
+      }
+    };
+    var getLiveAnalyticsStats = async (req, res) => {
+      try {
+        const stats = await getAdminLiveAnalytics();
+        return res.status(200).json({ success: true, data: stats });
+      } catch (err) {
+        console.error("[ANALYTICS_CTRL] getLiveAnalyticsStats error:", err.message);
+        return res.status(500).json({ success: false, message: "Server error" });
+      }
+    };
+    module2.exports = {
+      startSession,
+      trackPageView,
+      heartbeat,
+      trackExit,
+      trackEvent,
+      getLiveAnalyticsStats
+    };
+  }
+});
+
+// src/router/analytics.js
+var require_analytics2 = __commonJS({
+  "src/router/analytics.js"(exports2, module2) {
+    var express2 = require("express");
+    var router = express2.Router();
+    var {
+      startSession,
+      trackPageView,
+      heartbeat,
+      trackExit,
+      trackEvent,
+      getLiveAnalyticsStats
+    } = require_analytics();
+    router.post("/session", startSession);
+    router.post("/pageview", trackPageView);
+    router.post("/heartbeat", heartbeat);
+    router.post("/exit", trackExit);
+    router.post("/event", trackEvent);
+    router.get("/admin/live", getLiveAnalyticsStats);
+    module2.exports = router;
+  }
+});
+
 // src/services/categoryservice.js
 var require_categoryservice = __commonJS({
   "src/services/categoryservice.js"(exports2, module2) {
@@ -6861,6 +7171,7 @@ app.use(morgan("dev"));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 db.execute("ALTER TABLE orders ADD COLUMN tracking_ref VARCHAR(50) NULL DEFAULT NULL;").then(() => console.log("\u2705 [DB] 'tracking_ref' column ensured in orders table.")).catch((err) => console.log("\u2139\uFE0F [DB] Column setup note (ignore if already exists)."));
 var authRouter = require_auth2();
+var analyticsRouter = require_analytics2();
 var categoryRouter = require_category2();
 var productRouter = require_product2();
 var cartRouter = require_cart2();
@@ -6895,6 +7206,7 @@ app.use((err, req, res, next) => {
   next();
 });
 app.use("/api/dealer", dealerRoutes);
+app.use("/api/analytics", analyticsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/products", productRouter);

@@ -91,20 +91,14 @@ const recordAnalyticsEventInDB = async ({ sessionId, eventName, eventCategory = 
 };
 
 // 6. Admin Dashboard Live Stats (Last 3 minutes active)
+// 6. Admin Dashboard Live Stats (Last 3 minutes active)
 const getAdminLiveAnalytics = async () => {
     // A. Currently active sessions
     const [activeVisitors] = await db.execute(`
         SELECT 
-            vs.session_id,
-            vs.visitor_uuid,
-            COALESCE(u.name, 'Guest') AS user_name,
-            u.email AS user_email,
-            vs.device_type,
-            vs.browser,
-            vs.os,
-            vs.landing_page,
-            vs.total_duration_sec,
-            vs.last_active_at,
+            vs.session_id, vs.visitor_uuid, COALESCE(u.name, 'Guest') AS user_name,
+            u.email AS user_email, vs.device_type, vs.browser, vs.os, vs.landing_page,
+            vs.total_duration_sec, vs.last_active_at,
             (SELECT page_path FROM page_views WHERE session_id = vs.session_id ORDER BY view_id DESC LIMIT 1) AS current_page
         FROM visitor_sessions vs
         LEFT JOIN users u ON vs.user_id = u.user_id
@@ -112,8 +106,8 @@ const getAdminLiveAnalytics = async () => {
         ORDER BY vs.last_active_at DESC
     `);
 
-    // B. Today's aggregate numbers
-    const [summary] = await db.execute(`
+    // B. Today's aggregate numbers vs Yesterday's for Trend Calculation
+    const [todaySummary] = await db.execute(`
         SELECT 
             COUNT(DISTINCT session_id) AS total_sessions_today,
             COUNT(DISTINCT visitor_uuid) AS unique_visitors_today,
@@ -122,18 +116,25 @@ const getAdminLiveAnalytics = async () => {
         WHERE DATE(started_at) = CURDATE()
     `);
 
+    const [yesterdaySummary] = await db.execute(`
+        SELECT 
+            COUNT(DISTINCT session_id) AS total_sessions_yesterday,
+            COUNT(DISTINCT visitor_uuid) AS unique_visitors_yesterday,
+            COALESCE(ROUND(AVG(total_duration_sec)), 0) AS avg_duration_yesterday
+        FROM visitor_sessions
+        WHERE DATE(started_at) = CURDATE() - INTERVAL 1 DAY
+    `);
+
     // C. Top 5 viewed saree pages today
     const [topPages] = await db.execute(`
         SELECT 
-            page_path, 
-            COUNT(*) AS total_views, 
-            COALESCE(ROUND(AVG(time_spent_sec)), 0) AS avg_time_spent
+            page_path, COUNT(*) AS total_views, COALESCE(ROUND(AVG(time_spent_sec)), 0) AS avg_time_spent
         FROM page_views
         WHERE DATE(entered_at) = CURDATE()
         GROUP BY page_path
-        ORDER BY total_views DESC
-        LIMIT 5
+        ORDER BY total_views DESC LIMIT 5
     `);
+
     // D. Hourly Trend for the Chart (Last 12 Hours)
     const [trendData] = await db.execute(`
         SELECT 
@@ -146,12 +147,19 @@ const getAdminLiveAnalytics = async () => {
         ORDER BY HOUR(entered_at) ASC
     `);
 
+    // E. Total Lifetime Orders (For the Promo Banner)
+    const [ordersCount] = await db.execute(`
+        SELECT COUNT(order_id) AS total_orders FROM orders WHERE payment_status = 'paid'
+    `);
+
     return {
         activeNowCount: activeVisitors.length,
         activeVisitors,
-        todaySummary: summary[0] || {},
+        todaySummary: todaySummary[0] || { total_sessions_today: 0, unique_visitors_today: 0, avg_duration_sec: 0 },
+        yesterdaySummary: yesterdaySummary[0] || { total_sessions_yesterday: 0, unique_visitors_yesterday: 0, avg_duration_yesterday: 0 },
         topPages,
-        trendData
+        trendData,
+        totalLifetimeOrders: ordersCount[0].total_orders || 0
     };
 };
 
