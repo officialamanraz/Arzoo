@@ -134,6 +134,7 @@ db.execute("ALTER TABLE orders ADD COLUMN tracking_ref VARCHAR(50) NULL DEFAULT 
 // 4. ROUTE ATTACHMENTS
 // ==========================================
 const authRouter = require('./src/router/auth');
+const analyticsRouter = require('./src/router/analytics');
 const categoryRouter = require('./src/router/category');
 const productRouter = require('./src/router/product');
 const cartRouter = require('./src/router/cart');
@@ -177,6 +178,7 @@ app.use((err, req, res, next) => {
 
 // API Routes
 app.use('/api/dealer',dealerRoutes)
+app.use('/api/analytics', analyticsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);

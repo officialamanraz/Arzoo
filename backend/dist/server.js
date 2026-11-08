@@ -646,13 +646,11 @@ var require_authservice = __commonJS({
       }
     };
     var registerUserService = async ({ name, email, password, phone, fullFormattedAddress, profile_image }) => {
-      console.log(`[AUTH-SERVICE] Checking if email already exists: ${email}`);
       const [existingUsers] = await db2.execute(
         "SELECT user_id FROM users WHERE email = ?",
         [email]
       );
       if (existingUsers.length > 0) {
-        console.warn(`[AUTH-SERVICE] Registration failed -- email already exists: ${email}`);
         throw new DuplicateEmailError(email);
       }
       const finalImageUrl = profile_image || null;
@@ -661,7 +659,6 @@ var require_authservice = __commonJS({
         "INSERT INTO users (name, email, password_hash, phone, address, role, profile_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
         [name, email, hashedPassword, phone, fullFormattedAddress, "user", finalImageUrl]
       );
-      console.log(`[AUTH-SERVICE] User successfully registered -- user_id: ${insertResult.insertId}`);
       return {
         insertId: insertResult.insertId,
         name,
@@ -669,42 +666,35 @@ var require_authservice = __commonJS({
       };
     };
     var loginuser = async (email, password) => {
-      console.log(`[AUTH-SERVICE] Querying database for login email: ${email}`);
       const [users] = await db2.execute("SELECT * FROM users WHERE email = ?", [email]);
       if (users.length === 0) {
-        console.warn(`[AUTH-SERVICE] Login failed \u2014 account not found for ${email}`);
         throw new Error("INVALID_CREDENTIALS");
       }
       const user = users[0];
       if (!user.password_hash) {
-        console.error(`[AUTH-SERVICE] Login failed \u2014 user ${user.user_id} has no password_hash configured`);
         throw new Error("NO_PASSWORD_SET");
       }
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch) {
-        console.warn(`[AUTH-SERVICE] Login failed \u2014 password mismatch for ${email}`);
         throw new Error("INVALID_CREDENTIALS");
       }
       delete user.password_hash;
-      console.log(`[AUTH-SERVICE] Authentication passed for user_id: ${user.user_id}`);
+      delete user.reset_token;
+      delete user.reset_token_expiry;
       return user;
     };
     var forgotpassword = async ({ email, token, expiry }) => {
-      console.log(`[AUTH-SERVICE] Processing forgot password for: ${email}`);
       const [users] = await db2.execute("SELECT user_id FROM users WHERE email = ?", [email]);
       if (users.length === 0) {
-        console.log(`[AUTH-SERVICE] Forgot-password \u2014 no account found for ${email} (hidden for security)`);
         return { found: false };
       }
       await db2.execute(
         "UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE email = ?",
         [token, expiry, email]
       );
-      console.log(`[AUTH-SERVICE] Reset token (OTP) saved securely for ${email}`);
       return { found: true };
     };
     var verifyotp = async (email, otp) => {
-      console.log(`[AUTH-SERVICE] Verifying OTP for: ${email}`);
       const [users] = await db2.execute(
         "SELECT user_id FROM users WHERE email = ? AND reset_token = ? AND reset_token_expiry > NOW()",
         [email, otp]
@@ -712,13 +702,11 @@ var require_authservice = __commonJS({
       return { found: users.length > 0 };
     };
     var resetpassword = async (email, otp, newPassword) => {
-      console.log(`[AUTH-SERVICE] Validating OTP to reset password for: ${email}`);
       const [users] = await db2.execute(
         "SELECT user_id FROM users WHERE email = ? AND reset_token = ? AND reset_token_expiry > NOW()",
         [email, otp]
       );
       if (users.length === 0) {
-        console.warn("[AUTH-SERVICE] Reset-password failed \u2014 OTP invalid or expired");
         return { found: false };
       }
       const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
@@ -726,21 +714,15 @@ var require_authservice = __commonJS({
         "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE email = ?",
         [hashedPassword, email]
       );
-      console.log(`[AUTH-SERVICE] Password reset successful for user_id: ${users[0].user_id}`);
       return { found: true };
     };
     var USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
     var updateProfile = async (userId, updateData, profile_image) => {
       const { name, email, username, phone, currentPassword, newPassword } = updateData;
-      console.log(`
-[PROFILE-SERVICE] \u{1F50D} Update initiated for User ID: ${userId}`);
-      console.log(`[PROFILE-SERVICE] \u{1F4E6} Received updateData:`, { name, email, username, phone, hasPassword: !!newPassword, hasImage: !!profile_image });
       if (username && !USERNAME_REGEX.test(username)) {
-        console.warn(`[PROFILE-SERVICE] \u26A0\uFE0F Validation failed: Invalid username format.`);
         throw new Error("Invalid username. Use only letters, numbers, and underscores (3-30 characters).");
       }
       if (email || username) {
-        console.log(`[PROFILE-SERVICE] \u{1F50D} Checking uniqueness constraints for email/username...`);
         const checkQuery = `
             SELECT email, username FROM users 
             WHERE (email = ? OR username = ?) AND user_id != ?
@@ -758,7 +740,6 @@ var require_authservice = __commonJS({
       }
       let hashedPassword = null;
       if (newPassword) {
-        console.log(`[PROFILE-SERVICE] \u{1F512} Password update requested. Verifying current password...`);
         if (!currentPassword) {
           throw new Error("Current password is required to set a new password.");
         }
@@ -766,12 +747,10 @@ var require_authservice = __commonJS({
         if (users.length === 0) throw new Error("User not found.");
         const isMatch = await bcrypt.compare(currentPassword, users[0].password_hash);
         if (!isMatch) {
-          console.warn(`[PROFILE-SERVICE] \u26A0\uFE0F Verification failed: Incorrect current password.`);
           throw new Error("Incorrect current password.");
         }
         const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
         hashedPassword = await bcrypt.hash(newPassword, salt);
-        console.log(`[PROFILE-SERVICE] \u2705 New password successfully hashed.`);
       }
       const updateFields = [];
       const updateValues = [];
@@ -800,12 +779,13 @@ var require_authservice = __commonJS({
         updateValues.push(hashedPassword);
       }
       if (updateFields.length === 0) {
-        console.log(`[PROFILE-SERVICE] \u26A0\uFE0F No changes provided. Returning current user profile.`);
         const [user] = await db2.execute(
           "SELECT user_id, name, email, username, phone, profile_image, role FROM users WHERE user_id = ?",
           [userId]
         );
         if (user.length === 0) throw new Error("User not found.");
+        delete user[0].password_hash;
+        delete user[0].reset_token;
         return {
           ...user[0],
           profile_image: getFullImageUrl(user[0].profile_image)
@@ -813,32 +793,31 @@ var require_authservice = __commonJS({
       }
       updateValues.push(userId);
       const updateQuery = `UPDATE users SET ${updateFields.join(", ")} WHERE user_id = ?`;
-      console.log(`[PROFILE-SERVICE] \u{1F680} Executing dynamic update query:`, updateQuery);
-      console.log(`[PROFILE-SERVICE] \u{1F4CC} With bind values:`, updateValues);
-      const [result] = await db2.execute(updateQuery, updateValues);
-      console.log(`[PROFILE-SERVICE] \u2705 Successfully updated ${result.affectedRows} row(s).`);
+      await db2.execute(updateQuery, updateValues);
       const [updatedUser] = await db2.execute(
         "SELECT user_id, name, email, username, phone, profile_image, role FROM users WHERE user_id = ?",
         [userId]
       );
       if (updatedUser.length === 0) throw new Error("User not found after update.");
+      delete updatedUser[0].password_hash;
+      delete updatedUser[0].reset_token;
       return {
         ...updatedUser[0],
         profile_image: getFullImageUrl(updatedUser[0].profile_image)
       };
     };
     var getUserById = async (userId) => {
-      console.log(`[AUTH-SERVICE] Fetching user profile for user_id: ${userId}`);
       const [users] = await db2.execute(
         "SELECT user_id, name, email, username, phone, address, profile_image, role FROM users WHERE user_id = ?",
         [userId]
       );
       if (users.length === 0) {
-        console.warn(`[AUTH-SERVICE] User not found for user_id: ${userId}`);
         throw new Error("USER_NOT_FOUND");
       }
       const user = users[0];
-      console.log(`[AUTH-SERVICE] User profile fetched successfully for user_id: ${userId}`);
+      delete user.password_hash;
+      delete user.reset_token;
+      delete user.reset_token_expiry;
       return {
         ...user,
         profile_image: getFullImageUrl(user.profile_image)
@@ -884,7 +863,6 @@ var require_auth = __commonJS({
       loginuser,
       forgotpassword,
       verifyotp,
-      // 🌟 NAYA: Verify OTP import kiya gaya hai
       resetpassword,
       DuplicateEmailError,
       updateProfile,
@@ -906,7 +884,6 @@ var require_auth = __commonJS({
       apiKey: process.env.BREVO_API_KEY
     });
     var sendEmail = async ({ to, subject, html }) => {
-      console.log(`[AUTH-EMAIL] Dispatching transactional email to: ${to} | Subject: "${subject}"`);
       try {
         const response = await brevoClient.transactionalEmails.sendTransacEmail({
           subject,
@@ -914,7 +891,6 @@ var require_auth = __commonJS({
           sender: { name: EMAIL_FROM_NAME, email: EMAIL_FROM_ADDRESS },
           to: [{ email: to }]
         });
-        console.log(`[AUTH-EMAIL] Successfully delivered email to ${to}`);
         return response;
       } catch (error) {
         console.error(`[AUTH-EMAIL] Delivery failure for ${to}:`, error.message);
@@ -932,7 +908,6 @@ var require_auth = __commonJS({
           return res.status(400).json({ success: false, message: "Request body is missing." });
         }
         const { name, email, password, phone, state, city, fullAddress } = req.body;
-        console.log(`[AUTH-CTRL] Registration request received for email: ${email}`);
         if (!name || !email || !password) {
           return res.status(400).json({ success: false, message: "Name, email, and password are required." });
         }
@@ -946,7 +921,6 @@ var require_auth = __commonJS({
         const fullFormattedAddress = [fullAddress, city, state].filter(Boolean).join(", ");
         let profile_image = null;
         if (req.file) {
-          console.log(`[AUTH-CTRL] Processing profile image upload via ImageKit...`);
           const fileBase64 = req.file.buffer.toString("base64");
           const uploadResponse = await imagekit.files.upload({
             file: fileBase64,
@@ -964,7 +938,6 @@ var require_auth = __commonJS({
           profile_image
         });
         const token = generateToken(insertId, "user");
-        console.log(`[AUTH-CTRL] Registration complete \u2014 assigned token to user_id: ${insertId}`);
         return res.status(201).json({
           success: true,
           message: "Account created successfully!",
@@ -975,13 +948,11 @@ var require_auth = __commonJS({
         if (error instanceof DuplicateEmailError) {
           return res.status(409).json({ success: false, message: "An account with this email already exists." });
         }
-        console.error(`[AUTH-CTRL] Registration exception:`, error.message);
-        return res.status(500).json({ success: false, message: "Server error while creating account.", error: error.message });
+        return res.status(500).json({ success: false, message: "Server error while creating account." });
       }
     };
     var loginUser = async (req, res) => {
       const { email, password } = req.body;
-      console.log(`[AUTH-CTRL] Login invocation for email: ${email}`);
       if (!email || !password) {
         return res.status(400).json({ success: false, message: "Email and password are required." });
       }
@@ -989,7 +960,6 @@ var require_auth = __commonJS({
       try {
         const user = await loginuser(normalizedEmail, password);
         const token = generateToken(user.user_id, user.role);
-        console.log(`[AUTH-CTRL] Login verified successfully for user_id: ${user.user_id}`);
         return res.status(200).json({
           success: true,
           message: "Login successful!",
@@ -1002,19 +972,17 @@ var require_auth = __commonJS({
           }
         });
       } catch (error) {
-        console.error(`[AUTH-CTRL] Login rejected for ${email}:`, error.message);
         if (error.message === "INVALID_CREDENTIALS") {
           return res.status(401).json({ success: false, message: "Invalid email or password." });
         }
         if (error.message === "NO_PASSWORD_SET") {
           return res.status(500).json({ success: false, message: "Account configuration error. Please reset your password." });
         }
-        return res.status(500).json({ success: false, message: "Server error during login.", error: error.message });
+        return res.status(500).json({ success: false, message: "Server error during login." });
       }
     };
     var forgotPassword = async (req, res) => {
       const { email } = req.body;
-      console.log(`[AUTH-CTRL] Password recovery triggered for email: ${email}`);
       if (!email) {
         return res.status(400).json({ success: false, message: "Email is required." });
       }
@@ -1038,13 +1006,11 @@ var require_auth = __commonJS({
         }
         return res.status(200).json({ success: true, message: "If that email exists, an OTP has been sent." });
       } catch (error) {
-        console.error(`[AUTH-CTRL] Forgot password exception for ${email}:`, error.message);
-        return res.status(500).json({ success: false, message: "Server error.", error: error.message });
+        return res.status(500).json({ success: false, message: "Server error." });
       }
     };
     var resetPassword = async (req, res) => {
       const { email, otp, newPassword, action } = req.body;
-      console.log(`[AUTH-CTRL] Password reset sequence started for: ${email}, action: ${action}`);
       if (!email || !otp) {
         return res.status(400).json({ success: false, message: "Email and OTP are required." });
       }
@@ -1067,18 +1033,15 @@ var require_auth = __commonJS({
           return res.status(200).json({ success: true, message: "Password reset successfully. You can now log in." });
         }
       } catch (error) {
-        console.error("[AUTH-CTRL] Reset password exception:", error.message);
-        return res.status(500).json({ success: false, message: "Server error.", error: error.message });
+        return res.status(500).json({ success: false, message: "Server error." });
       }
     };
     var updateUserProfile = async (req, res) => {
       try {
         const userId = req.user.user_id || req.user.id;
         if (!userId) {
-          console.error("[AUTH-CTRL] Critical: User ID missing from security token payload!");
           return res.status(400).json({ success: false, message: "Invalid authentication token context." });
         }
-        console.log(`[AUTH-CTRL] Profile update pipeline triggered for User ID: ${userId}`);
         const updateData = {
           name: req.body.name,
           email: req.body.email,
@@ -1089,7 +1052,6 @@ var require_auth = __commonJS({
         };
         let profile_image = null;
         if (req.file) {
-          console.log(`[AUTH-CTRL] Uploading new profile image asset via ImageKit...`);
           const fileBase64 = req.file.buffer.toString("base64");
           const uploadResponse = await imagekit.files.upload({
             file: fileBase64,
@@ -1105,7 +1067,6 @@ var require_auth = __commonJS({
           user: updatedUser
         });
       } catch (error) {
-        console.error("[AUTH-CTRL] Profile update error:", error.message);
         return res.status(400).json({
           success: false,
           message: error.message || "Failed to update user profile."
@@ -1115,20 +1076,16 @@ var require_auth = __commonJS({
     var getUserProfile = async (req, res) => {
       try {
         const userId = req.user?.user_id || req.user?.id || req.user?.userId;
-        console.log(`[AUTH-CONTROLLER] \u{1F4E5} Fetching profile for resolved user_id:`, userId);
         if (!userId) {
-          console.warn(`[AUTH-CONTROLLER] \u26A0\uFE0F User ID is undefined in token payload:`, req.user);
           return res.status(400).json({ success: false, message: "Invalid token payload: User ID missing" });
         }
         const user = await getUserById(userId);
-        console.log(`[AUTH-CONTROLLER] \u{1F4E4} Profile successfully fetched for user_id:`, userId);
         return res.status(200).json({ success: true, user });
       } catch (err) {
-        console.error(`[AUTH-CONTROLLER] \u274C Error fetching profile:`, err.message);
         if (err.message === "USER_NOT_FOUND") {
           return res.status(404).json({ success: false, message: "User not found" });
         }
-        return res.status(500).json({ success: false, message: err.message });
+        return res.status(500).json({ success: false, message: "Server error" });
       }
     };
     module2.exports = {
@@ -4545,43 +4502,64 @@ var require_order = __commonJS({
       ordercencel,
       getDetailedOrderById,
       getOrderSummaryData,
-      // markOutForDelivery,
-      // markDeliveryAttemptFailed,
-      // verifyDeliveryOtp
       getDeliveredOrderHistory,
       getAllUserOrdersListService,
       getSingleOrderDetailService
     } = require_orderservice();
+    var sanitizeOrderData = (orderData, role) => {
+      if (!orderData) return null;
+      if (role === "admin") {
+        return orderData;
+      }
+      const safeOrder = { ...orderData };
+      delete safeOrder.gateway_fee;
+      delete safeOrder.net_admin_profit;
+      delete safeOrder.financial_summary;
+      delete safeOrder.dealer_transfers;
+      delete safeOrder.tracking_ref;
+      delete safeOrder.razorpay_order_id;
+      if (safeOrder.user) {
+        delete safeOrder.user.password_hash;
+        delete safeOrder.user.reset_token;
+      }
+      if (safeOrder.items && Array.isArray(safeOrder.items)) {
+        safeOrder.items = safeOrder.items.map((item) => {
+          const safeItem = { ...item };
+          delete safeItem.dealer_base_price;
+          delete safeItem.packaging_cost;
+          delete safeItem.locked_dealer_payout;
+          delete safeItem.financials;
+          delete safeItem.dealer_info;
+          delete safeItem.dealer_id;
+          return safeItem;
+        });
+      }
+      return safeOrder;
+    };
     var getadminorder = async (req, res) => {
-      console.log("[ORDER_CONTROLLER] \u{1F4E1} Admin requested all orders list.");
       try {
         const { orders, items } = await adminorder();
         const finalOrdersWithItems = orders.map((order) => ({
           ...order,
           items: items.filter((item) => item.order_id === order.order_id)
         }));
-        console.log(`[ORDER_CONTROLLER] \u2705 Successfully compiled ${finalOrdersWithItems.length} orders for Admin.`);
-        return res.status(200).json({ success: true, data: finalOrdersWithItems });
+        const safeData = finalOrdersWithItems.map((order) => sanitizeOrderData(order, "admin"));
+        return res.status(200).json({ success: true, data: safeData });
       } catch (error) {
-        console.error("[ORDER_CONTROLLER] \u274C Error in getadminorder:", error.message);
-        return res.status(500).json({ success: false, message: "Error fetching orders", error: error.message });
+        return res.status(500).json({ success: false, message: "Error fetching orders" });
       }
     };
     var updateOrderStatus = async (req, res) => {
       const orderId = req.params.id;
       const { status } = req.body;
-      console.log(`[ORDER_CONTROLLER] \u{1F4E1} Admin request received to change Order ID: ${orderId} status to '${status}'`);
       try {
         const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
         if (!validStatuses.includes(status)) {
-          console.warn(`[ORDER_CONTROLLER] \u26A0\uFE0F Invalid status value rejected: ${status}`);
           return res.status(400).json({ success: false, message: "Invalid status value" });
         }
         await updatestatusinDB(orderId, status);
-        console.log(`[ORDER_CONTROLLER] \u2705 Status successfully updated in DB for Order ID: ${orderId}`);
         return res.status(200).json({ success: true, message: `Order status updated to ${status}` });
       } catch (error) {
-        console.error("[ORDER_CONTROLLER] \u274C Error in updateOrderStatus:", error.message);
         if (error.message === "ORDER_NOT_FOUND") {
           return res.status(404).json({ success: false, message: "Order not found" });
         }
@@ -4590,36 +4568,32 @@ var require_order = __commonJS({
     };
     var getmyorders = async (req, res) => {
       const user_id = req.user.id;
-      console.log(`[ORDER_CONTROLLER] \u{1F4E1} Customer requested their orders -- User ID: ${user_id}`);
+      const userRole = req.user.role || "user";
       try {
         const { orders, items } = await getmyorderfromdb(user_id);
         if (orders.length === 0) {
-          console.log(`[ORDER_CONTROLLER] \u2139\uFE0F Zero orders found for User ID: ${user_id}`);
           return res.status(200).json({ success: true, message: "No orders found", data: [] });
         }
-        console.log("[DEBUG_MRP] Pehla item DB se:", items[0]?.mrp, items[0]);
-        const finalOrdersWithItems = orders.map((order) => ({
-          ...order,
-          items: items.filter((item) => item.order_id === order.order_id)
-        }));
-        console.log(`[ORDER_CONTROLLER] \u2705 Successfully fetched ${finalOrdersWithItems.length} orders for User ID: ${user_id}`);
+        const finalOrdersWithItems = orders.map((order) => {
+          const fullOrder = {
+            ...order,
+            items: items.filter((item) => item.order_id === order.order_id)
+          };
+          return sanitizeOrderData(fullOrder, userRole);
+        });
         return res.status(200).json({ success: true, data: finalOrdersWithItems });
       } catch (error) {
-        console.error(`[ORDER_CONTROLLER] \u274C Error in getmyorders for User ID ${user_id}:`, error.message);
-        return res.status(500).json({ success: false, message: "Error fetching orders", error: error.message });
+        return res.status(500).json({ success: false, message: "Error fetching orders" });
       }
     };
     var orderCreate = async (req, res) => {
       const { order_id, tracking_ref } = req.body;
       const user_id = req.user.id;
-      console.log(`[ORDER_CONTROLLER] \u{1F4E1} Request to initialize Razorpay payment -- Internal Order ID: ${order_id}, User ID: ${user_id}`);
       try {
         if (!order_id) {
-          console.warn("[ORDER_CONTROLLER] \u26A0\uFE0F Bad Request: order_id is missing.");
           return res.status(400).json({ success: false, message: "order_id is required" });
         }
         const razorpayData = await createorders(order_id, user_id, tracking_ref);
-        console.log(`[ORDER_CONTROLLER] \u2705 Razorpay payment object generated -- Razorpay ID: ${razorpayData.razorpay_order_id}`);
         return res.status(200).json({
           success: true,
           razorpay_order_id: razorpayData.razorpay_order_id,
@@ -4627,33 +4601,27 @@ var require_order = __commonJS({
           amount: razorpayData.amount
         });
       } catch (error) {
-        console.error("[ORDER_CONTROLLER] \u274C Error in orderCreate:", error.message);
         if (error.message === "ORDER_NOT_FOUND") {
           return res.status(404).json({ success: false, message: "Order not found or access denied" });
         }
-        return res.status(500).json({ success: false, message: "Failed to create razorpay order", error: error.message });
+        return res.status(500).json({ success: false, message: "Failed to create razorpay order" });
       }
     };
     var cancelOrder = async (req, res) => {
       const orderId = req.params.id;
       const userId = req.userId || req.user && req.user.userId || req.user && req.user.id;
-      console.log(`[ORDER_CONTROLLER] \u{1F4E1} Customer requested cancellation for Order ID: ${orderId} | User ID: ${userId}`);
       try {
         if (!userId) {
-          console.error("[ORDER_CONTROLLER] \u274C Auth Error: User ID could not be extracted from token.");
           return res.status(401).json({ success: false, message: "Authentication Error: User ID missing" });
         }
         await ordercencel(orderId, userId);
-        console.log(`[ORDER_CONTROLLER] \u2705 Order ID ${orderId} successfully cancelled.`);
         return res.status(200).json({ success: true, message: "Order cancelled successfully" });
       } catch (error) {
-        console.error("[ORDER_CONTROLLER] \u274C Error in cancelOrder:", error.message);
         if (error.message === "ORDER_NOT_FOUND") {
           return res.status(404).json({ success: false, message: "Order not found or access denied" });
         }
         if (error.message.startsWith("UNCANCELLABLE_STATE")) {
           const status = error.message.split(":")[1];
-          console.warn(`[ORDER_CONTROLLER] \u26A0\uFE0F Cancellation blocked. Current order state is already: ${status}`);
           return res.status(400).json({ success: false, message: `Order cannot be cancelled because it is already ${status}` });
         }
         return res.status(500).json({ success: false, message: "Failed to cancel order" });
@@ -4661,18 +4629,15 @@ var require_order = __commonJS({
     };
     var getSingleOrderAdmin = async (req, res) => {
       const orderId = req.params.id;
-      console.log(`[ORDER_CONTROLLER] \u{1F4E1} Admin requested financial deep-dive for Order ID: ${orderId}`);
       try {
         const orderDetails = await getDetailedOrderById(orderId);
         if (!orderDetails) {
-          console.warn(`[ORDER_CONTROLLER] \u26A0\uFE0F Order not found for ID: ${orderId}`);
           return res.status(404).json({ success: false, message: "Order not found" });
         }
-        console.log(`[ORDER_CONTROLLER] \u2705 Deep details and financials compiled successfully for Order ID: ${orderId}`);
-        return res.status(200).json({ success: true, data: orderDetails });
+        const safeData = sanitizeOrderData(orderDetails, "admin");
+        return res.status(200).json({ success: true, data: safeData });
       } catch (error) {
-        console.error(`[ORDER_CONTROLLER] \u274C Error in getSingleOrderAdmin:`, error.message);
-        return res.status(500).json({ success: false, message: "Server error while fetching order details", error: error.message });
+        return res.status(500).json({ success: false, message: "Server error while fetching order details" });
       }
     };
     var getOrderSummary = async (req, res, next) => {
@@ -4684,61 +4649,74 @@ var require_order = __commonJS({
         if (!userId) {
           return res.status(401).json({ success: false, message: "Unauthorized access" });
         }
-        console.log(`[CONTROLLER] \u{1F4CB} Fetching Order Summary for User: ${userId}`);
         const summaryData = await getOrderSummaryData(userId, addressId, buyNowProductId, buyNowQty);
+        if (summaryData.items) {
+          summaryData.items = summaryData.items.map((item) => {
+            const safeItem = { ...item };
+            delete safeItem.dealer_base_price;
+            delete safeItem.packaging_cost;
+            return safeItem;
+          });
+        }
         res.status(200).json({
           success: true,
           data: summaryData
         });
       } catch (error) {
-        console.error("[CONTROLLER] \u274C Error fetching order summary:", error);
         res.status(500).json({ success: false, message: "Failed to fetch order summary" });
       }
     };
     var getDeliveredOrderHistoryController = async (req, res) => {
       try {
         const userId = req.user?.user_id || req.user?.id;
+        const userRole = req.user?.role || "user";
         if (!userId) {
           return res.status(401).json({ success: false, message: "Unauthorized access" });
         }
-        console.log(`[CONTROLLER] \u{1F4E6} Fetching Delivered History for User: ${userId}`);
         const result = await getDeliveredOrderHistory(userId);
+        const finalOrdersWithItems = result.orders.map((order) => {
+          const fullOrder = {
+            ...order,
+            items: result.items.filter((item) => item.order_id === order.order_id)
+          };
+          return sanitizeOrderData(fullOrder, userRole);
+        });
         return res.status(200).json({
           success: true,
           message: "Delivered orders fetched successfully",
-          data: result
+          data: finalOrdersWithItems
         });
       } catch (error) {
-        console.error("[CONTROLLER] \u274C Error fetching delivered history:", error.message);
         return res.status(500).json({ success: false, message: "Failed to fetch order history" });
       }
     };
     var getAllUserOrdersController = async (req, res) => {
       try {
         const orders = await getAllUserOrdersListService();
+        const safeData = orders.map((order) => sanitizeOrderData(order, "admin"));
         return res.status(200).json({
           success: true,
-          count: orders.length,
-          data: orders
+          count: safeData.length,
+          data: safeData
         });
       } catch (error) {
-        console.error("Error fetching orders list:", error);
         return res.status(500).json({ success: false, message: "Server error" });
       }
     };
     var getSingleOrderController = async (req, res) => {
       try {
         const { id } = req.params;
+        const userRole = req.user?.role || "user";
         const orderDetails = await getSingleOrderDetailService(id);
         if (!orderDetails) {
           return res.status(404).json({ success: false, message: "Order not found" });
         }
+        const sanitizedData = sanitizeOrderData(orderDetails, userRole);
         return res.status(200).json({
           success: true,
-          data: orderDetails
+          data: sanitizedData
         });
       } catch (error) {
-        console.error(`Error fetching order detail for ID ${req.params.id}:`, error);
         return res.status(500).json({ success: false, message: "Server error" });
       }
     };
@@ -4750,9 +4728,6 @@ var require_order = __commonJS({
       cancelOrder,
       getSingleOrderAdmin,
       getOrderSummary,
-      // markOutForDeliveryController,
-      // markDeliveryAttemptFailedController,
-      // verifyDeliveryOtpController
       getDeliveredOrderHistoryController,
       getAllUserOrdersController,
       getSingleOrderController
@@ -5317,7 +5292,6 @@ var require_paymentservice = __commonJS({
         );
         if (rows.length === 0) {
           await connection.rollback();
-          console.error(`[PAYMENT-SERVICE] \u274C No matching internal order found for Razorpay Order ID: ${razorpay_order_id}`);
           return {
             success: false,
             reason: "order_not_found",
@@ -5326,7 +5300,6 @@ var require_paymentservice = __commonJS({
         }
         const internalOrderId = rows[0].order_id;
         const userId = rows[0].user_id;
-        console.log(`[PAYMENT-SERVICE] \u{1F504} Updating internal Order ID: ${internalOrderId} as PAID.`);
         await connection.execute(
           "UPDATE orders SET payment_status = 'paid', payment_id = ? WHERE razorpay_order_id = ?",
           [razorpay_payment_id, razorpay_order_id]
@@ -5335,7 +5308,6 @@ var require_paymentservice = __commonJS({
           "SELECT product_id, quantity FROM orderitems WHERE order_id = ?",
           [internalOrderId]
         );
-        console.log(`[PAYMENT-SERVICE] \u{1F4E6} Deducting stock for Order ID: ${internalOrderId}...`);
         for (const item of orderItems) {
           await connection.execute(
             `UPDATE products SET stock_qty = GREATEST(0, stock_qty - ?) WHERE product_id = ?`,
@@ -5345,7 +5317,6 @@ var require_paymentservice = __commonJS({
             myCache2.del(`product_${item.product_id}`);
           }
         }
-        console.log(`[PAYMENT-SERVICE] \u{1F5D1}\uFE0F Clearing cart for User ID: ${userId}...`);
         await connection.execute("DELETE FROM cart WHERE user_id = ?", [userId]);
         await connection.execute(
           `INSERT INTO order_tracking (order_id, status, status_message)
@@ -5353,8 +5324,6 @@ var require_paymentservice = __commonJS({
           [internalOrderId]
         );
         await connection.commit();
-        console.log(`[PAYMENT-SERVICE] \u{1F389} Transaction committed successfully for Order ID: ${internalOrderId}`);
-        console.log(`[PAYMENT-SERVICE] \u{1F4E7} Triggering invoice email for Order ID: ${internalOrderId}...`);
         sendInvoiceEmail(internalOrderId).catch(
           (err) => console.error(`[PAYMENT-SERVICE] \u274C Invoice email failed -- order_id: ${internalOrderId}:`, err.message)
         );
@@ -5392,8 +5361,7 @@ var require_payment = __commonJS({
       } catch (error) {
         return res.status(500).json({
           success: false,
-          message: "Payment verification failed",
-          error: error.message
+          message: "Payment verification failed"
         });
       }
     };
