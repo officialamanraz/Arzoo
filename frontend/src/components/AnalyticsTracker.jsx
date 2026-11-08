@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
-// Persistent UUID helper
 const generateUUID = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -32,7 +31,7 @@ export default function AnalyticsTracker() {
     return { visitorUuid, sessionId };
   };
 
-  // 1. Session start hone par backend ko inform karein
+  // 1. Session start & route change tracking
   useEffect(() => {
     const { visitorUuid, sessionId } = getVisitorDetails();
     const token = localStorage.getItem('token');
@@ -46,13 +45,13 @@ export default function AnalyticsTracker() {
       body: JSON.stringify({
         sessionId,
         visitorUuid,
-        landingPage: window.location.pathname,
+        landingPage: location.pathname,
         referrer: document.referrer || 'Direct'
       })
     }).catch(() => {});
-  }, []);
+  }, [location.pathname]);
 
-  // 2. Har baar jab user page badle (Route Change)
+  // 2. Track page views
   useEffect(() => {
     const { sessionId } = getVisitorDetails();
     pageStartTimeRef.current = Date.now();
@@ -80,17 +79,22 @@ export default function AnalyticsTracker() {
       .catch(() => {});
   }, [location.pathname]);
 
-  // 3. Heartbeat ping (Har 25 seconds mein active count update hoga)
+  // 3. Heartbeat (Every 25 seconds) & Tab Exit
   useEffect(() => {
-    const { sessionId } = getVisitorDetails();
+    const { sessionId, visitorUuid } = getVisitorDetails();
 
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
+        const token = localStorage.getItem('token');
         fetch(`${API_BASE_URL}/api/analytics/heartbeat`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({
             sessionId,
+            visitorUuid,
             viewId: activeViewIdRef.current,
             incrementSec: 25
           })
@@ -119,5 +123,5 @@ export default function AnalyticsTracker() {
     };
   }, []);
 
-  return null; // Invisible background tracking
+  return null;
 }

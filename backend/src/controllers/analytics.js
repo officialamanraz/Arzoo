@@ -8,7 +8,6 @@ const {
     getAdminLiveAnalytics
 } = require('../services/analyticsService');
 
-// Helper to extract user_id from Bearer token
 const extractUserIdFromReq = (req) => {
     try {
         const authHeader = req.headers['authorization'] || req.headers['Authorization'];
@@ -20,12 +19,11 @@ const extractUserIdFromReq = (req) => {
             }
         }
     } catch {
-        // Token invalid ya expired hone par fallback to null (Guest)
+        // Fallback to null if token expired or invalid
     }
     return req.user?.id || req.user?.user_id || null;
 };
 
-// Helper to detect device
 const parseUserAgent = (ua = '') => {
     let deviceType = 'desktop';
     if (/tablet|ipad|playbook|silk/i.test(ua)) deviceType = 'tablet';
@@ -44,7 +42,7 @@ const parseUserAgent = (ua = '') => {
 const startSession = async (req, res) => {
     try {
         const { sessionId, visitorUuid, landingPage, referrer } = req.body;
-        const userId = extractUserIdFromReq(req); // 👈 Ab real logged-in ID nikalegi
+        const userId = extractUserIdFromReq(req);
         const ipAddress = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
         const { deviceType, browser } = parseUserAgent(req.headers['user-agent']);
 
@@ -94,11 +92,15 @@ const trackPageView = async (req, res) => {
 // 3. POST /api/analytics/heartbeat
 const heartbeat = async (req, res) => {
     try {
-        const { sessionId, viewId, incrementSec } = req.body;
+        const { sessionId, visitorUuid, viewId, incrementSec } = req.body;
+        const userId = extractUserIdFromReq(req);
+
         if (!sessionId) return res.status(400).json({ success: false });
 
         await processHeartbeatInDB({
             sessionId,
+            visitorUuid,
+            userId,
             viewId: viewId ? Number(viewId) : null,
             incrementSec: Number(incrementSec) || 25
         });

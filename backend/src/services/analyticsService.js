@@ -1,6 +1,6 @@
 const db = require('../DATABASE/mysql');
 
-// 1. Initialize or refresh session
+// 1. Initialize or refresh session (Auto-links Guest history to User on login)
 const initOrUpdateSessionInDB = async ({
     sessionId,
     visitorUuid,
@@ -12,6 +12,7 @@ const initOrUpdateSessionInDB = async ({
     referrer = '',
     landingPage = '/'
 }) => {
+    // A. Upsert current session
     const query = `
         INSERT INTO visitor_sessions 
             (session_id, visitor_uuid, user_id, device_type, browser, os, ip_address, referrer, landing_page, is_active, last_active_at)
@@ -25,6 +26,15 @@ const initOrUpdateSessionInDB = async ({
         sessionId, visitorUuid, userId, deviceType, browser, os, ipAddress, referrer, landingPage,
         userId
     ]);
+
+    // B. If user is logged in, link all previous guest sessions from this device to this user
+    if (userId) {
+        await db.execute(
+            `UPDATE visitor_sessions SET user_id = ? WHERE visitor_uuid = ? AND user_id IS NULL`,
+            [userId, visitorUuid]
+        );
+    }
+
     return { sessionId };
 };
 
@@ -39,18 +49,24 @@ const recordPageViewInDB = async ({ sessionId, pagePath, pageTitle = '', product
 };
 
 // 3. Heartbeat: Increment active session time & update specific page dwell time
-const processHeartbeatInDB = async ({ sessionId, viewId = null, incrementSec = 25 }) => {
-    // A. Update overall session duration and activity status
+const processHeartbeatInDB = async ({ sessionId, visitorUuid, userId = null, viewId = null, incrementSec = 25 }) => {
     await db.execute(
         `UPDATE visitor_sessions 
          SET total_duration_sec = total_duration_sec + ?, 
+             user_id = COALESCE(?, user_id),
              last_active_at = NOW(), 
              is_active = 1 
          WHERE session_id = ?`,
-        [incrementSec, sessionId]
+        [incrementSec, userId, sessionId]
     );
 
-    // B. Update page view dwell time if viewId is provided
+    if (userId && visitorUuid) {
+        await db.execute(
+            `UPDATE visitor_sessions SET user_id = ? WHERE visitor_uuid = ? AND user_id IS NULL`,
+            [userId, visitorUuid]
+        );
+    }
+
     if (viewId) {
         await db.execute(
             `UPDATE page_views 
@@ -62,7 +78,7 @@ const processHeartbeatInDB = async ({ sessionId, viewId = null, incrementSec = 2
     }
 };
 
-// 4. Mark session inactive on exit
+// 4. Mark session inactive on exit/logout
 const markSessionExitInDB = async ({ sessionId, viewId = null, finalPageTimeSec = 0 }) => {
     await db.execute(
         `UPDATE visitor_sessions 
@@ -81,7 +97,7 @@ const markSessionExitInDB = async ({ sessionId, viewId = null, finalPageTimeSec 
     }
 };
 
-// 5. Log custom high-intent actions (Add to Cart, Checkout click)
+// 5. Log custom high-intent actions
 const recordAnalyticsEventInDB = async ({ sessionId, eventName, eventCategory = 'engagement', metadata = {} }) => {
     const query = `
         INSERT INTO analytics_events (session_id, event_name, event_category, metadata)
@@ -90,23 +106,38 @@ const recordAnalyticsEventInDB = async ({ sessionId, eventName, eventCategory = 
     await db.execute(query, [sessionId, eventName, eventCategory, JSON.stringify(metadata)]);
 };
 
-// 6. Admin Dashboard Live Stats (Last 3 minutes active)
-// 6. Admin Dashboard Live Stats (Last 3 minutes active)
+// 6. Admin Dashboard Live Stats (Deduplicated by visitor_uuid)
 const getAdminLiveAnalytics = async () => {
-    // A. Currently active sessions
+    // A. Currently active UNIQUE visitors (Active within last 90 seconds)
     const [activeVisitors] = await db.execute(`
         SELECT 
-            vs.session_id, vs.visitor_uuid, COALESCE(u.name, 'Guest') AS user_name,
-            u.email AS user_email, vs.device_type, vs.browser, vs.os, vs.landing_page,
-            vs.total_duration_sec, vs.last_active_at,
-            (SELECT page_path FROM page_views WHERE session_id = vs.session_id ORDER BY view_id DESC LIMIT 1) AS current_page
+            vs.visitor_uuid,
+            MAX(vs.session_id) AS session_id,
+            COALESCE(MAX(u.name), 'Guest') AS user_name,
+            MAX(u.email) AS user_email,
+            MAX(vs.device_type) AS device_type,
+            MAX(vs.browser) AS browser,
+            MAX(vs.os) AS os,
+            MAX(vs.landing_page) AS landing_page,
+            MAX(vs.total_duration_sec) AS total_duration_sec,
+            MAX(vs.last_active_at) AS last_active_at,
+            (
+                SELECT pv.page_path 
+                FROM page_views pv 
+                JOIN visitor_sessions s ON pv.session_id = s.session_id 
+                WHERE s.visitor_uuid = vs.visitor_uuid 
+                ORDER BY pv.view_id DESC 
+                LIMIT 1
+            ) AS current_page
         FROM visitor_sessions vs
         LEFT JOIN users u ON vs.user_id = u.user_id
-        WHERE vs.last_active_at >= NOW() - INTERVAL 3 MINUTE
-        ORDER BY vs.last_active_at DESC
+        WHERE vs.is_active = 1 
+          AND vs.last_active_at >= NOW() - INTERVAL 90 SECOND
+        GROUP BY vs.visitor_uuid
+        ORDER BY last_active_at DESC
     `);
 
-    // B. Today's aggregate numbers vs Yesterday's for Trend Calculation
+    // B. Today's aggregate numbers vs Yesterday's
     const [todaySummary] = await db.execute(`
         SELECT 
             COUNT(DISTINCT session_id) AS total_sessions_today,
@@ -132,7 +163,8 @@ const getAdminLiveAnalytics = async () => {
         FROM page_views
         WHERE DATE(entered_at) = CURDATE()
         GROUP BY page_path
-        ORDER BY total_views DESC LIMIT 5
+        ORDER BY total_views DESC 
+        LIMIT 5
     `);
 
     // D. Hourly Trend for the Chart (Last 12 Hours)
@@ -147,19 +179,19 @@ const getAdminLiveAnalytics = async () => {
         ORDER BY HOUR(entered_at) ASC
     `);
 
-    // E. Total Lifetime Orders (For the Promo Banner)
+    // E. Total Lifetime Paid Orders
     const [ordersCount] = await db.execute(`
         SELECT COUNT(order_id) AS total_orders FROM orders WHERE payment_status = 'paid'
     `);
 
     return {
-        activeNowCount: activeVisitors.length,
+        activeNowCount: activeVisitors.length, // True count of distinct people online
         activeVisitors,
         todaySummary: todaySummary[0] || { total_sessions_today: 0, unique_visitors_today: 0, avg_duration_sec: 0 },
         yesterdaySummary: yesterdaySummary[0] || { total_sessions_yesterday: 0, unique_visitors_yesterday: 0, avg_duration_yesterday: 0 },
         topPages,
         trendData,
-        totalLifetimeOrders: ordersCount[0].total_orders || 0
+        totalLifetimeOrders: ordersCount[0]?.total_orders || 0
     };
 };
 
