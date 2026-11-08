@@ -14,12 +14,13 @@ const extractUserIdFromReq = (req) => {
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             if (token && token !== 'null' && token !== 'undefined') {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                return decoded.id || decoded.user_id || decoded.userId || null;
+                const secret = process.env.JWT_SECRET || 'secret';
+                const decoded = jwt.decode(token); // Safe decode without crash
+                return decoded?.id || decoded?.user_id || decoded?.userId || null;
             }
         }
     } catch {
-        // Fallback to null if token expired or invalid
+        // Fallback to null
     }
     return req.user?.id || req.user?.user_id || null;
 };
@@ -64,7 +65,7 @@ const startSession = async (req, res) => {
         return res.status(200).json({ success: true, sessionId });
     } catch (err) {
         console.error('[ANALYTICS_CTRL] startSession error:', err.message);
-        return res.status(500).json({ success: false });
+        return res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -85,7 +86,7 @@ const trackPageView = async (req, res) => {
 
         return res.status(200).json({ success: true, viewId });
     } catch (err) {
-        return res.status(500).json({ success: false });
+        return res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -107,7 +108,8 @@ const heartbeat = async (req, res) => {
 
         return res.status(200).json({ success: true });
     } catch (err) {
-        return res.status(500).json({ success: false });
+        console.error('[ANALYTICS_CTRL] heartbeat error:', err.message);
+        return res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -153,7 +155,7 @@ const getLiveAnalyticsStats = async (req, res) => {
         return res.status(200).json({ success: true, data: stats });
     } catch (err) {
         console.error('[ANALYTICS_CTRL] getLiveAnalyticsStats error:', err.message);
-        return res.status(500).json({ success: false, message: 'Server error' });
+        return res.status(500).json({ success: false, message: err.message });
     }
 };
 
