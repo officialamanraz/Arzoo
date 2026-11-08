@@ -92,12 +92,18 @@ const AdminAnalytics = ({ isDark: propIsDark }) => {
   const todayDateString = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date());
 
   // Growth Calculators
-  const calcGrowth = (today, yesterday) => {
-    if (yesterday === 0 && today > 0) return { percent: 100, isUp: true };
-    if (yesterday === 0 && today === 0) return { percent: 0, isUp: true };
-    const diff = today - yesterday;
-    const percent = Math.round((Math.abs(diff) / yesterday) * 100);
-    return { percent, isUp: diff >= 0 };
+const calcGrowth = (today, yesterday) => {
+    const t = Number(today) || 0;
+    const y = Number(yesterday) || 0;
+    
+    // Agar kal 0 tha, toh 0 se divide na karein
+    if (y === 0) {
+      return { percent: t > 0 ? 100 : 0, isUp: true };
+    }
+    
+    const diff = t - y;
+    const percent = Math.round((Math.abs(diff) / y) * 100);
+    return { percent: isFinite(percent) ? percent : 0, isUp: diff >= 0 };
   };
 
   const sessions = data.todaySummary.total_sessions_today || 0;

@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const {
     initOrUpdateSessionInDB,
     recordPageViewInDB,
@@ -7,7 +8,24 @@ const {
     getAdminLiveAnalytics
 } = require('../services/analyticsService');
 
-// Helper to detect device and basic OS
+// Helper to extract user_id from Bearer token
+const extractUserIdFromReq = (req) => {
+    try {
+        const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            if (token && token !== 'null' && token !== 'undefined') {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                return decoded.id || decoded.user_id || decoded.userId || null;
+            }
+        }
+    } catch {
+        // Token invalid ya expired hone par fallback to null (Guest)
+    }
+    return req.user?.id || req.user?.user_id || null;
+};
+
+// Helper to detect device
 const parseUserAgent = (ua = '') => {
     let deviceType = 'desktop';
     if (/tablet|ipad|playbook|silk/i.test(ua)) deviceType = 'tablet';
@@ -26,7 +44,7 @@ const parseUserAgent = (ua = '') => {
 const startSession = async (req, res) => {
     try {
         const { sessionId, visitorUuid, landingPage, referrer } = req.body;
-        const userId = req.user?.id || req.user?.user_id || null;
+        const userId = extractUserIdFromReq(req); // 👈 Ab real logged-in ID nikalegi
         const ipAddress = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
         const { deviceType, browser } = parseUserAgent(req.headers['user-agent']);
 
@@ -69,7 +87,6 @@ const trackPageView = async (req, res) => {
 
         return res.status(200).json({ success: true, viewId });
     } catch (err) {
-        console.error('[ANALYTICS_CTRL] trackPageView error:', err.message);
         return res.status(500).json({ success: false });
     }
 };
@@ -92,13 +109,12 @@ const heartbeat = async (req, res) => {
     }
 };
 
-// 4. POST /api/analytics/exit (Supports navigator.sendBeacon)
+// 4. POST /api/analytics/exit
 const trackExit = async (req, res) => {
     try {
-        // Handle sendBeacon sending JSON as text/plain or parsed json
         let data = req.body;
         if (typeof data === 'string') {
-            try { data = JSON.parse(data); } catch (e) { data = {}; }
+            try { data = JSON.parse(data); } catch { data = {}; }
         }
 
         const { sessionId, viewId, finalPageTimeSec } = data;
@@ -128,7 +144,7 @@ const trackEvent = async (req, res) => {
     }
 };
 
-// 6. GET /api/analytics/admin/live (Admin only)
+// 6. GET /api/analytics/admin/live
 const getLiveAnalyticsStats = async (req, res) => {
     try {
         const stats = await getAdminLiveAnalytics();
