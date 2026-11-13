@@ -1165,22 +1165,22 @@ var require_analyticsService = __commonJS({
                 (session_id, visitor_uuid, user_id, device_type, browser, os, ip_address, referrer, landing_page, is_active, last_active_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW())
             ON DUPLICATE KEY UPDATE 
-                user_id = COALESCE(?, user_id),
+                user_id = COALESCE(VALUES(user_id), user_id),
                 is_active = 1,
                 last_active_at = NOW()
         `;
-        await db2.execute(query, [
+        const params = [
           sessionId,
           visitorUuid,
           userId,
-          deviceType,
-          browser,
-          os,
-          ipAddress,
-          referrer,
-          landingPage,
-          userId
-        ]);
+          deviceType?.substring(0, 50) || "desktop",
+          browser?.substring(0, 50) || "Unknown",
+          os?.substring(0, 50) || "Unknown",
+          ipAddress?.substring(0, 50) || null,
+          referrer?.substring(0, 255) || "",
+          landingPage?.substring(0, 255) || "/"
+        ];
+        await db2.execute(query, params);
         if (userId && visitorUuid) {
           await db2.execute(
             `UPDATE visitor_sessions SET user_id = ? WHERE visitor_uuid = ? AND user_id IS NULL`,
@@ -1190,7 +1190,7 @@ var require_analyticsService = __commonJS({
         return { sessionId };
       } catch (err) {
         console.error("[ANALYTICS_SERVICE] initOrUpdateSession error:", err.message);
-        throw err;
+        return { sessionId };
       }
     };
     var recordPageViewInDB = async ({ sessionId, pagePath, pageTitle = "", productId = null }) => {
@@ -1199,25 +1199,40 @@ var require_analyticsService = __commonJS({
             INSERT INTO page_views (session_id, page_path, page_title, product_id, entered_at)
             VALUES (?, ?, ?, ?, NOW())
         `;
-        const [result] = await db2.execute(query, [sessionId, pagePath, pageTitle, productId]);
-        return result.insertId;
+        const params = [
+          sessionId,
+          pagePath?.substring(0, 255) || "/",
+          pageTitle?.substring(0, 255) || "",
+          productId
+        ];
+        const [result] = await db2.execute(query, params);
+        return result.insertId || null;
       } catch (err) {
         console.error("[ANALYTICS_SERVICE] recordPageView error:", err.message);
-        throw err;
+        return null;
       }
     };
     var processHeartbeatInDB = async ({ sessionId, visitorUuid, userId = null, viewId = null, incrementSec = 25 }) => {
       try {
         if (!sessionId) return;
-        await db2.execute(
-          `UPDATE visitor_sessions 
-             SET total_duration_sec = COALESCE(total_duration_sec, 0) + ?, 
-                 user_id = COALESCE(?, user_id),
-                 last_active_at = NOW(), 
-                 is_active = 1 
-             WHERE session_id = ?`,
-          [incrementSec, userId || null, sessionId]
-        );
+        try {
+          await db2.execute(
+            `UPDATE visitor_sessions 
+                 SET total_duration_sec = COALESCE(total_duration_sec, 0) + ?, 
+                     user_id = COALESCE(?, user_id),
+                     last_active_at = NOW(), 
+                     is_active = 1 
+                 WHERE session_id = ?`,
+            [incrementSec, userId, sessionId]
+          );
+        } catch (updateErr) {
+          await db2.execute(
+            `UPDATE visitor_sessions 
+                 SET user_id = COALESCE(?, user_id), last_active_at = NOW(), is_active = 1 
+                 WHERE session_id = ?`,
+            [userId, sessionId]
+          );
+        }
         if (userId && visitorUuid) {
           await db2.execute(
             `UPDATE visitor_sessions SET user_id = ? WHERE visitor_uuid = ? AND user_id IS NULL`,
@@ -1227,8 +1242,7 @@ var require_analyticsService = __commonJS({
         if (viewId) {
           await db2.execute(
             `UPDATE page_views 
-                 SET time_spent_sec = COALESCE(time_spent_sec, 0) + ?,
-                     exited_at = NOW()
+                 SET time_spent_sec = COALESCE(time_spent_sec, 0) + ?, exited_at = NOW()
                  WHERE view_id = ?`,
             [incrementSec, viewId]
           );
@@ -1240,16 +1254,12 @@ var require_analyticsService = __commonJS({
     var markSessionExitInDB = async ({ sessionId, viewId = null, finalPageTimeSec = 0 }) => {
       try {
         await db2.execute(
-          `UPDATE visitor_sessions 
-             SET is_active = 0, last_active_at = NOW() 
-             WHERE session_id = ?`,
+          `UPDATE visitor_sessions SET is_active = 0, last_active_at = NOW() WHERE session_id = ?`,
           [sessionId]
         );
         if (viewId && finalPageTimeSec > 0) {
           await db2.execute(
-            `UPDATE page_views 
-                 SET time_spent_sec = COALESCE(time_spent_sec, 0) + ?, exited_at = NOW() 
-                 WHERE view_id = ?`,
+            `UPDATE page_views SET time_spent_sec = COALESCE(time_spent_sec, 0) + ?, exited_at = NOW() WHERE view_id = ?`,
             [finalPageTimeSec, viewId]
           );
         }
@@ -1286,7 +1296,7 @@ var require_analyticsService = __commonJS({
                 vs.browser,
                 vs.os,
                 vs.landing_page,
-                vs.total_duration_sec,
+                COALESCE(vs.total_duration_sec, 0) AS total_duration_sec,
                 vs.last_active_at,
                 (SELECT page_path FROM page_views WHERE session_id = vs.session_id ORDER BY view_id DESC LIMIT 1) AS current_page
             FROM visitor_sessions vs
@@ -1312,11 +1322,10 @@ var require_analyticsService = __commonJS({
                 COUNT(DISTINCT visitor_uuid) AS unique_visitors_today,
                 COALESCE(ROUND(AVG(total_duration_sec)), 0) AS avg_duration_sec
             FROM visitor_sessions
-            WHERE DATE(started_at) = CURDATE()
+            WHERE DATE(last_active_at) = CURDATE()
         `);
         if (today.length > 0) todaySummary = today[0];
       } catch (err) {
-        console.error("[LIVE_ANALYTICS] todaySummary error:", err.message);
       }
       try {
         const [yesterday] = await db2.execute(`
@@ -1325,11 +1334,10 @@ var require_analyticsService = __commonJS({
                 COUNT(DISTINCT visitor_uuid) AS unique_visitors_yesterday,
                 COALESCE(ROUND(AVG(total_duration_sec)), 0) AS avg_duration_yesterday
             FROM visitor_sessions
-            WHERE DATE(started_at) = CURDATE() - INTERVAL 1 DAY
+            WHERE DATE(last_active_at) = CURDATE() - INTERVAL 1 DAY
         `);
         if (yesterday.length > 0) yesterdaySummary = yesterday[0];
       } catch (err) {
-        console.error("[LIVE_ANALYTICS] yesterdaySummary error:", err.message);
       }
       try {
         const [pages] = await db2.execute(`
@@ -1345,7 +1353,6 @@ var require_analyticsService = __commonJS({
         `);
         topPages = pages;
       } catch (err) {
-        console.error("[LIVE_ANALYTICS] topPages error:", err.message);
       }
       try {
         const [trend] = await db2.execute(`
@@ -1360,13 +1367,11 @@ var require_analyticsService = __commonJS({
         `);
         trendData = trend;
       } catch (err) {
-        console.error("[LIVE_ANALYTICS] trendData error:", err.message);
       }
       try {
         const [ordersCount] = await db2.execute(`SELECT COUNT(*) AS total_orders FROM orders`);
         totalLifetimeOrders = ordersCount[0]?.total_orders || 0;
       } catch (err) {
-        console.error("[LIVE_ANALYTICS] ordersCount error:", err.message);
       }
       return {
         activeNowCount: activeVisitors.length,

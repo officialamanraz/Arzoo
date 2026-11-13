@@ -13,7 +13,11 @@ const generateUUID = () => {
 export default function AnalyticsTracker() {
   const location = useLocation();
   const activeViewIdRef = useRef(null);
-  const pageStartTimeRef = useRef(Date.now());
+  const lastSyncTimeRef = useRef(Date.now());
+  const sessionInitializedRef = useRef(false);
+
+  // Check if current route is an Admin page (skip tracking admin activity)
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   const getVisitorDetails = () => {
     let visitorUuid = localStorage.getItem('arzoo_visitor_uuid');
@@ -31,10 +35,73 @@ export default function AnalyticsTracker() {
     return { visitorUuid, sessionId };
   };
 
-  // 1. Session start & route change tracking
+  // Helper: Flush unsaved seconds spent on the current page before switching pages or closing tab
+  const flushRemainingPageTime = (isExitingSite = false) => {
+    const { sessionId, visitorUuid } = getVisitorDetails();
+    const elapsedSec = Math.round((Date.now() - lastSyncTimeRef.current) / 1000);
+    lastSyncTimeRef.current = Date.now();
+
+    // Ignore noise under 1 second unless exiting the site
+    if (elapsedSec <= 0 && !isExitingSite) return;
+    const boundedSec = Math.min(Math.max(elapsedSec, 0), 30); // Cap between 0-30s since last heartbeat
+
+    if (isExitingSite) {
+      const payload = JSON.stringify({
+        sessionId,
+        viewId: activeViewIdRef.current,
+        finalPageTimeSec: boundedSec
+      });
+
+      if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon(`${API_BASE_URL}/api/analytics/exit`, blob);
+      } else {
+        fetch(`${API_BASE_URL}/api/analytics/exit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true
+        }).catch(() => {});
+      }
+    } else if (activeViewIdRef.current && boundedSec > 0) {
+      // User clicked to another page before 25s heartbeat — save the exact seconds spent on previous page
+      const token = localStorage.getItem('token');
+      fetch(`${API_BASE_URL}/api/analytics/heartbeat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          sessionId,
+          visitorUuid,
+          viewId: activeViewIdRef.current,
+          incrementSec: boundedSec
+        }),
+        keepalive: true
+      }).catch(() => {});
+    }
+  };
+
+  // 1. Session Start & Route Change Tracking
   useEffect(() => {
+    if (isAdminRoute) return;
+
     const { visitorUuid, sessionId } = getVisitorDetails();
     const token = localStorage.getItem('token');
+
+    // First, flush time spent on the previous page before starting the new page view
+    if (sessionInitializedRef.current && activeViewIdRef.current) {
+      flushRemainingPageTime(false);
+    }
+
+    // Initialize/refresh session
+    const sessionPayload = {
+      sessionId,
+      visitorUuid,
+      landingPage: location.pathname,
+      referrer: document.referrer || 'Direct'
+    };
 
     fetch(`${API_BASE_URL}/api/analytics/session`, {
       method: 'POST',
@@ -42,20 +109,16 @@ export default function AnalyticsTracker() {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
-      body: JSON.stringify({
-        sessionId,
-        visitorUuid,
-        landingPage: location.pathname,
-        referrer: document.referrer || 'Direct'
+      body: JSON.stringify(sessionPayload)
+    })
+      .then((res) => res.json())
+      .then(() => {
+        sessionInitializedRef.current = true;
       })
-    }).catch(() => {});
-  }, [location.pathname]);
+      .catch((err) => console.error('Analytics Session Error:', err));
 
-  // 2. Track page views
-  useEffect(() => {
-    const { sessionId } = getVisitorDetails();
-    pageStartTimeRef.current = Date.now();
-
+    // Record the new Page View
+    lastSyncTimeRef.current = Date.now();
     const pathParts = location.pathname.split('/');
     const isProduct = pathParts[1] === 'products' && pathParts[2] && !isNaN(pathParts[2]);
     const productId = isProduct ? Number(pathParts[2]) : null;
@@ -66,7 +129,7 @@ export default function AnalyticsTracker() {
       body: JSON.stringify({
         sessionId,
         pagePath: location.pathname,
-        pageTitle: document.title,
+        pageTitle: document.title || 'Arzoo',
         productId
       })
     })
@@ -77,15 +140,19 @@ export default function AnalyticsTracker() {
         }
       })
       .catch(() => {});
-  }, [location.pathname]);
+  }, [location.pathname, isAdminRoute]);
 
-  // 3. Heartbeat (Every 25 seconds) & Tab Exit
+  // 2. Heartbeat (Every 25 seconds) & Tab Exit Listener
   useEffect(() => {
+    if (isAdminRoute) return;
+
     const { sessionId, visitorUuid } = getVisitorDetails();
 
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         const token = localStorage.getItem('token');
+        lastSyncTimeRef.current = Date.now(); // Reset sync timer on heartbeat
+
         fetch(`${API_BASE_URL}/api/analytics/heartbeat`, {
           method: 'POST',
           headers: {
@@ -103,16 +170,7 @@ export default function AnalyticsTracker() {
     }, 25000);
 
     const handleUnload = () => {
-      const finalSec = Math.round((Date.now() - pageStartTimeRef.current) / 1000);
-      const payload = JSON.stringify({
-        sessionId,
-        viewId: activeViewIdRef.current,
-        finalPageTimeSec: finalSec
-      });
-
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(`${API_BASE_URL}/api/analytics/exit`, payload);
-      }
+      flushRemainingPageTime(true);
     };
 
     window.addEventListener('beforeunload', handleUnload);
@@ -121,7 +179,7 @@ export default function AnalyticsTracker() {
       clearInterval(interval);
       window.removeEventListener('beforeunload', handleUnload);
     };
-  }, []);
+  }, [isAdminRoute]);
 
   return null;
 }

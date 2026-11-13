@@ -3,7 +3,6 @@ import './AdminAnalytics.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
-// Clean SVG Icons
 const Icons = {
   User: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   Layout: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>,
@@ -23,18 +22,27 @@ const Sparkline = ({ color }) => (
 );
 
 const AdminAnalytics = ({ isDark: propIsDark }) => {
+  // Default to today's date in YYYY-MM-DD (local time)
+  const getTodayISO = () => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().split('T')[0];
+  };
+
+  const [selectedDate, setSelectedDate] = useState(getTodayISO);
+  const [range, setRange] = useState('day'); // 'day', '7d', '30d'
   const [data, setData] = useState({
     activeNowCount: 0,
     activeVisitors: [],
     todaySummary: { total_sessions_today: 0, unique_visitors_today: 0, avg_duration_sec: 0 },
     yesterdaySummary: { total_sessions_yesterday: 0, unique_visitors_yesterday: 0, avg_duration_yesterday: 0 },
     topPages: [],
+    sessionLogs: [],
     trendData: [],
     totalLifetimeOrders: 0
   });
   const [loading, setLoading] = useState(true);
 
-  // Sync theme
   const detectTheme = useCallback(() => {
     if (typeof propIsDark === 'boolean') return propIsDark;
     return document.body.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
@@ -49,10 +57,12 @@ const AdminAnalytics = ({ isDark: propIsDark }) => {
     return () => observer.disconnect();
   }, [detectTheme]);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/analytics/admin/live`, {
+      const query = `?date=${encodeURIComponent(selectedDate)}&range=${encodeURIComponent(range)}`;
+      const response = await fetch(`${API_BASE_URL}/api/analytics/admin/live${query}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
@@ -63,6 +73,7 @@ const AdminAnalytics = ({ isDark: propIsDark }) => {
           todaySummary: result.data.todaySummary || {},
           yesterdaySummary: result.data.yesterdaySummary || {},
           topPages: result.data.topPages || [],
+          sessionLogs: result.data.sessionLogs || [],
           trendData: result.data.trendData || [],
           totalLifetimeOrders: result.data.totalLifetimeOrders || 0
         });
@@ -72,35 +83,40 @@ const AdminAnalytics = ({ isDark: propIsDark }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate, range]);
 
   useEffect(() => {
     fetchAnalytics();
     const interval = setInterval(fetchAnalytics, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchAnalytics]);
 
   const formatTime = (seconds) => {
     const s = Number(seconds) || 0;
-    const m = Math.floor(s / 60);
+    const hrs = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
     const rem = s % 60;
+    if (hrs > 0) return `${hrs}h ${m}m ${rem}s`;
     return `${m}m ${rem < 10 ? '0' : ''}${rem}s`;
   };
 
-  // --- FULLY DYNAMIC CALCULATIONS ---
-  // Current Date logic
-  const todayDateString = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date());
+  const formatDateTime = (ts) => {
+    if (!ts) return '-';
+    const d = new Date(ts);
+    return d.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+  };
 
-  // Growth Calculators
-const calcGrowth = (today, yesterday) => {
+  const calcGrowth = (today, yesterday) => {
     const t = Number(today) || 0;
     const y = Number(yesterday) || 0;
-    
-    // Agar kal 0 tha, toh 0 se divide na karein
-    if (y === 0) {
-      return { percent: t > 0 ? 100 : 0, isUp: true };
-    }
-    
+    if (y === 0) return { percent: t > 0 ? 100 : 0, isUp: true };
     const diff = t - y;
     const percent = Math.round((Math.abs(diff) / y) * 100);
     return { percent: isFinite(percent) ? percent : 0, isUp: diff >= 0 };
@@ -115,21 +131,19 @@ const calcGrowth = (today, yesterday) => {
   const duration = data.todaySummary.avg_duration_sec || 0;
   const durationTrend = calcGrowth(duration, data.yesterdaySummary.avg_duration_yesterday);
 
-  // Dynamic Chart SVG logic
   const generateChartPath = (dataArray, key) => {
     if (!dataArray || dataArray.length === 0) return "M 0 140 L 700 140";
-    const maxVal = Math.max(...dataArray.map(d => d.visitors, d => d.pageViews), 10);
+    const maxVal = Math.max(...dataArray.map(d => Math.max(d.visitors || 0, d.pageViews || 0)), 10);
     const stepX = 700 / (dataArray.length - 1 || 1);
     
-    let path = `M 0 ${140 - (dataArray[0][key] / maxVal) * 100}`;
+    let path = `M 0 ${140 - ((dataArray[0][key] || 0) / maxVal) * 100}`;
     for (let i = 1; i < dataArray.length; i++) {
-        const x = i * stepX;
-        const y = 140 - (dataArray[i][key] / maxVal) * 100;
-        // Bezier curve approximation
-        const prevX = (i - 1) * stepX;
-        const prevY = 140 - (dataArray[i-1][key] / maxVal) * 100;
-        const cp1x = prevX + (x - prevX) / 2;
-        path += ` C ${cp1x} ${prevY}, ${cp1x} ${y}, ${x} ${y}`;
+      const x = i * stepX;
+      const y = 140 - ((dataArray[i][key] || 0) / maxVal) * 100;
+      const prevX = (i - 1) * stepX;
+      const prevY = 140 - ((dataArray[i - 1][key] || 0) / maxVal) * 100;
+      const cp1x = prevX + (x - prevX) / 2;
+      path += ` C ${cp1x} ${prevY}, ${cp1x} ${y}, ${x} ${y}`;
     }
     return path;
   };
@@ -140,20 +154,34 @@ const calcGrowth = (today, yesterday) => {
   return (
     <div className={`analytics-dashboard ${themeDark ? 'dark-theme' : 'light-theme'}`}>
       
-      {/* 1. TOP HEADER */}
+      {/* 1. TOP HEADER WITH INTERACTIVE DATE & RANGE PICKER */}
       <div className="analytics-header">
         <div className="header-title">
           <h2>Analytics Dashboard</h2>
-          <p>Live insights &amp; performance overview</p>
+          <p>Live insights, visitor sessions &amp; date-wise time tracking</p>
         </div>
         <div className="header-actions">
-          {/* Dynamic Date applied here */}
-          <div className="date-badge">📅 {todayDateString}</div>
+          <input
+            type="date"
+            className="date-picker-input"
+            value={selectedDate}
+            max={getTodayISO()}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+          <select
+            className="range-select-input"
+            value={range}
+            onChange={(e) => setRange(e.target.value)}
+          >
+            <option value="day">Selected Date</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
           <div className="live-badge"><span className="pulse-dot"></span> Live</div>
         </div>
       </div>
 
-      {/* 2. KPI 4 CARDS ROW (Fully Dynamic) */}
+      {/* 2. KPI 4 CARDS ROW */}
       <div className="kpi-grid">
         <div className="kpi-card active-now">
           <div className="kpi-icon"><Icons.User /></div>
@@ -170,7 +198,7 @@ const calcGrowth = (today, yesterday) => {
         <div className="kpi-card sessions-today">
           <div className="kpi-icon"><Icons.Layout /></div>
           <div className="kpi-content">
-            <span className="kpi-label">Total Sessions Today</span>
+            <span className="kpi-label">Total Sessions ({range === 'day' ? selectedDate : range})</span>
             <div className="kpi-val-row">
               <h3>{sessions.toLocaleString()}</h3>
               <span className={`kpi-tag ${sessionsTrend.isUp ? 'purple-tag' : 'red-down'}`}>
@@ -214,7 +242,7 @@ const calcGrowth = (today, yesterday) => {
       <div className="tables-grid">
         <div className="dashboard-card">
           <div className="card-header">
-            <h3><span className="pulse-dot red-dot"></span> Live Active Visitors</h3>
+            <h3><span className="pulse-dot red-dot"></span> Live Active Visitors (Right Now)</h3>
             <span className="auto-refresh">Auto Refresh: 30s <Icons.Refresh spinning={loading} onClick={fetchAnalytics}/></span>
           </div>
           <div className="table-responsive">
@@ -224,12 +252,13 @@ const calcGrowth = (today, yesterday) => {
                   <th>User Name</th>
                   <th>Current Page</th>
                   <th>Device</th>
+                  <th>Started At</th>
                   <th>Time Active</th>
                 </tr>
               </thead>
               <tbody>
                 {data.activeVisitors.length > 0 ? (
-                  data.activeVisitors.slice(0, 5).map((v, idx) => (
+                  data.activeVisitors.slice(0, 6).map((v, idx) => (
                     <tr key={v.session_id || idx}>
                       <td>
                         <div className="user-cell">
@@ -239,11 +268,12 @@ const calcGrowth = (today, yesterday) => {
                       </td>
                       <td><span className="page-pill">{v.current_page || v.landing_page || '/'}</span></td>
                       <td className="device-td">{v.device_type === 'mobile' ? <Icons.Mobile /> : <Icons.Monitor />}</td>
-                      <td className="time-mono">{formatTime(v.total_duration_sec)}</td>
+                      <td className="time-mono">{formatDateTime(v.started_at)}</td>
+                      <td className="time-mono bold-stat">{formatTime(v.total_duration_sec)}</td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan="4"><div className="user-cell" style={{ padding: '8px 0' }}><div className="avatar-circle">G</div><span className="user-text-name">Waiting for live traffic...</span></div></td></tr>
+                  <tr><td colSpan="5"><div className="user-cell" style={{ padding: '8px 0' }}><div className="avatar-circle">G</div><span className="user-text-name">Waiting for live traffic...</span></div></td></tr>
                 )}
               </tbody>
             </table>
@@ -253,15 +283,16 @@ const calcGrowth = (today, yesterday) => {
         <div className="dashboard-card">
           <div className="card-header">
             <h3><span className="gold-star">★</span> Top Viewed Products &amp; Pages</h3>
-            <span className="filter-pill">Today ▾</span>
+            <span className="filter-pill">{range === 'day' ? selectedDate : `Last ${range}`}</span>
           </div>
           <div className="table-responsive">
             <table>
               <thead>
                 <tr>
                   <th>Page / Route Name</th>
-                  <th>Total Views</th>
+                  <th>Views</th>
                   <th>Avg. Time</th>
+                  <th>Total Time</th>
                 </tr>
               </thead>
               <tbody>
@@ -275,9 +306,10 @@ const calcGrowth = (today, yesterday) => {
                     </td>
                     <td className="bold-stat">{Number(p.total_views || 0).toLocaleString()}</td>
                     <td className="time-mono">{formatTime(p.avg_time_spent)}</td>
+                    <td className="time-mono">{formatTime(p.total_time_spent)}</td>
                   </tr>
                 )) : (
-                  <tr><td colSpan="3" style={{textAlign: 'center', color:'var(--text-secondary)'}}>No views recorded today.</td></tr>
+                  <tr><td colSpan="4" style={{textAlign: 'center', color:'var(--text-secondary)'}}>No views recorded for this date.</td></tr>
                 )}
               </tbody>
             </table>
@@ -285,11 +317,65 @@ const calcGrowth = (today, yesterday) => {
         </div>
       </div>
 
-      {/* 4. BOTTOM SECTION: SVG TREND CHART & DYNAMIC ORDER PROMO */}
+      {/* 4. NEW SECTION: DATE & TIME WISE USER SESSION HISTORY */}
+      <div className="dashboard-card" style={{ marginBottom: '24px' }}>
+        <div className="card-header">
+          <h3>🕒 Visitor Session History (Date, Time &amp; Duration Breakdown)</h3>
+          <span className="filter-pill">Showing last {data.sessionLogs.length} sessions</span>
+        </div>
+        <div className="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Visitor / User</th>
+                <th>Device &amp; Browser</th>
+                <th>Entry Page</th>
+                <th>Last Page</th>
+                <th>Pages Tapped</th>
+                <th>Session Start (Date &amp; Time)</th>
+                <th>Last Active Time</th>
+                <th>Total Time Spent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.sessionLogs.length > 0 ? (
+                data.sessionLogs.map((log, i) => (
+                  <tr key={log.session_id || i}>
+                    <td>
+                      <div className="user-cell">
+                        <div className="avatar-circle">{(log.user_name || 'G').charAt(0).toUpperCase()}</div>
+                        <div>
+                          <div className="user-text-name">{log.user_name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>#{log.visitor_uuid?.slice(0, 8)}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="device-td">{log.device_type} ({log.browser})</td>
+                    <td><span className="page-pill">{log.landing_page || '/'}</span></td>
+                    <td><span className="page-pill">{log.last_page || log.landing_page || '/'}</span></td>
+                    <td className="bold-stat">{log.pages_visited || 1}</td>
+                    <td className="time-mono">{formatDateTime(log.started_at)}</td>
+                    <td className="time-mono">{formatDateTime(log.last_active_at)}</td>
+                    <td className="time-mono bold-stat" style={{ color: '#10b981' }}>{formatTime(log.total_duration_sec)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    No visitor sessions found for {selectedDate}.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 5. BOTTOM SECTION: SVG TREND CHART & DYNAMIC ORDER PROMO */}
       <div className="bottom-grid">
         <div className="dashboard-card chart-card">
           <div className="card-header">
-            <h3>📈 Website Activity Trend</h3>
+            <h3>📈 Hourly Website Activity ({selectedDate})</h3>
             <div className="chart-legend">
               <span className="legend-item"><span className="legend-dot pink"></span> Visitors</span>
               <span className="legend-item"><span className="legend-dot gold"></span> Page Views</span>
@@ -305,34 +391,30 @@ const calcGrowth = (today, yesterday) => {
               <line x1="0" y1="90" x2="700" y2="90" stroke="var(--border)" strokeDasharray="3 3"/>
               <line x1="0" y1="140" x2="700" y2="140" stroke="var(--border)"/>
 
-              {/* Dynamic Pages Area */}
               <path d={`${pageViewsPath} L 700 140 L 0 140 Z`} fill="url(#glowGold)"/>
               <path d={pageViewsPath} fill="none" stroke="#f59e0b" strokeWidth="2.5"/>
 
-              {/* Dynamic Visitors Area */}
               <path d={`${visitorPath} L 700 140 L 0 140 Z`} fill="url(#glowPink)"/>
               <path d={visitorPath} fill="none" stroke="#e84393" strokeWidth="3"/>
             </svg>
             <div className="chart-x-labels">
-               {data.trendData.length > 0 
-                  ? data.trendData.map((d, i) => <span key={i}>{d.time}</span>) 
-                  : <span>No data yet</span>}
+              {data.trendData.length > 0 
+                ? data.trendData.map((d, i) => <span key={i}>{d.time}</span>) 
+                : <span>No hourly activity recorded on {selectedDate}</span>}
             </div>
           </div>
         </div>
 
-        {/* FULLY DYNAMIC PROMO CARD */}
         <div className="dashboard-card promo-banner-card">
           <div className="promo-inner">
             <h2 className="promo-brand">Arzoo</h2>
             <p className="promo-sub">Growing Together...</p>
-            {/* The Hard-coded "View Details" is replaced with Dynamic Counting */}
             <div className="promo-total-orders">
-               <span className="order-label">Lifetime Success:</span>
-               <div className="order-number-row">
-                 <span className="order-number">{data.totalLifetimeOrders.toLocaleString()}</span>
-                 <span className="order-text">Orders Completed</span>
-               </div>
+              <span className="order-label">Lifetime Success:</span>
+              <div className="order-number-row">
+                <span className="order-number">{data.totalLifetimeOrders.toLocaleString()}</span>
+                <span className="order-text">Orders Completed</span>
+              </div>
             </div>
           </div>
         </div>

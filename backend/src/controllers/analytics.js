@@ -149,9 +149,11 @@ const trackEvent = async (req, res) => {
 };
 
 // 6. GET /api/analytics/admin/live
+// 6. GET /api/analytics/admin/live?date=YYYY-MM-DD&range=day
 const getLiveAnalyticsStats = async (req, res) => {
     try {
-        const stats = await getAdminLiveAnalytics();
+        const { date, range } = req.query;
+        const stats = await getAdminLiveAnalytics(date, range);
         return res.status(200).json({ success: true, data: stats });
     } catch (err) {
         console.error('[ANALYTICS_CTRL] getLiveAnalyticsStats error:', err.message);
